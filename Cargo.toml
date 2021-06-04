@@ -1,0 +1,16 @@
+[package]
+name = "bdk_ffi"
+version = "0.1.0"
+authors = ["Steve Myers <steve@notmandatory.org>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+bdk = { version = "^0.7", feature = ["all-keys"] }
+safer-ffi = { version = "*", features = ["proc_macros"]}
+
+[features]
+c-headers = ["safer-ffi/headers"]

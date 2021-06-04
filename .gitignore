@@ -1,0 +1,4 @@
+/target
+*.h
+/main
+/Cargo.lock
