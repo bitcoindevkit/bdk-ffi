@@ -1,4 +1,10 @@
 use ::safer_ffi::prelude::*;
+use bdk::bitcoin::network::constants::Network::Testnet;
+use bdk::blockchain::{ElectrumBlockchain, log_progress};
+use bdk::electrum_client::Client;
+use bdk::sled;
+use bdk::sled::Tree;
+use bdk::Wallet;
 
 /// A `struct` usable from both Rust and C
 #[derive_ReprC]
@@ -35,6 +41,58 @@ fn new_point(x: f64, y: f64) -> repr_c::Box<Point> {
 #[ffi_export]
 fn free_point(point: Option<repr_c::Box<Point>>) {
     drop(point)
+}
+
+#[derive_ReprC]
+#[ReprC::opaque]
+pub struct WalletPtr {
+    raw: Wallet<ElectrumBlockchain, Tree>,
+}
+
+impl From<Wallet<ElectrumBlockchain, Tree>> for WalletPtr {
+    fn from(wallet: Wallet<ElectrumBlockchain, Tree>) -> Self {
+        WalletPtr {
+            raw: wallet,
+        }
+    }
+}
+
+#[ffi_export]
+fn new_wallet(
+    name: char_p::Ref<'_>,
+    descriptor: char_p::Ref<'_>,
+    change_descriptor: Option<char_p::Ref<'_>>,
+) -> repr_c::Box<WalletPtr> {
+    let name = name.to_string();
+    let descriptor = descriptor.to_string();
+    let change_descriptor = change_descriptor.map(|s| s.to_string());
+
+    let database = sled::open("./wallet_db").unwrap();
+    let tree = database.open_tree(name.clone()).unwrap();
+
+    let descriptor: &str = descriptor.as_str();
+    let change_descriptor: Option<&str> = change_descriptor.as_deref();
+
+    let electrum_url = "ssl://electrum.blockstream.info:60002";
+    let client = Client::new(&electrum_url).unwrap();
+
+    let wallet = Wallet::new(
+        descriptor,
+        change_descriptor,
+        Testnet,
+        tree,
+        ElectrumBlockchain::from(client),
+    )
+    .unwrap();
+
+    repr_c::Box::new(WalletPtr::from(wallet))
+}
+
+#[ffi_export]
+fn sync_wallet( wallet: repr_c::Box<WalletPtr>) {
+    println!("before sync");
+    wallet.raw.sync(log_progress(), Some(100));
+    println!("after sync");
 }
 
 /// The following test function is necessary for the header generation.
