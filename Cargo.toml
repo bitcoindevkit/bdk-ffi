@@ -10,7 +10,7 @@ crate-type = ["staticlib"]
 
 [dependencies]
 bdk = { version = "^0.7", feature = ["all-keys"] }
-safer-ffi = { version = "*", features = ["proc_macros"]}
+safer-ffi = { version = "0.0.6", features = ["proc_macros"]}
 
 [features]
 c-headers = ["safer-ffi/headers"]
