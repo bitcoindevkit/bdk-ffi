@@ -1,10 +1,41 @@
-use ::safer_ffi::prelude::*;
+#![deny(unsafe_code)] /* No `unsafe` needed! */
+
+//use ::safer_ffi::prelude::*;
 use bdk::bitcoin::network::constants::Network::Testnet;
 use bdk::blockchain::{ElectrumBlockchain, log_progress};
 use bdk::electrum_client::Client;
 use bdk::sled;
 use bdk::sled::Tree;
 use bdk::Wallet;
+use bdk::wallet::AddressIndex::New;
+use safer_ffi::char_p::{char_p_ref, char_p_boxed};
+use ::safer_ffi::prelude::*;
+
+/// Concatenate two input UTF-8 (_e.g._, ASCII) strings.
+///
+/// \remark The returned string must be freed with `rust_free_string`
+#[ffi_export]
+fn concat_string<'a>(fst: char_p_ref<'a>, snd: char_p_ref<'a>)
+           -> char_p_boxed
+{
+    let fst = fst.to_str(); // : &'_ str
+    let snd = snd.to_str(); // : &'_ str
+    let ccat = format!("{}{}", fst, snd).try_into().unwrap(); 
+    ccat
+}
+
+#[ffi_export]
+fn print_string (string: char_p_ref)
+{
+    println!("{}", string);
+}
+
+/// Frees a Rust-allocated string.
+#[ffi_export]
+fn free_string (string: char_p_boxed)
+{
+    drop(string)
+}
 
 /// A `struct` usable from both Rust and C
 #[derive_ReprC]
@@ -18,30 +49,28 @@ pub struct Point {
 /* Export a Rust function to the C world. */
 /// Returns the middle point of `[a, b]`.
 #[ffi_export]
-fn mid_point(a: Option<repr_c::Box<Point>>, b: Option<repr_c::Box<Point>>) -> repr_c::Box<Point> {
-    let a = a.unwrap();
-    let b = b.unwrap();
-    repr_c::Box::new(Point {
+fn mid_point(a: Point, b: Point) -> Point {
+    Point {
         x: (a.x + b.x) / 2.,
         y: (a.y + b.y) / 2.,
-    })
+    }
 }
 
 /// Pretty-prints a point using Rust's formatting logic.
 #[ffi_export]
-fn print_point(point: Option<repr_c::Box<Point>>) {
+fn print_point(point: Point) {
     println!("{:?}", point);
 }
 
 #[ffi_export]
-fn new_point(x: f64, y: f64) -> repr_c::Box<Point> {
-    repr_c::Box::new(Point { x, y })
+fn new_point(x: f64, y: f64) -> Point {
+    Point { x, y }
 }
 
-#[ffi_export]
-fn free_point(point: Option<repr_c::Box<Point>>) {
-    drop(point)
-}
+//#[ffi_export]
+//fn free_point(point: Point) {
+//    drop(point)
+//}
 
 #[derive_ReprC]
 #[ReprC::opaque]
@@ -90,9 +119,19 @@ fn new_wallet(
 
 #[ffi_export]
 fn sync_wallet( wallet: repr_c::Box<WalletPtr>) {
-    println!("before sync");
     wallet.raw.sync(log_progress(), Some(100));
     println!("after sync");
+}
+
+#[ffi_export]
+fn new_address( wallet: repr_c::Box<WalletPtr>) -> char_p::Box {
+    println!("before new_address");
+    let new_address = wallet.raw.get_address(New);
+    println!("after new_address: {:?}", new_address);
+    let new_address = new_address.unwrap();
+    let new_address = new_address.to_string();
+    println!("new address: ${}", new_address);
+    new_address.try_into().unwrap()
 }
 
 /// The following test function is necessary for the header generation.
