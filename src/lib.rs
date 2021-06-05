@@ -1,6 +1,6 @@
 #![deny(unsafe_code)] /* No `unsafe` needed! */
 
-//use ::safer_ffi::prelude::*;
+use ::safer_ffi::prelude::*;
 use bdk::bitcoin::network::constants::Network::Testnet;
 use bdk::blockchain::{ElectrumBlockchain, log_progress};
 use bdk::electrum_client::Client;
@@ -9,7 +9,7 @@ use bdk::sled::Tree;
 use bdk::Wallet;
 use bdk::wallet::AddressIndex::New;
 use safer_ffi::char_p::{char_p_ref, char_p_boxed};
-use ::safer_ffi::prelude::*;
+use safer_ffi::boxed::Box;
 
 /// Concatenate two input UTF-8 (_e.g._, ASCII) strings.
 ///
@@ -87,11 +87,11 @@ impl From<Wallet<ElectrumBlockchain, Tree>> for WalletPtr {
 }
 
 #[ffi_export]
-fn new_wallet(
-    name: char_p::Ref<'_>,
-    descriptor: char_p::Ref<'_>,
-    change_descriptor: Option<char_p::Ref<'_>>,
-) -> repr_c::Box<WalletPtr> {
+fn new_wallet<'a>(
+    name: char_p_ref<'a>,
+    descriptor: char_p_ref<'a>,
+    change_descriptor: Option<char_p_ref<'a>>,
+) -> Box<WalletPtr> {
     let name = name.to_string();
     let descriptor = descriptor.to_string();
     let change_descriptor = change_descriptor.map(|s| s.to_string());
@@ -114,17 +114,18 @@ fn new_wallet(
     )
     .unwrap();
 
-    repr_c::Box::new(WalletPtr::from(wallet))
+    Box::new(WalletPtr::from(wallet))
 }
 
 #[ffi_export]
-fn sync_wallet( wallet: repr_c::Box<WalletPtr>) {
-    wallet.raw.sync(log_progress(), Some(100));
+fn sync_wallet( wallet: &Box<WalletPtr>) {
+    println!("before sync");
+    let _r = wallet.raw.sync(log_progress(), Some(100));
     println!("after sync");
 }
 
 #[ffi_export]
-fn new_address( wallet: repr_c::Box<WalletPtr>) -> char_p::Box {
+fn new_address( wallet: &Box<WalletPtr>) -> char_p_boxed {
     println!("before new_address");
     let new_address = wallet.raw.get_address(New);
     println!("after new_address: {:?}", new_address);
@@ -132,6 +133,11 @@ fn new_address( wallet: repr_c::Box<WalletPtr>) -> char_p::Box {
     let new_address = new_address.to_string();
     println!("new address: ${}", new_address);
     new_address.try_into().unwrap()
+}
+
+#[ffi_export]
+fn free_wallet( wallet: Box<WalletPtr>) {
+    drop(wallet)
 }
 
 /// The following test function is necessary for the header generation.
