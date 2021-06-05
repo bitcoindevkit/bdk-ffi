@@ -9,7 +9,7 @@ edition = "2018"
 crate-type = ["staticlib"]
 
 [dependencies]
-bdk = { version = "^0.7", feature = ["all-keys"] }
+bdk = { version = "^0.7", features = ["all-keys"] }
 safer-ffi = { version = "0.0.6", features = ["proc_macros"]}
 
 [features]
