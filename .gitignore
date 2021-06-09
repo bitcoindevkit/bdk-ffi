@@ -1,4 +1,8 @@
-/target
+target
+build
+Cargo.lock
 *.h
-/main
-/Cargo.lock
+main
+/local.properties
+.gradle
+wallet_db
