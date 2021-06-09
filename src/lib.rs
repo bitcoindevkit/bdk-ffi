@@ -11,11 +11,17 @@ use bdk::wallet::AddressIndex::New;
 use safer_ffi::char_p::{char_p_ref, char_p_boxed};
 use safer_ffi::boxed::Box;
 
+#[ffi_export]
+fn print_string (string: char_p_ref)
+{
+    println!("{}", string);
+}
+
 /// Concatenate two input UTF-8 (_e.g._, ASCII) strings.
 ///
-/// \remark The returned string must be freed with `rust_free_string`
+/// The returned string must be freed with `rust_free_string`
 #[ffi_export]
-fn concat_string<'a>(fst: char_p_ref<'a>, snd: char_p_ref<'a>)
+fn concat_string(fst: char_p_ref, snd: char_p_ref)
            -> char_p_boxed
 {
     let fst = fst.to_str(); // : &'_ str
@@ -24,13 +30,7 @@ fn concat_string<'a>(fst: char_p_ref<'a>, snd: char_p_ref<'a>)
     ccat
 }
 
-#[ffi_export]
-fn print_string (string: char_p_ref)
-{
-    println!("{}", string);
-}
-
-/// Frees a Rust-allocated string.
+/// Frees a Rust-allocated string
 #[ffi_export]
 fn free_string (string: char_p_boxed)
 {
@@ -40,105 +40,97 @@ fn free_string (string: char_p_boxed)
 /// A `struct` usable from both Rust and C
 #[derive_ReprC]
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
-pub struct Point {
-    x: f64,
-    y: f64,
+#[derive(Debug, Clone)]
+pub struct Config {
+    name: char_p_boxed,
+    count: i64
 }
 
-/* Export a Rust function to the C world. */
-/// Returns the middle point of `[a, b]`.
+/// Debug print a Point
 #[ffi_export]
-fn mid_point(a: Point, b: Point) -> Point {
-    Point {
-        x: (a.x + b.x) / 2.,
-        y: (a.y + b.y) / 2.,
-    }
+fn print_config(config: &Config) {
+    println!("{:?}", config);
 }
 
-/// Pretty-prints a point using Rust's formatting logic.
+/// Create a new Config
 #[ffi_export]
-fn print_point(point: Point) {
-    println!("{:?}", point);
+fn new_config(name: char_p_ref, count: i64) -> Box<Config> {
+    let name = name.to_string().try_into().unwrap();
+    Box::new(Config { name, count })
 }
 
 #[ffi_export]
-fn new_point(x: f64, y: f64) -> Point {
-    Point { x, y }
+fn free_config(config: Box<Config>) {
+    drop(config)
 }
 
-//#[ffi_export]
-//fn free_point(point: Point) {
-//    drop(point)
+//#[derive_ReprC]
+//#[ReprC::opaque]
+//pub struct WalletPtr {
+//    raw: Wallet<ElectrumBlockchain, Tree>,
 //}
 
-#[derive_ReprC]
-#[ReprC::opaque]
-pub struct WalletPtr {
-    raw: Wallet<ElectrumBlockchain, Tree>,
-}
+//impl From<Wallet<ElectrumBlockchain, Tree>> for WalletPtr {
+//    fn from(wallet: Wallet<ElectrumBlockchain, Tree>) -> Self {
+//        WalletPtr {
+//            raw: wallet,
+//        }
+//    }
+//}
 
-impl From<Wallet<ElectrumBlockchain, Tree>> for WalletPtr {
-    fn from(wallet: Wallet<ElectrumBlockchain, Tree>) -> Self {
-        WalletPtr {
-            raw: wallet,
-        }
-    }
-}
+//#[ffi_export]
+//fn new_wallet<'a>(
+//    name: char_p_ref<'a>,
+//    descriptor: char_p_ref<'a>,
+//    change_descriptor: Option<char_p_ref<'a>>,
+//) -> Box<WalletPtr> {
+//    let name = name.to_string();
+//    let descriptor = descriptor.to_string();
+//    let change_descriptor = change_descriptor.map(|s| s.to_string());
+//
+//    let database = sled::open("./wallet_db").unwrap();
+//    let tree = database.open_tree(name.clone()).unwrap();
+//
+//    let descriptor: &str = descriptor.as_str();
+//    let change_descriptor: Option<&str> = change_descriptor.as_deref();
+//
+//    let electrum_url = "ssl://electrum.blockstream.info:60002";
+//    let client = Client::new(&electrum_url).unwrap();
+//
+//    let wallet = Wallet::new(
+//        descriptor,
+//        change_descriptor,
+//        Testnet,
+//        tree,
+//        ElectrumBlockchain::from(client),
+//    )
+//    .unwrap();
+//
+//    Box::new(WalletPtr::from(wallet))
+//}
 
-#[ffi_export]
-fn new_wallet<'a>(
-    name: char_p_ref<'a>,
-    descriptor: char_p_ref<'a>,
-    change_descriptor: Option<char_p_ref<'a>>,
-) -> Box<WalletPtr> {
-    let name = name.to_string();
-    let descriptor = descriptor.to_string();
-    let change_descriptor = change_descriptor.map(|s| s.to_string());
+//#[ffi_export]
+//fn sync_wallet( wallet: &Box<WalletPtr>) {
+//    println!("before sync");
+//    let _r = wallet.raw.sync(log_progress(), Some(100));
+//    println!("after sync");
+//}
 
-    let database = sled::open("./wallet_db").unwrap();
-    let tree = database.open_tree(name.clone()).unwrap();
+//#[ffi_export]
+//fn new_address( wallet: &Box<WalletPtr>) -> char_p_boxed {
+//    println!("before new_address");
+//    let new_address = wallet.raw.get_address(New);
+//    println!("after new_address: {:?}", new_address);
+//    let new_address = new_address.unwrap();
+//    let new_address = new_address.to_string();
+//    println!("new address: ${}", new_address);
+//    new_address.try_into().unwrap()
+//}
 
-    let descriptor: &str = descriptor.as_str();
-    let change_descriptor: Option<&str> = change_descriptor.as_deref();
-
-    let electrum_url = "ssl://electrum.blockstream.info:60002";
-    let client = Client::new(&electrum_url).unwrap();
-
-    let wallet = Wallet::new(
-        descriptor,
-        change_descriptor,
-        Testnet,
-        tree,
-        ElectrumBlockchain::from(client),
-    )
-    .unwrap();
-
-    Box::new(WalletPtr::from(wallet))
-}
-
-#[ffi_export]
-fn sync_wallet( wallet: &Box<WalletPtr>) {
-    println!("before sync");
-    let _r = wallet.raw.sync(log_progress(), Some(100));
-    println!("after sync");
-}
-
-#[ffi_export]
-fn new_address( wallet: &Box<WalletPtr>) -> char_p_boxed {
-    println!("before new_address");
-    let new_address = wallet.raw.get_address(New);
-    println!("after new_address: {:?}", new_address);
-    let new_address = new_address.unwrap();
-    let new_address = new_address.to_string();
-    println!("new address: ${}", new_address);
-    new_address.try_into().unwrap()
-}
-
-#[ffi_export]
-fn free_wallet( wallet: Box<WalletPtr>) {
-    drop(wallet)
-}
+//#[ffi_export]
+//fn free_wallet( wallet: Box<WalletPtr>) {
+//    drop(wallet)
+//}
 
 /// The following test function is necessary for the header generation.
 #[::safer_ffi::cfg_headers]
