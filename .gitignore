@@ -2,7 +2,6 @@ target
 build
 Cargo.lock
 *.h
-main
 /local.properties
 .gradle
 wallet_db
