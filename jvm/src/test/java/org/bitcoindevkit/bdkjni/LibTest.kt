@@ -2,6 +2,8 @@ package org.bitcoindevkit.bdkjni
 
 import com.sun.jna.Native
 import com.sun.jna.NativeLong
+import com.sun.jna.Pointer
+import com.sun.jna.ptr.PointerByReference
 import org.junit.Test
 
 /**
@@ -40,4 +42,27 @@ class LibTest {
         lib.print_config(config)
         lib.free_config(config)
     }
+
+//    @Test
+//    fun new_sync_free_wallet() {
+//        val name = "test_wallet"
+//        val desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
+//        val change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)"
+//        
+//        val wallet = lib.new_wallet(name, desc, change)
+//        println("wallet created in kotlin: $wallet")
+//        lib.sync_wallet(wallet)
+//        //lib.free_wallet(wallet)
+//    }
+
+//    @Test
+//    fun new_newaddress_wallet() {
+//        val name = "test_wallet"
+//        val desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
+//        val change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)"
+//
+//        val config = lib.new_config("test test", NativeLong(Long.MAX_VALUE))
+//        lib.print_config(config)
+//        lib.free_config(config)
+//    }
 }
