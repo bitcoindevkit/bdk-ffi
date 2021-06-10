@@ -5,3 +5,4 @@ Cargo.lock
 /local.properties
 .gradle
 wallet_db
+bdk_ffi_test

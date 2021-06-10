@@ -7,9 +7,9 @@ plugins {
 test {
     systemProperty "java.library.path", file("${buildDir}/jniLibs/x86_64_linux").absolutePath
     environment "LD_LIBRARY_PATH", file("${buildDir}/jniLibs/x86_64_linux").absolutePath
-//    testLogging {
-//        events "PASSED", "SKIPPED", "FAILED", "STANDARD_OUT", "STANDARD_ERROR"
-//    }
+    testLogging {
+        events "PASSED", "SKIPPED", "FAILED", "STANDARD_OUT", "STANDARD_ERROR"
+    }
 }
 
 task buildRust(type: Exec) {
