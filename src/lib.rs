@@ -64,73 +64,68 @@ fn free_config(config: Box<Config>) {
     drop(config)
 }
 
-//#[derive_ReprC]
-//#[ReprC::opaque]
-//pub struct WalletPtr {
-//    raw: Wallet<ElectrumBlockchain, Tree>,
-//}
+#[derive_ReprC]
+#[ReprC::opaque]
+pub struct WalletPtr {
+    raw: Wallet<ElectrumBlockchain, Tree>,
+}
 
-//impl From<Wallet<ElectrumBlockchain, Tree>> for WalletPtr {
-//    fn from(wallet: Wallet<ElectrumBlockchain, Tree>) -> Self {
-//        WalletPtr {
-//            raw: wallet,
-//        }
-//    }
-//}
+impl From<Wallet<ElectrumBlockchain, Tree>> for WalletPtr {
+    fn from(wallet: Wallet<ElectrumBlockchain, Tree>) -> Self {
+        WalletPtr {
+            raw: wallet,
+        }
+    }
+}
 
-//#[ffi_export]
-//fn new_wallet<'a>(
-//    name: char_p_ref<'a>,
-//    descriptor: char_p_ref<'a>,
-//    change_descriptor: Option<char_p_ref<'a>>,
-//) -> Box<WalletPtr> {
-//    let name = name.to_string();
-//    let descriptor = descriptor.to_string();
-//    let change_descriptor = change_descriptor.map(|s| s.to_string());
-//
-//    let database = sled::open("./wallet_db").unwrap();
-//    let tree = database.open_tree(name.clone()).unwrap();
-//
-//    let descriptor: &str = descriptor.as_str();
-//    let change_descriptor: Option<&str> = change_descriptor.as_deref();
-//
-//    let electrum_url = "ssl://electrum.blockstream.info:60002";
-//    let client = Client::new(&electrum_url).unwrap();
-//
-//    let wallet = Wallet::new(
-//        descriptor,
-//        change_descriptor,
-//        Testnet,
-//        tree,
-//        ElectrumBlockchain::from(client),
-//    )
-//    .unwrap();
-//
-//    Box::new(WalletPtr::from(wallet))
-//}
+#[ffi_export]
+fn new_wallet(
+    name: char_p_ref,
+    descriptor: char_p_ref,
+    change_descriptor: Option<char_p_ref>,
+) -> Box<WalletPtr> {
+    let name = name.to_string();
+    let descriptor = descriptor.to_string();
+    let change_descriptor = change_descriptor.map(|s| s.to_string());
 
-//#[ffi_export]
-//fn sync_wallet( wallet: &Box<WalletPtr>) {
-//    println!("before sync");
-//    let _r = wallet.raw.sync(log_progress(), Some(100));
-//    println!("after sync");
-//}
+    let database = sled::open("./wallet_db").unwrap();
+    let tree = database.open_tree(name.clone()).unwrap();
 
-//#[ffi_export]
-//fn new_address( wallet: &Box<WalletPtr>) -> char_p_boxed {
-//    println!("before new_address");
-//    let new_address = wallet.raw.get_address(New);
-//    println!("after new_address: {:?}", new_address);
-//    let new_address = new_address.unwrap();
-//    let new_address = new_address.to_string();
-//    println!("new address: ${}", new_address);
-//    new_address.try_into().unwrap()
-//}
+    let descriptor: &str = descriptor.as_str();
+    let change_descriptor: Option<&str> = change_descriptor.as_deref();
 
-//#[ffi_export]
-//fn free_wallet( wallet: Box<WalletPtr>) {
-//    drop(wallet)
-//}
+    let electrum_url = "ssl://electrum.blockstream.info:60002";
+    let client = Client::new(&electrum_url).unwrap();
+
+    let wallet = Wallet::new(
+        descriptor,
+        change_descriptor,
+        Testnet,
+        tree,
+        ElectrumBlockchain::from(client),
+    )
+    .unwrap();
+    println!("created wallet");
+    Box::new(WalletPtr::from(wallet))
+}
+
+#[ffi_export]
+fn sync_wallet( wallet: &WalletPtr) {
+    let _r = wallet.raw.sync(log_progress(), Some(100));
+}
+
+#[ffi_export]
+fn new_address( wallet: &WalletPtr) -> char_p_boxed {
+    let new_address = wallet.raw.get_address(New);
+    let new_address = new_address.unwrap();
+    let new_address = new_address.to_string();
+    new_address.try_into().unwrap()
+}
+
+#[ffi_export]
+fn free_wallet( wallet: Option<Box<WalletPtr>>) {
+    drop(wallet)
+}
 
 /// The following test function is necessary for the header generation.
 #[::safer_ffi::cfg_headers]
