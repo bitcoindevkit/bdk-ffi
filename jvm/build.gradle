@@ -30,7 +30,7 @@ dependencies {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'org.bitcoindevkit.bdkjni'
+            groupId = 'org.bitcoindevkit.bdkffi'
             artifactId = 'bdk-jvm-debug'
             version = '0.2.1-dev'
 
