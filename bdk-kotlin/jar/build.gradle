@@ -5,7 +5,7 @@ plugins {
 }
 
 test {
-    environment "LD_LIBRARY_PATH", file("${projectDir}/../../target/debug").absolutePath
+    environment "LD_LIBRARY_PATH", file("${projectDir}/libs/x86_64_linux").absolutePath
 //    testLogging {
 //        events "PASSED", "SKIPPED", "FAILED", "STANDARD_OUT", "STANDARD_ERROR"
 //    }
