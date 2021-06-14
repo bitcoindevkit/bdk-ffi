@@ -7,6 +7,6 @@ mod wallet;
 #[test]
 fn generate_headers() -> ::std::io::Result<()> {
     ::safer_ffi::headers::builder()
-        .to_file("bdk_ffi.h")?
+        .to_file("cc/bdk_ffi.h")?
         .generate()
 }

@@ -2,7 +2,7 @@ target
 build
 Cargo.lock
 *.h
-/local.properties
+/bdk-kotlin/local.properties
 .gradle
 wallet_db
 bdk_ffi_test
