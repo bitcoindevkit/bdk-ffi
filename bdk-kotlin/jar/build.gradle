@@ -1,0 +1,42 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'java-library'
+    id 'maven-publish'
+}
+
+test {
+    environment "LD_LIBRARY_PATH", file("${projectDir}/../../target/debug").absolutePath
+//    testLogging {
+//        events "PASSED", "SKIPPED", "FAILED", "STANDARD_OUT", "STANDARD_ERROR"
+//    }
+}
+
+task buildRust(type: Exec) {
+    workingDir '../'
+    commandLine './build.sh'
+}
+
+dependencies {
+    implementation platform('org.jetbrains.kotlin:kotlin-bom')
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "net.java.dev.jna:jna:5.8.0"
+    
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = 'org.bitcoindevkit'
+            artifactId = 'bdk-debug'
+            version = '0.0.1-dev'
+
+            from components.java
+        }
+    }
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
