@@ -35,8 +35,11 @@ int main (int argc, char const * const argv[])
         // test free_wallet NULL doesn't crash
         free_wallet(NULL);
         
-        // verify sync_wallet after sync_wallet fails (double free detected, core dumped)
-        ////sync_wallet(&wallet);
+        // verify free_wallet after free_wallet fails (core dumped)
+        ////free_wallet(wallet);
+        
+        // verify sync_wallet after free_wallet fails (core dumped)
+        ////sync_wallet(wallet);
     }
         
     return EXIT_SUCCESS;
