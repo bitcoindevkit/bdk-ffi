@@ -1,7 +1,6 @@
-package org.bitcoindevkit.bdkjni
+package org.bitcoindevkit.bdk
 
 import com.sun.jna.Native
-import com.sun.jna.NativeLong
 import org.junit.Test
 import kotlin.test.assertEquals
 

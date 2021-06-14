@@ -1,7 +1,6 @@
-package org.bitcoindevkit.bdkjni
+package org.bitcoindevkit.bdk
 
 import com.sun.jna.*
-import com.sun.jna.ptr.PointerByReference
 
 interface Lib : Library {
 
