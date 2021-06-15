@@ -1,11 +1,10 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
+//apply plugin: 'kotlin-android-extensions'
 apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 30
-    buildToolsVersion "29.0.3"
 
     defaultConfig {
         minSdkVersion 21
@@ -43,7 +42,7 @@ afterEvaluate {
                 from components.release
 
                 // You can then customize attributes of the publication as shown below.
-                groupId = 'org.bitcoindevkit.bdkffi'
+                groupId = 'org.bitcoindevkit'
                 artifactId = 'bdk'
                 version = '0.0.1-dev'
             }
@@ -52,7 +51,7 @@ afterEvaluate {
                 // Applies the component for the debug build variant.
                 from components.debug
 
-                groupId = 'org.bitcoindevkit.bdkffi'
+                groupId = 'org.bitcoindevkit'
                 artifactId = 'bdk-debug'
                 version = '0.0.1-dev'
             }
@@ -61,7 +60,10 @@ afterEvaluate {
 }
 
 dependencies {
-    implementation project(':jar')
+    implementation (project(':jar')) {
+        exclude group: 'net.java.dev.jna', module: 'jna'
+    }
+
     api 'net.java.dev.jna:jna:5.8.0@aar'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.3.0'

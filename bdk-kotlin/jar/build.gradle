@@ -11,17 +11,15 @@ test {
 //    }
 }
 
-task buildRust(type: Exec) {
-    workingDir '../'
-    commandLine './build.sh'
-}
+//task buildRust(type: Exec) {
+//    workingDir '../'
+//    commandLine './build.sh'
+//}
 
 dependencies {
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "net.java.dev.jna:jna:5.8.0"
-    
-    testImplementation 'org.jetbrains.kotlin:kotlin-test'
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
 }
 
@@ -29,7 +27,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'org.bitcoindevkit'
-            artifactId = 'bdk-debug'
+            artifactId = 'bdk'
             version = '0.0.1-dev'
 
             from components.java
