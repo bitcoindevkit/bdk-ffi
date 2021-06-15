@@ -12,7 +12,7 @@ interface Lib : Library {
 
     // void free_string (
     //    char * string);
-    fun free_string(string: String)
+    fun free_string(string: Pointer)
 
     // WalletPtr_t * new_wallet (
     //    char const * name,
@@ -27,7 +27,7 @@ interface Lib : Library {
 
     // char * new_address (
     //    WalletPtr_t * const * wallet);
-    fun new_address(wallet: WalletPtr_t): String
+    fun new_address(wallet: WalletPtr_t): Pointer
 
     // void free_wallet (
     //    WalletPtr_t * wallet);

@@ -54,7 +54,9 @@ class AndroidLibTest {
 
     @Test
     fun new_address() {
-        val address = bdkFfi.new_address(wallet)
+        val pointer = bdkFfi.new_address(wallet)
+        val address = pointer.getString(0)
+        bdkFfi.free_string(pointer)
         //println("address created from kotlin: $address")
         assertEquals(address, "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e")
         Log.d("new_address", "new address: $address")
