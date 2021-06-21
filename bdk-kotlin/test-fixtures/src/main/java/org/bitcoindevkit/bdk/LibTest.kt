@@ -10,7 +10,7 @@ import kotlin.test.assertNull
  * Library test, which will execute on linux host.
  *
  */
-class LibTest {
+abstract class LibTest {
 
     companion object {
         private val bdkFfi: Lib = Native.load("bdk_ffi", Lib::class.java)
@@ -40,12 +40,12 @@ class LibTest {
     @Test
     fun wallet_sync_error() {
         val bad_wallet_result = bdkFfi.new_wallet_result("test", "bad", null)
-        println("wallet result created")
+        //println("wallet result created")
         val sync_result = bdkFfi.sync_wallet(bad_wallet_result)
         val sync_err_pointer = bdkFfi.get_void_err(sync_result)
         assertNotNull(sync_err_pointer)
-        val sync_err = sync_err_pointer.getString(0)
-        println("wallet sync error $sync_err")
+        val sync_err = sync_err_pointer!!.getString(0)
+        //println("wallet sync error $sync_err")
     }
 
     @Test
