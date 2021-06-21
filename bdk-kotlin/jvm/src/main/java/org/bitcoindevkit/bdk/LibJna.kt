@@ -2,7 +2,7 @@ package org.bitcoindevkit.bdk
 
 import com.sun.jna.*
 
-interface Lib : Library {
+interface LibJna : Library {
 
     // typedef struct VoidResult VoidResult_t;
     class VoidResult_t : PointerType {
