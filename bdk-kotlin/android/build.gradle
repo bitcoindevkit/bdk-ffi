@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-//apply plugin: 'kotlin-android-extensions'
 apply plugin: 'maven-publish'
 
 android {
@@ -24,15 +23,7 @@ android {
     }
 }
 
-//task buildRust(type: Exec) {
-//    workingDir '../'
-//    commandLine './build.sh'
-//}
-
 afterEvaluate {
-//    android.libraryVariants.all { variant ->
-//        variant.javaCompileProvider.get().dependsOn(buildRust)
-//    }
 
     publishing {
         publications {
@@ -68,7 +59,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.3.0'
     implementation 'androidx.core:core-ktx:1.5.0'
-    
+    api "org.slf4j:slf4j-api:1.7.30"
+
+    androidTestImplementation 'com.github.tony19:logback-android:2.0.0'
     androidTestImplementation (project(':test-fixtures')) {
         exclude group: 'net.java.dev.jna', module: 'jna'
     }
