@@ -11,4 +11,4 @@ cc/bdk_ffi_test
 
 # bdk-kotlin
 (cd bdk-kotlin && gradle test)
-#(cd bdk-kotlin && gradle :aar:connectedDebugAndroidTest)
+#(cd bdk-kotlin && gradle :android:connectedDebugAndroidTest)

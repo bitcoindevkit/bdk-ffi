@@ -60,7 +60,7 @@ afterEvaluate {
 }
 
 dependencies {
-    implementation (project(':jar')) {
+    implementation (project(':jvm')) {
         exclude group: 'net.java.dev.jna', module: 'jna'
     }
 
