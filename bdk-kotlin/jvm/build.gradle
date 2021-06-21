@@ -21,6 +21,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "net.java.dev.jna:jna:5.8.0"
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit'
+    testImplementation (project(':test-fixtures'))
 }
 
 publishing {
