@@ -11,11 +11,11 @@ class StringResult internal constructor(private val stringResultT: LibJna.String
         return libJna.get_string_err(stringResultT) != null
     }
     
-    fun err(): String? {
+    fun err(): Error? {
         val errPointer = libJna.get_string_err(stringResultT)
         val err = errPointer?.getString(0)
         libJna.free_string(errPointer)
-        return err
+        return err?.let { Error.valueOf(it) }
     }
     
     fun ok(): String? {

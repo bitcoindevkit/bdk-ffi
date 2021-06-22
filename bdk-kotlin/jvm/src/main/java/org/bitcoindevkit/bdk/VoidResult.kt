@@ -11,11 +11,11 @@ class VoidResult internal constructor(private val voidResultT: LibJna.VoidResult
         return libJna.get_void_err(voidResultT) != null
     }
     
-    fun err(): String? {
+    fun err(): Error? {
         val errPointer = libJna.get_void_err(voidResultT)
         val err = errPointer?.getString(0)
         libJna.free_string(errPointer)
-        return err
+        return err?.let { Error.valueOf(it) }
     }
     
     protected fun finalize() {

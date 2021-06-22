@@ -26,7 +26,7 @@ abstract class LibTest : LibBase() {
         val walletErr = badWalletResult.err()
         assertNotNull(walletErr)
         log.debug("wallet error $walletErr")
-        assertEquals("Descriptor", walletErr)
+        assertEquals(Error.Descriptor, walletErr)
         val wallet = badWalletResult.ok()
         assertNull(wallet)
     }
