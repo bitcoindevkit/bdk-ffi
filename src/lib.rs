@@ -1,5 +1,6 @@
 #![deny(unsafe_code)] /* No `unsafe` needed! */
 
+mod error;
 mod wallet;
 
 /// The following test function is necessary for the header generation.
@@ -7,6 +8,7 @@ mod wallet;
 #[test]
 fn generate_headers() -> ::std::io::Result<()> {
     ::safer_ffi::headers::builder()
+        .with_guard("__RUST_BDK_FFI__")
         .to_file("cc/bdk_ffi.h")?
         .generate()
 }
