@@ -10,10 +10,13 @@ int main (int argc, char const * const argv[])
     { 
         WalletResult_t *wallet_result = new_wallet_result("bad", "bad", NULL);
         assert(wallet_result != NULL);
-        char *wallet_error = get_wallet_err(wallet_result);
-        assert(wallet_error != NULL);
-        //printf("wallet error: %s\n", wallet_error);         
-        free_string(wallet_error);
+        char *wallet_err = get_wallet_err(wallet_result);
+        assert(wallet_err != NULL);
+        assert( 0 == strcmp(wallet_err,"Descriptor") );
+        //printf("wallet err: %s\n", wallet_err);   
+        WalletRef_t *wallet_ref = get_wallet_ok(wallet_result);
+        assert(wallet_ref == NULL);
+        free_string(wallet_err);
         free_wallet_result(wallet_result);
     }
     
@@ -25,25 +28,31 @@ int main (int argc, char const * const argv[])
     
         WalletResult_t *wallet_result = new_wallet_result(name, desc, change);
         assert(wallet_result != NULL);
+        char *wallet_err = get_wallet_err(wallet_result);
+        assert(wallet_err == NULL);
+        WalletRef_t *wallet_ref = get_wallet_ok(wallet_result);
+        assert(wallet_ref != NULL);
         
         // test sync_wallet
-        VoidResult_t *sync_result = sync_wallet(wallet_result);    
+        VoidResult_t *sync_result = sync_wallet(wallet_ref);    
         free_void_result(sync_result);    
         
         // test new_address
-        StringResult_t *address_result1 = new_address(wallet_result);
+        StringResult_t *address_result1 = new_address(wallet_ref);
         char *address1 = get_string_ok(address_result1);
         //printf("address1: %s\n", address1);       
         assert( 0 == strcmp(address1,"tb1qgkhp034fyxeta00h0nne9tzfm0vsxq4prduzxp"));
         free_string(address1);
         free_string_result(address_result1);
         
-        StringResult_t *address_result2 = new_address(wallet_result);
+        StringResult_t *address_result2 = new_address(wallet_ref);
         char *address2 = get_string_ok(address_result2);
         //printf("address2: %s\n", address2);
         assert(0 == strcmp(address2,"tb1qd6u9q327sru2ljvwzdtfrdg36sapax7udz97wf"));
         free_string(address2);
         free_string_result(address_result2);
+        
+        free_wallet_ref(wallet_ref);
         
         // test free_wallet
         free_wallet_result(wallet_result);

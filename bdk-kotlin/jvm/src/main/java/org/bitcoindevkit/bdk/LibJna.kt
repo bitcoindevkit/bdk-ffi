@@ -35,10 +35,16 @@ interface LibJna : Library {
     // void free_string_result (
     //    StringResult_t * string_result);
     fun free_string_result(string_result: StringResult_t)
-
-    // void free_string (
-    //    char * string);
-    fun free_string(string: Pointer?)
+    
+    // typedef struct WalletRef WalletRef_t;
+    class WalletRef_t : PointerType {
+        constructor() : super()
+        constructor(pointer: Pointer) : super(pointer)
+    }
+    
+    // void free_wallet_ref (
+    //    WalletRef_t * wallet_ref);
+    fun free_wallet_ref(wallet_ref: WalletRef_t)
 
     // typedef struct WalletResult WalletResult_t;
     class WalletResult_t : PointerType {
@@ -58,17 +64,25 @@ interface LibJna : Library {
     
     // char * get_wallet_err (
     //    WalletResult_t const * wallet_result);
-    // TODO
+    fun get_wallet_err(wallet_result: WalletResult_t): Pointer?
+    
+    // WalletRef_t * get_wallet_ok (
+    //    WalletResult_t const * wallet_result);
+    fun get_wallet_ok(wallet_result: WalletResult_t): WalletRef_t?
 
     // VoidResult_t * sync_wallet (
-    //    WalletResult_t const * wallet_result);
-    fun sync_wallet(wallet_result: WalletResult_t): VoidResult_t
+    //    WalletRef_t const * wallet_ref);
+    fun sync_wallet(wallet_ref: Pointer): VoidResult_t
 
     // StringResult_t * new_address (
-    //    WalletResult_t const * wallet_result);
-    fun new_address(wallet_result: WalletResult_t): StringResult_t
+    //    WalletRef_t const * wallet_ref);
+    fun new_address(wallet_ref: Pointer): StringResult_t
 
     // void free_wallet_result (
     //    WalletResult_t * wallet_result);
     fun free_wallet_result(wallet_result: WalletResult_t)
+
+    // void free_string (
+    //    char * string);
+    fun free_string(string: Pointer?)
 }
