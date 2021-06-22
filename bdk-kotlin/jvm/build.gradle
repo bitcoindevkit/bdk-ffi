@@ -4,6 +4,12 @@ plugins {
     id 'maven-publish'
 }
 
+test {
+    testLogging {
+        events "PASSED", "SKIPPED", "FAILED", "STANDARD_OUT", "STANDARD_ERROR"
+    }
+}
+
 dependencies {
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
