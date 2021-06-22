@@ -16,11 +16,11 @@ class WalletResult(
         return libJna.get_wallet_err(walletResultT) != null
     }
 
-    fun err(): String? {
+    fun err(): Error? {
         val errPointer = libJna.get_wallet_err(walletResultT)
         val err = errPointer?.getString(0)
         libJna.free_string(errPointer)
-        return err
+        return err?.let { Error.valueOf(it) }
     }
 
     fun ok(): Wallet? {
