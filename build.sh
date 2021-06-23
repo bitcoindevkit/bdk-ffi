@@ -13,7 +13,7 @@ cc cc/bdk_ffi_test.c -o cc/bdk_ffi_test -L target/debug -l bdk_ffi -l pthread -l
 mkdir -p bdk-kotlin/jvm/src/main/resources/linux-x86-64
 cp target/debug/libbdk_ffi.so bdk-kotlin/jvm/src/main/resources/linux-x86-64
 
-(cd bdk-kotlin && gradle :jvm:build)
+(cd bdk-kotlin && gradle :jvm:build && gradle :jvm:publishToMavenLocal)
 
 # rust android
 
@@ -49,4 +49,4 @@ if echo $BUILD_TARGETS | grep "i686"; then
 fi
 
 # bdk-kotlin aar
-(cd bdk-kotlin && gradle :android:build)
+(cd bdk-kotlin && gradle :android:build && gradle :android:publishToMavenLocal)
