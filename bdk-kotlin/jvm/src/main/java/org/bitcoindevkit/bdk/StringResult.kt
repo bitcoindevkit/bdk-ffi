@@ -1,32 +1,26 @@
 package org.bitcoindevkit.bdk
 
+import com.sun.jna.Pointer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class StringResult internal constructor(private val stringResultT: LibJna.StringResult_t) : LibBase() {
+class StringResult internal constructor(stringResultT: LibJna.StringResult_t) :
+    ResultBase<LibJna.StringResult_t, String>(stringResultT) {
 
-    private val log: Logger = LoggerFactory.getLogger(StringResult::class.java)
+    override val log: Logger = LoggerFactory.getLogger(StringResult::class.java)
 
-    fun isErr(): Boolean {
-        return libJna.get_string_err(stringResultT) != null
+    override fun err(): Pointer? {
+        return libJna.get_string_err(resultT)
     }
-    
-    fun err(): Error? {
-        val errPointer = libJna.get_string_err(stringResultT)
-        val err = errPointer?.getString(0)
-        libJna.free_string(errPointer)
-        return err?.let { Error.valueOf(it) }
-    }
-    
-    fun ok(): String? {
-        val okPointer = libJna.get_string_ok(stringResultT)
-        val ok = okPointer?.getString(0)
+
+    override fun ok(): String {
+        val okPointer = libJna.get_string_ok(resultT)
+        val ok = okPointer!!.getString(0)
         libJna.free_string(okPointer)
         return ok
     }
-    
-    protected fun finalize() {
-        libJna.free_string_result(stringResultT)
-        log.debug("StringResult_t freed")
+
+    override fun free(pointer: LibJna.StringResult_t) {
+        libJna.free_string_result(resultT)
     }
 }

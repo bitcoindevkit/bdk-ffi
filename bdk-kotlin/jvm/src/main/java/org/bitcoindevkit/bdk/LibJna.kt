@@ -1,6 +1,8 @@
 package org.bitcoindevkit.bdk
 
-import com.sun.jna.*
+import com.sun.jna.Library
+import com.sun.jna.Pointer
+import com.sun.jna.PointerType
 
 interface LibJna : Library {
 
@@ -35,13 +37,13 @@ interface LibJna : Library {
     // void free_string_result (
     //    StringResult_t * string_result);
     fun free_string_result(string_result: StringResult_t)
-    
+
     // typedef struct WalletRef WalletRef_t;
     class WalletRef_t : PointerType {
         constructor() : super()
         constructor(pointer: Pointer) : super(pointer)
     }
-    
+
     // void free_wallet_ref (
     //    WalletRef_t * wallet_ref);
     fun free_wallet_ref(wallet_ref: WalletRef_t)
@@ -61,11 +63,11 @@ interface LibJna : Library {
         descriptor: String,
         changeDescriptor: String?
     ): WalletResult_t
-    
+
     // char * get_wallet_err (
     //    WalletResult_t const * wallet_result);
     fun get_wallet_err(wallet_result: WalletResult_t): Pointer?
-    
+
     // WalletRef_t * get_wallet_ok (
     //    WalletResult_t const * wallet_result);
     fun get_wallet_ok(wallet_result: WalletResult_t): WalletRef_t?
