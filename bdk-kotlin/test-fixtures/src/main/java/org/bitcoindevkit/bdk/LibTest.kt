@@ -4,6 +4,7 @@ import org.junit.*
 import org.junit.Assert.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import javax.management.Descriptor
 
 /**
  * Library test, which will execute on linux host.
@@ -21,21 +22,17 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletResultError() {
-        val badWalletResult = WalletResult("bad", "bad", "bad")
-        assertTrue(badWalletResult.isErr())
-        val walletErr = badWalletResult.err()
-        assertNotNull(walletErr)
-        log.debug("wallet error $walletErr")
-        assertEquals(Error.Descriptor, walletErr)
-        val wallet = badWalletResult.ok()
-        assertNull(wallet)
+        val jnaException = assertThrows(JnaException::class.java) {
+            Wallet("bad", "bad", "bad")
+        }
+        assertEquals(jnaException.err, JnaError.Descriptor)
     }
 
     @Test
     fun walletResultFinalize() {
         val names = listOf("one", "two", "three")
         names.map {
-            val wallet = WalletResult(it, desc, change)
+            val wallet = Wallet(it, desc, change)
             assertNotNull(wallet)
         }
         System.gc()
@@ -44,23 +41,16 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletSync() {
-        val walletResult = WalletResult(name, desc, change)
-        val wallet = walletResult.ok()
+        val wallet = Wallet(name, desc, change)
         assertNotNull(wallet)
-        val syncResult = wallet!!.sync();
-        assertFalse(syncResult.isErr())
-        assertNull(syncResult.err())
+        wallet.sync()
     }
 
     @Test
     fun walletNewAddress() {
-        val walletResult = WalletResult(name, desc, change)
-        val wallet = walletResult.ok()
+        val wallet = Wallet(name, desc, change)
         assertNotNull(wallet)
-        val addressResult = wallet!!.getAddress()
-        assertFalse(addressResult.isErr())
-        assertNull(addressResult.err())
-        val address = addressResult.ok()
+        val address = wallet.getAddress()
         assertNotNull(address)
         log.debug("address created from kotlin: $address")
         assertEquals(address, "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e")

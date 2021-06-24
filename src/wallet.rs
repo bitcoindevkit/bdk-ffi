@@ -129,13 +129,12 @@ fn get_wallet_ok<'lt>(wallet_result: &'lt WalletResult) -> Option<Box<WalletRef<
         .raw
         .as_ref()
         .ok()
-        .map(|w| Box::new(WalletRef { raw: w}))
+        .map(|w| Box::new(WalletRef { raw: w }))
 }
 
 #[ffi_export]
 fn sync_wallet<'lt>(wallet_ref: &'lt WalletRef<'lt>) -> Box<VoidResult> {
-    let void_result = wallet_ref
-        .raw.sync(log_progress(), Some(100));
+    let void_result = wallet_ref.raw.sync(log_progress(), Some(100));
     Box::new(VoidResult { raw: void_result })
 }
 

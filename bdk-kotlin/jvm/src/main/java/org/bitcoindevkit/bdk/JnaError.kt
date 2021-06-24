@@ -1,6 +1,6 @@
 package org.bitcoindevkit.bdk
 
-enum class Error {
+enum class JnaError {
     InvalidU32Bytes,
     Generic,
     ScriptDoesntHaveAddressForm,
@@ -37,7 +37,8 @@ enum class Error {
     Hex,
     Psbt,
     Electrum,
-//        Esplora
+
+    //        Esplora
 //        CompactFilters
     Sled,
 }
