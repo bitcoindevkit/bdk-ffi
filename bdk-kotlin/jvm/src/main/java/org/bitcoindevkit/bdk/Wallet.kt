@@ -4,15 +4,16 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class Wallet constructor(
-    name: String,
     descriptor: String,
     changeDescriptor: String?,
+    blockchainConfig: BlockchainConfig,
+    databaseConfig: DatabaseConfig,
 ) : LibBase() {
 
     val log: Logger = LoggerFactory.getLogger(Wallet::class.java)
 
     private val walletResult =
-        WalletResult(libJna.new_wallet_result(name, descriptor, changeDescriptor))
+        WalletResult(libJna.new_wallet_result(descriptor, changeDescriptor, blockchainConfig.blockchainConfigT, databaseConfig.databaseConfigT))
     private val walletRefT = walletResult.value()
 
     fun sync() {

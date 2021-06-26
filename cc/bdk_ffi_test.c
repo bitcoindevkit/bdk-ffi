@@ -8,8 +8,14 @@ int main (int argc, char const * const argv[])
 {   
     // test new wallet error
     { 
-        WalletResult_t *wallet_result = new_wallet_result("bad", "bad", NULL);
+        BlockchainConfig_t *bc_config = new_electrum_config("ssl://electrum.blockstream.info:60002", NULL, 5, 30);
+        //DatabaseConfig_t *db_config = new_sled_config("/home/steve/.bdk", "test_wallet");
+        DatabaseConfig_t *db_config = new_memory_config();
+        
+        WalletResult_t *wallet_result = new_wallet_result("bad", "bad", bc_config, db_config);
         assert(wallet_result != NULL);
+        free_blockchain_config(bc_config);
+        free_database_config(db_config);
         char *wallet_err = get_wallet_err(wallet_result);
         assert(wallet_err != NULL);
         assert( 0 == strcmp(wallet_err,"Descriptor") );
@@ -18,16 +24,22 @@ int main (int argc, char const * const argv[])
         assert(wallet_ref == NULL);
         free_string(wallet_err);
         free_wallet_result(wallet_result);
+
     }
     
     // test new wallet
     {
-        char const *name = "test_wallet";
         char const *desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)";
         char const *change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)";
     
-        WalletResult_t *wallet_result = new_wallet_result(name, desc, change);
+        BlockchainConfig_t *bc_config = new_electrum_config("ssl://electrum.blockstream.info:60002", NULL, 5, 30);
+        //DatabaseConfig_t *db_config = new_sled_config("/home/steve/.bdk", "test_wallet");
+        DatabaseConfig_t *db_config = new_memory_config();
+    
+        WalletResult_t *wallet_result = new_wallet_result(desc, change, bc_config, db_config);
         assert(wallet_result != NULL);
+        free_blockchain_config(bc_config);
+        free_database_config(db_config);
         char *wallet_err = get_wallet_err(wallet_result);
         assert(wallet_err == NULL);
         WalletRef_t *wallet_ref = get_wallet_ok(wallet_result);
@@ -65,6 +77,7 @@ int main (int argc, char const * const argv[])
         
         // verify sync_wallet after free_wallet fails (core dumped)
         ////VoidResult_t sync_result2 = sync_wallet(wallet_result);   
+
     }
         
     return EXIT_SUCCESS;

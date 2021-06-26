@@ -1,5 +1,7 @@
 #![deny(unsafe_code)] /* No `unsafe` needed! */
 
+mod blockchain;
+mod database;
 mod error;
 mod wallet;
 

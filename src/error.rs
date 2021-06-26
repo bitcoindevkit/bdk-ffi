@@ -38,8 +38,8 @@ pub fn get_name(error: &bdk::Error) -> String {
         Error::Hex(_) => "Hex",
         Error::Psbt(_) => "Psbt",
         Error::Electrum(_) => "Electrum",
-        //        Error::Esplora(_) => {}
-        //        Error::CompactFilters(_) => {}
+        //        Error::Esplora(_) => "Esplora",
+        //        Error::CompactFilters(_) => "CompactFilters",
         Error::Sled(_) => "Sled",
     }
     .to_string()
