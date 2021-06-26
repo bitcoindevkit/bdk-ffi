@@ -10,6 +10,8 @@ use bdk::wallet::AddressIndex::New;
 use bdk::{Error, Wallet};
 use safer_ffi::boxed::Box;
 use safer_ffi::char_p::{char_p_boxed, char_p_ref};
+use crate::blockchain::BlockchainConfig;
+use crate::database::DatabaseConfig;
 
 #[derive_ReprC]
 #[ReprC::opaque]
@@ -79,34 +81,30 @@ pub struct WalletResult {
 
 #[ffi_export]
 fn new_wallet_result(
-    name: char_p_ref,
     descriptor: char_p_ref,
     change_descriptor: Option<char_p_ref>,
+    blockchain_config: &BlockchainConfig,
+    database_config: &DatabaseConfig,
 ) -> Box<WalletResult> {
-    let name = name.to_string();
+    
     let descriptor = descriptor.to_string();
     let change_descriptor = change_descriptor.map(|s| s.to_string());
-    let wallet_result = new_wallet(name, descriptor, change_descriptor);
+    let bc_config = &blockchain_config.raw;
+    let db_config  = &database_config.raw;
+    let wallet_result = new_wallet(descriptor, change_descriptor, bc_config, db_config);
     Box::new(WalletResult { raw: wallet_result })
 }
 
 fn new_wallet(
-    _name: String,
     descriptor: String,
     change_descriptor: Option<String>,
+    blockchain_config: &AnyBlockchainConfig,
+    database_config: &AnyDatabaseConfig,
 ) -> Result<Wallet<AnyBlockchain, AnyDatabase>, Error> {
     let network = Testnet;
-    let electrum_config = AnyBlockchainConfig::Electrum(ElectrumBlockchainConfig {
-        url: "ssl://electrum.blockstream.info:60002".to_string(),
-        socks5: None,
-        retry: 5,
-        timeout: None,
-    });
-    let blockchain_config = electrum_config;
-    let client = AnyBlockchain::from_config(&blockchain_config)?;
 
-    let database_config = AnyDatabaseConfig::Memory(());
-    let database = AnyDatabase::from_config(&database_config)?;
+    let client = AnyBlockchain::from_config(blockchain_config)?;
+    let database = AnyDatabase::from_config(database_config)?;
 
     let descriptor: &str = descriptor.as_str();
     let change_descriptor: Option<&str> = change_descriptor.as_deref();
