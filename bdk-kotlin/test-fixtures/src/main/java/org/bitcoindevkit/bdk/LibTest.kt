@@ -22,17 +22,21 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletResultError() {
+        val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30)
+        val databaseConfig = MemoryConfig()
         val jnaException = assertThrows(JnaException::class.java) {
-            Wallet("bad", "bad", "bad")
+            Wallet("bad", "bad", blockchainConfig, databaseConfig)
         }
         assertEquals(jnaException.err, JnaError.Descriptor)
     }
 
     @Test
     fun walletResultFinalize() {
+        val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30)
+        val databaseConfig = MemoryConfig()
         val names = listOf("one", "two", "three")
         names.map {
-            val wallet = Wallet(it, desc, change)
+            val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
             assertNotNull(wallet)
         }
         System.gc()
@@ -41,14 +45,18 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletSync() {
-        val wallet = Wallet(name, desc, change)
+        val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30)
+        val databaseConfig = MemoryConfig()
+        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
         assertNotNull(wallet)
         wallet.sync()
     }
 
     @Test
     fun walletNewAddress() {
-        val wallet = Wallet(name, desc, change)
+        val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30)
+        val databaseConfig = MemoryConfig()
+        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
         assertNotNull(wallet)
         val address = wallet.getAddress()
         assertNotNull(address)

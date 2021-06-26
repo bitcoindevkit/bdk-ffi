@@ -48,6 +48,18 @@ interface LibJna : Library {
     //    WalletRef_t * wallet_ref);
     fun free_wallet_ref(wallet_ref: WalletRef_t)
 
+    // typedef struct BlockchainConfig BlockchainConfig_t;
+    class BlockchainConfig_t : PointerType {
+        constructor() : super()
+        constructor(pointer: Pointer) : super(pointer)
+    }
+
+    // typedef struct DatabaseConfig DatabaseConfig_t;
+    class DatabaseConfig_t : PointerType {
+        constructor() : super()
+        constructor(pointer: Pointer) : super(pointer)
+    }
+
     // typedef struct WalletResult WalletResult_t;
     class WalletResult_t : PointerType {
         constructor() : super()
@@ -55,13 +67,15 @@ interface LibJna : Library {
     }
 
     // WalletResult_t * new_wallet_result (
-    //    char const * name,
     //    char const * descriptor,
-    //    char const * change_descriptor);
+    //    char const * change_descriptor,
+    //    BlockchainConfig_t const * blockchain_config,
+    //    DatabaseConfig_t const * database_config);
     fun new_wallet_result(
-        name: String,
         descriptor: String,
-        changeDescriptor: String?
+        changeDescriptor: String?,
+        blockchainConfig: BlockchainConfig_t,
+        databaseConfig: DatabaseConfig_t,
     ): WalletResult_t
 
     // char * get_wallet_err (
@@ -87,4 +101,32 @@ interface LibJna : Library {
     // void free_string (
     //    char * string);
     fun free_string(string: Pointer?)
+
+    // BlockchainConfig_t * new_electrum_config (
+    //    char const * url,
+    //    char const * socks5,
+    //    int16_t retry,
+    //    int16_t timeout);
+    fun new_electrum_config(
+        url: String,
+        socks5: String?,
+        retry: Short,
+        timeout: Short
+    ): BlockchainConfig_t
+
+    // void free_blockchain_config (
+    //    BlockchainConfig_t * blockchain_config);
+    fun free_blockchain_config( blockchain_config: BlockchainConfig_t) 
+
+    // DatabaseConfig_t * new_memory_config (void);
+    fun new_memory_config(): DatabaseConfig_t
+    
+    // DatabaseConfig_t * new_sled_config (
+    //    char const * path,
+    //    char const * tree_name);
+    fun new_sled_config(path: String, tree_name: String): DatabaseConfig_t
+
+    // void free_database_config (
+    //    DatabaseConfig_t * database_config);
+    fun free_database_config( database_config: DatabaseConfig_t)
 }
