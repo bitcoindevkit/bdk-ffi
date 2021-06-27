@@ -5,33 +5,34 @@ import com.sun.jna.PointerType
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-abstract class ResultBase<PT : PointerType, RT : Any> internal constructor(protected val resultT: PT) :
+abstract class ResultBase<PT : PointerType, RT : Any> internal constructor(private val pointerT: PT) :
     LibBase() {
 
     protected open val log: Logger = LoggerFactory.getLogger(ResultBase::class.java)
 
-    protected abstract fun err(): Pointer?
+    protected abstract fun err(pointerT: PT): Pointer?
 
-    protected abstract fun ok(): RT
+    protected abstract fun ok(pointerT: PT): RT
 
-    protected abstract fun free(pointer: PT)
+    protected abstract fun free(pointerT: PT)
 
-    private fun checkErr() {
-        val errPointer = err()
+    private fun checkErr(pointerT: PT) {
+        val errPointer = err(pointerT)
         val err = errPointer?.getString(0)
         libJna.free_string(errPointer)
         if (err != null) {
+            log.error("JnaError: $err")
             throw JnaException(JnaError.valueOf(err))
         }
     }
 
     fun value(): RT {
-        checkErr()
-        return ok()
+        checkErr(pointerT)
+        return ok(pointerT)
     }
 
     protected fun finalize() {
-        free(resultT)
-        log.debug("$resultT freed")
+        free(pointerT)
+        log.debug("$pointerT freed")
     }
 }

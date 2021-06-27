@@ -9,15 +9,15 @@ class WalletResult internal constructor(walletResultT: LibJna.WalletResult_t) :
 
     override val log: Logger = LoggerFactory.getLogger(WalletResult::class.java)
 
-    override fun err(): Pointer? {
-        return libJna.get_wallet_err(resultT)
+    override fun err(pointerT: LibJna.WalletResult_t): Pointer? {
+        return libJna.get_wallet_err(pointerT)
     }
 
-    override fun ok(): LibJna.WalletRef_t {
-        return libJna.get_wallet_ok(resultT)!!
+    override fun ok(pointerT: LibJna.WalletResult_t): LibJna.WalletRef_t {
+        return libJna.get_wallet_ok(pointerT)!!
     }
 
-    override fun free(pointer: LibJna.WalletResult_t) {
-        libJna.free_wallet_result(resultT)
+    override fun free(pointerT: LibJna.WalletResult_t) {
+        libJna.free_wallet_result(pointerT)
     }
 }

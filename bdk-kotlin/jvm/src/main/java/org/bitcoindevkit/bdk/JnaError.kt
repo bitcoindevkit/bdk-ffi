@@ -39,6 +39,6 @@ enum class JnaError {
     Electrum,
 
     //        Esplora
-//        CompactFilters
+    //        CompactFilters
     Sled,
 }

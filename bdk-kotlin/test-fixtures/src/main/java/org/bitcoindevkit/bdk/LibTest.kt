@@ -1,14 +1,13 @@
 package org.bitcoindevkit.bdk
 
-import org.junit.*
 import org.junit.Assert.*
+import org.junit.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import javax.management.Descriptor
+import java.io.File
 
 /**
- * Library test, which will execute on linux host.
- *
+ * Library tests which will execute for jvm and android modules.
  */
 abstract class LibTest : LibBase() {
 
@@ -19,6 +18,12 @@ abstract class LibTest : LibBase() {
         "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
     val change =
         "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)"
+
+    abstract fun getTestDataDir(): String
+
+    fun cleanupTestDataDir() {
+        File(getTestDataDir()).deleteRecursively()
+    }
 
     @Test
     fun walletResultError() {
@@ -46,10 +51,13 @@ abstract class LibTest : LibBase() {
     @Test
     fun walletSync() {
         val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30)
-        val databaseConfig = MemoryConfig()
+        val testDataDir = getTestDataDir()
+        log.debug("testDataDir = $testDataDir")
+        val databaseConfig = SledConfig(testDataDir, "steve-test")
         val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
         assertNotNull(wallet)
         wallet.sync()
+        cleanupTestDataDir()
     }
 
     @Test

@@ -9,18 +9,18 @@ class StringResult internal constructor(stringResultT: LibJna.StringResult_t) :
 
     override val log: Logger = LoggerFactory.getLogger(StringResult::class.java)
 
-    override fun err(): Pointer? {
-        return libJna.get_string_err(resultT)
+    override fun err(pointerT: LibJna.StringResult_t): Pointer? {
+        return libJna.get_string_err(pointerT)
     }
 
-    override fun ok(): String {
-        val okPointer = libJna.get_string_ok(resultT)
+    override fun ok(pointerT: LibJna.StringResult_t): String {
+        val okPointer = libJna.get_string_ok(pointerT)
         val ok = okPointer!!.getString(0)
         libJna.free_string(okPointer)
         return ok
     }
 
-    override fun free(pointer: LibJna.StringResult_t) {
-        libJna.free_string_result(resultT)
+    override fun free(pointerT: LibJna.StringResult_t) {
+        libJna.free_string_result(pointerT)
     }
 }

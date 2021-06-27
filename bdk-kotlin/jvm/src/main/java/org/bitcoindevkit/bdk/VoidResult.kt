@@ -9,15 +9,15 @@ class VoidResult internal constructor(voidResultT: LibJna.VoidResult_t) :
 
     override val log: Logger = LoggerFactory.getLogger(VoidResult::class.java)
 
-    override fun err(): Pointer? {
-        return libJna.get_void_err(resultT)
+    override fun err(pointerT: LibJna.VoidResult_t): Pointer? {
+        return libJna.get_void_err(pointerT)
     }
 
-    override fun ok() {
+    override fun ok(pointerT: LibJna.VoidResult_t) {
         // Void
     }
 
-    override fun free(pointer: LibJna.VoidResult_t) {
-        libJna.free_void_result(resultT)
+    override fun free(pointerT: LibJna.VoidResult_t) {
+        libJna.free_void_result(pointerT)
     }
 }
