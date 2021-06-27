@@ -1,3 +1,5 @@
+use crate::blockchain::BlockchainConfig;
+use crate::database::DatabaseConfig;
 use crate::error::get_name;
 use ::safer_ffi::prelude::*;
 use bdk::bitcoin::network::constants::Network::Testnet;
@@ -10,8 +12,6 @@ use bdk::wallet::AddressIndex::New;
 use bdk::{Error, Wallet};
 use safer_ffi::boxed::Box;
 use safer_ffi::char_p::{char_p_boxed, char_p_ref};
-use crate::blockchain::BlockchainConfig;
-use crate::database::DatabaseConfig;
 
 #[derive_ReprC]
 #[ReprC::opaque]
@@ -86,11 +86,10 @@ fn new_wallet_result(
     blockchain_config: &BlockchainConfig,
     database_config: &DatabaseConfig,
 ) -> Box<WalletResult> {
-    
     let descriptor = descriptor.to_string();
     let change_descriptor = change_descriptor.map(|s| s.to_string());
     let bc_config = &blockchain_config.raw;
-    let db_config  = &database_config.raw;
+    let db_config = &database_config.raw;
     let wallet_result = new_wallet(descriptor, change_descriptor, bc_config, db_config);
     Box::new(WalletResult { raw: wallet_result })
 }
