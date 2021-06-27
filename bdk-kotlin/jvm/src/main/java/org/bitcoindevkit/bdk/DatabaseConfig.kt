@@ -19,7 +19,7 @@ class MemoryConfig() : DatabaseConfig() {
     override val databaseConfigT = libJna.new_memory_config()
 }
 
-class SledConfig(path: String, treeName:String) : DatabaseConfig() {
+class SledConfig(path: String, treeName: String) : DatabaseConfig() {
 
     private val log: Logger = LoggerFactory.getLogger(SledConfig::class.java)
     override val databaseConfigT = libJna.new_sled_config(path, treeName)

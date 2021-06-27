@@ -116,11 +116,11 @@ interface LibJna : Library {
 
     // void free_blockchain_config (
     //    BlockchainConfig_t * blockchain_config);
-    fun free_blockchain_config( blockchain_config: BlockchainConfig_t) 
+    fun free_blockchain_config(blockchain_config: BlockchainConfig_t)
 
     // DatabaseConfig_t * new_memory_config (void);
     fun new_memory_config(): DatabaseConfig_t
-    
+
     // DatabaseConfig_t * new_sled_config (
     //    char const * path,
     //    char const * tree_name);
@@ -128,5 +128,5 @@ interface LibJna : Library {
 
     // void free_database_config (
     //    DatabaseConfig_t * database_config);
-    fun free_database_config( database_config: DatabaseConfig_t)
+    fun free_database_config(database_config: DatabaseConfig_t)
 }

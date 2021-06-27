@@ -35,7 +35,7 @@ afterEvaluate {
                 // You can then customize attributes of the publication as shown below.
                 groupId = 'org.bitcoindevkit'
                 artifactId = 'bdk'
-                version = '0.0.1-dev'
+                version = '0.0.1-SNAPSHOT'
             }
             // Creates a Maven publication called “debug”.
             debug(MavenPublication) {
@@ -44,14 +44,14 @@ afterEvaluate {
 
                 groupId = 'org.bitcoindevkit'
                 artifactId = 'bdk-debug'
-                version = '0.0.1-dev'
+                version = '0.0.1-SNAPSHOT'
             }
         }
     }
 }
 
 dependencies {
-    implementation (project(':jvm')) {
+    implementation(project(':jvm')) {
         exclude group: 'net.java.dev.jna', module: 'jna'
     }
 
@@ -62,7 +62,7 @@ dependencies {
     api "org.slf4j:slf4j-api:1.7.30"
 
     androidTestImplementation 'com.github.tony19:logback-android:2.0.0'
-    androidTestImplementation (project(':test-fixtures')) {
+    androidTestImplementation(project(':test-fixtures')) {
         exclude group: 'net.java.dev.jna', module: 'jna'
     }
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

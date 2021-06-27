@@ -25,7 +25,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'org.bitcoindevkit'
             artifactId = 'bdk'
-            version = '0.0.1-dev'
+            version = '0.0.1-SNAPSHOT'
 
             from components.java
         }

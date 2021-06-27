@@ -13,7 +13,14 @@ class Wallet constructor(
     val log: Logger = LoggerFactory.getLogger(Wallet::class.java)
 
     private val walletResult =
-        WalletResult(libJna.new_wallet_result(descriptor, changeDescriptor, blockchainConfig.blockchainConfigT, databaseConfig.databaseConfigT))
+        WalletResult(
+            libJna.new_wallet_result(
+                descriptor,
+                changeDescriptor,
+                blockchainConfig.blockchainConfigT,
+                databaseConfig.databaseConfigT
+            )
+        )
     private val walletRefT = walletResult.value()
 
     fun sync() {
@@ -26,7 +33,7 @@ class Wallet constructor(
         return stringResult.value()
     }
 
-    protected fun finalize(pointer: LibJna.WalletResult_t) {
+    protected fun finalize(walletRefT: LibJna.WalletRef_t) {
         libJna.free_wallet_ref(walletRefT)
         log.debug("$walletRefT freed")
     }
