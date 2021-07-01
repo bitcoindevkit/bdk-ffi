@@ -1,23 +1,15 @@
 package org.bitcoindevkit.bdk
 
 import com.sun.jna.Pointer
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-class WalletResult internal constructor(walletResultT: LibJna.WalletResult_t) :
-    ResultBase<LibJna.WalletResult_t, LibJna.WalletRef_t>(walletResultT) {
+class WalletResult constructor(walletResultPtr: LibJna.FfiResult_OpaqueWallet_t.ByValue) :
+    Result<LibJna.FfiResult_OpaqueWallet_t.ByValue, LibJna.OpaqueWallet_t>(walletResultPtr) {
 
-    override val log: Logger = LoggerFactory.getLogger(WalletResult::class.java)
-
-    override fun err(pointerT: LibJna.WalletResult_t): Pointer? {
-        return libJna.get_wallet_err(pointerT)
+    override fun getOkValue(pointer: Pointer): LibJna.OpaqueWallet_t {
+        return LibJna.OpaqueWallet_t(pointer)
     }
 
-    override fun ok(pointerT: LibJna.WalletResult_t): LibJna.WalletRef_t {
-        return libJna.get_wallet_ok(pointerT)!!
-    }
-
-    override fun free(pointerT: LibJna.WalletResult_t) {
-        libJna.free_wallet_result(pointerT)
+    override fun freeResult(ffiResult: LibJna.FfiResult_OpaqueWallet_t.ByValue) {
+        libJna.free_wallet_result(ffiResult)
     }
 }

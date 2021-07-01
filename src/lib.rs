@@ -3,6 +3,7 @@
 mod blockchain;
 mod database;
 mod error;
+mod types;
 mod wallet;
 
 /// The following test function is necessary for the header generation.

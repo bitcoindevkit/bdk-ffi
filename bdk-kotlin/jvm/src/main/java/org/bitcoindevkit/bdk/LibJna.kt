@@ -1,106 +1,54 @@
 package org.bitcoindevkit.bdk
 
-import com.sun.jna.Library
-import com.sun.jna.Pointer
-import com.sun.jna.PointerType
+import com.sun.jna.*
 
 interface LibJna : Library {
 
-    // typedef struct VoidResult VoidResult_t;
-    class VoidResult_t : PointerType {
-        constructor() : super()
-        constructor(pointer: Pointer) : super(pointer)
+    // typedef struct {
+    //
+    //    char * * ok;
+    //
+    //    char * * err;
+    //
+    // } FfiResult_char_ptr_t;
+    open class FfiResult_char_ptr_t : FfiResult() {
+        class ByValue : FfiResult_char_ptr_t(), Structure.ByValue
+        class ByReference : FfiResult_char_ptr_t(), Structure.ByReference
+
+        override fun getFieldOrder() = listOf("ok", "err")
     }
-
-    // char * get_void_err (
-    //    VoidResult_t const * void_result);
-    fun get_void_err(void_result: VoidResult_t): Pointer?
-
-    // void free_void_result (
-    //    VoidResult_t * void_result);
-    fun free_void_result(void_result: VoidResult_t)
-
-    // typedef struct StringResult StringResult_t;
-    class StringResult_t : PointerType {
-        constructor() : super()
-        constructor(pointer: Pointer) : super(pointer)
-    }
-
-    // char * get_string_ok (
-    //    StringResult_t const * string_result);
-    fun get_string_ok(string_result: StringResult_t): Pointer?
-
-    // char * get_string_err (
-    //    StringResult_t const * string_result);
-    fun get_string_err(string_result: StringResult_t): Pointer?
 
     // void free_string_result (
-    //    StringResult_t * string_result);
-    fun free_string_result(string_result: StringResult_t)
+    //    FfiResult_char_ptr_t string_result);
+    fun free_string_result(string_result: FfiResult_char_ptr_t.ByValue)
 
-    // typedef struct WalletRef WalletRef_t;
-    class WalletRef_t : PointerType {
-        constructor() : super()
-        constructor(pointer: Pointer) : super(pointer)
+    // typedef struct {
+    //
+    //    void * ok;
+    //
+    //    char * * err;
+    //
+    // } FfiResult_void_t;
+    open class FfiResult_void_t : FfiResult() {
+        class ByValue : FfiResult_void_t(), Structure.ByValue
+        class ByReference : FfiResult_void_t(), Structure.ByReference
+
+        override fun getFieldOrder() = listOf("ok", "err")
     }
 
-    // void free_wallet_ref (
-    //    WalletRef_t * wallet_ref);
-    fun free_wallet_ref(wallet_ref: WalletRef_t)
+    // void free_void_result (
+    //    FfiResult_void_t void_result);
+    fun free_void_result(void_result: FfiResult_void_t.ByValue)
+
+    // void free_string (
+    //    char * string);
+    fun free_string(string: Pointer?)
 
     // typedef struct BlockchainConfig BlockchainConfig_t;
     class BlockchainConfig_t : PointerType {
         constructor() : super()
         constructor(pointer: Pointer) : super(pointer)
     }
-
-    // typedef struct DatabaseConfig DatabaseConfig_t;
-    class DatabaseConfig_t : PointerType {
-        constructor() : super()
-        constructor(pointer: Pointer) : super(pointer)
-    }
-
-    // typedef struct WalletResult WalletResult_t;
-    class WalletResult_t : PointerType {
-        constructor() : super()
-        constructor(pointer: Pointer) : super(pointer)
-    }
-
-    // WalletResult_t * new_wallet_result (
-    //    char const * descriptor,
-    //    char const * change_descriptor,
-    //    BlockchainConfig_t const * blockchain_config,
-    //    DatabaseConfig_t const * database_config);
-    fun new_wallet_result(
-        descriptor: String,
-        changeDescriptor: String?,
-        blockchainConfig: BlockchainConfig_t,
-        databaseConfig: DatabaseConfig_t,
-    ): WalletResult_t
-
-    // char * get_wallet_err (
-    //    WalletResult_t const * wallet_result);
-    fun get_wallet_err(wallet_result: WalletResult_t): Pointer?
-
-    // WalletRef_t * get_wallet_ok (
-    //    WalletResult_t const * wallet_result);
-    fun get_wallet_ok(wallet_result: WalletResult_t): WalletRef_t?
-
-    // VoidResult_t * sync_wallet (
-    //    WalletRef_t const * wallet_ref);
-    fun sync_wallet(wallet_ref: Pointer): VoidResult_t
-
-    // StringResult_t * new_address (
-    //    WalletRef_t const * wallet_ref);
-    fun new_address(wallet_ref: Pointer): StringResult_t
-
-    // void free_wallet_result (
-    //    WalletResult_t * wallet_result);
-    fun free_wallet_result(wallet_result: WalletResult_t)
-
-    // void free_string (
-    //    char * string);
-    fun free_string(string: Pointer?)
 
     // BlockchainConfig_t * new_electrum_config (
     //    char const * url,
@@ -117,6 +65,193 @@ interface LibJna : Library {
     // void free_blockchain_config (
     //    BlockchainConfig_t * blockchain_config);
     fun free_blockchain_config(blockchain_config: BlockchainConfig_t)
+
+    // typedef struct DatabaseConfig DatabaseConfig_t;
+    class DatabaseConfig_t : PointerType {
+        constructor() : super()
+        constructor(pointer: Pointer) : super(pointer)
+    }
+
+    // typedef struct OpaqueWallet OpaqueWallet_t;
+    class OpaqueWallet_t : PointerType {
+        constructor() : super()
+        constructor(pointer: Pointer) : super(pointer)
+    }
+
+    // typedef struct {
+    //
+    //    OpaqueWallet_t * ok;
+    //
+    //    char * * err;
+    //
+    // } FfiResult_OpaqueWallet_t;
+    open class FfiResult_OpaqueWallet_t : FfiResult() {
+        class ByValue : FfiResult_OpaqueWallet_t(), Structure.ByValue
+        class ByReference : FfiResult_OpaqueWallet_t(), Structure.ByReference
+
+        override fun getFieldOrder() = listOf("ok", "err")
+    }
+
+    // FfiResult_OpaqueWallet_t new_wallet_result (
+    //    char const * descriptor,
+    //    char const * change_descriptor,
+    //    BlockchainConfig_t const * blockchain_config,
+    //    DatabaseConfig_t const * database_config);
+    fun new_wallet_result(
+        descriptor: String,
+        changeDescriptor: String?,
+        blockchainConfig: BlockchainConfig_t,
+        databaseConfig: DatabaseConfig_t,
+    ): FfiResult_OpaqueWallet_t.ByValue
+
+    // void free_wallet_result (
+    //    FfiResult_OpaqueWallet_t wallet_result);
+    fun free_wallet_result(wallet_result: FfiResult_OpaqueWallet_t.ByValue)
+
+    // typedef struct {
+    //
+    //    char * txid;
+    //
+    //    uint32_t vout;
+    //
+    // } OutPoint_t;
+    open class OutPoint_t : Structure() {
+        class ByValue : OutPoint_t(), Structure.ByValue
+
+        @JvmField
+        var txid: String? = null
+
+        @JvmField
+        var vout: Int? = null
+
+        override fun getFieldOrder() = listOf("txid", "vout")
+    }
+
+    // typedef struct {
+    //
+    //    uint64_t value;
+    //
+    //    char * script_pubkey;
+    //
+    // } TxOut_t;
+    open class TxOut_t : Structure() {
+        class ByValue : TxOut_t(), Structure.ByValue
+
+        @JvmField
+        var value: Long? = null
+
+        @JvmField
+        var script_pubkey: String? = null
+
+        override fun getFieldOrder() = listOf("value", "script_pubkey")
+    }
+
+    // typedef struct {
+    //
+    //    OutPoint_t outpoint;
+    //
+    //    TxOut_t txout;
+    //
+    //    uint16_t keychain;
+    //
+    // } LocalUtxo_t;
+    open class LocalUtxo_t : Structure {
+        constructor() : super()
+        constructor(pointer: Pointer) : super(pointer)
+
+        class ByValue : LocalUtxo_t, Structure.ByValue {
+            constructor() : super()
+            constructor(pointer: Pointer) : super(pointer)
+        }
+
+        class ByReference : LocalUtxo_t, Structure.ByReference {
+            constructor() : super()
+            constructor(pointer: Pointer) : super(pointer)
+        }
+
+        @JvmField
+        var outpoint: OutPoint_t? = null
+
+        @JvmField
+        var txout: TxOut_t? = null
+
+        @JvmField
+        var keychain: Short? = null
+
+        override fun getFieldOrder() = listOf("outpoint", "txout", "keychain")
+    }
+
+    // typedef struct {
+    //
+    //    LocalUtxo_t * ptr;
+    //
+    //    size_t len;
+    //
+    //    size_t cap;
+    //
+    // } Vec_LocalUtxo_t;
+    open class Vec_LocalUtxo_t : Structure {
+        constructor() : super()
+        constructor(pointer: Pointer) : super(pointer)
+
+        class ByReference : Vec_LocalUtxo_t, Structure.ByReference {
+            constructor() : super()
+            constructor(pointer: Pointer) : super(pointer)
+        }
+
+        class ByValue : Vec_LocalUtxo_t, Structure.ByValue {
+            constructor() : super()
+            constructor(pointer: Pointer) : super(pointer)
+        }
+        
+        @JvmField
+        var ptr: LocalUtxo_t.ByReference? = null
+
+        @JvmField
+        var len: NativeLong? = null
+
+        @JvmField
+        var cap: NativeLong? = null
+
+        override fun getFieldOrder() = listOf("ptr", "len", "cap")
+    }
+
+    // typedef struct {
+    //
+    //    Vec_LocalUtxo_t ok;
+    //
+    //    char * * err;
+    //
+    // } FfiResultVec_LocalUtxo_t;
+    open class FfiResultVec_LocalUtxo_t : Structure() {
+        
+        class ByValue : FfiResultVec_LocalUtxo_t(), Structure.ByValue
+        class ByReference : FfiResultVec_LocalUtxo_t(), Structure.ByReference
+
+        @JvmField
+        var ok: Vec_LocalUtxo_t = Vec_LocalUtxo_t()
+
+        @JvmField
+        var err: Pointer? = null
+
+        override fun getFieldOrder() = listOf("ok", "err")
+    }
+
+    // void free_unspent_result (
+    //    FfiResultVec_LocalUtxo_t unspent_result);
+    fun free_unspent_result(unspent_result: FfiResultVec_LocalUtxo_t.ByValue)
+
+    // FfiResult_void_t sync_wallet (
+    //    OpaqueWallet_t const * opaque_wallet);
+    fun sync_wallet(opaque_wallet: OpaqueWallet_t): FfiResult_void_t.ByValue
+
+    // FfiResult_char_ptr_t new_address (
+    //    OpaqueWallet_t const * opaque_wallet);
+    fun new_address(opaque_wallet: OpaqueWallet_t): FfiResult_char_ptr_t.ByValue
+
+    // FfiResult_Vec_LocalUtxo_t list_unspent (
+    //    OpaqueWallet_t const * opaque_wallet);
+    fun list_unspent(opaque_wallet: OpaqueWallet_t): FfiResultVec_LocalUtxo_t.ByValue
 
     // DatabaseConfig_t * new_memory_config (void);
     fun new_memory_config(): DatabaseConfig_t
