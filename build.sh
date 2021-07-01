@@ -2,6 +2,7 @@
 set -eo pipefail -o xtrace
 
 # rust
+cargo fmt
 cargo build
 cargo test --features c-headers -- generate_headers
 
