@@ -1,7 +1,6 @@
 target
 build
 Cargo.lock
-*.h
 /bdk-kotlin/local.properties
 .gradle
 wallet_db

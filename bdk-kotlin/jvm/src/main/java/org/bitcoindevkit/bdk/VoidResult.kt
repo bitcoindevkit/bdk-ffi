@@ -1,23 +1,15 @@
 package org.bitcoindevkit.bdk
 
 import com.sun.jna.Pointer
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
-class VoidResult internal constructor(voidResultT: LibJna.VoidResult_t) :
-    ResultBase<LibJna.VoidResult_t, Unit>(voidResultT) {
+class VoidResult constructor(voidResultPtr: LibJna.FfiResult_void_t.ByValue) :
+    Result<LibJna.FfiResult_void_t.ByValue, Unit>(voidResultPtr) {
 
-    override val log: Logger = LoggerFactory.getLogger(VoidResult::class.java)
-
-    override fun err(pointerT: LibJna.VoidResult_t): Pointer? {
-        return libJna.get_void_err(pointerT)
+    override fun getOkValue(pointer: Pointer) {
+        // No value
     }
 
-    override fun ok(pointerT: LibJna.VoidResult_t) {
-        // Void
-    }
-
-    override fun free(pointerT: LibJna.VoidResult_t) {
-        libJna.free_void_result(pointerT)
+    override fun freeResult(ffiResult: LibJna.FfiResult_void_t.ByValue) {
+        libJna.free_void_result(ffiResult)
     }
 }
