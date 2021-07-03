@@ -1,5 +1,11 @@
-package org.bitcoindevkit.bdk
+package org.bitcoindevkit.bdk.wallet
 
+import org.bitcoindevkit.bdk.BlockchainConfig
+import org.bitcoindevkit.bdk.DatabaseConfig
+import org.bitcoindevkit.bdk.LibBase
+import org.bitcoindevkit.bdk.LibJna
+import org.bitcoindevkit.bdk.types.StringResult
+import org.bitcoindevkit.bdk.types.VoidResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

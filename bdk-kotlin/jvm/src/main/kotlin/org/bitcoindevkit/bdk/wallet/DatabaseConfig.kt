@@ -3,7 +3,7 @@ package org.bitcoindevkit.bdk
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-abstract class DatabaseConfig() : LibBase() {
+abstract class DatabaseConfig : LibBase() {
     private val log: Logger = LoggerFactory.getLogger(DatabaseConfig::class.java)
     abstract val databaseConfigT: LibJna.DatabaseConfig_t
 
@@ -13,7 +13,7 @@ abstract class DatabaseConfig() : LibBase() {
     }
 }
 
-class MemoryConfig() : DatabaseConfig() {
+class MemoryConfig : DatabaseConfig() {
 
     private val log: Logger = LoggerFactory.getLogger(MemoryConfig::class.java)
     override val databaseConfigT = libJna.new_memory_config()

@@ -3,7 +3,7 @@ package org.bitcoindevkit.bdk
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-abstract class BlockchainConfig() : LibBase() {
+abstract class BlockchainConfig : LibBase() {
     private val log: Logger = LoggerFactory.getLogger(BlockchainConfig::class.java)
     abstract val blockchainConfigT: LibJna.BlockchainConfig_t
 

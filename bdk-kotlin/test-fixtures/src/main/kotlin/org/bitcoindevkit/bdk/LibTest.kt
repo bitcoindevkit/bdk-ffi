@@ -1,5 +1,6 @@
 package org.bitcoindevkit.bdk
 
+import org.bitcoindevkit.bdk.wallet.Wallet
 import org.junit.Assert.*
 import org.junit.Test
 import org.slf4j.Logger

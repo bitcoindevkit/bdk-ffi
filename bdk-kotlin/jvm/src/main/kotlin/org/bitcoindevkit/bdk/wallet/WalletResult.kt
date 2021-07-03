@@ -1,6 +1,8 @@
-package org.bitcoindevkit.bdk
+package org.bitcoindevkit.bdk.wallet
 
 import com.sun.jna.Pointer
+import org.bitcoindevkit.bdk.LibJna
+import org.bitcoindevkit.bdk.types.Result
 
 class WalletResult constructor(walletResultPtr: LibJna.FfiResult_OpaqueWallet_t.ByValue) :
     Result<LibJna.FfiResult_OpaqueWallet_t.ByValue, LibJna.OpaqueWallet_t>(walletResultPtr) {

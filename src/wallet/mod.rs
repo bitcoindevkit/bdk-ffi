@@ -9,10 +9,16 @@ use bdk::{Error, Wallet};
 use safer_ffi::boxed::Box;
 use safer_ffi::char_p::{char_p_boxed, char_p_ref};
 
-use crate::blockchain::BlockchainConfig;
-use crate::database::DatabaseConfig;
+use blockchain::BlockchainConfig;
+use database::DatabaseConfig;
+
 use crate::error::get_name;
 use crate::types::{FfiResult, FfiResultVec};
+
+mod blockchain;
+mod database;
+
+// create a new wallet
 
 #[derive_ReprC]
 #[ReprC::opaque]
@@ -45,15 +51,29 @@ fn new_wallet_result(
     }
 }
 
+fn new_wallet(
+    descriptor: String,
+    change_descriptor: Option<String>,
+    blockchain_config: &AnyBlockchainConfig,
+    database_config: &AnyDatabaseConfig,
+) -> Result<Wallet<AnyBlockchain, AnyDatabase>, Error> {
+    let network = Testnet;
+
+    let client = AnyBlockchain::from_config(blockchain_config)?;
+    let database = AnyDatabase::from_config(database_config)?;
+
+    let descriptor: &str = descriptor.as_str();
+    let change_descriptor: Option<&str> = change_descriptor.as_deref();
+
+    Wallet::new(descriptor, change_descriptor, network, database, client)
+}
+
 #[ffi_export]
 fn free_wallet_result(wallet_result: FfiResult<OpaqueWallet>) {
     drop(wallet_result);
 }
 
-#[ffi_export]
-fn free_unspent_result(unspent_result: FfiResultVec<LocalUtxo>) {
-    drop(unspent_result)
-}
+// wallet operations
 
 #[ffi_export]
 fn sync_wallet(opaque_wallet: &OpaqueWallet) -> FfiResult<()> {
@@ -105,24 +125,12 @@ fn list_unspent(opaque_wallet: &OpaqueWallet) -> FfiResultVec<LocalUtxo> {
     }
 }
 
-fn new_wallet(
-    descriptor: String,
-    change_descriptor: Option<String>,
-    blockchain_config: &AnyBlockchainConfig,
-    database_config: &AnyDatabaseConfig,
-) -> Result<Wallet<AnyBlockchain, AnyDatabase>, Error> {
-    let network = Testnet;
-
-    let client = AnyBlockchain::from_config(blockchain_config)?;
-    let database = AnyDatabase::from_config(database_config)?;
-
-    let descriptor: &str = descriptor.as_str();
-    let change_descriptor: Option<&str> = change_descriptor.as_deref();
-
-    Wallet::new(descriptor, change_descriptor, network, database, client)
+#[ffi_export]
+fn free_unspent_result(unspent_result: FfiResultVec<LocalUtxo>) {
+    drop(unspent_result)
 }
 
-// Non-opaque returned structs
+// Non-opaque returned values
 
 #[derive_ReprC]
 #[repr(C)]
