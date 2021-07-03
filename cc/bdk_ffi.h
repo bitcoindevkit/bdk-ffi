@@ -52,6 +52,28 @@ void free_wallet_result (
 
 typedef struct {
 
+    void * ok;
+
+    char * * err;
+
+} FfiResult_void_t;
+
+FfiResult_void_t sync_wallet (
+    OpaqueWallet_t const * opaque_wallet);
+
+typedef struct {
+
+    char * * ok;
+
+    char * * err;
+
+} FfiResult_char_ptr_t;
+
+FfiResult_char_ptr_t new_address (
+    OpaqueWallet_t const * opaque_wallet);
+
+typedef struct {
+
     char * txid;
 
     uint32_t vout;
@@ -97,33 +119,11 @@ typedef struct {
 
 } FfiResultVec_LocalUtxo_t;
 
-void free_unspent_result (
-    FfiResultVec_LocalUtxo_t unspent_result);
-
-typedef struct {
-
-    void * ok;
-
-    char * * err;
-
-} FfiResult_void_t;
-
-FfiResult_void_t sync_wallet (
-    OpaqueWallet_t const * opaque_wallet);
-
-typedef struct {
-
-    char * * ok;
-
-    char * * err;
-
-} FfiResult_char_ptr_t;
-
-FfiResult_char_ptr_t new_address (
-    OpaqueWallet_t const * opaque_wallet);
-
 FfiResultVec_LocalUtxo_t list_unspent (
     OpaqueWallet_t const * opaque_wallet);
+
+void free_unspent_result (
+    FfiResultVec_LocalUtxo_t unspent_result);
 
 DatabaseConfig_t * new_memory_config (void);
 
@@ -141,7 +141,7 @@ void free_void_result (
     FfiResult_void_t void_result);
 
 /** \brief
- *  Frees a Rust-allocated string
+ *  Free a Rust-allocated string
  */
 void free_string (
     char * string);

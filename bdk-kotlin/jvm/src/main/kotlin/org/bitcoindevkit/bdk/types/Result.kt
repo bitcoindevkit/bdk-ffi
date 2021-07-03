@@ -1,6 +1,10 @@
-package org.bitcoindevkit.bdk
+package org.bitcoindevkit.bdk.types
 
 import com.sun.jna.Pointer
+import org.bitcoindevkit.bdk.FfiResult
+import org.bitcoindevkit.bdk.JnaError
+import org.bitcoindevkit.bdk.JnaException
+import org.bitcoindevkit.bdk.LibBase
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

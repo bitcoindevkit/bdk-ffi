@@ -27,7 +27,7 @@ fn free_void_result(void_result: FfiResult<()>) {
 }
 
 // TODO do we need this? remove?
-/// Frees a Rust-allocated string
+/// Free a Rust-allocated string
 #[ffi_export]
 fn free_string(string: Option<char_p_boxed>) {
     drop(string)

@@ -1,6 +1,7 @@
-package org.bitcoindevkit.bdk
+package org.bitcoindevkit.bdk.types
 
 import com.sun.jna.Pointer
+import org.bitcoindevkit.bdk.LibJna
 
 class StringResult constructor(stringResultPtr: LibJna.FfiResult_char_ptr_t.ByValue) :
     Result<LibJna.FfiResult_char_ptr_t.ByValue, String>(stringResultPtr) {

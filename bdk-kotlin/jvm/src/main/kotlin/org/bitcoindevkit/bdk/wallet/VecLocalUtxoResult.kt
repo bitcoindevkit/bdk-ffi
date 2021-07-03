@@ -1,5 +1,9 @@
-package org.bitcoindevkit.bdk
+package org.bitcoindevkit.bdk.wallet
 
+import org.bitcoindevkit.bdk.JnaError
+import org.bitcoindevkit.bdk.JnaException
+import org.bitcoindevkit.bdk.LibBase
+import org.bitcoindevkit.bdk.LibJna
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
