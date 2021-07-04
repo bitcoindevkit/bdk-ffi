@@ -27,6 +27,11 @@ fn free_void_result(void_result: FfiResultVoid) {
     drop(void_result)
 }
 
+#[ffi_export]
+fn free_uint64_result(void_result: FfiResult<u64>) {
+    drop(void_result)
+}
+
 // TODO do we need this? remove?
 /// Free a Rust-allocated string
 #[ffi_export]

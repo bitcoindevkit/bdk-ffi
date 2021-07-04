@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::ffi::CString;
 
 use ::safer_ffi::prelude::*;
 use bdk::bitcoin::network::constants::Network::Testnet;
@@ -14,7 +15,6 @@ use database::DatabaseConfig;
 
 use crate::error::FfiError;
 use crate::types::{FfiResult, FfiResultVoid};
-use std::ffi::CString;
 
 mod blockchain;
 mod database;
@@ -125,8 +125,24 @@ fn list_unspent(opaque_wallet: &OpaqueWallet) -> FfiResult<repr_c::Vec<LocalUtxo
 }
 
 #[ffi_export]
-fn free_unspent_result(unspent_result: FfiResult<repr_c::Vec<LocalUtxo>>) {
+fn free_veclocalutxo_result(unspent_result: FfiResult<repr_c::Vec<LocalUtxo>>) {
     drop(unspent_result)
+}
+
+#[ffi_export]
+fn balance(opaque_wallet: &OpaqueWallet) -> FfiResult<u64> {
+    let balance_result = opaque_wallet.raw.get_balance();
+
+    match balance_result {
+        Ok(b) => FfiResult {
+            ok: b,
+            err: FfiError::None,
+        },
+        Err(e) => FfiResult {
+            ok: u64::MIN,
+            err: FfiError::from(&e),
+        },
+    }
 }
 
 // Non-opaque returned values
