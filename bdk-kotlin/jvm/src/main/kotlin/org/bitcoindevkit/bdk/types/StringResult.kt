@@ -1,16 +1,33 @@
 package org.bitcoindevkit.bdk.types
 
-import com.sun.jna.Pointer
+import org.bitcoindevkit.bdk.JnaError
+import org.bitcoindevkit.bdk.JnaException
+import org.bitcoindevkit.bdk.LibBase
 import org.bitcoindevkit.bdk.LibJna
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-class StringResult constructor(stringResultPtr: LibJna.FfiResult_char_ptr_t.ByValue) :
-    Result<LibJna.FfiResult_char_ptr_t.ByValue, String>(stringResultPtr) {
+class StringResult constructor(private val ffiResultCharPtrT: LibJna.FfiResult_char_ptr_t.ByValue) :
+    LibBase() {
 
-    override fun getOkValue(pointer: Pointer): String {
-        return pointer.getPointer(0).getString(0)
+    private val log: Logger = LoggerFactory.getLogger(StringResult::class.java)
+
+    fun value(): String {
+        val err = ffiResultCharPtrT.err
+        val ok = ffiResultCharPtrT.ok
+        when {
+            err.isNotEmpty() -> {
+                log.error("JnaError: $err")
+                throw JnaException(JnaError.valueOf(err))
+            }
+            else -> {
+                return ok
+            }
+        }
     }
 
-    override fun freeResult(ffiResult: LibJna.FfiResult_char_ptr_t.ByValue) {
-        libJna.free_string_result(ffiResult)
+    protected fun finalize() {
+        libJna.free_string_result(ffiResultCharPtrT)
+        log.debug("$ffiResultCharPtrT freed")
     }
 }

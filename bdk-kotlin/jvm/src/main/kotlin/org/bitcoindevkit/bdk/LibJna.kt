@@ -6,14 +6,20 @@ interface LibJna : Library {
 
     // typedef struct {
     //
-    //    char * * ok;
+    //    char * ok;
     //
-    //    char * * err;
+    //    char * err;
     //
-    // } FfiResult_char_ptr_t;
-    open class FfiResult_char_ptr_t : FfiResult() {
+    //} FfiResult_char_ptr_t;
+    open class FfiResult_char_ptr_t : Structure() {
         class ByValue : FfiResult_char_ptr_t(), Structure.ByValue
         class ByReference : FfiResult_char_ptr_t(), Structure.ByReference
+
+        @JvmField
+        var ok: String = ""
+
+        @JvmField
+        var err: String = ""
 
         override fun getFieldOrder() = listOf("ok", "err")
     }
@@ -24,21 +30,27 @@ interface LibJna : Library {
 
     // typedef struct {
     //
-    //    void * ok;
+    //    int32_t ok;
     //
-    //    char * * err;
+    //    char * err;
     //
-    // } FfiResult_void_t;
-    open class FfiResult_void_t : FfiResult() {
-        class ByValue : FfiResult_void_t(), Structure.ByValue
-        class ByReference : FfiResult_void_t(), Structure.ByReference
+    //} FfiResult_int32_t;
+    open class FfiResult_int32_t : Structure() {
+        class ByValue : FfiResult_int32_t(), Structure.ByValue
+        class ByReference : FfiResult_int32_t(), Structure.ByReference
 
+        @JvmField
+        var ok: Int = 0
+
+        @JvmField
+        var err: String = ""
+        
         override fun getFieldOrder() = listOf("ok", "err")
     }
 
-    // void free_void_result (
-    //    FfiResult_void_t void_result);
-    fun free_void_result(void_result: FfiResult_void_t.ByValue)
+    // void free_int_result (
+    //    FfiResult_int32_t int_result);
+    fun free_int_result(void_result: FfiResult_int32_t.ByValue)
 
     // void free_string (
     //    char * string);
@@ -82,17 +94,23 @@ interface LibJna : Library {
     //
     //    OpaqueWallet_t * ok;
     //
-    //    char * * err;
+    //    char * err;
     //
-    // } FfiResult_OpaqueWallet_t;
-    open class FfiResult_OpaqueWallet_t : FfiResult() {
-        class ByValue : FfiResult_OpaqueWallet_t(), Structure.ByValue
-        class ByReference : FfiResult_OpaqueWallet_t(), Structure.ByReference
+    // } FfiResult_OpaqueWallet_ptr_t;
+    open class FfiResult_OpaqueWallet_ptr_t : Structure() {
+        class ByValue : FfiResult_OpaqueWallet_ptr_t(), Structure.ByValue
+        class ByReference : FfiResult_OpaqueWallet_ptr_t(), Structure.ByReference
 
+        @JvmField
+        var ok: OpaqueWallet_t = OpaqueWallet_t()
+
+        @JvmField
+        var err: String = ""
+        
         override fun getFieldOrder() = listOf("ok", "err")
     }
 
-    // FfiResult_OpaqueWallet_t new_wallet_result (
+    // FfiResult_OpaqueWallet_ptr_t new_wallet_result (
     //    char const * descriptor,
     //    char const * change_descriptor,
     //    BlockchainConfig_t const * blockchain_config,
@@ -102,11 +120,11 @@ interface LibJna : Library {
         changeDescriptor: String?,
         blockchainConfig: BlockchainConfig_t,
         databaseConfig: DatabaseConfig_t,
-    ): FfiResult_OpaqueWallet_t.ByValue
+    ): FfiResult_OpaqueWallet_ptr_t.ByValue
 
     // void free_wallet_result (
-    //    FfiResult_OpaqueWallet_t wallet_result);
-    fun free_wallet_result(wallet_result: FfiResult_OpaqueWallet_t.ByValue)
+    //    FfiResult_OpaqueWallet_ptr_t wallet_result);
+    fun free_wallet_result(wallet_result: FfiResult_OpaqueWallet_ptr_t.ByValue)
 
     // typedef struct {
     //
@@ -155,19 +173,10 @@ interface LibJna : Library {
     //    uint16_t keychain;
     //
     // } LocalUtxo_t;
-    open class LocalUtxo_t : Structure {
-        constructor() : super()
-        constructor(pointer: Pointer) : super(pointer)
-
-        class ByValue : LocalUtxo_t, Structure.ByValue {
-            constructor() : super()
-            constructor(pointer: Pointer) : super(pointer)
-        }
-
-        class ByReference : LocalUtxo_t, Structure.ByReference {
-            constructor() : super()
-            constructor(pointer: Pointer) : super(pointer)
-        }
+    open class LocalUtxo_t : Structure() {
+        
+        class ByValue : LocalUtxo_t(), Structure.ByValue
+        class ByReference : LocalUtxo_t(), Structure.ByReference
 
         @JvmField
         var outpoint: OutPoint_t? = null
@@ -190,19 +199,10 @@ interface LibJna : Library {
     //    size_t cap;
     //
     // } Vec_LocalUtxo_t;
-    open class Vec_LocalUtxo_t : Structure {
-        constructor() : super()
-        constructor(pointer: Pointer) : super(pointer)
-
-        class ByReference : Vec_LocalUtxo_t, Structure.ByReference {
-            constructor() : super()
-            constructor(pointer: Pointer) : super(pointer)
-        }
-
-        class ByValue : Vec_LocalUtxo_t, Structure.ByValue {
-            constructor() : super()
-            constructor(pointer: Pointer) : super(pointer)
-        }
+    open class Vec_LocalUtxo_t : Structure() {
+        
+        class ByReference : Vec_LocalUtxo_t(), Structure.ByReference
+        class ByValue : Vec_LocalUtxo_t(), Structure.ByValue
         
         @JvmField
         var ptr: LocalUtxo_t.ByReference? = null
@@ -220,9 +220,9 @@ interface LibJna : Library {
     //
     //    Vec_LocalUtxo_t ok;
     //
-    //    char * * err;
+    //    char * err;
     //
-    // } FfiResultVec_LocalUtxo_t;
+    // } FfiResult_Vec_LocalUtxo_t;
     open class FfiResultVec_LocalUtxo_t : Structure() {
         
         class ByValue : FfiResultVec_LocalUtxo_t(), Structure.ByValue
@@ -232,18 +232,18 @@ interface LibJna : Library {
         var ok: Vec_LocalUtxo_t = Vec_LocalUtxo_t()
 
         @JvmField
-        var err: Pointer? = null
+        var err: String = ""
 
         override fun getFieldOrder() = listOf("ok", "err")
     }
 
     // void free_unspent_result (
-    //    FfiResultVec_LocalUtxo_t unspent_result);
+    //    FfiResult_Vec_LocalUtxo_t unspent_result);
     fun free_unspent_result(unspent_result: FfiResultVec_LocalUtxo_t.ByValue)
 
-    // FfiResult_void_t sync_wallet (
+    // FfiResult_int32_t sync_wallet (
     //    OpaqueWallet_t const * opaque_wallet);
-    fun sync_wallet(opaque_wallet: OpaqueWallet_t): FfiResult_void_t.ByValue
+    fun sync_wallet(opaque_wallet: OpaqueWallet_t): FfiResult_int32_t.ByValue
 
     // FfiResult_char_ptr_t new_address (
     //    OpaqueWallet_t const * opaque_wallet);

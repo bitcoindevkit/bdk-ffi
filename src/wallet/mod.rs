@@ -13,7 +13,8 @@ use blockchain::BlockchainConfig;
 use database::DatabaseConfig;
 
 use crate::error::get_name;
-use crate::types::{FfiResult, FfiResultVec};
+use crate::types::FfiResult;
+use std::ffi::CString;
 
 mod blockchain;
 mod database;
@@ -32,7 +33,7 @@ fn new_wallet_result(
     change_descriptor: Option<char_p_ref>,
     blockchain_config: &BlockchainConfig,
     database_config: &DatabaseConfig,
-) -> FfiResult<OpaqueWallet> {
+) -> FfiResult<Option<Box<OpaqueWallet>>> {
     let descriptor = descriptor.to_string();
     let change_descriptor = change_descriptor.map(|s| s.to_string());
     let bc_config = &blockchain_config.raw;
@@ -42,11 +43,11 @@ fn new_wallet_result(
     match wallet_result {
         Ok(w) => FfiResult {
             ok: Some(Box::new(OpaqueWallet { raw: w })),
-            err: None,
+            err: char_p_boxed::from(CString::default()),
         },
         Err(e) => FfiResult {
             ok: None,
-            err: Some(Box::new(char_p_boxed::try_from(get_name(&e)).unwrap())),
+            err: char_p_boxed::try_from(get_name(&e)).unwrap(),
         },
     }
 }
@@ -69,23 +70,23 @@ fn new_wallet(
 }
 
 #[ffi_export]
-fn free_wallet_result(wallet_result: FfiResult<OpaqueWallet>) {
+fn free_wallet_result(wallet_result: FfiResult<Option<Box<OpaqueWallet>>>) {
     drop(wallet_result);
 }
 
 // wallet operations
 
 #[ffi_export]
-fn sync_wallet(opaque_wallet: &OpaqueWallet) -> FfiResult<()> {
-    let void_result = opaque_wallet.raw.sync(log_progress(), Some(100));
-    match void_result {
-        Ok(v) => FfiResult {
-            ok: Some(Box::new(v)),
-            err: None,
+fn sync_wallet(opaque_wallet: &OpaqueWallet) -> FfiResult<i32> {
+    let int_result = opaque_wallet.raw.sync(log_progress(), Some(100));
+    match int_result {
+        Ok(_v) => FfiResult {
+            ok: 0,
+            err: char_p_boxed::from(CString::default()),
         },
         Err(e) => FfiResult {
-            ok: None,
-            err: Some(Box::new(char_p_boxed::try_from(get_name(&e)).unwrap())),
+            ok: -1,
+            err: char_p_boxed::try_from(get_name(&e)).unwrap(),
         },
     }
 }
@@ -96,37 +97,37 @@ fn new_address(opaque_wallet: &OpaqueWallet) -> FfiResult<char_p_boxed> {
     let string_result = new_address.map(|a| a.to_string());
     match string_result {
         Ok(a) => FfiResult {
-            ok: Some(Box::new(char_p_boxed::try_from(a).unwrap())),
-            err: None,
+            ok: char_p_boxed::try_from(a).unwrap(),
+            err: char_p_boxed::from(CString::default()),
         },
         Err(e) => FfiResult {
-            ok: None,
-            err: Some(Box::new(char_p_boxed::try_from(get_name(&e)).unwrap())),
+            ok: char_p_boxed::from(CString::default()),
+            err: char_p_boxed::try_from(get_name(&e)).unwrap(),
         },
     }
 }
 
 #[ffi_export]
-fn list_unspent(opaque_wallet: &OpaqueWallet) -> FfiResultVec<LocalUtxo> {
+fn list_unspent(opaque_wallet: &OpaqueWallet) -> FfiResult<repr_c::Vec<LocalUtxo>> {
     let unspent_result = opaque_wallet.raw.list_unspent();
 
     match unspent_result {
-        Ok(v) => FfiResultVec {
+        Ok(v) => FfiResult {
             ok: {
                 let ve: Vec<LocalUtxo> = v.iter().map(|lu| LocalUtxo::from(lu)).collect();
                 repr_c::Vec::from(ve)
             },
-            err: None,
+            err: char_p_boxed::from(CString::default()),
         },
-        Err(e) => FfiResultVec {
+        Err(e) => FfiResult {
             ok: repr_c::Vec::EMPTY,
-            err: Some(Box::new(char_p_boxed::try_from(get_name(&e)).unwrap())),
+            err: char_p_boxed::try_from(get_name(&e)).unwrap(),
         },
     }
 }
 
 #[ffi_export]
-fn free_unspent_result(unspent_result: FfiResultVec<LocalUtxo>) {
+fn free_unspent_result(unspent_result: FfiResult<repr_c::Vec<LocalUtxo>>) {
     drop(unspent_result)
 }
 

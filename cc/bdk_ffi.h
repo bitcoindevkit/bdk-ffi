@@ -14,20 +14,7 @@
 extern "C" {
 #endif
 
-
-#include <stddef.h>
-#include <stdint.h>
-
 typedef struct BlockchainConfig BlockchainConfig_t;
-
-BlockchainConfig_t * new_electrum_config (
-    char const * url,
-    char const * socks5,
-    int16_t retry,
-    int16_t timeout);
-
-void free_blockchain_config (
-    BlockchainConfig_t * blockchain_config);
 
 typedef struct DatabaseConfig DatabaseConfig_t;
 
@@ -37,35 +24,39 @@ typedef struct {
 
     OpaqueWallet_t * ok;
 
-    char * * err;
+    char * err;
 
-} FfiResult_OpaqueWallet_t;
+} FfiResult_OpaqueWallet_ptr_t;
 
-FfiResult_OpaqueWallet_t new_wallet_result (
+FfiResult_OpaqueWallet_ptr_t new_wallet_result (
     char const * descriptor,
     char const * change_descriptor,
     BlockchainConfig_t const * blockchain_config,
     DatabaseConfig_t const * database_config);
 
 void free_wallet_result (
-    FfiResult_OpaqueWallet_t wallet_result);
+    FfiResult_OpaqueWallet_ptr_t wallet_result);
+
+
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
 
-    void * ok;
+    int32_t ok;
 
-    char * * err;
+    char * err;
 
-} FfiResult_void_t;
+} FfiResult_int32_t;
 
-FfiResult_void_t sync_wallet (
+FfiResult_int32_t sync_wallet (
     OpaqueWallet_t const * opaque_wallet);
 
 typedef struct {
 
-    char * * ok;
+    char * ok;
 
-    char * * err;
+    char * err;
 
 } FfiResult_char_ptr_t;
 
@@ -115,15 +106,24 @@ typedef struct {
 
     Vec_LocalUtxo_t ok;
 
-    char * * err;
+    char * err;
 
-} FfiResultVec_LocalUtxo_t;
+} FfiResult_Vec_LocalUtxo_t;
 
-FfiResultVec_LocalUtxo_t list_unspent (
+FfiResult_Vec_LocalUtxo_t list_unspent (
     OpaqueWallet_t const * opaque_wallet);
 
 void free_unspent_result (
-    FfiResultVec_LocalUtxo_t unspent_result);
+    FfiResult_Vec_LocalUtxo_t unspent_result);
+
+BlockchainConfig_t * new_electrum_config (
+    char const * url,
+    char const * socks5,
+    int16_t retry,
+    int16_t timeout);
+
+void free_blockchain_config (
+    BlockchainConfig_t * blockchain_config);
 
 DatabaseConfig_t * new_memory_config (void);
 
@@ -137,8 +137,8 @@ void free_database_config (
 void free_string_result (
     FfiResult_char_ptr_t string_result);
 
-void free_void_result (
-    FfiResult_void_t void_result);
+void free_int_result (
+    FfiResult_int32_t int_result);
 
 /** \brief
  *  Free a Rust-allocated string
