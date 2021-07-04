@@ -114,12 +114,12 @@ int main (int argc, char const * const argv[])
             assert(unspent_ptr[i].keychain >= 0);
         }
         
-        free_unspent_result(unspent_result);          
+        free_veclocalutxo_result(unspent_result);          
         free_wallet_result(wallet_result);
     }
     
     // test balance 
-    /*{
+    {
         char const *desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)";
         char const *change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)";
     
@@ -128,7 +128,7 @@ int main (int argc, char const * const argv[])
     
         // new wallet
         FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,bc_config,db_config);
-        assert(wallet_result.err == NULL);    
+        assert(wallet_result.err == FFI_ERROR_NONE);    
         assert(wallet_result.ok != NULL);
         
         free_blockchain_config(bc_config);
@@ -138,19 +138,20 @@ int main (int argc, char const * const argv[])
         
         // sync wallet
         FfiResultVoid_t sync_result = sync_wallet(wallet);   
-        assert(sync_result.err == NULL);    
+        assert(sync_result.err == FFI_ERROR_NONE);    
         free_void_result(sync_result);
         
         // get balance
-        FfiResultT_uint64_t balance_result = balance(wallet);
-        assert(balance_result.err == NULL);  
-        printf("balance = %lu\n", balance_result.ok);
+        FfiResult_uint64_t balance_result = balance(wallet);
+        //printf("balance.err = %d\n", (balance_result.err));
+        assert(balance_result.err == FFI_ERROR_NONE);          
+        //printf("balance.ok = %ld\n", balance_result.ok);                
         assert(balance_result.ok > 0);  
         
         // free balance and wallet results
-        free_u64_result(balance_result);
+        free_uint64_result(balance_result);
         free_wallet_result(wallet_result);
-    }*/
+    }
         
     return EXIT_SUCCESS;
 }
