@@ -48,10 +48,9 @@ int main (int argc, char const * const argv[])
         OpaqueWallet_t *wallet = wallet_result.ok;
         
         // sync wallet
-        FfiResult_int32_t sync_result = sync_wallet(wallet);   
-        assert(sync_result.ok == 0);
+        FfiResultVoid_t sync_result = sync_wallet(wallet);   
         assert(strlen(sync_result.err) == 0);    
-        free_int_result(sync_result);
+        free_void_result(sync_result);
         
         // new address
         FfiResult_char_ptr_t address1_result = new_address(wallet);
@@ -75,7 +74,7 @@ int main (int argc, char const * const argv[])
         //// free_wallet_result(wallet_result);
         
         // verify sync_wallet after free_wallet fails (core dumped)
-        //// FfiResult_int32_t sync_result2 = sync_wallet(wallet);    
+        //// FfiResultVoid_t sync_result2 = sync_wallet(wallet);    
     }
     
     // test get unspent utxos
@@ -97,10 +96,9 @@ int main (int argc, char const * const argv[])
         OpaqueWallet_t *wallet = wallet_result.ok;
         
         // sync wallet
-        FfiResult_int32_t sync_result = sync_wallet(wallet);   
-        assert(sync_result.ok == 0);
+        FfiResultVoid_t sync_result = sync_wallet(wallet);   
         assert(strlen(sync_result.err) == 0);    
-        free_int_result(sync_result);
+        free_void_result(sync_result);
         
         // list unspent
         FfiResult_Vec_LocalUtxo_t unspent_result = list_unspent(wallet);
@@ -144,10 +142,9 @@ int main (int argc, char const * const argv[])
         OpaqueWallet_t *wallet = wallet_result.ok;
         
         // sync wallet
-        FfiResult_int32_t sync_result = sync_wallet(wallet);   
-        assert(sync_result.ok == 0);
+        FfiResultVoid_t sync_result = sync_wallet(wallet);   
         assert(sync_result.err == NULL);    
-        free_int_result(sync_result);
+        free_void_result(sync_result);
         
         // get balance
         FfiResultT_uint64_t balance_result = balance(wallet);
