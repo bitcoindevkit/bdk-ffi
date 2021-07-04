@@ -37,19 +37,13 @@ FfiResult_OpaqueWallet_ptr_t new_wallet_result (
 void free_wallet_result (
     FfiResult_OpaqueWallet_ptr_t wallet_result);
 
-
-#include <stddef.h>
-#include <stdint.h>
-
 typedef struct {
-
-    int32_t ok;
 
     char * err;
 
-} FfiResult_int32_t;
+} FfiResultVoid_t;
 
-FfiResult_int32_t sync_wallet (
+FfiResultVoid_t sync_wallet (
     OpaqueWallet_t const * opaque_wallet);
 
 typedef struct {
@@ -62,6 +56,10 @@ typedef struct {
 
 FfiResult_char_ptr_t new_address (
     OpaqueWallet_t const * opaque_wallet);
+
+
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
 
@@ -137,8 +135,8 @@ void free_database_config (
 void free_string_result (
     FfiResult_char_ptr_t string_result);
 
-void free_int_result (
-    FfiResult_int32_t int_result);
+void free_void_result (
+    FfiResultVoid_t void_result);
 
 /** \brief
  *  Free a Rust-allocated string

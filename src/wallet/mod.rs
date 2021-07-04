@@ -13,7 +13,7 @@ use blockchain::BlockchainConfig;
 use database::DatabaseConfig;
 
 use crate::error::get_name;
-use crate::types::FfiResult;
+use crate::types::{FfiResult, FfiResultVoid};
 use std::ffi::CString;
 
 mod blockchain;
@@ -77,15 +77,13 @@ fn free_wallet_result(wallet_result: FfiResult<Option<Box<OpaqueWallet>>>) {
 // wallet operations
 
 #[ffi_export]
-fn sync_wallet(opaque_wallet: &OpaqueWallet) -> FfiResult<i32> {
+fn sync_wallet(opaque_wallet: &OpaqueWallet) -> FfiResultVoid {
     let int_result = opaque_wallet.raw.sync(log_progress(), Some(100));
     match int_result {
-        Ok(_v) => FfiResult {
-            ok: 0,
+        Ok(_v) => FfiResultVoid {
             err: char_p_boxed::from(CString::default()),
         },
-        Err(e) => FfiResult {
-            ok: -1,
+        Err(e) => FfiResultVoid {
             err: char_p_boxed::try_from(get_name(&e)).unwrap(),
         },
     }
