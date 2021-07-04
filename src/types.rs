@@ -9,14 +9,21 @@ pub struct FfiResult<T> {
     pub err: char_p_boxed,
 }
 
+#[derive_ReprC]
+#[repr(C)]
+#[derive(Debug)]
+pub struct FfiResultVoid {
+    pub err: char_p_boxed,
+}
+
 #[ffi_export]
 fn free_string_result(string_result: FfiResult<char_p_boxed>) {
     drop(string_result)
 }
 
 #[ffi_export]
-fn free_int_result(int_result: FfiResult<i32>) {
-    drop(int_result)
+fn free_void_result(void_result: FfiResultVoid) {
+    drop(void_result)
 }
 
 // TODO do we need this? remove?
