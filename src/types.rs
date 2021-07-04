@@ -1,3 +1,4 @@
+use crate::error::FfiError;
 use ::safer_ffi::prelude::*;
 use safer_ffi::char_p::char_p_boxed;
 
@@ -6,14 +7,14 @@ use safer_ffi::char_p::char_p_boxed;
 #[derive(Debug)]
 pub struct FfiResult<T> {
     pub ok: T,
-    pub err: char_p_boxed,
+    pub err: FfiError,
 }
 
 #[derive_ReprC]
 #[repr(C)]
 #[derive(Debug)]
 pub struct FfiResultVoid {
-    pub err: char_p_boxed,
+    pub err: FfiError,
 }
 
 #[ffi_export]
