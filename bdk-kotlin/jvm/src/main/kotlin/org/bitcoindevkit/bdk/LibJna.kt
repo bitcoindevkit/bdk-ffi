@@ -232,10 +232,35 @@ interface LibJna : Library {
         override fun getFieldOrder() = listOf("ok", "err")
     }
 
-    // void free_unspent_result (
+    // void free_veclocalutxo_result (
     //    FfiResult_Vec_LocalUtxo_t unspent_result);
-    fun free_unspent_result(unspent_result: FfiResultVec_LocalUtxo_t.ByValue)
+    fun free_veclocalutxo_result(unspent_result: FfiResultVec_LocalUtxo_t.ByValue)
 
+    // typedef struct {
+    //
+    //    uint64_t ok;
+    //
+    //    FfiError_t err;
+    //
+    // } FfiResult_uint64_t;
+    open class FfiResult_uint64_t : Structure() {
+
+        class ByValue : FfiResult_uint64_t(), Structure.ByValue
+        class ByReference : FfiResult_uint64_t(), Structure.ByReference
+        
+        @JvmField
+        var ok: Long = Long.MIN_VALUE
+
+        @JvmField
+        var err: Short = 0
+
+        override fun getFieldOrder() = listOf("ok", "err")
+    }
+
+    // void free_uint64_result (
+    //    FfiResult_uint64_t void_result);
+    fun free_uint64_result(unspent_result: FfiResult_uint64_t.ByValue)
+    
     // FfiResultVoid_t sync_wallet (
     //    OpaqueWallet_t const * opaque_wallet);
     fun sync_wallet(opaque_wallet: OpaqueWallet_t): FfiResultVoid_t.ByValue
@@ -248,6 +273,10 @@ interface LibJna : Library {
     //    OpaqueWallet_t const * opaque_wallet);
     fun list_unspent(opaque_wallet: OpaqueWallet_t): FfiResultVec_LocalUtxo_t.ByValue
 
+    // FfiResult_uint64_t balance (
+    //    OpaqueWallet_t const * opaque_wallet);
+    fun balance(opaque_wallet: OpaqueWallet_t): FfiResult_uint64_t.ByValue
+    
     // DatabaseConfig_t * new_memory_config (void);
     fun new_memory_config(): DatabaseConfig_t
 

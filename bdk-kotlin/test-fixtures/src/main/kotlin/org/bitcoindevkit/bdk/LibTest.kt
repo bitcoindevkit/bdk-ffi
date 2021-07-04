@@ -96,4 +96,13 @@ abstract class LibTest : LibBase() {
             assertTrue(it.keychain!! >= 0)
         }
     }
+
+    @Test
+    fun walletBalance() {
+        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
+        wallet.sync()
+        val balance = wallet.balance()
+        //log.debug("balance from kotlin: $balance")
+        assertTrue(balance > 0)
+    }
 }

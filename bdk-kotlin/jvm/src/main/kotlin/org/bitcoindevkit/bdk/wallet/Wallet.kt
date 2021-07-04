@@ -5,6 +5,7 @@ import org.bitcoindevkit.bdk.DatabaseConfig
 import org.bitcoindevkit.bdk.LibBase
 import org.bitcoindevkit.bdk.LibJna
 import org.bitcoindevkit.bdk.types.StringResult
+import org.bitcoindevkit.bdk.types.UInt64Result
 import org.bitcoindevkit.bdk.types.VoidResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -41,5 +42,10 @@ class Wallet constructor(
     fun listUnspent(): Array<LibJna.LocalUtxo_t.ByReference> {
         val vecLocalUtxoResult = VecLocalUtxoResult(libJna.list_unspent(wallet))
         return vecLocalUtxoResult.value()
+    }
+    
+    fun balance(): Long {
+        val longResult = UInt64Result(libJna.balance(wallet))
+        return longResult.value()
     }
 }

@@ -26,7 +26,7 @@ class VecLocalUtxoResult(private val ffiResultVecLocalUtxoT: LibJna.FfiResultVec
     }
 
     protected fun finalize() {
-        libJna.free_unspent_result(ffiResultVecLocalUtxoT)
+        libJna.free_veclocalutxo_result(ffiResultVecLocalUtxoT)
         log.debug("$ffiResultVecLocalUtxoT freed")
     }
 }
