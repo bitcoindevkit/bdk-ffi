@@ -1,17 +1,33 @@
 package org.bitcoindevkit.bdk.wallet
 
-import com.sun.jna.Pointer
+import org.bitcoindevkit.bdk.JnaError
+import org.bitcoindevkit.bdk.JnaException
+import org.bitcoindevkit.bdk.LibBase
 import org.bitcoindevkit.bdk.LibJna
-import org.bitcoindevkit.bdk.types.Result
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-class WalletResult constructor(walletResultPtr: LibJna.FfiResult_OpaqueWallet_t.ByValue) :
-    Result<LibJna.FfiResult_OpaqueWallet_t.ByValue, LibJna.OpaqueWallet_t>(walletResultPtr) {
+class WalletResult constructor(private val ffiResultOpaqueWalletPtrT: LibJna.FfiResult_OpaqueWallet_ptr_t.ByValue) :
+    LibBase() {
 
-    override fun getOkValue(pointer: Pointer): LibJna.OpaqueWallet_t {
-        return LibJna.OpaqueWallet_t(pointer)
+    private val log: Logger = LoggerFactory.getLogger(WalletResult::class.java)
+
+    fun value(): LibJna.OpaqueWallet_t {
+        val err = ffiResultOpaqueWalletPtrT.err
+        val ok = ffiResultOpaqueWalletPtrT.ok
+        when {
+            err.isNotEmpty() -> {
+                log.error("JnaError: $err")
+                throw JnaException(JnaError.valueOf(err))
+            }
+            else -> {
+                return ok
+            }
+        }
     }
 
-    override fun freeResult(ffiResult: LibJna.FfiResult_OpaqueWallet_t.ByValue) {
-        libJna.free_wallet_result(ffiResult)
+    protected fun finalize() {
+        libJna.free_wallet_result(ffiResultOpaqueWalletPtrT)
+        log.debug("$ffiResultOpaqueWalletPtrT freed")
     }
 }

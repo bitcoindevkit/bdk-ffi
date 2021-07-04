@@ -7,19 +7,18 @@ import org.bitcoindevkit.bdk.LibJna
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class VecLocalUtxoResult(private val ffiResult: LibJna.FfiResultVec_LocalUtxo_t.ByValue) :
+class VecLocalUtxoResult(private val ffiResultVecLocalUtxoT: LibJna.FfiResultVec_LocalUtxo_t.ByValue) :
     LibBase() {
 
-    protected open val log: Logger = LoggerFactory.getLogger(VecLocalUtxoResult::class.java)
+    private val log: Logger = LoggerFactory.getLogger(VecLocalUtxoResult::class.java)
 
     fun value(): Array<LibJna.LocalUtxo_t.ByReference> {
-        val err = ffiResult.err
-        val ok = ffiResult.ok
+        val err = ffiResultVecLocalUtxoT.err
+        val ok = ffiResultVecLocalUtxoT.ok
         when {
-            err != null -> {
-                val errString = err.getPointer(0).getString(0)
-                log.error("JnaError: $errString")
-                throw JnaException(JnaError.valueOf(errString))
+            err .isNotEmpty() -> {
+                log.error("JnaError: $err")
+                throw JnaException(JnaError.valueOf(err))
             }
             else -> {
                 val first = ok.ptr!!
@@ -29,7 +28,7 @@ class VecLocalUtxoResult(private val ffiResult: LibJna.FfiResultVec_LocalUtxo_t.
     }
 
     protected fun finalize() {
-        libJna.free_unspent_result(ffiResult)
-        log.debug("$ffiResult freed")
+        libJna.free_unspent_result(ffiResultVecLocalUtxoT)
+        log.debug("$ffiResultVecLocalUtxoT freed")
     }
 }
