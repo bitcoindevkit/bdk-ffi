@@ -5,15 +5,8 @@ use safer_ffi::char_p::char_p_boxed;
 #[repr(C)]
 #[derive(Debug)]
 pub struct FfiResult<T> {
-    pub ok: Option<repr_c::Box<T>>,
-    pub err: Option<repr_c::Box<char_p_boxed>>,
-}
-
-#[derive_ReprC]
-#[repr(C)]
-pub struct FfiResultVec<T> {
-    pub ok: repr_c::Vec<T>,
-    pub err: Option<repr_c::Box<char_p_boxed>>,
+    pub ok: T,
+    pub err: char_p_boxed,
 }
 
 #[ffi_export]
@@ -22,8 +15,8 @@ fn free_string_result(string_result: FfiResult<char_p_boxed>) {
 }
 
 #[ffi_export]
-fn free_void_result(void_result: FfiResult<()>) {
-    drop(void_result)
+fn free_int_result(int_result: FfiResult<i32>) {
+    drop(int_result)
 }
 
 // TODO do we need this? remove?
