@@ -12,7 +12,7 @@ use safer_ffi::char_p::{char_p_boxed, char_p_ref};
 use blockchain::BlockchainConfig;
 use database::DatabaseConfig;
 
-use crate::error::get_name;
+use crate::error::FfiError;
 use crate::types::{FfiResult, FfiResultVoid};
 use std::ffi::CString;
 
@@ -43,11 +43,11 @@ fn new_wallet_result(
     match wallet_result {
         Ok(w) => FfiResult {
             ok: Some(Box::new(OpaqueWallet { raw: w })),
-            err: char_p_boxed::from(CString::default()),
+            err: FfiError::None,
         },
         Err(e) => FfiResult {
             ok: None,
-            err: char_p_boxed::try_from(get_name(&e)).unwrap(),
+            err: FfiError::from(&e),
         },
     }
 }
@@ -81,10 +81,10 @@ fn sync_wallet(opaque_wallet: &OpaqueWallet) -> FfiResultVoid {
     let int_result = opaque_wallet.raw.sync(log_progress(), Some(100));
     match int_result {
         Ok(_v) => FfiResultVoid {
-            err: char_p_boxed::from(CString::default()),
+            err: FfiError::None,
         },
         Err(e) => FfiResultVoid {
-            err: char_p_boxed::try_from(get_name(&e)).unwrap(),
+            err: FfiError::from(&e),
         },
     }
 }
@@ -96,11 +96,11 @@ fn new_address(opaque_wallet: &OpaqueWallet) -> FfiResult<char_p_boxed> {
     match string_result {
         Ok(a) => FfiResult {
             ok: char_p_boxed::try_from(a).unwrap(),
-            err: char_p_boxed::from(CString::default()),
+            err: FfiError::None,
         },
         Err(e) => FfiResult {
             ok: char_p_boxed::from(CString::default()),
-            err: char_p_boxed::try_from(get_name(&e)).unwrap(),
+            err: FfiError::from(&e),
         },
     }
 }
@@ -115,11 +115,11 @@ fn list_unspent(opaque_wallet: &OpaqueWallet) -> FfiResult<repr_c::Vec<LocalUtxo
                 let ve: Vec<LocalUtxo> = v.iter().map(|lu| LocalUtxo::from(lu)).collect();
                 repr_c::Vec::from(ve)
             },
-            err: char_p_boxed::from(CString::default()),
+            err: FfiError::None,
         },
         Err(e) => FfiResult {
             ok: repr_c::Vec::EMPTY,
-            err: char_p_boxed::try_from(get_name(&e)).unwrap(),
+            err: FfiError::from(&e),
         },
     }
 }

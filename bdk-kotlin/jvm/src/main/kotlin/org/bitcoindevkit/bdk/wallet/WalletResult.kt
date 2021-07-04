@@ -1,7 +1,6 @@
 package org.bitcoindevkit.bdk.wallet
 
-import org.bitcoindevkit.bdk.JnaError
-import org.bitcoindevkit.bdk.JnaException
+import org.bitcoindevkit.bdk.FfiException
 import org.bitcoindevkit.bdk.LibBase
 import org.bitcoindevkit.bdk.LibJna
 import org.slf4j.Logger
@@ -16,9 +15,8 @@ class WalletResult constructor(private val ffiResultOpaqueWalletPtrT: LibJna.Ffi
         val err = ffiResultOpaqueWalletPtrT.err
         val ok = ffiResultOpaqueWalletPtrT.ok
         when {
-            err.isNotEmpty() -> {
-                log.error("JnaError: $err")
-                throw JnaException(JnaError.valueOf(err))
+            err > 0 -> {
+                throw FfiException(err)
             }
             else -> {
                 return ok

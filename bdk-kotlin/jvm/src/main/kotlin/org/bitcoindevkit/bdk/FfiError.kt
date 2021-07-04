@@ -1,6 +1,7 @@
 package org.bitcoindevkit.bdk
 
-enum class JnaError {
+enum class FfiError {
+    None,
     InvalidU32Bytes,
     Generic,
     ScriptDoesntHaveAddressForm,

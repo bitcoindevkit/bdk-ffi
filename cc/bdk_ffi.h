@@ -14,7 +14,135 @@
 extern "C" {
 #endif
 
+
+#include <stddef.h>
+#include <stdint.h>
+
+/** \remark Has the same ABI as `uint16_t` **/
+#ifdef DOXYGEN
+typedef enum FfiError
+#else
+typedef uint16_t FfiError_t; enum
+#endif
+{
+    /** . */
+    FFI_ERROR_NONE,
+    /** . */
+    FFI_ERROR_INVALID_U32_BYTES,
+    /** . */
+    FFI_ERROR_GENERIC,
+    /** . */
+    FFI_ERROR_SCRIPT_DOESNT_HAVE_ADDRESS_FORM,
+    /** . */
+    FFI_ERROR_SINGLE_RECIPIENT_MULTIPLE_OUTPUTS,
+    /** . */
+    FFI_ERROR_SINGLE_RECIPIENT_NO_INPUTS,
+    /** . */
+    FFI_ERROR_NO_RECIPIENTS,
+    /** . */
+    FFI_ERROR_NO_UTXOS_SELECTED,
+    /** . */
+    FFI_ERROR_OUTPUT_BELOW_DUST_LIMIT,
+    /** . */
+    FFI_ERROR_INSUFFICIENT_FUNDS,
+    /** . */
+    FFI_ERROR_BN_B_TOTAL_TRIES_EXCEEDED,
+    /** . */
+    FFI_ERROR_BN_B_NO_EXACT_MATCH,
+    /** . */
+    FFI_ERROR_UNKNOWN_UTXO,
+    /** . */
+    FFI_ERROR_TRANSACTION_NOT_FOUND,
+    /** . */
+    FFI_ERROR_TRANSACTION_CONFIRMED,
+    /** . */
+    FFI_ERROR_IRREPLACEABLE_TRANSACTION,
+    /** . */
+    FFI_ERROR_FEE_RATE_TOO_LOW,
+    /** . */
+    FFI_ERROR_FEE_TOO_LOW,
+    /** . */
+    FFI_ERROR_MISSING_KEY_ORIGIN,
+    /** . */
+    FFI_ERROR_KEY,
+    /** . */
+    FFI_ERROR_CHECKSUM_MISMATCH,
+    /** . */
+    FFI_ERROR_SPENDING_POLICY_REQUIRED,
+    /** . */
+    FFI_ERROR_INVALID_POLICY_PATH_ERROR,
+    /** . */
+    FFI_ERROR_SIGNER,
+    /** . */
+    FFI_ERROR_INVALID_PROGRESS_VALUE,
+    /** . */
+    FFI_ERROR_PROGRESS_UPDATE_ERROR,
+    /** . */
+    FFI_ERROR_INVALID_OUTPOINT,
+    /** . */
+    FFI_ERROR_DESCRIPTOR,
+    /** . */
+    FFI_ERROR_ADDRESS_VALIDATOR,
+    /** . */
+    FFI_ERROR_ENCODE,
+    /** . */
+    FFI_ERROR_MINISCRIPT,
+    /** . */
+    FFI_ERROR_BIP32,
+    /** . */
+    FFI_ERROR_SECP256K1,
+    /** . */
+    FFI_ERROR_JSON,
+    /** . */
+    FFI_ERROR_HEX,
+    /** . */
+    FFI_ERROR_PSBT,
+    /** . */
+    FFI_ERROR_ELECTRUM,
+    /** . */
+    FFI_ERROR_SLED,
+}
+#ifdef DOXYGEN
+FfiError_t
+#endif
+;
+
+typedef struct {
+
+    char * ok;
+
+    FfiError_t err;
+
+} FfiResult_char_ptr_t;
+
+void free_string_result (
+    FfiResult_char_ptr_t string_result);
+
+typedef struct {
+
+    FfiError_t err;
+
+} FfiResultVoid_t;
+
+void free_void_result (
+    FfiResultVoid_t void_result);
+
+/** \brief
+ *  Free a Rust-allocated string
+ */
+void free_string (
+    char * string);
+
 typedef struct BlockchainConfig BlockchainConfig_t;
+
+BlockchainConfig_t * new_electrum_config (
+    char const * url,
+    char const * socks5,
+    int16_t retry,
+    int16_t timeout);
+
+void free_blockchain_config (
+    BlockchainConfig_t * blockchain_config);
 
 typedef struct DatabaseConfig DatabaseConfig_t;
 
@@ -24,7 +152,7 @@ typedef struct {
 
     OpaqueWallet_t * ok;
 
-    char * err;
+    FfiError_t err;
 
 } FfiResult_OpaqueWallet_ptr_t;
 
@@ -37,29 +165,11 @@ FfiResult_OpaqueWallet_ptr_t new_wallet_result (
 void free_wallet_result (
     FfiResult_OpaqueWallet_ptr_t wallet_result);
 
-typedef struct {
-
-    char * err;
-
-} FfiResultVoid_t;
-
 FfiResultVoid_t sync_wallet (
     OpaqueWallet_t const * opaque_wallet);
 
-typedef struct {
-
-    char * ok;
-
-    char * err;
-
-} FfiResult_char_ptr_t;
-
 FfiResult_char_ptr_t new_address (
     OpaqueWallet_t const * opaque_wallet);
-
-
-#include <stddef.h>
-#include <stdint.h>
 
 typedef struct {
 
@@ -104,7 +214,7 @@ typedef struct {
 
     Vec_LocalUtxo_t ok;
 
-    char * err;
+    FfiError_t err;
 
 } FfiResult_Vec_LocalUtxo_t;
 
@@ -114,15 +224,6 @@ FfiResult_Vec_LocalUtxo_t list_unspent (
 void free_unspent_result (
     FfiResult_Vec_LocalUtxo_t unspent_result);
 
-BlockchainConfig_t * new_electrum_config (
-    char const * url,
-    char const * socks5,
-    int16_t retry,
-    int16_t timeout);
-
-void free_blockchain_config (
-    BlockchainConfig_t * blockchain_config);
-
 DatabaseConfig_t * new_memory_config (void);
 
 DatabaseConfig_t * new_sled_config (
@@ -131,18 +232,6 @@ DatabaseConfig_t * new_sled_config (
 
 void free_database_config (
     DatabaseConfig_t * database_config);
-
-void free_string_result (
-    FfiResult_char_ptr_t string_result);
-
-void free_void_result (
-    FfiResultVoid_t void_result);
-
-/** \brief
- *  Free a Rust-allocated string
- */
-void free_string (
-    char * string);
 
 
 #ifdef __cplusplus

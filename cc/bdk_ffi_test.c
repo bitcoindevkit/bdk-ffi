@@ -14,16 +14,11 @@ int main (int argc, char const * const argv[])
         
         // new wallet with bad descriptor 
         FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result("bad","bad",bc_config,db_config);  
-        assert(strlen(wallet_result.err) > 0); 
+        assert(wallet_result.err == FFI_ERROR_DESCRIPTOR);
         assert(wallet_result.ok == NULL);
         
         free_blockchain_config(bc_config);
-        free_database_config(db_config);
-        
-        char *wallet_err = wallet_result.err;
-        assert(wallet_err != NULL);
-        assert( 0 == strcmp(wallet_err,"Descriptor") );
-        // printf("wallet err: %s\n", wallet_err);   
+        free_database_config(db_config);  
         
         free_wallet_result(wallet_result);
     }
@@ -38,8 +33,8 @@ int main (int argc, char const * const argv[])
     
         // new wallet
         FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,bc_config,db_config);
-        // printf("wallet_result.err = %ld\n", strlen(wallet_result.err));
-        assert(strlen(wallet_result.err) == 0);    
+        // printf("wallet_result.err = %d\n", wallet_result.err));
+        assert(wallet_result.err == FFI_ERROR_NONE);    
         assert(wallet_result.ok != NULL);
         
         free_blockchain_config(bc_config);
@@ -49,20 +44,20 @@ int main (int argc, char const * const argv[])
         
         // sync wallet
         FfiResultVoid_t sync_result = sync_wallet(wallet);   
-        assert(strlen(sync_result.err) == 0);    
+        assert(sync_result.err == FFI_ERROR_NONE);    
         free_void_result(sync_result);
         
         // new address
         FfiResult_char_ptr_t address1_result = new_address(wallet);
         assert(address1_result.ok != NULL);
-        assert(strlen(address1_result.err) == 0);
+        assert(address1_result.err == FFI_ERROR_NONE);
         // printf("address1 = %s\n", *address1_result.ok);
         assert( 0 == strcmp(address1_result.ok,"tb1qgkhp034fyxeta00h0nne9tzfm0vsxq4prduzxp"));
         free_string_result(address1_result);
         
         FfiResult_char_ptr_t address2_result = new_address(wallet);
         assert(address2_result.ok != NULL);
-        assert(strlen(address2_result.err) == 0);
+        assert(address2_result.err == FFI_ERROR_NONE);
         // printf("address2 = %s\n", *address2_result.ok);
         assert( 0 == strcmp(address2_result.ok,"tb1qd6u9q327sru2ljvwzdtfrdg36sapax7udz97wf"));
         free_string_result(address2_result);
@@ -87,7 +82,7 @@ int main (int argc, char const * const argv[])
     
         // new wallet
         FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,bc_config,db_config);
-        assert(strlen(wallet_result.err) == 0);    
+        assert(wallet_result.err == FFI_ERROR_NONE);    
         assert(wallet_result.ok != NULL);
         
         free_blockchain_config(bc_config);
@@ -97,13 +92,13 @@ int main (int argc, char const * const argv[])
         
         // sync wallet
         FfiResultVoid_t sync_result = sync_wallet(wallet);   
-        assert(strlen(sync_result.err) == 0);    
+        assert(sync_result.err == FFI_ERROR_NONE);    
         free_void_result(sync_result);
         
         // list unspent
         FfiResult_Vec_LocalUtxo_t unspent_result = list_unspent(wallet);
         assert(unspent_result.ok.len == 7);
-        assert(strlen(unspent_result.err) == 0);
+        assert(unspent_result.err == FFI_ERROR_NONE);
         
         LocalUtxo_t * unspent_ptr = unspent_result.ok.ptr;                       
         for (int i = 0; i < unspent_result.ok.len; i++) {            

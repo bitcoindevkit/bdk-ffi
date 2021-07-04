@@ -31,10 +31,10 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletResultError() {
-        val jnaException = assertThrows(JnaException::class.java) {
+        val jnaException = assertThrows(FfiException::class.java) {
             Wallet("bad", "bad", blockchainConfig, databaseConfig)
         }
-        assertEquals(jnaException.err, JnaError.Descriptor)
+        assertEquals(jnaException.err, FfiError.Descriptor)
     }
 
 //    @Test
