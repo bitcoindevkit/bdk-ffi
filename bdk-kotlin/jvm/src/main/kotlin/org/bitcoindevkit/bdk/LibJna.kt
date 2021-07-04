@@ -8,7 +8,7 @@ interface LibJna : Library {
     //
     //    char * ok;
     //
-    //    char * err;
+    //    FfiError_t err;
     //
     //} FfiResult_char_ptr_t;
     open class FfiResult_char_ptr_t : Structure() {
@@ -19,7 +19,7 @@ interface LibJna : Library {
         var ok: String = ""
 
         @JvmField
-        var err: String = ""
+        var err: Short = 0
 
         override fun getFieldOrder() = listOf("ok", "err")
     }
@@ -30,7 +30,7 @@ interface LibJna : Library {
 
     // typedef struct {
     //
-    //    char * err;
+    //    FfiError_t err;
     //
     //} FfiResultVoid_t;
     open class FfiResultVoid_t : Structure() {
@@ -38,7 +38,7 @@ interface LibJna : Library {
         class ByReference : FfiResultVoid_t(), Structure.ByReference
 
         @JvmField
-        var err: String = ""
+        var err: Short = 0
         
         override fun getFieldOrder() = listOf("err")
     }
@@ -89,7 +89,7 @@ interface LibJna : Library {
     //
     //    OpaqueWallet_t * ok;
     //
-    //    char * err;
+    //    FfiError_t err;
     //
     // } FfiResult_OpaqueWallet_ptr_t;
     open class FfiResult_OpaqueWallet_ptr_t : Structure() {
@@ -100,7 +100,7 @@ interface LibJna : Library {
         var ok: OpaqueWallet_t = OpaqueWallet_t()
 
         @JvmField
-        var err: String = ""
+        var err: Short = 0
         
         override fun getFieldOrder() = listOf("ok", "err")
     }
@@ -215,7 +215,7 @@ interface LibJna : Library {
     //
     //    Vec_LocalUtxo_t ok;
     //
-    //    char * err;
+    //    FfiError_t err;
     //
     // } FfiResult_Vec_LocalUtxo_t;
     open class FfiResultVec_LocalUtxo_t : Structure() {
@@ -227,7 +227,7 @@ interface LibJna : Library {
         var ok: Vec_LocalUtxo_t = Vec_LocalUtxo_t()
 
         @JvmField
-        var err: String = ""
+        var err: Short = 0
 
         override fun getFieldOrder() = listOf("ok", "err")
     }
