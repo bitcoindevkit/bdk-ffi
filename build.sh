@@ -11,8 +11,19 @@ export LD_LIBRARY_PATH=`pwd`/target/debug
 cc cc/bdk_ffi_test.c -o cc/bdk_ffi_test -L target/debug -l bdk_ffi -l pthread -l dl -l m
 
 # bdk-kotlin jar
-mkdir -p bdk-kotlin/jvm/src/main/resources/linux-x86-64
-cp target/debug/libbdk_ffi.so bdk-kotlin/jvm/src/main/resources/linux-x86-64
+OS=$(uname)
+case $OS in
+  "Darwin")
+    echo "Darwin build system"
+    mkdir -p bdk-kotlin/jvm/src/main/resources/darwin-x86-64
+    cp target/debug/libbdk_ffi.dylib bdk-kotlin/jvm/src/main/resources/darwin-x86-64
+    ;;
+  "Linux")
+    echo "Linux build system"
+    mkdir -p bdk-kotlin/jvm/src/main/resources/linux-x86-64
+    cp target/debug/libbdk_ffi.so bdk-kotlin/jvm/src/main/resources/linux-x86-64
+    ;;
+esac
 
 (cd bdk-kotlin && gradle :jvm:build && gradle :jvm:publishToMavenLocal)
 
