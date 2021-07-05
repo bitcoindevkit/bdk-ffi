@@ -12,7 +12,7 @@ class VoidResult constructor(private val ffiResultVoidT: LibJna.FfiResultVoid_t.
     private val log: Logger = LoggerFactory.getLogger(VoidResult::class.java)
 
     fun value(): Unit {
-        val err = ffiResultVoidT.err
+        val err = ffiResultVoidT.err!!
 
         when {
             err > 0 -> {

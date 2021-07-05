@@ -16,10 +16,10 @@ interface LibJna : Library {
         class ByReference : FfiResult_char_ptr_t(), Structure.ByReference
 
         @JvmField
-        var ok: String = ""
+        var ok: String? = null
 
         @JvmField
-        var err: Short = 0
+        var err: Short? = null
 
         override fun getFieldOrder() = listOf("ok", "err")
     }
@@ -38,7 +38,7 @@ interface LibJna : Library {
         class ByReference : FfiResultVoid_t(), Structure.ByReference
 
         @JvmField
-        var err: Short = 0
+        var err: Short? = null
         
         override fun getFieldOrder() = listOf("err")
     }
@@ -97,10 +97,10 @@ interface LibJna : Library {
         class ByReference : FfiResult_OpaqueWallet_ptr_t(), Structure.ByReference
 
         @JvmField
-        var ok: OpaqueWallet_t = OpaqueWallet_t()
+        var ok: OpaqueWallet_t? = null
 
         @JvmField
-        var err: Short = 0
+        var err: Short? = null
         
         override fun getFieldOrder() = listOf("ok", "err")
     }
@@ -224,10 +224,10 @@ interface LibJna : Library {
         class ByReference : FfiResultVec_LocalUtxo_t(), Structure.ByReference
 
         @JvmField
-        var ok: Vec_LocalUtxo_t = Vec_LocalUtxo_t()
+        var ok: Vec_LocalUtxo_t? = null
 
         @JvmField
-        var err: Short = 0
+        var err: Short? = null
 
         override fun getFieldOrder() = listOf("ok", "err")
     }
@@ -249,10 +249,10 @@ interface LibJna : Library {
         class ByReference : FfiResult_uint64_t(), Structure.ByReference
         
         @JvmField
-        var ok: Long = Long.MIN_VALUE
+        var ok: Long? = null
 
         @JvmField
-        var err: Short = 0
+        var err: Short? = null
 
         override fun getFieldOrder() = listOf("ok", "err")
     }
@@ -288,4 +288,101 @@ interface LibJna : Library {
     // void free_database_config (
     //    DatabaseConfig_t * database_config);
     fun free_database_config(database_config: DatabaseConfig_t)
+    
+    // typedef struct {
+    //
+    //    char * txid;
+    //
+    //    uint64_t timestamp;
+    //
+    //    uint64_t received;
+    //
+    //    uint64_t sent;
+    //
+    //    uint64_t fees;
+    //
+    //    int32_t height;
+    //
+    // } TransactionDetails_t;
+    open class TransactionDetails_t : Structure() {
+
+        class ByValue : TransactionDetails_t(), Structure.ByValue
+        class ByReference : TransactionDetails_t(), Structure.ByReference
+
+        @JvmField
+        var txid: String? = null
+
+        @JvmField
+        var timestamp: Long? = null
+
+        @JvmField
+        var received: Long? = null
+
+        @JvmField
+        var sent: Long? = null
+
+        @JvmField
+        var fees: Long? = null
+
+        @JvmField
+        var height: Int? = null
+        
+        override fun getFieldOrder() = listOf("txid", "timestamp", "received", "sent", "fees", "height")
+    }
+    
+    // typedef struct {
+    //
+    //    TransactionDetails_t * ptr;
+    //
+    //    size_t len;
+    //
+    //    size_t cap;
+    //
+    // } Vec_TransactionDetails_t;
+    open class Vec_TransactionDetails_t : Structure() {
+
+        class ByReference : Vec_TransactionDetails_t(), Structure.ByReference
+        class ByValue : Vec_TransactionDetails_t(), Structure.ByValue
+
+        @JvmField
+        var ptr: TransactionDetails_t.ByReference? = null
+
+        @JvmField
+        var len: NativeLong? = null
+
+        @JvmField
+        var cap: NativeLong? = null
+
+        override fun getFieldOrder() = listOf("ptr", "len", "cap")
+    }
+    
+    // typedef struct {
+    //
+    //    Vec_TransactionDetails_t ok;
+    //
+    //    FfiError_t err;
+    //
+    // } FfiResult_Vec_TransactionDetails_t;
+    open class FfiResult_Vec_TransactionDetails_t : Structure() {
+
+        class ByValue : FfiResult_Vec_TransactionDetails_t(), Structure.ByValue
+        class ByReference : FfiResult_Vec_TransactionDetails_t(), Structure.ByReference
+
+        @JvmField
+        var ok: Vec_TransactionDetails_t? = null
+
+        @JvmField
+        var err: Short? = null
+
+        override fun getFieldOrder() = listOf("ok", "err")
+    }
+    
+    // FfiResult_Vec_TransactionDetails_t list_transactions (
+    //    OpaqueWallet_t const * opaque_wallet);
+    fun list_transactions(opaque_wallet: OpaqueWallet_t): FfiResult_Vec_TransactionDetails_t.ByValue
+
+
+    // void free_vectxdetails_result (
+    //    FfiResult_Vec_TransactionDetails_t txdetails_result);
+    fun free_vectxdetails_result(txdetails_result: FfiResult_Vec_TransactionDetails_t.ByValue)
 }
