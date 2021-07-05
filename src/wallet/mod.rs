@@ -15,9 +15,11 @@ use database::DatabaseConfig;
 
 use crate::error::FfiError;
 use crate::types::{FfiResult, FfiResultVoid};
+use crate::wallet::transaction::{LocalUtxo, TransactionDetails};
 
 mod blockchain;
 mod database;
+mod transaction;
 
 // create a new wallet
 
@@ -145,64 +147,27 @@ fn balance(opaque_wallet: &OpaqueWallet) -> FfiResult<u64> {
     }
 }
 
-// Non-opaque returned values
+#[ffi_export]
+fn list_transactions(opaque_wallet: &OpaqueWallet) -> FfiResult<repr_c::Vec<TransactionDetails>> {
+    let transactions_result = opaque_wallet.raw.list_transactions(false);
 
-#[derive_ReprC]
-#[repr(C)]
-#[derive(Debug, Clone)]
-pub struct OutPoint {
-    /// The referenced transaction's txid, as hex string
-    pub txid: char_p_boxed,
-    /// The index of the referenced output in its transaction's vout
-    pub vout: u32,
-}
-
-impl From<&bdk::bitcoin::OutPoint> for OutPoint {
-    fn from(op: &bdk::bitcoin::OutPoint) -> Self {
-        OutPoint {
-            txid: char_p_boxed::try_from(op.txid.to_string()).unwrap(),
-            vout: op.vout,
-        }
+    match transactions_result {
+        Ok(v) => FfiResult {
+            ok: {
+                let ve: Vec<TransactionDetails> =
+                    v.iter().map(|t| TransactionDetails::from(t)).collect();
+                repr_c::Vec::from(ve)
+            },
+            err: FfiError::None,
+        },
+        Err(e) => FfiResult {
+            ok: repr_c::Vec::EMPTY,
+            err: FfiError::from(&e),
+        },
     }
 }
 
-#[derive_ReprC]
-#[repr(C)]
-#[derive(Debug, Clone)]
-pub struct TxOut {
-    /// The value of the output, in satoshis
-    pub value: u64,
-    /// The script which must satisfy for the output to be spent, as hex string
-    pub script_pubkey: char_p_boxed,
-}
-
-impl From<&bdk::bitcoin::TxOut> for TxOut {
-    fn from(to: &bdk::bitcoin::TxOut) -> Self {
-        TxOut {
-            value: to.value,
-            script_pubkey: char_p_boxed::try_from(to.script_pubkey.to_string()).unwrap(),
-        }
-    }
-}
-
-#[derive_ReprC]
-#[repr(C)]
-#[derive(Debug, Clone)]
-pub struct LocalUtxo {
-    /// Reference to a transaction output
-    pub outpoint: OutPoint,
-    /// Transaction output
-    pub txout: TxOut,
-    /// Type of keychain, as short 0 for "external" or 1 for "internal"
-    pub keychain: u16,
-}
-
-impl From<&bdk::LocalUtxo> for LocalUtxo {
-    fn from(lu: &bdk::LocalUtxo) -> Self {
-        LocalUtxo {
-            outpoint: OutPoint::from(&lu.outpoint),
-            txout: TxOut::from(&lu.txout),
-            keychain: lu.keychain as u16,
-        }
-    }
+#[ffi_export]
+fn free_vectxdetails_result(txdetails_result: FfiResult<repr_c::Vec<TransactionDetails>>) {
+    drop(txdetails_result)
 }
