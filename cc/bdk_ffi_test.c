@@ -152,6 +152,53 @@ int main (int argc, char const * const argv[])
         free_uint64_result(balance_result);
         free_wallet_result(wallet_result);
     }
+    
+    // test get transaction details
+    {
+        char const *desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)";
+        char const *change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)";
+    
+        BlockchainConfig_t *bc_config = new_electrum_config("ssl://electrum.blockstream.info:60002", NULL, 5, 30);
+        DatabaseConfig_t *db_config = new_memory_config();
+    
+        // new wallet
+        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,bc_config,db_config);
+        assert(wallet_result.err == FFI_ERROR_NONE);    
+        assert(wallet_result.ok != NULL);
+        
+        free_blockchain_config(bc_config);
+        free_database_config(db_config);
+        
+        OpaqueWallet_t *wallet = wallet_result.ok;
+        
+        // sync wallet
+        FfiResultVoid_t sync_result = sync_wallet(wallet);   
+        assert(sync_result.err == FFI_ERROR_NONE);    
+        free_void_result(sync_result);
+        
+        // list transactions
+        FfiResult_Vec_TransactionDetails_t txdetails_result = list_transactions(wallet);
+        assert(txdetails_result.ok.len > 0);
+        assert(txdetails_result.err == FFI_ERROR_NONE);
+        
+        TransactionDetails_t * txdetails_ptr = txdetails_result.ok.ptr;                       
+        for (int i = 0; i < txdetails_result.ok.len; i++) {            
+            //printf("%d: txid: %s\n", i, txdetails_ptr[i].txid);
+            assert(txdetails_ptr[i].txid != NULL);
+            //printf("%d: timestamp: %ld\n", i, txdetails_ptr[i].timestamp);
+            assert(txdetails_ptr[i].timestamp > 0);
+            //printf("%d: received: %ld\n", i, txdetails_ptr[i].received);
+            //printf("%d: sent: %ld\n", i, txdetails_ptr[i].sent);
+            assert(txdetails_ptr[i].received > 0 || txdetails_ptr[i].sent > 0);
+            //printf("%d: fees: %ld\n", i, txdetails_ptr[i].fees);
+            assert(txdetails_ptr[i].fees > 0);
+            //printf("%d: height: %d\n", i, txdetails_ptr[i].height);
+            assert(txdetails_ptr[i].height >= -1);
+        }
+        
+        free_vectxdetails_result(txdetails_result);          
+        free_wallet_result(wallet_result);
+    }
         
     return EXIT_SUCCESS;
 }

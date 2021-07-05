@@ -214,6 +214,49 @@ typedef struct {
 FfiResult_uint64_t balance (
     OpaqueWallet_t const * opaque_wallet);
 
+typedef struct {
+
+    char * txid;
+
+    uint64_t timestamp;
+
+    uint64_t received;
+
+    uint64_t sent;
+
+    uint64_t fees;
+
+    int32_t height;
+
+} TransactionDetails_t;
+
+/** \brief
+ *  Same as [`Vec<T>`][`rust::Vec`], but with guaranteed `#[repr(C)]` layout
+ */
+typedef struct {
+
+    TransactionDetails_t * ptr;
+
+    size_t len;
+
+    size_t cap;
+
+} Vec_TransactionDetails_t;
+
+typedef struct {
+
+    Vec_TransactionDetails_t ok;
+
+    FfiError_t err;
+
+} FfiResult_Vec_TransactionDetails_t;
+
+FfiResult_Vec_TransactionDetails_t list_transactions (
+    OpaqueWallet_t const * opaque_wallet);
+
+void free_vectxdetails_result (
+    FfiResult_Vec_TransactionDetails_t txdetails_result);
+
 BlockchainConfig_t * new_electrum_config (
     char const * url,
     char const * socks5,

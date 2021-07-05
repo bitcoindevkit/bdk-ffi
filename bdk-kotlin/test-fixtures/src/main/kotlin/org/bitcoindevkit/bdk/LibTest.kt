@@ -105,4 +105,26 @@ abstract class LibTest : LibBase() {
         //log.debug("balance from kotlin: $balance")
         assertTrue(balance > 0)
     }
+
+    @Test
+    fun walletTxDetails() {
+        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
+        wallet.sync()
+        val txDetails = wallet.listTransactionDetails()
+        assertTrue(txDetails.isNotEmpty())
+
+        txDetails.iterator().forEach {
+            //log.debug("txDetails.txid: ${it.txid}")
+            assertNotNull(it.txid)
+            //log.debug("txDetails.timestamp: ${it.timestamp}")
+            assertTrue(it.timestamp!! > 0)
+            //log.debug("txDetails.received: ${it.received}")
+            //log.debug("txDetails.sent: ${it.sent}")
+            assertTrue(it.received!! > 0 || it.sent!! > 0)
+            //log.debug("txDetails.fees: ${it.fees}")
+            assertTrue(it.fees!! > 0)
+            //log.debug("txDetails.fees: ${it.height}")
+            assertTrue(it.height!! >= -1)
+        }
+    }
 }

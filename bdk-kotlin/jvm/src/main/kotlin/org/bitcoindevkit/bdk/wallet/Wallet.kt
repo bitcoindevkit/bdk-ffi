@@ -48,4 +48,9 @@ class Wallet constructor(
         val longResult = UInt64Result(libJna.balance(wallet))
         return longResult.value()
     }
+    
+    fun listTransactionDetails(): Array<LibJna.TransactionDetails_t.ByReference> {
+        val vecTxDetailsResult = VecTxDetailsResult(libJna.list_transactions((wallet)))
+        return vecTxDetailsResult.value()
+    }
 }

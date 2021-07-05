@@ -12,8 +12,8 @@ class StringResult constructor(private val ffiResultCharPtrT: LibJna.FfiResult_c
     private val log: Logger = LoggerFactory.getLogger(StringResult::class.java)
 
     fun value(): String {
-        val err = ffiResultCharPtrT.err
-        val ok = ffiResultCharPtrT.ok
+        val err = ffiResultCharPtrT.err!!
+        val ok = ffiResultCharPtrT.ok!!
         when {
             err > 0 -> {
                 throw FfiException(err)

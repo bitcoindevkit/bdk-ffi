@@ -12,8 +12,8 @@ class UInt64Result constructor(private val ffiResultUint64T: LibJna.FfiResult_ui
     private val log: Logger = LoggerFactory.getLogger(UInt64Result::class.java)
 
     fun value(): Long {
-        val err = ffiResultUint64T.err
-        val ok = ffiResultUint64T.ok
+        val err = ffiResultUint64T.err!!
+        val ok = ffiResultUint64T.ok!!
         when {
             err > 0 -> {
                 throw FfiException(err)

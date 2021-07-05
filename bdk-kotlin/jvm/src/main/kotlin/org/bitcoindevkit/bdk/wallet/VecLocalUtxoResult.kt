@@ -12,8 +12,8 @@ class VecLocalUtxoResult(private val ffiResultVecLocalUtxoT: LibJna.FfiResultVec
     private val log: Logger = LoggerFactory.getLogger(VecLocalUtxoResult::class.java)
 
     fun value(): Array<LibJna.LocalUtxo_t.ByReference> {
-        val err = ffiResultVecLocalUtxoT.err
-        val ok = ffiResultVecLocalUtxoT.ok
+        val err = ffiResultVecLocalUtxoT.err!!
+        val ok = ffiResultVecLocalUtxoT.ok!!
         when {
             err > 0 -> {
                 throw FfiException(err)

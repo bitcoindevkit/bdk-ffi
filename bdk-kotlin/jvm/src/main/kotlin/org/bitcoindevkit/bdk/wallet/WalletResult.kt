@@ -12,14 +12,14 @@ class WalletResult constructor(private val ffiResultOpaqueWalletPtrT: LibJna.Ffi
     private val log: Logger = LoggerFactory.getLogger(WalletResult::class.java)
 
     fun value(): LibJna.OpaqueWallet_t {
-        val err = ffiResultOpaqueWalletPtrT.err
+        val err = ffiResultOpaqueWalletPtrT.err!!
         val ok = ffiResultOpaqueWalletPtrT.ok
         when {
             err > 0 -> {
                 throw FfiException(err)
             }
             else -> {
-                return ok
+                return ok!!
             }
         }
     }
