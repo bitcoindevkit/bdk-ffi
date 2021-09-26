@@ -13,27 +13,52 @@ pub struct TransactionDetails {
     // pub transaction: Option<Transaction>,
     /// Transaction id
     pub txid: char_p_boxed,
-    /// Timestamp
-    pub timestamp: u64,
     /// Received value (sats)
     pub received: u64,
     /// Sent value (sats)
     pub sent: u64,
-    /// Fee value (sats)
-    pub fees: u64,
-    /// Confirmed in block height, `None` means unconfirmed
-    pub height: i32,
+    /// Fee value (sats) if known, -1 if unknown, based on backend
+    pub fee: i64,
+    /// true if confirmed
+    pub is_confirmed: bool,
+    /// Confirmed in block height
+    pub confirmation_time: ConfirmationTime,
+    /// Whether the tx has been verified against the consensus rules
+    pub verified: bool,
+}
+
+#[derive_ReprC]
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub struct ConfirmationTime {
+    /// confirmation block height, 0 if is_confirmed is false
+    pub height: u32,
+    /// confirmation block timestamp, 0 if is_confirmed is false
+    pub timestamp: u64,
 }
 
 impl From<&bdk::TransactionDetails> for TransactionDetails {
     fn from(op: &bdk::TransactionDetails) -> Self {
+        let fee = op.fee.map(|f| i64::try_from(f).unwrap()).unwrap_or(-1);
+        let confirmation_time = op
+            .confirmation_time
+            .as_ref()
+            .map(|c| ConfirmationTime {
+                height: c.height,
+                timestamp: c.timestamp,
+            })
+            .unwrap_or(ConfirmationTime {
+                height: 0,
+                timestamp: 0,
+            });
         TransactionDetails {
             txid: char_p_boxed::try_from(op.txid.to_string()).unwrap(),
-            timestamp: op.timestamp,
             received: op.received,
             sent: op.sent,
-            fees: op.fees,
-            height: op.height.map(|h| h as i32).unwrap_or(-1),
+            fee,
+            is_confirmed: op.confirmation_time.is_some(),
+            confirmation_time,
+            verified: op.verified,
         }
     }
 }

@@ -1,5 +1,6 @@
 package org.bitcoindevkit.bdk
 
+import org.bitcoindevkit.bdk.wallet.Network
 import org.bitcoindevkit.bdk.wallet.Wallet
 import org.junit.Assert.*
 import org.junit.Test
@@ -19,8 +20,9 @@ abstract class LibTest : LibBase() {
         "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
     val change =
         "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)"
-
-    val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30)
+    val network = Network.Testnet
+    
+    val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30, 100)
     val databaseConfig = MemoryConfig()
 
     abstract fun getTestDataDir(): String
@@ -32,7 +34,7 @@ abstract class LibTest : LibBase() {
     @Test
     fun walletResultError() {
         val jnaException = assertThrows(FfiException::class.java) {
-            Wallet("bad", "bad", blockchainConfig, databaseConfig)
+            Wallet("bad", "bad", network, blockchainConfig, databaseConfig)
         }
         assertEquals(jnaException.err, FfiError.Descriptor)
     }
@@ -58,18 +60,18 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletSync() {
-        val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30)
+        val blockchainConfig = ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5, 30, 100)
         val testDataDir = getTestDataDir()
         // log.debug("testDataDir = $testDataDir")
         val databaseConfig = SledConfig(testDataDir, "steve-test")
-        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
+        val wallet = Wallet(desc, change, network, blockchainConfig, databaseConfig)
         wallet.sync()
         cleanupTestDataDir()
     }
 
     @Test
     fun walletNewAddress() {
-        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
+        val wallet = Wallet(desc, change, network, blockchainConfig, databaseConfig)
         val address = wallet.getAddress()
         assertNotNull(address)
         // log.debug("address created from kotlin: $address")
@@ -78,7 +80,7 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletUnspent() {
-        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
+        val wallet = Wallet(desc, change, network, blockchainConfig, databaseConfig)
         wallet.sync()
         val unspent = wallet.listUnspent()
         assertTrue(unspent.isNotEmpty())
@@ -99,7 +101,7 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletBalance() {
-        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
+        val wallet = Wallet(desc, change, network, blockchainConfig, databaseConfig)
         wallet.sync()
         val balance = wallet.balance()
         //log.debug("balance from kotlin: $balance")
@@ -108,7 +110,7 @@ abstract class LibTest : LibBase() {
 
     @Test
     fun walletTxDetails() {
-        val wallet = Wallet(desc, change, blockchainConfig, databaseConfig)
+        val wallet = Wallet(desc, change, network, blockchainConfig, databaseConfig)
         wallet.sync()
         val txDetails = wallet.listTransactionDetails()
         assertTrue(txDetails.isNotEmpty())
@@ -116,15 +118,18 @@ abstract class LibTest : LibBase() {
         txDetails.iterator().forEach {
             //log.debug("txDetails.txid: ${it.txid}")
             assertNotNull(it.txid)
-            //log.debug("txDetails.timestamp: ${it.timestamp}")
-            assertTrue(it.timestamp!! > 0)
             //log.debug("txDetails.received: ${it.received}")
             //log.debug("txDetails.sent: ${it.sent}")
             assertTrue(it.received!! > 0 || it.sent!! > 0)
-            //log.debug("txDetails.fees: ${it.fees}")
-            assertTrue(it.fees!! > 0)
-            //log.debug("txDetails.fees: ${it.height}")
-            assertTrue(it.height!! >= -1)
+            //log.debug("txDetails.fee: ${it.fee}")
+            assertTrue(it.fee!! > 0)
+            //log.debug("txDetails.is_confirmed: ${it.is_confirmed}")
+            assertTrue(it.is_confirmed!!)
+            assertNotNull(it.confirmation_time!!)
+            //log.debug("txDetails.confirmation_time.timestamp: ${it.confirmation_time!!.timestamp}")
+            assertTrue(it.confirmation_time!!.timestamp!! > 0)
+            //log.debug("txDetails.confirmation_time.height: ${it.confirmation_time!!.height}")
+            assertTrue(it.confirmation_time!!.height!! > 0)
         }
     }
 }

@@ -6,3 +6,4 @@ Cargo.lock
 wallet_db
 bdk_ffi_test
 local.properties
+*.log

@@ -17,9 +17,10 @@ class ElectrumConfig(
     url: String,
     socks5: String?,
     retry: Short,
-    timeout: Short
+    timeout: Short,
+    stopGap: Long,
 ) : BlockchainConfig() {
 
     private val log: Logger = LoggerFactory.getLogger(ElectrumConfig::class.java)
-    override val blockchainConfigT = libJna.new_electrum_config(url, socks5, retry, timeout)
+    override val blockchainConfigT = libJna.new_electrum_config(url, socks5, retry, timeout, stopGap)
 }

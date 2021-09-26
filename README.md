@@ -1,4 +1,16 @@
+Setup build environment
 
+1. Add Android rust targets
+
+```sh
+rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
+```
+
+2. Set ANDROID_NDK_HOME
+
+```sh
+export ANDROID_NDK_HOME=/home/<user>/Android/Sdk/ndk/<NDK version, ie. 21.4.7075529>
+```
 
 Adding new structs and functions
 
