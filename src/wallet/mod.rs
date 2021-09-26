@@ -2,7 +2,6 @@ use std::convert::TryFrom;
 use std::ffi::CString;
 
 use ::safer_ffi::prelude::*;
-use bdk::bitcoin::network::constants::Network::Testnet;
 use bdk::blockchain::{log_progress, AnyBlockchain, AnyBlockchainConfig, ConfigurableBlockchain};
 use bdk::database::{AnyDatabase, AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::AddressIndex::New;
@@ -16,6 +15,8 @@ use database::DatabaseConfig;
 use crate::error::FfiError;
 use crate::types::{FfiResult, FfiResultVoid};
 use crate::wallet::transaction::{LocalUtxo, TransactionDetails};
+use bdk::bitcoin::Network;
+use std::str::FromStr;
 
 mod blockchain;
 mod database;
@@ -33,14 +34,16 @@ pub struct OpaqueWallet {
 fn new_wallet_result(
     descriptor: char_p_ref,
     change_descriptor: Option<char_p_ref>,
+    network: char_p_ref,
     blockchain_config: &BlockchainConfig,
     database_config: &DatabaseConfig,
 ) -> FfiResult<Option<Box<OpaqueWallet>>> {
     let descriptor = descriptor.to_string();
     let change_descriptor = change_descriptor.map(|s| s.to_string());
+    let net = Network::from_str(network.to_str()).expect("Network name");
     let bc_config = &blockchain_config.raw;
     let db_config = &database_config.raw;
-    let wallet_result = new_wallet(descriptor, change_descriptor, bc_config, db_config);
+    let wallet_result = new_wallet(descriptor, change_descriptor, net, bc_config, db_config);
 
     match wallet_result {
         Ok(w) => FfiResult {
@@ -57,11 +60,10 @@ fn new_wallet_result(
 fn new_wallet(
     descriptor: String,
     change_descriptor: Option<String>,
+    network: Network,
     blockchain_config: &AnyBlockchainConfig,
     database_config: &AnyDatabaseConfig,
 ) -> Result<Wallet<AnyBlockchain, AnyDatabase>, Error> {
-    let network = Testnet;
-
     let client = AnyBlockchain::from_config(blockchain_config)?;
     let database = AnyDatabase::from_config(database_config)?;
 

@@ -16,6 +16,7 @@ fn new_electrum_config(
     socks5: Option<char_p_ref>,
     retry: i16,
     timeout: i16,
+    stop_gap: usize,
 ) -> Box<BlockchainConfig> {
     let url = url.to_string();
     let socks5 = socks5.map(|s| s.to_string());
@@ -27,6 +28,7 @@ fn new_electrum_config(
         socks5,
         retry,
         timeout,
+        stop_gap,
     });
     Box::new(BlockchainConfig {
         raw: electrum_config,
