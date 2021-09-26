@@ -40,10 +40,6 @@ typedef uint16_t FfiError_t; enum
     /** . */
     FFI_ERROR_SCRIPT_DOESNT_HAVE_ADDRESS_FORM,
     /** . */
-    FFI_ERROR_SINGLE_RECIPIENT_MULTIPLE_OUTPUTS,
-    /** . */
-    FFI_ERROR_SINGLE_RECIPIENT_NO_INPUTS,
-    /** . */
     FFI_ERROR_NO_RECIPIENTS,
     /** . */
     FFI_ERROR_NO_UTXOS_SELECTED,
@@ -68,6 +64,8 @@ typedef uint16_t FfiError_t; enum
     /** . */
     FFI_ERROR_FEE_TOO_LOW,
     /** . */
+    FFI_ERROR_FEE_RATE_UNAVAILABLE,
+    /** . */
     FFI_ERROR_MISSING_KEY_ORIGIN,
     /** . */
     FFI_ERROR_KEY,
@@ -79,6 +77,8 @@ typedef uint16_t FfiError_t; enum
     FFI_ERROR_INVALID_POLICY_PATH_ERROR,
     /** . */
     FFI_ERROR_SIGNER,
+    /** . */
+    FFI_ERROR_INVALID_NETWORK,
     /** . */
     FFI_ERROR_INVALID_PROGRESS_VALUE,
     /** . */
@@ -104,6 +104,8 @@ typedef uint16_t FfiError_t; enum
     /** . */
     FFI_ERROR_PSBT,
     /** . */
+    FFI_ERROR_PSBT_PARSE,
+    /** . */
     FFI_ERROR_ELECTRUM,
     /** . */
     FFI_ERROR_SLED,
@@ -124,6 +126,7 @@ typedef struct {
 FfiResult_OpaqueWallet_ptr_t new_wallet_result (
     char const * descriptor,
     char const * change_descriptor,
+    char const * network,
     BlockchainConfig_t const * blockchain_config,
     DatabaseConfig_t const * database_config);
 
@@ -214,19 +217,32 @@ typedef struct {
 FfiResult_uint64_t balance (
     OpaqueWallet_t const * opaque_wallet);
 
+
+#include <stdbool.h>
+
+typedef struct {
+
+    uint32_t height;
+
+    uint64_t timestamp;
+
+} ConfirmationTime_t;
+
 typedef struct {
 
     char * txid;
-
-    uint64_t timestamp;
 
     uint64_t received;
 
     uint64_t sent;
 
-    uint64_t fees;
+    int64_t fee;
 
-    int32_t height;
+    bool is_confirmed;
+
+    ConfirmationTime_t confirmation_time;
+
+    bool verified;
 
 } TransactionDetails_t;
 
@@ -261,7 +277,8 @@ BlockchainConfig_t * new_electrum_config (
     char const * url,
     char const * socks5,
     int16_t retry,
-    int16_t timeout);
+    int16_t timeout,
+    size_t stop_gap);
 
 void free_blockchain_config (
     BlockchainConfig_t * blockchain_config);

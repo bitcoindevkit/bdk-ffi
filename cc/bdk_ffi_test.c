@@ -6,14 +6,21 @@
 
 int main (int argc, char const * const argv[])
 {   
+
+    // shared consts
+    char const *desc = "wpkh([bf988dd3/84'/1'/0']tpubDD7bHVspyCSvvU8qEycydF664NAX6EAPjJ77j9E614GU2zVdXgnZZo6JJjKbDT6fUn8owMN6TCP9rZMznsNEhJbpkEwp6fAyyoSqy3DH2Qj/0/*)";
+    char const *change = "wpkh([bf988dd3/84'/1'/0']tpubDD7bHVspyCSvvU8qEycydF664NAX6EAPjJ77j9E614GU2zVdXgnZZo6JJjKbDT6fUn8owMN6TCP9rZMznsNEhJbpkEwp6fAyyoSqy3DH2Qj/1/*)";
+    char const *net = "testnet";
+    char const *blocks = "ssl://electrum.blockstream.info:60002";
+        
     // test new wallet error
     { 
-        BlockchainConfig_t *bc_config = new_electrum_config("ssl://electrum.blockstream.info:60002", NULL, 5, 30);
+        BlockchainConfig_t *bc_config = new_electrum_config(blocks, NULL, 5, 30, 100);
         //DatabaseConfig_t *db_config = new_sled_config("/home/steve/.bdk", "test_wallet");
         DatabaseConfig_t *db_config = new_memory_config();
         
         // new wallet with bad descriptor 
-        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result("bad","bad",bc_config,db_config);  
+        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result("bad","bad",net,bc_config,db_config);  
         assert(wallet_result.err == FFI_ERROR_DESCRIPTOR);
         assert(wallet_result.ok == NULL);
         
@@ -25,14 +32,11 @@ int main (int argc, char const * const argv[])
     
     // test new wallet
     {
-        char const *desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)";
-        char const *change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)";
-    
-        BlockchainConfig_t *bc_config = new_electrum_config("ssl://electrum.blockstream.info:60002", NULL, 5, 30);
+        BlockchainConfig_t *bc_config = new_electrum_config(blocks, NULL, 5, 30, 100);
         DatabaseConfig_t *db_config = new_memory_config();
     
         // new wallet
-        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,bc_config,db_config);
+        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,net,bc_config,db_config);
         // printf("wallet_result.err = %d\n", wallet_result.err));
         assert(wallet_result.err == FFI_ERROR_NONE);    
         assert(wallet_result.ok != NULL);
@@ -51,15 +55,15 @@ int main (int argc, char const * const argv[])
         FfiResult_char_ptr_t address1_result = new_address(wallet);
         assert(address1_result.ok != NULL);
         assert(address1_result.err == FFI_ERROR_NONE);
-        // printf("address1 = %s\n", *address1_result.ok);
-        assert( 0 == strcmp(address1_result.ok,"tb1qgkhp034fyxeta00h0nne9tzfm0vsxq4prduzxp"));
+        //printf("address1 = %s\n", address1_result.ok);
+        assert( 0 == strcmp(address1_result.ok,"tb1qh4ajvhz9nd76tqddnl99l89hx4dat33hrjauzw"));
         free_string_result(address1_result);
         
         FfiResult_char_ptr_t address2_result = new_address(wallet);
         assert(address2_result.ok != NULL);
         assert(address2_result.err == FFI_ERROR_NONE);
-        // printf("address2 = %s\n", *address2_result.ok);
-        assert( 0 == strcmp(address2_result.ok,"tb1qd6u9q327sru2ljvwzdtfrdg36sapax7udz97wf"));
+        //printf("address2 = %s\n", address2_result.ok);
+        assert( 0 == strcmp(address2_result.ok,"tb1qr7pu0pech43hcjrc4pzxcen0qkslj7xk7s5w3m"));
         free_string_result(address2_result);
         
         // free_wallet
@@ -73,15 +77,12 @@ int main (int argc, char const * const argv[])
     }
     
     // test get unspent utxos
-    {
-        char const *desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)";
-        char const *change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)";
-    
-        BlockchainConfig_t *bc_config = new_electrum_config("ssl://electrum.blockstream.info:60002", NULL, 5, 30);
+    {    
+        BlockchainConfig_t *bc_config = new_electrum_config(blocks, NULL, 5, 30, 100);
         DatabaseConfig_t *db_config = new_memory_config();
     
         // new wallet
-        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,bc_config,db_config);
+        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,net,bc_config,db_config);
         assert(wallet_result.err == FFI_ERROR_NONE);    
         assert(wallet_result.ok != NULL);
         
@@ -97,7 +98,7 @@ int main (int argc, char const * const argv[])
         
         // list unspent
         FfiResult_Vec_LocalUtxo_t unspent_result = list_unspent(wallet);
-        assert(unspent_result.ok.len == 7);
+        assert(unspent_result.ok.len == 1);
         assert(unspent_result.err == FFI_ERROR_NONE);
         
         LocalUtxo_t * unspent_ptr = unspent_result.ok.ptr;                       
@@ -119,15 +120,12 @@ int main (int argc, char const * const argv[])
     }
     
     // test balance 
-    {
-        char const *desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)";
-        char const *change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)";
-    
-        BlockchainConfig_t *bc_config = new_electrum_config("ssl://electrum.blockstream.info:60002", NULL, 5, 30);
+    {        
+        BlockchainConfig_t *bc_config = new_electrum_config(blocks, NULL, 5, 30, 100);
         DatabaseConfig_t *db_config = new_memory_config();
     
         // new wallet
-        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,bc_config,db_config);
+        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,net,bc_config,db_config);
         assert(wallet_result.err == FFI_ERROR_NONE);    
         assert(wallet_result.ok != NULL);
         
@@ -155,14 +153,11 @@ int main (int argc, char const * const argv[])
     
     // test get transaction details
     {
-        char const *desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)";
-        char const *change = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)";
-    
-        BlockchainConfig_t *bc_config = new_electrum_config("ssl://electrum.blockstream.info:60002", NULL, 5, 30);
+        BlockchainConfig_t *bc_config = new_electrum_config(blocks, NULL, 5, 30, 100);
         DatabaseConfig_t *db_config = new_memory_config();
     
         // new wallet
-        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,bc_config,db_config);
+        FfiResult_OpaqueWallet_ptr_t wallet_result = new_wallet_result(desc,change,net,bc_config,db_config);
         assert(wallet_result.err == FFI_ERROR_NONE);    
         assert(wallet_result.ok != NULL);
         
@@ -186,14 +181,14 @@ int main (int argc, char const * const argv[])
             //printf("%d: txid: %s\n", i, txdetails_ptr[i].txid);
             assert(txdetails_ptr[i].txid != NULL);
             //printf("%d: timestamp: %ld\n", i, txdetails_ptr[i].timestamp);
-            assert(txdetails_ptr[i].timestamp > 0);
+            assert(txdetails_ptr[i].is_confirmed);
             //printf("%d: received: %ld\n", i, txdetails_ptr[i].received);
             //printf("%d: sent: %ld\n", i, txdetails_ptr[i].sent);
             assert(txdetails_ptr[i].received > 0 || txdetails_ptr[i].sent > 0);
             //printf("%d: fees: %ld\n", i, txdetails_ptr[i].fees);
-            assert(txdetails_ptr[i].fees > 0);
+            assert(txdetails_ptr[i].fee > 0);
             //printf("%d: height: %d\n", i, txdetails_ptr[i].height);
-            assert(txdetails_ptr[i].height >= -1);
+            assert(txdetails_ptr[i].confirmation_time.height > 0);
         }
         
         free_vectxdetails_result(txdetails_result);          

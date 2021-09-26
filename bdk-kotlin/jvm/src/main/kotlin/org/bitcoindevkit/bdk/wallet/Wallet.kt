@@ -10,9 +10,17 @@ import org.bitcoindevkit.bdk.types.VoidResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+enum class Network {
+    Bitcoin,
+    Testnet,
+    Signet,
+    Regtest,
+}
+
 class Wallet constructor(
     descriptor: String,
     changeDescriptor: String?,
+    network: Network,
     blockchainConfig: BlockchainConfig,
     databaseConfig: DatabaseConfig,
 ) : LibBase() {
@@ -23,6 +31,7 @@ class Wallet constructor(
         libJna.new_wallet_result(
             descriptor,
             changeDescriptor,
+            network.toString().lowercase(),
             blockchainConfig.blockchainConfigT,
             databaseConfig.databaseConfigT
         )

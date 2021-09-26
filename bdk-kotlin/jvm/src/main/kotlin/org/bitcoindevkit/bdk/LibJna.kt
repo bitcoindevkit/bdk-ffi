@@ -61,12 +61,14 @@ interface LibJna : Library {
     //    char const * url,
     //    char const * socks5,
     //    int16_t retry,
-    //    int16_t timeout);
+    //    int16_t timeout,
+    //    size_t stop_gap);
     fun new_electrum_config(
         url: String,
         socks5: String?,
         retry: Short,
-        timeout: Short
+        timeout: Short,
+        stop_gap: Long,
     ): BlockchainConfig_t
 
     // void free_blockchain_config (
@@ -108,11 +110,13 @@ interface LibJna : Library {
     // FfiResult_OpaqueWallet_ptr_t new_wallet_result (
     //    char const * descriptor,
     //    char const * change_descriptor,
+    //    char const * network,
     //    BlockchainConfig_t const * blockchain_config,
     //    DatabaseConfig_t const * database_config);
     fun new_wallet_result(
         descriptor: String,
         changeDescriptor: String?,
+        network: String,
         blockchainConfig: BlockchainConfig_t,
         databaseConfig: DatabaseConfig_t,
     ): FfiResult_OpaqueWallet_ptr_t.ByValue
@@ -288,21 +292,33 @@ interface LibJna : Library {
     // void free_database_config (
     //    DatabaseConfig_t * database_config);
     fun free_database_config(database_config: DatabaseConfig_t)
-    
+
     // typedef struct {
-    //
-    //    char * txid;
-    //
+    //    uint32_t height;
     //    uint64_t timestamp;
-    //
+    // } ConfirmationTime_t;
+    open class ConfirmationTime_t : Structure() {
+        
+        class ByValue : ConfirmationTime_t(), Structure.ByValue
+        class ByReference : ConfirmationTime_t(), Structure.ByReference
+        
+        @JvmField
+        var height: Int? = null
+        
+        @JvmField
+        var timestamp: Long? = null
+
+        override fun getFieldOrder() = listOf("height", "timestamp")
+    }
+
+    // typedef struct {
+    //    char * txid;
     //    uint64_t received;
-    //
     //    uint64_t sent;
-    //
-    //    uint64_t fees;
-    //
-    //    int32_t height;
-    //
+    //    int64_t fee;
+    //    bool is_confirmed;
+    //    ConfirmationTime_t confirmation_time;
+    //    bool verified;
     // } TransactionDetails_t;
     open class TransactionDetails_t : Structure() {
 
@@ -313,21 +329,24 @@ interface LibJna : Library {
         var txid: String? = null
 
         @JvmField
-        var timestamp: Long? = null
-
-        @JvmField
         var received: Long? = null
 
         @JvmField
         var sent: Long? = null
 
         @JvmField
-        var fees: Long? = null
+        var fee: Long? = null
+        
+        @JvmField
+        var is_confirmed: Boolean? = null
 
         @JvmField
-        var height: Int? = null
+        var confirmation_time: ConfirmationTime_t? = null
+
+        @JvmField
+        var verified: Boolean? = null
         
-        override fun getFieldOrder() = listOf("txid", "timestamp", "received", "sent", "fees", "height")
+        override fun getFieldOrder() = listOf("txid", "received", "sent", "fee", "is_confirmed", "confirmation_time", "verified")
     }
     
     // typedef struct {
