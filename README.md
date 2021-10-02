@@ -1,4 +1,4 @@
-Setup build environment
+Setup Android build environment
 
 1. Add Android rust targets
 
@@ -11,6 +11,10 @@ rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu x86_64-linux-andr
 ```sh
 export ANDROID_NDK_HOME=/home/<user>/Android/Sdk/ndk/<NDK version, ie. 21.4.7075529>
 ```
+
+Setup Swift build environment
+
+1. Install Swift, see ["Download Swift"](https://swift.org/download/) page
 
 Adding new structs and functions
 
