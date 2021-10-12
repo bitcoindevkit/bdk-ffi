@@ -3,7 +3,7 @@ UniFFI
 
 1. cargo install uniffi_bindgen 
 2. cargo build
-3. uniffi-bindgen generate --no-format --out-dir kotlin src/bdk.udl --language kotlin
+3. uniffi-bindgen generate --no-format --out-dir targets/kotlin/src/main/kotlin src/bdk.udl --language kotlin
 
 Setup Android build environment
 
