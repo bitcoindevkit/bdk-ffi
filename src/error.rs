@@ -1,55 +1,92 @@
-use ::safer_ffi::prelude::*;
 use bdk::Error;
+use thiserror::Error;
 
-#[derive_ReprC]
-#[repr(u16)]
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum FfiError {
+    #[error("data store disconnected")]
     None,
+    #[error("data store disconnected")]
     InvalidU32Bytes,
+    #[error("data store disconnected")]
     Generic,
+    #[error("data store disconnected")]
     ScriptDoesntHaveAddressForm,
+    #[error("data store disconnected")]
     NoRecipients,
+    #[error("data store disconnected")]
     NoUtxosSelected,
+    #[error("data store disconnected")]
     OutputBelowDustLimit,
+    #[error("data store disconnected")]
     InsufficientFunds,
+    #[error("data store disconnected")]
     BnBTotalTriesExceeded,
+    #[error("data store disconnected")]
     BnBNoExactMatch,
+    #[error("data store disconnected")]
     UnknownUtxo,
+    #[error("data store disconnected")]
     TransactionNotFound,
+    #[error("data store disconnected")]
     TransactionConfirmed,
+    #[error("data store disconnected")]
     IrreplaceableTransaction,
+    #[error("data store disconnected")]
     FeeRateTooLow,
+    #[error("data store disconnected")]
     FeeTooLow,
+    #[error("data store disconnected")]
     FeeRateUnavailable,
+    #[error("data store disconnected")]
     MissingKeyOrigin,
+    #[error("data store disconnected")]
     Key,
+    #[error("data store disconnected")]
     ChecksumMismatch,
+    #[error("data store disconnected")]
     SpendingPolicyRequired,
+    #[error("data store disconnected")]
     InvalidPolicyPathError,
+    #[error("data store disconnected")]
     Signer,
+    #[error("data store disconnected")]
     InvalidNetwork,
+    #[error("data store disconnected")]
     InvalidProgressValue,
+    #[error("data store disconnected")]
     ProgressUpdateError,
+    #[error("data store disconnected")]
     InvalidOutpoint,
+    #[error("data store disconnected")]
     Descriptor,
+    #[error("data store disconnected")]
     AddressValidator,
+    #[error("data store disconnected")]
     Encode,
+    #[error("data store disconnected")]
     Miniscript,
+    #[error("data store disconnected")]
     Bip32,
+    #[error("data store disconnected")]
     Secp256k1,
+    #[error("data store disconnected")]
     Json,
+    #[error("data store disconnected")]
     Hex,
+    #[error("data store disconnected")]
     Psbt,
+    #[error("data store disconnected")]
     PsbtParse,
+    #[error("data store disconnected")]
     Electrum,
     // Esplora,
     // CompactFilters,
+    #[error("data store disconnected")]
     Sled,
 }
 
-impl From<&bdk::Error> for FfiError {
-    fn from(error: &bdk::Error) -> Self {
+impl From<bdk::Error> for FfiError {
+    fn from(error: bdk::Error) -> Self {
         match error {
             Error::InvalidU32Bytes(_) => FfiError::InvalidU32Bytes,
             Error::Generic(_) => FfiError::Generic,

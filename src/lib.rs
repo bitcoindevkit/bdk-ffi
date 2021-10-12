@@ -1,15 +1,37 @@
-#![deny(unsafe_code)] /* No `unsafe` needed! */
+use bdk::Wallet;
+use bdk::database::MemoryDatabase;
+use bdk::bitcoin::Network;
+// use crate::error::FfiError;
+use std::sync::RwLock;
+use std::vec::Vec;
 
-mod error;
-mod types;
-mod wallet;
+//mod error;
+//mod types;
+//mod wallet;
 
-/// The following test function is necessary for the header generation.
-#[::safer_ffi::cfg_headers]
-#[test]
-fn generate_headers() -> ::std::io::Result<()> {
-    ::safer_ffi::headers::builder()
-        .with_guard("__RUST_BDK_FFI__")
-        .to_file("cc/bdk_ffi.h")?
-        .generate()
+uniffi_macros::include_scaffolding!("bdk");
+
+struct OfflineWallet {
+    wallet: Wallet<(), MemoryDatabase>,
+    //wallet: RwLock<Vec<String>>
 }
+
+impl OfflineWallet {
+    fn new(descriptor: String) -> Self {
+        let wallet = Wallet::new_offline(
+            &descriptor,
+            None,
+            Network::Regtest,
+            MemoryDatabase::new(),
+        ).unwrap();
+
+        OfflineWallet {
+            wallet
+        }
+
+//        OfflineWallet {
+//            wallet: RwLock::new(Vec::new())
+//        }
+    }
+}
+
