@@ -1,16 +1,32 @@
+buildscript {
+    ext.kotlin_version = '1.5.10'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
 plugins {
-    id 'org.jetbrains.kotlin.jvm'
+    id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
     id 'java-library'
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
 
 dependencies {
     implementation platform('org.jetbrains.kotlin:kotlin-bom')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    // implementation "net.java.dev.jna:jna:5.8.0"
-    // implementation(project(':jvm'))
+    implementation "net.java.dev.jna:jna:5.8.0"
     implementation "junit:junit:4.13.2"
-    //implementation "org.mockito.kotlin:mockito-kotlin:3.2.0"
-    // api "org.slf4j:slf4j-api:1.7.30"
 }
 
 java {

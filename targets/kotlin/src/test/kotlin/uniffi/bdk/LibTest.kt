@@ -3,8 +3,6 @@ package uniffi.bdk
 import uniffi.bdk.OfflineWallet
 import org.junit.Assert.*
 import org.junit.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.io.File
 
 /**
@@ -19,6 +17,7 @@ class LibTest {
     fun walletNewAddress() {
         val wallet = OfflineWallet(desc)
         val address = wallet.getNewAddress()
+        println("address:" + address)
         assertNotNull(address)
         // log.debug("address created from kotlin: $address")
         assertEquals(address, "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e")
