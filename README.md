@@ -1,3 +1,10 @@
+
+UniFFI
+
+1. cargo install uniffi_bindgen 
+2. cargo build
+3. uniffi-bindgen generate --no-format --out-dir kotlin src/bdk.udl --language kotlin
+
 Setup Android build environment
 
 1. Add Android rust targets

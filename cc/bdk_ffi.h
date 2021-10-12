@@ -14,11 +14,16 @@
 extern "C" {
 #endif
 
-typedef struct BlockchainConfig BlockchainConfig_t;
-
 typedef struct DatabaseConfig DatabaseConfig_t;
 
-typedef struct OpaqueWallet OpaqueWallet_t;
+DatabaseConfig_t * new_memory_config (void);
+
+DatabaseConfig_t * new_sled_config (
+    char const * path,
+    char const * tree_name);
+
+void free_database_config (
+    DatabaseConfig_t * database_config);
 
 
 #include <stddef.h>
@@ -117,6 +122,47 @@ FfiError_t
 
 typedef struct {
 
+    char * ok;
+
+    FfiError_t err;
+
+} FfiResult_char_ptr_t;
+
+void free_string_result (
+    FfiResult_char_ptr_t string_result);
+
+typedef struct {
+
+    FfiError_t err;
+
+} FfiResultVoid_t;
+
+void free_void_result (
+    FfiResultVoid_t void_result);
+
+typedef struct {
+
+    uint64_t ok;
+
+    FfiError_t err;
+
+} FfiResult_uint64_t;
+
+void free_uint64_result (
+    FfiResult_uint64_t void_result);
+
+/** \brief
+ *  Free a Rust-allocated string
+ */
+void free_string (
+    char * string);
+
+typedef struct BlockchainConfig BlockchainConfig_t;
+
+typedef struct OpaqueWallet OpaqueWallet_t;
+
+typedef struct {
+
     OpaqueWallet_t * ok;
 
     FfiError_t err;
@@ -133,22 +179,8 @@ FfiResult_OpaqueWallet_ptr_t new_wallet_result (
 void free_wallet_result (
     FfiResult_OpaqueWallet_ptr_t wallet_result);
 
-typedef struct {
-
-    FfiError_t err;
-
-} FfiResultVoid_t;
-
 FfiResultVoid_t sync_wallet (
     OpaqueWallet_t const * opaque_wallet);
-
-typedef struct {
-
-    char * ok;
-
-    FfiError_t err;
-
-} FfiResult_char_ptr_t;
 
 FfiResult_char_ptr_t new_address (
     OpaqueWallet_t const * opaque_wallet);
@@ -205,14 +237,6 @@ FfiResult_Vec_LocalUtxo_t list_unspent (
 
 void free_veclocalutxo_result (
     FfiResult_Vec_LocalUtxo_t unspent_result);
-
-typedef struct {
-
-    uint64_t ok;
-
-    FfiError_t err;
-
-} FfiResult_uint64_t;
 
 FfiResult_uint64_t balance (
     OpaqueWallet_t const * opaque_wallet);
@@ -282,30 +306,6 @@ BlockchainConfig_t * new_electrum_config (
 
 void free_blockchain_config (
     BlockchainConfig_t * blockchain_config);
-
-void free_string_result (
-    FfiResult_char_ptr_t string_result);
-
-void free_void_result (
-    FfiResultVoid_t void_result);
-
-void free_uint64_result (
-    FfiResult_uint64_t void_result);
-
-/** \brief
- *  Free a Rust-allocated string
- */
-void free_string (
-    char * string);
-
-DatabaseConfig_t * new_memory_config (void);
-
-DatabaseConfig_t * new_sled_config (
-    char const * path,
-    char const * tree_name);
-
-void free_database_config (
-    DatabaseConfig_t * database_config);
 
 
 #ifdef __cplusplus

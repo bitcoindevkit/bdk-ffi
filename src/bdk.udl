@@ -1,0 +1,7 @@
+namespace bdk {
+
+};
+
+interface OfflineWallet {
+    constructor(string descriptor);
+};
