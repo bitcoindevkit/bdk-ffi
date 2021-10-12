@@ -3,9 +3,9 @@ UniFFI
 
 1. cargo install uniffi_bindgen 
 2. cargo build
-3. uniffi-bindgen generate --no-format --out-dir targets/kotlin/src/main/kotlin src/bdk.udl --language kotlin
-4. cp target/debug/libuniffi_bdk.dylib targets/kotlin/src/main/resources/darwin-x86-64
-5. gradle build -Djna.debug_load=true -Djna.debug_load.jna
+3. uniffi-bindgen generate --no-format --out-dir bindings/bdk-kotlin/src/main/kotlin src/bdk.udl --language kotlin
+4. cp target/debug/libuniffi_bdk.dylib bindings/bdk-kotlin/src/main/resources/darwin-x86-64
+5. cd bindings/bdk-kotlin; gradle build -Djna.debug_load=true -Djna.debug_load.jna
 
 
 Setup Android build environment
