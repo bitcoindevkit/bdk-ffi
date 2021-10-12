@@ -1,5 +1,5 @@
 [package]
-name = "bdk-ffi"
+name = "uniffi_bdk"
 version = "0.1.0"
 authors = ["Steve Myers <steve@notmandatory.org>"]
 edition = "2018"
