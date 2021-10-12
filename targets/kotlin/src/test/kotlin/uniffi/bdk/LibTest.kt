@@ -20,6 +20,6 @@ class LibTest {
         println("address:" + address)
         assertNotNull(address)
         // log.debug("address created from kotlin: $address")
-        assertEquals(address, "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e")
+        assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
     }
 }
