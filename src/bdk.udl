@@ -4,4 +4,5 @@ namespace bdk {
 
 interface OfflineWallet {
     constructor(string descriptor);
+    string get_new_address();
 };

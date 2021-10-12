@@ -1,14 +1,13 @@
 use bdk::Wallet;
+use bdk::wallet::AddressIndex;
 use bdk::database::MemoryDatabase;
 use bdk::bitcoin::Network;
 // use crate::error::FfiError;
 use std::sync::{RwLock, Mutex};
 use std::vec::Vec;
-
 use bdk::database::BatchDatabase;
 use bdk::sled;
 use bdk::sled::Tree;
-
 //mod error;
 //mod types;
 //mod wallet;
@@ -39,6 +38,17 @@ impl OfflineWallet {
 //        OfflineWallet {
 //            wallet: RwLock::new(Vec::new())
 //        }
+    }
+
+    fn get_new_address(&self) -> String {
+        self
+            .wallet
+            .lock()
+            .unwrap()
+            .get_address(AddressIndex::New)
+            .unwrap()
+            .address
+            .to_string()
     }
 }
 
