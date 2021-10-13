@@ -1,44 +1,44 @@
+# BDK UniFFI Language Bindings
 
-UniFFI
+## Setup Android build environment
 
-1. cargo install uniffi_bindgen 
-2. cargo build
-3. uniffi-bindgen generate --no-format --out-dir bindings/bdk-kotlin/src/main/kotlin src/bdk.udl --language kotlin
-4. cp target/debug/libuniffi_bdk.dylib bindings/bdk-kotlin/src/main/resources/darwin-x86-64
-5. cd bindings/bdk-kotlin; gradle build -Djna.debug_load=true -Djna.debug_load.jna
+   1. Add Android rust targets
 
+   ```sh
+   rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
+   ```
 
-Setup Android build environment
+   2. Set ANDROID_NDK_HOME
+   
+   ```sh
+   export ANDROID_NDK_HOME=/home/<user>/Android/Sdk/ndk/<NDK version, ie. 21.4.7075529>
+   ```
 
-1. Add Android rust targets
+## Setup Swift build environment
 
-```sh
-rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
-```
+    1. install Swift, see ["Download Swift"](https://swift.org/download/) page  
+       (or on Mac OSX install the latest Xcode)
 
-2. Set ANDROID_NDK_HOME
+## Setup UniFFI
 
-```sh
-export ANDROID_NDK_HOME=/home/<user>/Android/Sdk/ndk/<NDK version, ie. 21.4.7075529>
-```
+    1. `cargo install uniffi_bindgen`
 
-Setup Swift build environment
+## Adding new structs and functions
 
-1. Install Swift, see ["Download Swift"](https://swift.org/download/) page
+See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
 
-Adding new structs and functions
+### For pass by value objects
 
-1. Create C safe Rust structs and related functions using safer-ffi
+   1. create new rust struct with only fields that are supported UniFFI types
+   2. update mapping `bdk.udl` file with new `dictionary`
 
-2. Test generated library and `bdk_ffi.h` file with c language tests in `cc/bdk_ffi_test.c`
+### For pass by reference values 
 
-3. Use `build.sh` and `test.sh` to build c test program and verify functionality and 
-   memory de-allocation via `valgrind` 
+   1. create wrapper rust struct/impl with only fields that are `Sync + Send`
+   2. update mapping `bdk.udl` file with new `interface`
 
-4. Update the kotlin native interface LibJna.kt in the `bdk-kotlin` `jvm` module to match `bdk_ffi.h`
+### Build and test
 
-5. Create kotlin wrapper classes and interfaces as needed
-
-6. Add tests to `bdk-kotlin` `test-fixtures` module 
-
-7. Use `build.sh` and `test.sh` to build and test `bdk-kotlin` `jvm` and `android` modules
+   1. Use `build.sh` script (TODO do it all in build.rs instead) 
+   2. Create tests in `bindings/bdk-kotlin` and/or `bindings/bdk-swift`
+   3. Use `test.sh` to run all bindings tests
