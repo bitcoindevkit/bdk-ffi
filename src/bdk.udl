@@ -44,8 +44,19 @@ enum BdkError {
   "Sled",
 };
 
+dictionary SledDbConfiguration {
+  string path;
+  string tree_name;
+};
+
+[Enum]
+interface DatabaseConfig {
+  Memory(string junk);
+  Sled(SledDbConfiguration configuration);
+};
+
 interface OfflineWallet {
     [Throws=BdkError]
-    constructor(string descriptor);
+    constructor(string descriptor, DatabaseConfig database_config);
     string get_new_address();
 };

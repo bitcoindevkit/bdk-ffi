@@ -44,15 +44,15 @@ open class RustBuffer : Structure() {
 
     companion object {
         internal fun alloc(size: Int = 0) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_a71d_rustbuffer_alloc(size, status)
+            _UniFFILib.INSTANCE.ffi_bdk_f91_rustbuffer_alloc(size, status)
         }
 
         internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_a71d_rustbuffer_free(buf, status)
+            _UniFFILib.INSTANCE.ffi_bdk_f91_rustbuffer_free(buf, status)
         }
 
         internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_a71d_rustbuffer_reserve(buf, additional, status)
+            _UniFFILib.INSTANCE.ffi_bdk_f91_rustbuffer_reserve(buf, additional, status)
         }
     }
 
@@ -256,6 +256,18 @@ internal fun String.write(buf: RustBufferBuilder) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 @Synchronized
 fun findLibraryName(componentName: String): String {
     val libOverride = System.getProperty("uniffi.component.${componentName}.libraryOverride")
@@ -283,31 +295,31 @@ internal interface _UniFFILib : Library {
         }
     }
 
-    fun ffi_bdk_a71d_OfflineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_f91_OfflineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_a71d_OfflineWallet_new(descriptor: RustBuffer.ByValue,
+    fun bdk_f91_OfflineWallet_new(descriptor: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_a71d_OfflineWallet_get_new_address(ptr: Pointer,
+    fun bdk_f91_OfflineWallet_get_new_address(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_a71d_rustbuffer_alloc(size: Int,
+    fun ffi_bdk_f91_rustbuffer_alloc(size: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_a71d_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
+    fun ffi_bdk_f91_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_a71d_rustbuffer_free(buf: RustBuffer.ByValue,
+    fun ffi_bdk_f91_rustbuffer_free(buf: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_a71d_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
+    fun ffi_bdk_f91_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
@@ -481,6 +493,66 @@ abstract class FFIObject(
 
 // Public interface members begin here.
 // Public facing enums
+
+
+
+
+
+
+
+
+sealed class DatabaseConfig  {
+    
+    data class Memory(
+        val junk: String 
+        ) : DatabaseConfig()
+    
+    data class Sled(
+        val configuration: SledDbConfiguration 
+        ) : DatabaseConfig()
+    
+
+    companion object {
+        internal fun lift(rbuf: RustBuffer.ByValue): DatabaseConfig {
+            return liftFromRustBuffer(rbuf) { buf -> DatabaseConfig.read(buf) }
+        }
+
+        internal fun read(buf: ByteBuffer): DatabaseConfig {
+            return when(buf.getInt()) {
+                1 -> DatabaseConfig.Memory(
+                    String.read(buf)
+                    )
+                2 -> DatabaseConfig.Sled(
+                    SledDbConfiguration.read(buf)
+                    )
+                else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+            }
+        }
+    }
+
+    internal fun lower(): RustBuffer.ByValue {
+        return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
+    }
+
+    internal fun write(buf: RustBufferBuilder) {
+        when(this) {
+            is DatabaseConfig.Memory -> {
+                buf.putInt(1)
+                this.junk.write(buf)
+                
+            }
+            is DatabaseConfig.Sled -> {
+                buf.putInt(2)
+                this.configuration.write(buf)
+                
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+    
+    
+}
+
 // Error definitions
 @Structure.FieldOrder("code", "error_buf")
 internal open class RustCallStatus : Structure() {
@@ -649,6 +721,39 @@ private inline fun <U> rustCall(callback: (RustCallStatus) -> U): U {
 
 // Public facing records
 
+data class SledDbConfiguration (
+    var path: String, 
+    var treeName: String 
+)  {
+    companion object {
+        internal fun lift(rbuf: RustBuffer.ByValue): SledDbConfiguration {
+            return liftFromRustBuffer(rbuf) { buf -> SledDbConfiguration.read(buf) }
+        }
+
+        internal fun read(buf: ByteBuffer): SledDbConfiguration {
+            return SledDbConfiguration(
+            String.read(buf),
+            String.read(buf)
+            )
+        }
+    }
+
+    internal fun lower(): RustBuffer.ByValue {
+        return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
+    }
+
+    internal fun write(buf: RustBufferBuilder) {
+            this.path.write(buf)
+        
+            this.treeName.write(buf)
+        
+    }
+
+    
+    
+}
+
+
 // Namespace functions
 
 
@@ -664,10 +769,10 @@ public interface OfflineWalletInterface {
 class OfflineWallet(
     pointer: Pointer
 ) : FFIObject(pointer), OfflineWalletInterface {
-    constructor(descriptor: String ) :
+    constructor(descriptor: String, databaseConfig: DatabaseConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_a71d_OfflineWallet_new(descriptor.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_f91_OfflineWallet_new(descriptor.lower(), databaseConfig.lower() ,status)
 })
 
     /**
@@ -680,7 +785,7 @@ class OfflineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_a71d_OfflineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_f91_OfflineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -695,7 +800,7 @@ class OfflineWallet(
     override fun getNewAddress(): String =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_a71d_OfflineWallet_get_new_address(it,  status)
+    _UniFFILib.INSTANCE.bdk_f91_OfflineWallet_get_new_address(it,  status)
 }
         }.let {
             String.lift(it)

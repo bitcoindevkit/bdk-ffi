@@ -14,7 +14,8 @@ class LibTest {
 
     @Test
     fun walletNewAddress() {
-        val wallet = OfflineWallet(desc)
+        val config = DatabaseConfig.Memory("")
+        val wallet = OfflineWallet(desc, config)
         val address = wallet.getNewAddress()
         assertNotNull(address)
         assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
@@ -22,6 +23,7 @@ class LibTest {
 
     @Test(expected=BdkException.Descriptor::class)
     fun invalidDescriptorExceptionIsThrown() {
-        OfflineWallet("invalid-descriptor")
+        val config = DatabaseConfig.Memory("")
+        OfflineWallet("invalid-descriptor", config)
     }
 }
