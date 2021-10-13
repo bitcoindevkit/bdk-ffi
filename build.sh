@@ -7,29 +7,21 @@ set -eo pipefail
 help()
 {
    # Display Help
-   echo "Build bdk-ffi and related libraries."
+   echo "Build bdk-uniffi and related libraries."
    echo
-   echo "Syntax: build [-a|h|k]"
+   echo "Syntax: build [-h|k]"
    echo "options:"
-   echo "-a     Android aar."
    echo "-h     Print this Help."
-   echo "-k     JVM jar."
+   echo "-k     Kotlin."
    echo
 }
 
 ## rust
 build_rust() {
-  echo "Build Rust library and C headers"
+  echo "Build Rust library"
   cargo fmt
   cargo build
-  cargo test --features c-headers -- generate_headers
-}
-
-## cc
-build_cc() {
-  echo "Build C test library"
-  export LD_LIBRARY_PATH=`pwd`/target/debug
-  cc cc/bdk_ffi_test.c -o cc/bdk_ffi_test -L target/debug -l bdk_ffi -l pthread -l dl -l m
+  cargo test
 }
 
 ## copy to bdk-bdk-kotlin
@@ -38,13 +30,13 @@ copy_lib_kotlin() {
   case $OS in
     "Darwin")
       echo -n "darwin "
-      mkdir -p bdk-bdk-kotlin/jvm/src/main/resources/darwin-x86-64
-      cp target/debug/libbdk_ffi.dylib bdk-bdk-kotlin/jvm/src/main/resources/darwin-x86-64
+      mkdir -p bindings/bdk-kotlin/src/main/resources/darwin-x86-64
+      cp target/debug/libuniffi_bdk.dylib bindings/bdk-kotlin/src/main/resources/darwin-x86-64
       ;;
     "Linux")
       echo -n "linux "
-      mkdir -p bdk-bdk-kotlin/jvm/src/main/resources/linux-x86-64
-      cp target/debug/libbdk_ffi.so bdk-bdk-kotlin/jvm/src/main/resources/linux-x86-64
+      mkdir -p bindings/bdk-kotlin/src/main/resources/linux-x86-64
+      cp target/debug/libuniffi_bdk.so bindings/bdk-kotlin/src/main/resources/linux-x86-64
       ;;
   esac
   echo "libs to kotlin sub-project"
@@ -52,7 +44,8 @@ copy_lib_kotlin() {
 
 ## bdk-bdk-kotlin jar
 build_kotlin() {
-  (cd bdk-bdk-kotlin && ./gradlew :jvm:build && ./gradlew :jvm:publishToMavenLocal)
+  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-kotlin/src/main/kotlin --language kotlin
+  (cd bindings/bdk-kotlin && ./gradlew build)
 }
 
 ## rust android
@@ -99,13 +92,11 @@ then
   help
 else
   build_rust
-  build_cc
   copy_lib_kotlin
 
   while [ -n "$1" ]; do # while loop starts
     case "$1" in
       -k) build_kotlin ;;
-      -a) build_android ;;
       -h) help ;;
       *) echo "Option $1 not recognized" ;;
     esac
