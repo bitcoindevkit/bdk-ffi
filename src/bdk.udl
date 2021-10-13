@@ -2,7 +2,50 @@ namespace bdk {
 
 };
 
+[Error]
+enum BdkError {
+  "InvalidU32Bytes",
+  "Generic",
+  "ScriptDoesntHaveAddressForm",
+  "NoRecipients",
+  "NoUtxosSelected",
+  "OutputBelowDustLimit",
+  "InsufficientFunds",
+  "BnBTotalTriesExceeded",
+  "BnBNoExactMatch",
+  "UnknownUtxo",
+  "TransactionNotFound",
+  "TransactionConfirmed",
+  "IrreplaceableTransaction",
+  "FeeRateTooLow",
+  "FeeTooLow",
+  "FeeRateUnavailable",
+  "MissingKeyOrigin",
+  "Key",
+  "ChecksumMismatch",
+  "SpendingPolicyRequired",
+  "InvalidPolicyPathError",
+  "Signer",
+  "InvalidNetwork",
+  "InvalidProgressValue",
+  "ProgressUpdateError",
+  "InvalidOutpoint",
+  "Descriptor",
+  "AddressValidator",
+  "Encode",
+  "Miniscript",
+  "Bip32",
+  "Secp256k1",
+  "Json",
+  "Hex",
+  "Psbt",
+  "PsbtParse",
+  "Electrum",
+  "Sled",
+};
+
 interface OfflineWallet {
+    [Throws=BdkError]
     constructor(string descriptor);
     string get_new_address();
 };

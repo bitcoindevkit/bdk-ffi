@@ -44,15 +44,15 @@ open class RustBuffer : Structure() {
 
     companion object {
         internal fun alloc(size: Int = 0) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_75ce_rustbuffer_alloc(size, status)
+            _UniFFILib.INSTANCE.ffi_bdk_a71d_rustbuffer_alloc(size, status)
         }
 
         internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_75ce_rustbuffer_free(buf, status)
+            _UniFFILib.INSTANCE.ffi_bdk_a71d_rustbuffer_free(buf, status)
         }
 
         internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_75ce_rustbuffer_reserve(buf, additional, status)
+            _UniFFILib.INSTANCE.ffi_bdk_a71d_rustbuffer_reserve(buf, additional, status)
         }
     }
 
@@ -249,6 +249,13 @@ internal fun String.write(buf: RustBufferBuilder) {
 
 
 
+
+
+
+
+
+
+
 @Synchronized
 fun findLibraryName(componentName: String): String {
     val libOverride = System.getProperty("uniffi.component.${componentName}.libraryOverride")
@@ -276,31 +283,31 @@ internal interface _UniFFILib : Library {
         }
     }
 
-    fun ffi_bdk_75ce_OfflineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_a71d_OfflineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_75ce_OfflineWallet_new(descriptor: RustBuffer.ByValue,
+    fun bdk_a71d_OfflineWallet_new(descriptor: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_75ce_OfflineWallet_get_new_address(ptr: Pointer,
+    fun bdk_a71d_OfflineWallet_get_new_address(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_75ce_rustbuffer_alloc(size: Int,
+    fun ffi_bdk_a71d_rustbuffer_alloc(size: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_75ce_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
+    fun ffi_bdk_a71d_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_75ce_rustbuffer_free(buf: RustBuffer.ByValue,
+    fun ffi_bdk_a71d_rustbuffer_free(buf: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_75ce_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
+    fun ffi_bdk_a71d_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
@@ -500,6 +507,107 @@ interface CallStatusErrorHandler<E> {
     fun lift(error_buf: RustBuffer.ByValue): E;
 }
 
+// Error BdkError
+
+sealed class BdkException(message: String): Exception(message)  {
+        // Each variant is a nested class
+        // Flat enums carries a string error message, so no special implementation is necessary.
+        class InvalidU32Bytes(message: String) : BdkException(message)
+        class Generic(message: String) : BdkException(message)
+        class ScriptDoesntHaveAddressForm(message: String) : BdkException(message)
+        class NoRecipients(message: String) : BdkException(message)
+        class NoUtxosSelected(message: String) : BdkException(message)
+        class OutputBelowDustLimit(message: String) : BdkException(message)
+        class InsufficientFunds(message: String) : BdkException(message)
+        class BnBTotalTriesExceeded(message: String) : BdkException(message)
+        class BnBNoExactMatch(message: String) : BdkException(message)
+        class UnknownUtxo(message: String) : BdkException(message)
+        class TransactionNotFound(message: String) : BdkException(message)
+        class TransactionConfirmed(message: String) : BdkException(message)
+        class IrreplaceableTransaction(message: String) : BdkException(message)
+        class FeeRateTooLow(message: String) : BdkException(message)
+        class FeeTooLow(message: String) : BdkException(message)
+        class FeeRateUnavailable(message: String) : BdkException(message)
+        class MissingKeyOrigin(message: String) : BdkException(message)
+        class Key(message: String) : BdkException(message)
+        class ChecksumMismatch(message: String) : BdkException(message)
+        class SpendingPolicyRequired(message: String) : BdkException(message)
+        class InvalidPolicyPathException(message: String) : BdkException(message)
+        class Signer(message: String) : BdkException(message)
+        class InvalidNetwork(message: String) : BdkException(message)
+        class InvalidProgressValue(message: String) : BdkException(message)
+        class ProgressUpdateException(message: String) : BdkException(message)
+        class InvalidOutpoint(message: String) : BdkException(message)
+        class Descriptor(message: String) : BdkException(message)
+        class AddressValidator(message: String) : BdkException(message)
+        class Encode(message: String) : BdkException(message)
+        class Miniscript(message: String) : BdkException(message)
+        class Bip32(message: String) : BdkException(message)
+        class Secp256k1(message: String) : BdkException(message)
+        class Json(message: String) : BdkException(message)
+        class Hex(message: String) : BdkException(message)
+        class Psbt(message: String) : BdkException(message)
+        class PsbtParse(message: String) : BdkException(message)
+        class Electrum(message: String) : BdkException(message)
+        class Sled(message: String) : BdkException(message)
+        
+
+    companion object ErrorHandler : CallStatusErrorHandler<BdkException> {
+        override fun lift(error_buf: RustBuffer.ByValue): BdkException {
+            return liftFromRustBuffer(error_buf) { error_buf -> read(error_buf) }
+        }
+
+        fun read(error_buf: ByteBuffer): BdkException {
+            
+                return when(error_buf.getInt()) {
+                1 -> BdkException.InvalidU32Bytes(String.read(error_buf))
+                2 -> BdkException.Generic(String.read(error_buf))
+                3 -> BdkException.ScriptDoesntHaveAddressForm(String.read(error_buf))
+                4 -> BdkException.NoRecipients(String.read(error_buf))
+                5 -> BdkException.NoUtxosSelected(String.read(error_buf))
+                6 -> BdkException.OutputBelowDustLimit(String.read(error_buf))
+                7 -> BdkException.InsufficientFunds(String.read(error_buf))
+                8 -> BdkException.BnBTotalTriesExceeded(String.read(error_buf))
+                9 -> BdkException.BnBNoExactMatch(String.read(error_buf))
+                10 -> BdkException.UnknownUtxo(String.read(error_buf))
+                11 -> BdkException.TransactionNotFound(String.read(error_buf))
+                12 -> BdkException.TransactionConfirmed(String.read(error_buf))
+                13 -> BdkException.IrreplaceableTransaction(String.read(error_buf))
+                14 -> BdkException.FeeRateTooLow(String.read(error_buf))
+                15 -> BdkException.FeeTooLow(String.read(error_buf))
+                16 -> BdkException.FeeRateUnavailable(String.read(error_buf))
+                17 -> BdkException.MissingKeyOrigin(String.read(error_buf))
+                18 -> BdkException.Key(String.read(error_buf))
+                19 -> BdkException.ChecksumMismatch(String.read(error_buf))
+                20 -> BdkException.SpendingPolicyRequired(String.read(error_buf))
+                21 -> BdkException.InvalidPolicyPathException(String.read(error_buf))
+                22 -> BdkException.Signer(String.read(error_buf))
+                23 -> BdkException.InvalidNetwork(String.read(error_buf))
+                24 -> BdkException.InvalidProgressValue(String.read(error_buf))
+                25 -> BdkException.ProgressUpdateException(String.read(error_buf))
+                26 -> BdkException.InvalidOutpoint(String.read(error_buf))
+                27 -> BdkException.Descriptor(String.read(error_buf))
+                28 -> BdkException.AddressValidator(String.read(error_buf))
+                29 -> BdkException.Encode(String.read(error_buf))
+                30 -> BdkException.Miniscript(String.read(error_buf))
+                31 -> BdkException.Bip32(String.read(error_buf))
+                32 -> BdkException.Secp256k1(String.read(error_buf))
+                33 -> BdkException.Json(String.read(error_buf))
+                34 -> BdkException.Hex(String.read(error_buf))
+                35 -> BdkException.Psbt(String.read(error_buf))
+                36 -> BdkException.PsbtParse(String.read(error_buf))
+                37 -> BdkException.Electrum(String.read(error_buf))
+                38 -> BdkException.Sled(String.read(error_buf))
+                else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+            }
+        }
+    }
+
+    
+    
+}
+
+
 // Helpers for calling Rust
 // In practice we usually need to be synchronized to call this safely, so it doesn't
 // synchronize itself
@@ -558,8 +666,8 @@ class OfflineWallet(
 ) : FFIObject(pointer), OfflineWalletInterface {
     constructor(descriptor: String ) :
         this(
-    rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_75ce_OfflineWallet_new(descriptor.lower() ,status)
+    rustCallWithError(BdkException) { status ->
+    _UniFFILib.INSTANCE.bdk_a71d_OfflineWallet_new(descriptor.lower() ,status)
 })
 
     /**
@@ -572,7 +680,7 @@ class OfflineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_75ce_OfflineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_a71d_OfflineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -587,7 +695,7 @@ class OfflineWallet(
     override fun getNewAddress(): String =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_75ce_OfflineWallet_get_new_address(it,  status)
+    _UniFFILib.INSTANCE.bdk_a71d_OfflineWallet_get_new_address(it,  status)
 }
         }.let {
             String.lift(it)
