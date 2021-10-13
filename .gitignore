@@ -8,3 +8,4 @@ bdk_ffi_test
 local.properties
 *.log
 *.dylib
+*.so
