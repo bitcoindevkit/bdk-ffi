@@ -1,28 +1,26 @@
 use bdk::bitcoin::Network;
-use bdk::sled;
-use bdk::sled::Tree;
+use bdk::database::MemoryDatabase;
 use bdk::wallet::AddressIndex;
 use bdk::Error;
 use bdk::Wallet;
+
 use std::sync::Mutex;
 
 type BdkError = Error;
 
 uniffi_macros::include_scaffolding!("bdk");
-
 struct OfflineWallet {
-    wallet: Mutex<Wallet<(), Tree>>,
+    wallet: Mutex<Wallet<(), MemoryDatabase>>,
 }
 
 impl OfflineWallet {
     fn new(descriptor: String) -> Result<Self, BdkError> {
-        let database = sled::open("testdb").unwrap();
-        let tree = database.open_tree("test").unwrap();
+        let database = MemoryDatabase::default();
         let wallet = Mutex::new(Wallet::new_offline(
             &descriptor,
             None,
             Network::Regtest,
-            tree,
+            database,
         )?);
         Ok(OfflineWallet { wallet })
     }
