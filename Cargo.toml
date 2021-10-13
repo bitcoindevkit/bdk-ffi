@@ -1,7 +1,7 @@
 [package]
 name = "uniffi_bdk"
 version = "0.1.0"
-authors = ["Steve Myers <steve@notmandatory.org>", ""]
+authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
