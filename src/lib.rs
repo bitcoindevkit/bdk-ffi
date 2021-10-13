@@ -1,5 +1,6 @@
 use bdk::bitcoin::Network;
-use bdk::database::MemoryDatabase;
+use bdk::database::any::{AnyDatabase, SledDbConfiguration};
+use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::AddressIndex;
 use bdk::Error;
 use bdk::Wallet;
@@ -8,14 +9,24 @@ use std::sync::Mutex;
 
 type BdkError = Error;
 
+pub enum DatabaseConfig {
+    Memory { junk: String },
+    Sled { configuration: SledDbConfiguration },
+}
+
 uniffi_macros::include_scaffolding!("bdk");
+
 struct OfflineWallet {
-    wallet: Mutex<Wallet<(), MemoryDatabase>>,
+    wallet: Mutex<Wallet<(), AnyDatabase>>,
 }
 
 impl OfflineWallet {
-    fn new(descriptor: String) -> Result<Self, BdkError> {
-        let database = MemoryDatabase::default();
+    fn new(descriptor: String, database_config: DatabaseConfig) -> Result<Self, BdkError> {
+        let any_database_config = match database_config {
+            DatabaseConfig::Memory { .. } => AnyDatabaseConfig::Memory(()),
+            DatabaseConfig::Sled { configuration } => AnyDatabaseConfig::Sled(configuration),
+        };
+        let database = AnyDatabase::from_config(&any_database_config)?;
         let wallet = Mutex::new(Wallet::new_offline(
             &descriptor,
             None,
