@@ -17,7 +17,7 @@ help()
 }
 
 test_kotlin() {
-  (cd bindings/bdk-kotlin && ./gradlew test)
+  (cd bindings/bdk-kotlin && ./gradlew test -Djna.debug_load=true)
 }
 
 if [ $1 = "-h" ]
@@ -25,10 +25,10 @@ then
   help
 else
   cargo test
-      
+
   # optional tests
   while [ -n "$1" ]; do # while loop starts
-    case "$1" in          
+    case "$1" in
       -h) help ;;
       -k) test_kotlin ;;
       *) echo "Option $1 not recognized" ;;
