@@ -45,7 +45,6 @@ copy_lib_kotlin() {
 ## bdk-bdk-kotlin jar
 build_kotlin() {
   uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-kotlin/src/main/kotlin --language kotlin
-  (cd bindings/bdk-kotlin && ./gradlew build)
 }
 
 ## rust android
