@@ -44,15 +44,15 @@ open class RustBuffer : Structure() {
 
     companion object {
         internal fun alloc(size: Int = 0) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_f470_rustbuffer_alloc(size, status)
+            _UniFFILib.INSTANCE.ffi_bdk_146a_rustbuffer_alloc(size, status)
         }
 
         internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_f470_rustbuffer_free(buf, status)
+            _UniFFILib.INSTANCE.ffi_bdk_146a_rustbuffer_free(buf, status)
         }
 
         internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_f470_rustbuffer_reserve(buf, additional, status)
+            _UniFFILib.INSTANCE.ffi_bdk_146a_rustbuffer_reserve(buf, additional, status)
         }
     }
 
@@ -301,31 +301,31 @@ internal interface _UniFFILib : Library {
         }
     }
 
-    fun ffi_bdk_f470_OfflineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_146a_OfflineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_f470_OfflineWallet_new(network: RustBuffer.ByValue,descriptor: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
+    fun bdk_146a_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_f470_OfflineWallet_get_new_address(ptr: Pointer,
+    fun bdk_146a_OfflineWallet_get_new_address(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_f470_rustbuffer_alloc(size: Int,
+    fun ffi_bdk_146a_rustbuffer_alloc(size: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_f470_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
+    fun ffi_bdk_146a_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_f470_rustbuffer_free(buf: RustBuffer.ByValue,
+    fun ffi_bdk_146a_rustbuffer_free(buf: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_f470_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
+    fun ffi_bdk_146a_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
@@ -804,10 +804,10 @@ public interface OfflineWalletInterface {
 class OfflineWallet(
     pointer: Pointer
 ) : FFIObject(pointer), OfflineWalletInterface {
-    constructor(network: Network, descriptor: String, databaseConfig: DatabaseConfig ) :
+    constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_f470_OfflineWallet_new(network.lower(), descriptor.lower(), databaseConfig.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_146a_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
 })
 
     /**
@@ -820,7 +820,7 @@ class OfflineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_f470_OfflineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_146a_OfflineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -835,7 +835,7 @@ class OfflineWallet(
     override fun getNewAddress(): String =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_f470_OfflineWallet_get_new_address(it,  status)
+    _UniFFILib.INSTANCE.bdk_146a_OfflineWallet_get_new_address(it,  status)
 }
         }.let {
             String.lift(it)
