@@ -117,6 +117,10 @@ impl OnlineWallet {
         )?);
         Ok(OnlineWallet { wallet })
     }
+
+    fn get_network(&self) -> Network {
+        self.wallet.lock().unwrap().network()
+    }
 }
 
 uniffi::deps::static_assertions::assert_impl_all!(OfflineWallet: Sync, Send);

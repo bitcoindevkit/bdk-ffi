@@ -94,4 +94,5 @@ interface BlockchainConfig {
 interface OnlineWallet {
     [Throws=BdkError]
     constructor(string descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
+    Network get_network();
 };

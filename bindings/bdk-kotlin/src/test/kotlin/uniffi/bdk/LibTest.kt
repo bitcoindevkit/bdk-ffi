@@ -42,5 +42,7 @@ class LibTest {
         val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:50002", null, 5u, null, 100u))
         val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
         assertNotNull(wallet)
+        val network = wallet.getNetwork()
+        assertEquals(network, Network.TESTNET)
     }
 }
