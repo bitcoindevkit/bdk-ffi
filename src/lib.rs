@@ -7,6 +7,8 @@ use bdk::Wallet;
 
 use std::sync::Mutex;
 
+uniffi_macros::include_scaffolding!("bdk");
+
 type BdkError = Error;
 
 pub enum DatabaseConfig {
@@ -14,25 +16,22 @@ pub enum DatabaseConfig {
     Sled { configuration: SledDbConfiguration },
 }
 
-uniffi_macros::include_scaffolding!("bdk");
-
 struct OfflineWallet {
     wallet: Mutex<Wallet<(), AnyDatabase>>,
 }
 
 impl OfflineWallet {
-    fn new(descriptor: String, database_config: DatabaseConfig) -> Result<Self, BdkError> {
+    fn new(
+        network: Network,
+        descriptor: String,
+        database_config: DatabaseConfig,
+    ) -> Result<Self, BdkError> {
         let any_database_config = match database_config {
             DatabaseConfig::Memory { .. } => AnyDatabaseConfig::Memory(()),
             DatabaseConfig::Sled { configuration } => AnyDatabaseConfig::Sled(configuration),
         };
         let database = AnyDatabase::from_config(&any_database_config)?;
-        let wallet = Mutex::new(Wallet::new_offline(
-            &descriptor,
-            None,
-            Network::Regtest,
-            database,
-        )?);
+        let wallet = Mutex::new(Wallet::new_offline(&descriptor, None, network, database)?);
         Ok(OfflineWallet { wallet })
     }
 
