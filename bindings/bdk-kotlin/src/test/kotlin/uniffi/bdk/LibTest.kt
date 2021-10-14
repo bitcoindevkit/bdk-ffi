@@ -46,7 +46,7 @@ class LibTest {
     @Test
     fun onlineWalletInMemory() {
         val db = DatabaseConfig.Memory("")
-        val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:50002", null, 5u, null, 100u))
+        val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 100u))
         val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
         assertNotNull(wallet)
         val network = wallet.getNetwork()
@@ -56,11 +56,10 @@ class LibTest {
     @Test
     fun onlineWalletSyncGetBalance() {
         val db = DatabaseConfig.Memory("")
-        val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:50002", null, 5u, null, 100u))
+        val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 100u))
         val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
         wallet.sync(LogProgress(), null)
         val balance = wallet.getBalance()
-        assertNotNull(balance)
-        println(balance)
+        assertTrue(balance > 0u)
     }
 }
