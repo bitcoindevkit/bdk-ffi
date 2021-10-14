@@ -44,15 +44,15 @@ open class RustBuffer : Structure() {
 
     companion object {
         internal fun alloc(size: Int = 0) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_d1e_rustbuffer_alloc(size, status)
+            _UniFFILib.INSTANCE.ffi_bdk_3303_rustbuffer_alloc(size, status)
         }
 
         internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_d1e_rustbuffer_free(buf, status)
+            _UniFFILib.INSTANCE.ffi_bdk_3303_rustbuffer_free(buf, status)
         }
 
         internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_d1e_rustbuffer_reserve(buf, additional, status)
+            _UniFFILib.INSTANCE.ffi_bdk_3303_rustbuffer_reserve(buf, additional, status)
         }
     }
 
@@ -542,51 +542,55 @@ internal interface _UniFFILib : Library {
         }
     }
 
-    fun ffi_bdk_d1e_OfflineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_3303_OfflineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_d1e_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
+    fun bdk_3303_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_d1e_OfflineWallet_get_new_address(ptr: Pointer,
+    fun bdk_3303_OfflineWallet_get_new_address(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_d1e_OnlineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_3303_OnlineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_d1e_OnlineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,blockchain_config: RustBuffer.ByValue,
+    fun bdk_3303_OnlineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,blockchain_config: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_d1e_OnlineWallet_get_network(ptr: Pointer,
+    fun bdk_3303_OnlineWallet_get_network(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun bdk_d1e_OnlineWallet_sync(ptr: Pointer,progress_update: Long,max_address_param: RustBuffer.ByValue,
+    fun bdk_3303_OnlineWallet_sync(ptr: Pointer,progress_update: Long,max_address_param: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_d1e_BdkProgress_init_callback(callback_stub: ForeignCallback,
+    fun bdk_3303_OnlineWallet_get_balance(ptr: Pointer,
+    uniffi_out_err: RustCallStatus
+    ): Long
+
+    fun ffi_bdk_3303_BdkProgress_init_callback(callback_stub: ForeignCallback,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_d1e_rustbuffer_alloc(size: Int,
+    fun ffi_bdk_3303_rustbuffer_alloc(size: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_d1e_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
+    fun ffi_bdk_3303_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_d1e_rustbuffer_free(buf: RustBuffer.ByValue,
+    fun ffi_bdk_3303_rustbuffer_free(buf: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_d1e_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
+    fun ffi_bdk_3303_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
@@ -1296,7 +1300,7 @@ class OfflineWallet(
     constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_d1e_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_3303_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
 })
 
     /**
@@ -1309,7 +1313,7 @@ class OfflineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_d1e_OfflineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_3303_OfflineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -1324,7 +1328,7 @@ class OfflineWallet(
     override fun getNewAddress(): String =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_d1e_OfflineWallet_get_new_address(it,  status)
+    _UniFFILib.INSTANCE.bdk_3303_OfflineWallet_get_new_address(it,  status)
 }
         }.let {
             String.lift(it)
@@ -1351,6 +1355,7 @@ class OfflineWallet(
 public interface OnlineWalletInterface {
     fun getNetwork(): Network
     fun sync(progressUpdate: BdkProgress, maxAddressParam: UInt? )
+    fun getBalance(): ULong
     
 }
 
@@ -1361,7 +1366,7 @@ class OnlineWallet(
     constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig, blockchainConfig: BlockchainConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_d1e_OnlineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower(), blockchainConfig.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_3303_OnlineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower(), blockchainConfig.lower() ,status)
 })
 
     /**
@@ -1374,7 +1379,7 @@ class OnlineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_d1e_OnlineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_3303_OnlineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -1389,7 +1394,7 @@ class OnlineWallet(
     override fun getNetwork(): Network =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_d1e_OnlineWallet_get_network(it,  status)
+    _UniFFILib.INSTANCE.bdk_3303_OnlineWallet_get_network(it,  status)
 }
         }.let {
             Network.lift(it)
@@ -1398,8 +1403,17 @@ class OnlineWallet(
     override fun sync(progressUpdate: BdkProgress, maxAddressParam: UInt? ) =
         callWithPointer {
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_d1e_OnlineWallet_sync(it, CallbackInterfaceBdkProgressInternals.lower(progressUpdate), lowerOptionalu32(maxAddressParam) , status)
+    _UniFFILib.INSTANCE.bdk_3303_OnlineWallet_sync(it, CallbackInterfaceBdkProgressInternals.lower(progressUpdate), lowerOptionalu32(maxAddressParam) , status)
 }
+        }
+    
+    override fun getBalance(): ULong =
+        callWithPointer {
+    rustCallWithError(BdkException) { status ->
+    _UniFFILib.INSTANCE.bdk_3303_OnlineWallet_get_balance(it,  status)
+}
+        }.let {
+            ULong.lift(it)
         }
     
     
@@ -1468,7 +1482,7 @@ internal object CallbackInterfaceBdkProgressInternals: CallbackInternals<BdkProg
 ) {
     override fun register(lib: _UniFFILib) {
         rustCall() { status ->
-            lib.ffi_bdk_d1e_BdkProgress_init_callback(this.foreignCallback, status)
+            lib.ffi_bdk_3303_BdkProgress_init_callback(this.foreignCallback, status)
         }
     }
 }

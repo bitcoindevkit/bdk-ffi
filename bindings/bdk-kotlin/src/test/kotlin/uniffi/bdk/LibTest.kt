@@ -54,10 +54,13 @@ class LibTest {
     }
 
     @Test
-    fun onlineWalletSync() {
+    fun onlineWalletSyncGetBalance() {
         val db = DatabaseConfig.Memory("")
         val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:50002", null, 5u, null, 100u))
         val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
         wallet.sync(LogProgress(), null)
+        val balance = wallet.getBalance()
+        assertNotNull(balance)
+        println(balance)
     }
 }

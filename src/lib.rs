@@ -149,6 +149,10 @@ impl OnlineWallet {
             .unwrap()
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
+
+    fn get_balance(&self) -> Result<u64, Error> {
+        self.wallet.lock().unwrap().get_balance()
+    }
 }
 
 uniffi::deps::static_assertions::assert_impl_all!(OfflineWallet: Sync, Send);
