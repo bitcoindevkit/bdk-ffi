@@ -1,5 +1,6 @@
 use bdk::bitcoin::Network;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
+use bdk::blockchain::Progress;
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig, ConfigurableBlockchain,
 };
@@ -75,6 +76,24 @@ struct OnlineWallet {
     wallet: Mutex<Wallet<AnyBlockchain, AnyDatabase>>,
 }
 
+pub trait BdkProgress: Send {
+    fn update(&self, progress: f32, message: Option<String>);
+}
+
+struct BdkProgressHolder {
+    progress_update: Mutex<Box<dyn BdkProgress>>,
+}
+
+impl Progress for BdkProgressHolder {
+    fn update(&self, progress: f32, message: Option<String>) -> Result<(), Error> {
+        self.progress_update
+            .lock()
+            .unwrap()
+            .update(progress, message);
+        Ok(())
+    }
+}
+
 impl OnlineWallet {
     fn new(
         descriptor: String,
@@ -120,6 +139,20 @@ impl OnlineWallet {
 
     fn get_network(&self) -> Network {
         self.wallet.lock().unwrap().network()
+    }
+
+    fn sync(
+        &self,
+        progress_update: Box<dyn BdkProgress>,
+        max_address_param: Option<u32>,
+    ) -> Result<(), BdkError> {
+        progress_update.update(21.0, Some("message".to_string()));
+        self.wallet.lock().unwrap().sync(
+            BdkProgressHolder {
+                progress_update: Mutex::new(progress_update),
+            },
+            max_address_param,
+        )
     }
 }
 
