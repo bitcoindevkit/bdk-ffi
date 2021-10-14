@@ -35,4 +35,12 @@ class LibTest {
         assertNotNull(address)
         assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
     }
+
+    @Test
+    fun onlineWalletInMemory() {
+        val db = DatabaseConfig.Memory("")
+        val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:50002", null, 5u, null, 100u))
+        val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
+        assertNotNull(wallet)
+    }
 }

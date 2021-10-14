@@ -44,15 +44,15 @@ open class RustBuffer : Structure() {
 
     companion object {
         internal fun alloc(size: Int = 0) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_146a_rustbuffer_alloc(size, status)
+            _UniFFILib.INSTANCE.ffi_bdk_f2ea_rustbuffer_alloc(size, status)
         }
 
         internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_146a_rustbuffer_free(buf, status)
+            _UniFFILib.INSTANCE.ffi_bdk_f2ea_rustbuffer_free(buf, status)
         }
 
         internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_146a_rustbuffer_reserve(buf, additional, status)
+            _UniFFILib.INSTANCE.ffi_bdk_f2ea_rustbuffer_reserve(buf, additional, status)
         }
     }
 
@@ -208,6 +208,54 @@ internal fun<T> lowerIntoRustBuffer(v: T, writeItem: (T, RustBufferBuilder) -> U
 
 
 
+@ExperimentalUnsignedTypes
+internal fun UByte.Companion.lift(v: Byte): UByte {
+    return v.toUByte()
+}
+
+@ExperimentalUnsignedTypes
+internal fun UByte.Companion.read(buf: ByteBuffer): UByte {
+    return UByte.lift(buf.get())
+}
+
+@ExperimentalUnsignedTypes
+internal fun UByte.lower(): Byte {
+    return this.toByte()
+}
+
+@ExperimentalUnsignedTypes
+internal fun UByte.write(buf: RustBufferBuilder) {
+    buf.putByte(this.toByte())
+}
+
+
+
+
+
+@ExperimentalUnsignedTypes
+internal fun ULong.Companion.lift(v: Long): ULong {
+    return v.toULong()
+}
+
+@ExperimentalUnsignedTypes
+internal fun ULong.Companion.read(buf: ByteBuffer): ULong {
+    return ULong.lift(buf.getLong())
+}
+
+@ExperimentalUnsignedTypes
+internal fun ULong.lower(): Long {
+    return this.toLong()
+}
+
+@ExperimentalUnsignedTypes
+internal fun ULong.write(buf: RustBufferBuilder) {
+    buf.putLong(this.toLong())
+}
+
+
+
+
+
 internal fun String.Companion.lift(rbuf: RustBuffer.ByValue): String {
     try {
         val byteArr = ByteArray(rbuf.len)
@@ -274,6 +322,108 @@ internal fun String.write(buf: RustBufferBuilder) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Helper functions for pasing values of type UByte?
+@ExperimentalUnsignedTypes
+internal fun liftOptionalu8(rbuf: RustBuffer.ByValue): UByte? {
+    return liftFromRustBuffer(rbuf) { buf ->
+        readOptionalu8(buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun readOptionalu8(buf: ByteBuffer): UByte? {
+    if (buf.get().toInt() == 0) {
+        return null
+    }
+    return UByte.read(buf)
+}
+
+@ExperimentalUnsignedTypes
+internal fun lowerOptionalu8(v: UByte?): RustBuffer.ByValue {
+    return lowerIntoRustBuffer(v) { v, buf ->
+        writeOptionalu8(v, buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun writeOptionalu8(v: UByte?, buf: RustBufferBuilder) {
+    if (v == null) {
+        buf.putByte(0)
+    } else {
+        buf.putByte(1)
+        v.write(buf)
+    }
+}
+
+
+
+
+
+
+
+// Helper functions for pasing values of type String?
+
+internal fun liftOptionalstring(rbuf: RustBuffer.ByValue): String? {
+    return liftFromRustBuffer(rbuf) { buf ->
+        readOptionalstring(buf)
+    }
+}
+
+
+internal fun readOptionalstring(buf: ByteBuffer): String? {
+    if (buf.get().toInt() == 0) {
+        return null
+    }
+    return String.read(buf)
+}
+
+
+internal fun lowerOptionalstring(v: String?): RustBuffer.ByValue {
+    return lowerIntoRustBuffer(v) { v, buf ->
+        writeOptionalstring(v, buf)
+    }
+}
+
+
+internal fun writeOptionalstring(v: String?, buf: RustBufferBuilder) {
+    if (v == null) {
+        buf.putByte(0)
+    } else {
+        buf.putByte(1)
+        v.write(buf)
+    }
+}
+
+
+
+
 @Synchronized
 fun findLibraryName(componentName: String): String {
     val libOverride = System.getProperty("uniffi.component.${componentName}.libraryOverride")
@@ -301,31 +451,39 @@ internal interface _UniFFILib : Library {
         }
     }
 
-    fun ffi_bdk_146a_OfflineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_f2ea_OfflineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_146a_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
+    fun bdk_f2ea_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_146a_OfflineWallet_get_new_address(ptr: Pointer,
+    fun bdk_f2ea_OfflineWallet_get_new_address(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_146a_rustbuffer_alloc(size: Int,
-    uniffi_out_err: RustCallStatus
-    ): RustBuffer.ByValue
-
-    fun ffi_bdk_146a_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
-    uniffi_out_err: RustCallStatus
-    ): RustBuffer.ByValue
-
-    fun ffi_bdk_146a_rustbuffer_free(buf: RustBuffer.ByValue,
+    fun ffi_bdk_f2ea_OnlineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_146a_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
+    fun bdk_f2ea_OnlineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,blockchain_config: RustBuffer.ByValue,
+    uniffi_out_err: RustCallStatus
+    ): Pointer
+
+    fun ffi_bdk_f2ea_rustbuffer_alloc(size: Int,
+    uniffi_out_err: RustCallStatus
+    ): RustBuffer.ByValue
+
+    fun ffi_bdk_f2ea_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
+    uniffi_out_err: RustCallStatus
+    ): RustBuffer.ByValue
+
+    fun ffi_bdk_f2ea_rustbuffer_free(buf: RustBuffer.ByValue,
+    uniffi_out_err: RustCallStatus
+    ): Unit
+
+    fun ffi_bdk_f2ea_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
@@ -543,7 +701,7 @@ sealed class DatabaseConfig  {
         ) : DatabaseConfig()
     
     data class Sled(
-        val configuration: SledDbConfiguration 
+        val config: SledDbConfiguration 
         ) : DatabaseConfig()
     
 
@@ -578,7 +736,67 @@ sealed class DatabaseConfig  {
             }
             is DatabaseConfig.Sled -> {
                 buf.putInt(2)
-                this.configuration.write(buf)
+                this.config.write(buf)
+                
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+    
+    
+}
+
+
+
+
+
+
+
+
+@ExperimentalUnsignedTypes
+sealed class BlockchainConfig  {
+    
+    data class Electrum(
+        val config: ElectrumConfig 
+        ) : BlockchainConfig()
+    
+    data class Esplora(
+        val config: EsploraConfig 
+        ) : BlockchainConfig()
+    
+
+    companion object {
+        internal fun lift(rbuf: RustBuffer.ByValue): BlockchainConfig {
+            return liftFromRustBuffer(rbuf) { buf -> BlockchainConfig.read(buf) }
+        }
+
+        internal fun read(buf: ByteBuffer): BlockchainConfig {
+            return when(buf.getInt()) {
+                1 -> BlockchainConfig.Electrum(
+                    ElectrumConfig.read(buf)
+                    )
+                2 -> BlockchainConfig.Esplora(
+                    EsploraConfig.read(buf)
+                    )
+                else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+            }
+        }
+    }
+
+    internal fun lower(): RustBuffer.ByValue {
+        return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
+    }
+
+    internal fun write(buf: RustBufferBuilder) {
+        when(this) {
+            is BlockchainConfig.Electrum -> {
+                buf.putInt(1)
+                this.config.write(buf)
+                
+            }
+            is BlockchainConfig.Esplora -> {
+                buf.putInt(2)
+                this.config.write(buf)
                 
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
@@ -656,6 +874,7 @@ sealed class BdkException(message: String): Exception(message)  {
         class Psbt(message: String) : BdkException(message)
         class PsbtParse(message: String) : BdkException(message)
         class Electrum(message: String) : BdkException(message)
+        class Esplora(message: String) : BdkException(message)
         class Sled(message: String) : BdkException(message)
         
 
@@ -704,7 +923,8 @@ sealed class BdkException(message: String): Exception(message)  {
                 35 -> BdkException.Psbt(String.read(error_buf))
                 36 -> BdkException.PsbtParse(String.read(error_buf))
                 37 -> BdkException.Electrum(String.read(error_buf))
-                38 -> BdkException.Sled(String.read(error_buf))
+                38 -> BdkException.Esplora(String.read(error_buf))
+                39 -> BdkException.Sled(String.read(error_buf))
                 else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
             }
         }
@@ -788,6 +1008,96 @@ data class SledDbConfiguration (
     
 }
 
+@ExperimentalUnsignedTypes
+data class ElectrumConfig (
+    var url: String, 
+    var socks5: String?, 
+    var retry: UByte, 
+    var timeout: UByte?, 
+    var stopGap: ULong 
+)  {
+    companion object {
+        internal fun lift(rbuf: RustBuffer.ByValue): ElectrumConfig {
+            return liftFromRustBuffer(rbuf) { buf -> ElectrumConfig.read(buf) }
+        }
+
+        internal fun read(buf: ByteBuffer): ElectrumConfig {
+            return ElectrumConfig(
+            String.read(buf),
+            readOptionalstring(buf),
+            UByte.read(buf),
+            readOptionalu8(buf),
+            ULong.read(buf)
+            )
+        }
+    }
+
+    internal fun lower(): RustBuffer.ByValue {
+        return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
+    }
+
+    internal fun write(buf: RustBufferBuilder) {
+            this.url.write(buf)
+        
+            writeOptionalstring(this.socks5, buf)
+        
+            this.retry.write(buf)
+        
+            writeOptionalu8(this.timeout, buf)
+        
+            this.stopGap.write(buf)
+        
+    }
+
+    
+    
+}
+
+@ExperimentalUnsignedTypes
+data class EsploraConfig (
+    var baseUrl: String, 
+    var proxy: String?, 
+    var timeoutRead: ULong, 
+    var timeoutWrite: ULong, 
+    var stopGap: ULong 
+)  {
+    companion object {
+        internal fun lift(rbuf: RustBuffer.ByValue): EsploraConfig {
+            return liftFromRustBuffer(rbuf) { buf -> EsploraConfig.read(buf) }
+        }
+
+        internal fun read(buf: ByteBuffer): EsploraConfig {
+            return EsploraConfig(
+            String.read(buf),
+            readOptionalstring(buf),
+            ULong.read(buf),
+            ULong.read(buf),
+            ULong.read(buf)
+            )
+        }
+    }
+
+    internal fun lower(): RustBuffer.ByValue {
+        return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
+    }
+
+    internal fun write(buf: RustBufferBuilder) {
+            this.baseUrl.write(buf)
+        
+            writeOptionalstring(this.proxy, buf)
+        
+            this.timeoutRead.write(buf)
+        
+            this.timeoutWrite.write(buf)
+        
+            this.stopGap.write(buf)
+        
+    }
+
+    
+    
+}
+
 
 // Namespace functions
 
@@ -807,7 +1117,7 @@ class OfflineWallet(
     constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_146a_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_f2ea_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
 })
 
     /**
@@ -820,7 +1130,7 @@ class OfflineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_146a_OfflineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_f2ea_OfflineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -835,7 +1145,7 @@ class OfflineWallet(
     override fun getNewAddress(): String =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_146a_OfflineWallet_get_new_address(it,  status)
+    _UniFFILib.INSTANCE.bdk_f2ea_OfflineWallet_get_new_address(it,  status)
 }
         }.let {
             String.lift(it)
@@ -852,6 +1162,60 @@ class OfflineWallet(
             // The Rust code always writes pointers as 8 bytes, and will
             // fail to compile if they don't fit.
             return OfflineWallet.lift(Pointer(buf.getLong()))
+        }
+
+        
+    }
+}
+
+@ExperimentalUnsignedTypes
+public interface OnlineWalletInterface {
+    
+}
+
+@ExperimentalUnsignedTypes
+class OnlineWallet(
+    pointer: Pointer
+) : FFIObject(pointer), OnlineWalletInterface {
+    constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig, blockchainConfig: BlockchainConfig ) :
+        this(
+    rustCallWithError(BdkException) { status ->
+    _UniFFILib.INSTANCE.bdk_f2ea_OnlineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower(), blockchainConfig.lower() ,status)
+})
+
+    /**
+     * Disconnect the object from the underlying Rust object.
+     * 
+     * It can be called more than once, but once called, interacting with the object
+     * causes an `IllegalStateException`.
+     * 
+     * Clients **must** call this method once done with the object, or cause a memory leak.
+     */
+    override protected fun freeRustArcPtr() {
+        rustCall() { status ->
+            _UniFFILib.INSTANCE.ffi_bdk_f2ea_OnlineWallet_object_free(this.pointer, status)
+        }
+    }
+
+    internal fun lower(): Pointer = callWithPointer { it }
+
+    internal fun write(buf: RustBufferBuilder) {
+        // The Rust code always expects pointers written as 8 bytes,
+        // and will fail to compile if they don't fit.
+        buf.putLong(Pointer.nativeValue(this.lower()))
+    }
+
+    
+
+    companion object {
+        internal fun lift(ptr: Pointer): OnlineWallet {
+            return OnlineWallet(ptr)
+        }
+
+        internal fun read(buf: ByteBuffer): OnlineWallet {
+            // The Rust code always writes pointers as 8 bytes, and will
+            // fail to compile if they don't fit.
+            return OnlineWallet.lift(Pointer(buf.getLong()))
         }
 
         
