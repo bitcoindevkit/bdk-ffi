@@ -44,15 +44,15 @@ open class RustBuffer : Structure() {
 
     companion object {
         internal fun alloc(size: Int = 0) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_14a1_rustbuffer_alloc(size, status)
+            _UniFFILib.INSTANCE.ffi_bdk_d1e_rustbuffer_alloc(size, status)
         }
 
         internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_14a1_rustbuffer_free(buf, status)
+            _UniFFILib.INSTANCE.ffi_bdk_d1e_rustbuffer_free(buf, status)
         }
 
         internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_14a1_rustbuffer_reserve(buf, additional, status)
+            _UniFFILib.INSTANCE.ffi_bdk_d1e_rustbuffer_reserve(buf, additional, status)
         }
     }
 
@@ -233,6 +233,30 @@ internal fun UByte.write(buf: RustBufferBuilder) {
 
 
 @ExperimentalUnsignedTypes
+internal fun UInt.Companion.lift(v: Int): UInt {
+    return v.toUInt()
+}
+
+@ExperimentalUnsignedTypes
+internal fun UInt.Companion.read(buf: ByteBuffer): UInt {
+    return UInt.lift(buf.getInt())
+}
+
+@ExperimentalUnsignedTypes
+internal fun UInt.lower(): Int {
+    return this.toInt()
+}
+
+@ExperimentalUnsignedTypes
+internal fun UInt.write(buf: RustBufferBuilder) {
+    buf.putInt(this.toInt())
+}
+
+
+
+
+
+@ExperimentalUnsignedTypes
 internal fun ULong.Companion.lift(v: Long): ULong {
     return v.toULong()
 }
@@ -250,6 +274,26 @@ internal fun ULong.lower(): Long {
 @ExperimentalUnsignedTypes
 internal fun ULong.write(buf: RustBufferBuilder) {
     buf.putLong(this.toLong())
+}
+
+
+
+
+
+internal fun Float.Companion.lift(v: Float): Float {
+    return v
+}
+
+internal fun Float.Companion.read(buf: ByteBuffer): Float {
+    return buf.getFloat()
+}
+
+internal fun Float.lower(): Float {
+    return this
+}
+
+internal fun Float.write(buf: RustBufferBuilder) {
+    buf.putFloat(this)
 }
 
 
@@ -287,6 +331,12 @@ internal fun String.write(buf: RustBufferBuilder) {
     buf.putInt(byteArr.size)
     buf.put(byteArr)
 }
+
+
+
+
+
+
 
 
 
@@ -388,6 +438,45 @@ internal fun writeOptionalu8(v: UByte?, buf: RustBufferBuilder) {
 
 
 
+// Helper functions for pasing values of type UInt?
+@ExperimentalUnsignedTypes
+internal fun liftOptionalu32(rbuf: RustBuffer.ByValue): UInt? {
+    return liftFromRustBuffer(rbuf) { buf ->
+        readOptionalu32(buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun readOptionalu32(buf: ByteBuffer): UInt? {
+    if (buf.get().toInt() == 0) {
+        return null
+    }
+    return UInt.read(buf)
+}
+
+@ExperimentalUnsignedTypes
+internal fun lowerOptionalu32(v: UInt?): RustBuffer.ByValue {
+    return lowerIntoRustBuffer(v) { v, buf ->
+        writeOptionalu32(v, buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun writeOptionalu32(v: UInt?, buf: RustBufferBuilder) {
+    if (v == null) {
+        buf.putByte(0)
+    } else {
+        buf.putByte(1)
+        v.write(buf)
+    }
+}
+
+
+
+
+
+
+
 // Helper functions for pasing values of type String?
 
 internal fun liftOptionalstring(rbuf: RustBuffer.ByValue): String? {
@@ -446,48 +535,58 @@ internal interface _UniFFILib : Library {
     companion object {
         internal val INSTANCE: _UniFFILib by lazy { 
             loadIndirect<_UniFFILib>(componentName = "bdk")
-            
+            .also { lib: _UniFFILib ->
+                CallbackInterfaceBdkProgressInternals.register(lib)
+                }
             
         }
     }
 
-    fun ffi_bdk_14a1_OfflineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_d1e_OfflineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_14a1_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
+    fun bdk_d1e_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_14a1_OfflineWallet_get_new_address(ptr: Pointer,
+    fun bdk_d1e_OfflineWallet_get_new_address(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_14a1_OnlineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_d1e_OnlineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_14a1_OnlineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,blockchain_config: RustBuffer.ByValue,
+    fun bdk_d1e_OnlineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,blockchain_config: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_14a1_OnlineWallet_get_network(ptr: Pointer,
+    fun bdk_d1e_OnlineWallet_get_network(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_14a1_rustbuffer_alloc(size: Int,
-    uniffi_out_err: RustCallStatus
-    ): RustBuffer.ByValue
-
-    fun ffi_bdk_14a1_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
-    uniffi_out_err: RustCallStatus
-    ): RustBuffer.ByValue
-
-    fun ffi_bdk_14a1_rustbuffer_free(buf: RustBuffer.ByValue,
+    fun bdk_d1e_OnlineWallet_sync(ptr: Pointer,progress_update: Long,max_address_param: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_14a1_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
+    fun ffi_bdk_d1e_BdkProgress_init_callback(callback_stub: ForeignCallback,
+    uniffi_out_err: RustCallStatus
+    ): Unit
+
+    fun ffi_bdk_d1e_rustbuffer_alloc(size: Int,
+    uniffi_out_err: RustCallStatus
+    ): RustBuffer.ByValue
+
+    fun ffi_bdk_d1e_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
+    uniffi_out_err: RustCallStatus
+    ): RustBuffer.ByValue
+
+    fun ffi_bdk_d1e_rustbuffer_free(buf: RustBuffer.ByValue,
+    uniffi_out_err: RustCallStatus
+    ): Unit
+
+    fun ffi_bdk_d1e_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
@@ -657,6 +756,82 @@ abstract class FFIObject(
 
 
 
+internal typealias Handle = Long
+internal class ConcurrentHandleMap<T>(
+    private val leftMap: MutableMap<Handle, T> = mutableMapOf(),
+    private val rightMap: MutableMap<T, Handle> = mutableMapOf()
+) {
+    private val lock = java.util.concurrent.locks.ReentrantLock()
+    private val currentHandle = AtomicLong(0L)
+    private val stride = 1L
+
+    fun insert(obj: T): Handle =
+        lock.withLock {
+            rightMap[obj] ?:
+                currentHandle.getAndAdd(stride)
+                    .also { handle ->
+                        leftMap[handle] = obj
+                        rightMap[obj] = handle
+                    }
+            }
+
+    fun <R> callWithResult(handle: Handle, fn: (T) -> R): R =
+        lock.withLock {
+            leftMap[handle] ?: throw RuntimeException("Panic: handle not in handlemap")
+        }.let { obj ->
+            fn.invoke(obj)
+        }
+
+    fun get(handle: Handle) = lock.withLock {
+        leftMap[handle]
+    }
+
+    fun delete(handle: Handle) { 
+        this.remove(handle)
+    }
+
+    fun remove(handle: Handle): T? =
+        lock.withLock {
+            leftMap.remove(handle)?.let { obj ->
+                rightMap.remove(obj)
+                obj
+            }
+        }
+}
+
+interface ForeignCallback : com.sun.jna.Callback {
+    public fun invoke(handle: Long, method: Int, args: RustBuffer.ByValue): RustBuffer.ByValue
+}
+
+// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+internal const val IDX_CALLBACK_FREE = 0
+
+internal abstract class CallbackInternals<CallbackInterface>(
+    val foreignCallback: ForeignCallback
+) {
+    val handleMap = ConcurrentHandleMap<CallbackInterface>()
+
+    // Registers the foreign callback with the Rust side.
+    // This method is generated for each callback interface.
+    abstract fun register(lib: _UniFFILib)
+
+    fun drop(handle: Long): RustBuffer.ByValue {
+        return handleMap.remove(handle).let { RustBuffer.ByValue() }
+    }
+
+    fun lift(n: Long) = handleMap.get(n)
+
+    fun read(buf: ByteBuffer) = lift(buf.getLong())
+
+    fun lower(v: CallbackInterface) =
+        handleMap.insert(v).also {
+            assert(handleMap.get(it) === v) { "Handle map is not returning the object we just placed there. This is a bug in the HandleMap." }
+        }
+
+    fun write(v: CallbackInterface, buf: RustBufferBuilder) =
+        buf.putLong(lower(v))
+}
 
 
 // Public interface members begin here.
@@ -1121,7 +1296,7 @@ class OfflineWallet(
     constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_14a1_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_d1e_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
 })
 
     /**
@@ -1134,7 +1309,7 @@ class OfflineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_14a1_OfflineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_d1e_OfflineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -1149,7 +1324,7 @@ class OfflineWallet(
     override fun getNewAddress(): String =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_14a1_OfflineWallet_get_new_address(it,  status)
+    _UniFFILib.INSTANCE.bdk_d1e_OfflineWallet_get_new_address(it,  status)
 }
         }.let {
             String.lift(it)
@@ -1175,6 +1350,7 @@ class OfflineWallet(
 @ExperimentalUnsignedTypes
 public interface OnlineWalletInterface {
     fun getNetwork(): Network
+    fun sync(progressUpdate: BdkProgress, maxAddressParam: UInt? )
     
 }
 
@@ -1185,7 +1361,7 @@ class OnlineWallet(
     constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig, blockchainConfig: BlockchainConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_14a1_OnlineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower(), blockchainConfig.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_d1e_OnlineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower(), blockchainConfig.lower() ,status)
 })
 
     /**
@@ -1198,7 +1374,7 @@ class OnlineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_14a1_OnlineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_d1e_OnlineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -1213,10 +1389,17 @@ class OnlineWallet(
     override fun getNetwork(): Network =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_14a1_OnlineWallet_get_network(it,  status)
+    _UniFFILib.INSTANCE.bdk_d1e_OnlineWallet_get_network(it,  status)
 }
         }.let {
             Network.lift(it)
+        }
+    
+    override fun sync(progressUpdate: BdkProgress, maxAddressParam: UInt? ) =
+        callWithPointer {
+    rustCallWithError(BdkException) { status ->
+    _UniFFILib.INSTANCE.bdk_d1e_OnlineWallet_sync(it, CallbackInterfaceBdkProgressInternals.lower(progressUpdate), lowerOptionalu32(maxAddressParam) , status)
+}
         }
     
     
@@ -1238,5 +1421,56 @@ class OnlineWallet(
 
 
 // Callback Interfaces
+
+
+public interface BdkProgress {
+    fun update(progress: Float, message: String? )
+    
+}
+
+
+internal class CallbackInterfaceBdkProgressFFI : ForeignCallback {
+    @Suppress("TooGenericExceptionCaught")
+    override fun invoke(handle: Long, method: Int, args: RustBuffer.ByValue): RustBuffer.ByValue {
+        return CallbackInterfaceBdkProgressInternals.handleMap.callWithResult(handle) { cb -> 
+            when (method) {
+                IDX_CALLBACK_FREE -> CallbackInterfaceBdkProgressInternals.drop(handle)
+                1 -> this.invokeUpdate(cb, args)
+                
+                // This should never happen, because an out of bounds method index won't
+                // ever be used. Once we can catch errors, we should return an InternalException.
+                // https://github.com/mozilla/uniffi-rs/issues/351
+                else -> RustBuffer.ByValue()
+            }
+        }
+    }
+
+    
+    private fun invokeUpdate(kotlinCallbackInterface: BdkProgress, args: RustBuffer.ByValue): RustBuffer.ByValue =
+        try {
+            val buf = args.asByteBuffer() ?: throw InternalException("No ByteBuffer in RustBuffer; this is a Uniffi bug")
+            kotlinCallbackInterface.update(
+                    Float.read(buf), 
+                    readOptionalstring(buf) 
+                    )
+            .let { RustBuffer.ByValue() }
+                // TODO catch errors and report them back to Rust. 
+                // https://github.com/mozilla/uniffi-rs/issues/351
+        } finally {
+            RustBuffer.free(args)
+        }
+
+    
+}
+
+internal object CallbackInterfaceBdkProgressInternals: CallbackInternals<BdkProgress>(
+    foreignCallback = CallbackInterfaceBdkProgressFFI()
+) {
+    override fun register(lib: _UniFFILib) {
+        rustCall() { status ->
+            lib.ffi_bdk_d1e_BdkProgress_init_callback(this.foreignCallback, status)
+        }
+    }
+}
 
 
