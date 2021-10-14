@@ -91,8 +91,14 @@ interface BlockchainConfig {
   Esplora(EsploraConfig config);
 };
 
+callback interface BdkProgress {
+  void update(f32 progress, string? message);
+};
+
 interface OnlineWallet {
     [Throws=BdkError]
     constructor(string descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
     Network get_network();
+    [Throws=BdkError]
+    void sync(BdkProgress progress_update, u32? max_address_param);
 };

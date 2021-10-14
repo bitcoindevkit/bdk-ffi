@@ -4,6 +4,13 @@ import uniffi.bdk.OfflineWallet
 import org.junit.Assert.*
 import org.junit.Test
 
+class LogProgress: BdkProgress {
+    override fun update(progress: Float, message: String? ) {
+        println(progress);
+        println(message);
+    }
+}
+
 /**
  * Library tests which will execute for jvm and android modules.
  */
@@ -44,5 +51,13 @@ class LibTest {
         assertNotNull(wallet)
         val network = wallet.getNetwork()
         assertEquals(network, Network.TESTNET)
+    }
+
+    @Test
+    fun onlineWalletSync() {
+        val db = DatabaseConfig.Memory("")
+        val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:50002", null, 5u, null, 100u))
+        val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
+        wallet.sync(LogProgress(), null)
     }
 }
