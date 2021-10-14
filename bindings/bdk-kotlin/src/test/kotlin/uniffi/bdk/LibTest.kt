@@ -15,7 +15,7 @@ class LibTest {
     @Test
     fun memoryWalletNewAddress() {
         val config = DatabaseConfig.Memory("")
-        val wallet = OfflineWallet(Network.REGTEST, desc, config)
+        val wallet = OfflineWallet(desc, Network.REGTEST, config)
         val address = wallet.getNewAddress()
         assertNotNull(address)
         assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
@@ -24,13 +24,13 @@ class LibTest {
     @Test(expected=BdkException.Descriptor::class)
     fun invalidDescriptorExceptionIsThrown() {
         val config = DatabaseConfig.Memory("")
-        OfflineWallet(Network.REGTEST, "invalid-descriptor", config)
+        OfflineWallet("invalid-descriptor", Network.REGTEST, config)
     }
 
     @Test
     fun sledWalletNewAddress() {
         val config = DatabaseConfig.Sled(SledDbConfiguration("/tmp/testdb", "testdb"))
-        val wallet = OfflineWallet(Network.REGTEST, desc, config)
+        val wallet = OfflineWallet(desc, Network.REGTEST, config)
         val address = wallet.getNewAddress()
         assertNotNull(address)
         assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")

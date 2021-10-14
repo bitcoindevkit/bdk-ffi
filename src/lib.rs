@@ -22,8 +22,8 @@ struct OfflineWallet {
 
 impl OfflineWallet {
     fn new(
-        network: Network,
         descriptor: String,
+        network: Network,
         database_config: DatabaseConfig,
     ) -> Result<Self, BdkError> {
         let any_database_config = match database_config {
