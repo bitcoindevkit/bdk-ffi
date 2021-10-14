@@ -17,7 +17,7 @@ help()
 }
 
 test_kotlin() {
-  (cd bindings/bdk-kotlin && ./gradlew test -Djna.debug_load=true)
+  (cd bindings/bdk-kotlin && rm -rf /tmp/testdb && ./gradlew test -Djna.debug_load=true)
 }
 
 if [ $1 = "-h" ]
