@@ -9,7 +9,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-bdk = { version = "^0.12.1-dev", features = ["all-keys"] }
+bdk = { version = "^0.12.1-dev", features = ["all-keys", "use-esplora-ureq"] }
 uniffi_macros = "0.14.0"
 uniffi = "0.14.0"
 thiserror = "1.0"
