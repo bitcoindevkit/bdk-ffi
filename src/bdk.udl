@@ -64,6 +64,6 @@ interface DatabaseConfig {
 
 interface OfflineWallet {
     [Throws=BdkError]
-    constructor(Network network, string descriptor, DatabaseConfig database_config);
+    constructor(string descriptor, Network network, DatabaseConfig database_config);
     string get_new_address();
 };
