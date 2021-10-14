@@ -101,4 +101,6 @@ interface OnlineWallet {
     Network get_network();
     [Throws=BdkError]
     void sync(BdkProgress progress_update, u32? max_address_param);
+    [Throws=BdkError]
+    u64 get_balance();
 };
