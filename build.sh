@@ -30,13 +30,13 @@ copy_lib_kotlin() {
   case $OS in
     "Darwin")
       echo -n "darwin "
-      mkdir -p bindings/bdk-kotlin/src/main/resources/darwin-x86-64
-      cp target/debug/libuniffi_bdk.dylib bindings/bdk-kotlin/src/main/resources/darwin-x86-64
+      mkdir -p bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
+      cp target/debug/libuniffi_bdk.dylib bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
       ;;
     "Linux")
       echo -n "linux "
-      mkdir -p bindings/bdk-kotlin/src/main/resources/linux-x86-64
-      cp target/debug/libuniffi_bdk.so bindings/bdk-kotlin/src/main/resources/linux-x86-64
+      mkdir -p bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
+      cp target/debug/libuniffi_bdk.so bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
       ;;
   esac
   echo "libs to kotlin sub-project"
@@ -44,7 +44,7 @@ copy_lib_kotlin() {
 
 ## bdk-bdk-kotlin jar
 build_kotlin() {
-  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-kotlin/src/main/kotlin --language kotlin
+  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-kotlin/jvm/src/main/kotlin --language kotlin
 }
 
 ## rust android
@@ -61,27 +61,27 @@ build_android() {
   # IMPORTANT: make sure every target is not a substring of a different one. We check for them with grep later on
   BUILD_TARGETS="${BUILD_TARGETS:-aarch64,armv7,x86_64,i686}"
 
-  mkdir -p bdk-bdk-kotlin/android/src/main/jniLibs/ bdk-bdk-kotlin/android/src/main/jniLibs/arm64-v8a bdk-bdk-kotlin/android/src/main/jniLibs/x86_64 bdk-bdk-kotlin/android/src/main/jniLibs/armeabi-v7a bdk-bdk-kotlin/android/src/main/jniLibs/x86
+  mkdir -p bdk-kotlin/android/src/main/jniLibs/ bdk-kotlin/android/src/main/jniLibs/arm64-v8a bdk-kotlin/android/src/main/jniLibs/x86_64 bdk-kotlin/android/src/main/jniLibs/armeabi-v7a bdk-kotlin/android/src/main/jniLibs/x86
 
   if echo $BUILD_TARGETS | grep "aarch64"; then
       CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="aarch64-linux-android21-clang" CC="aarch64-linux-android21-clang" cargo build --target=aarch64-linux-android
-      cp target/aarch64-linux-android/debug/libbdk_ffi.so bdk-bdk-kotlin/android/src/main/jniLibs/arm64-v8a
+      cp target/aarch64-linux-android/debug/libbdk_ffi.so bdk-kotlin/android/src/main/jniLibs/arm64-v8a
   fi
   if echo $BUILD_TARGETS | grep "x86_64"; then
       CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="x86_64-linux-android21-clang" CC="x86_64-linux-android21-clang" cargo build --target=x86_64-linux-android
-      cp target/x86_64-linux-android/debug/libbdk_ffi.so bdk-bdk-kotlin/android/src/main/jniLibs/x86_64
+      cp target/x86_64-linux-android/debug/libbdk_ffi.so bdk-kotlin/android/src/main/jniLibs/x86_64
   fi
   if echo $BUILD_TARGETS | grep "armv7"; then
       CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER="armv7a-linux-androideabi21-clang" CC="armv7a-linux-androideabi21-clang" cargo build --target=armv7-linux-androideabi
-      cp target/armv7-linux-androideabi/debug/libbdk_ffi.so bdk-bdk-kotlin/android/src/main/jniLibs/armeabi-v7a
+      cp target/armv7-linux-androideabi/debug/libbdk_ffi.so bdk-kotlin/android/src/main/jniLibs/armeabi-v7a
   fi
   if echo $BUILD_TARGETS | grep "i686"; then
       CARGO_TARGET_I686_LINUX_ANDROID_LINKER="i686-linux-android21-clang" CC="i686-linux-android21-clang" cargo build --target=i686-linux-android
-      cp target/i686-linux-android/debug/libbdk_ffi.so bdk-bdk-kotlin/android/src/main/jniLibs/x86
+      cp target/i686-linux-android/debug/libbdk_ffi.so bdk-kotlin/android/src/main/jniLibs/x86
   fi
 
-  # bdk-bdk-kotlin aar
-  (cd bdk-bdk-kotlin && ./gradlew :android:build && ./gradlew :android:publishToMavenLocal)
+  # bdk-kotlin aar
+  (cd bdk-kotlin && ./gradlew :android:build && ./gradlew :android:publishToMavenLocal)
 }
 
 OS=$(uname)

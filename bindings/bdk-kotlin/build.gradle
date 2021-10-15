@@ -1,42 +1,29 @@
 buildscript {
-    ext.kotlin_version = '1.5.10'
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
-plugins {
-    id "org.jetbrains.kotlin.jvm" version "$kotlin_version"
-    id 'java-library'
+  ext.kotlin_version = '1.5.10'
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.android.tools.build:gradle:4.2.1'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
 }
 
 allprojects {
-    repositories {
-        google()
-        mavenCentral()
+  repositories {
+    google()
+    mavenCentral()
+  }
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+      freeCompilerArgs += [
+        "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes",
+      ]
     }
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-        kotlinOptions {
-            freeCompilerArgs += [
-                "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes",
-            ]
-        }
-    }
+  }
 }
 
-dependencies {
-    implementation platform('org.jetbrains.kotlin:kotlin-bom')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation "net.java.dev.jna:jna:5.8.0"
-    implementation "junit:junit:4.13.2"
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+task clean(type: Delete) {
+  delete rootProject.buildDir
 }
