@@ -49,12 +49,15 @@ fun main(args: Array<String>) {
     wallet.sign(transaction)
     println("Broadcasting the signed transaction...")
     val transactionId = wallet.broadcast(transaction)
-    println("Refunded $amount satoshis to $recipient via transaction id $transactionId")
+    println("Broadcasted transaction with id $transactionId")
     println("Confirming transaction...")
     var confirmedTransaction = getConfirmedTransaction(wallet, transactionId)
     while (confirmedTransaction == null) {
         confirmedTransaction = getConfirmedTransaction(wallet, transactionId)
     }
     println("Confirmed transaction: $confirmedTransaction")
+    val transactions = wallet.getTransactions()
+    println("Listing all ${transactions.size} transactions...")
+    transactions.sortedByDescending { it.timestamp }.forEach { println(it) }
     println("Final wallet balance: ${wallet.getBalance()}")
 }
