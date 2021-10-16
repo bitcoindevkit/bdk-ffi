@@ -57,6 +57,16 @@ impl WalletHolder<()> for OfflineWallet {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct ConfirmedTransaction {
+    pub fees: Option<u64>,
+    pub height: u32,
+    pub timestamp: u64,
+    pub received: u64,
+    pub sent: u64,
+    pub id: String,
+}
+
 trait OfflineWalletOperations<B>: WalletHolder<B> {
     fn get_new_address(&self) -> String {
         self.get_wallet()
@@ -80,6 +90,22 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
                 psbt
             ))),
         }
+    }
+
+    fn get_transactions(&self) -> Result<Vec<ConfirmedTransaction>, Error> {
+        let transactions = self.get_wallet().list_transactions(true)?;
+        Ok(transactions
+            .iter()
+            .filter(|x| x.confirmation_time.is_some())
+            .map(|x| ConfirmedTransaction {
+                fees: x.fee,
+                height: x.confirmation_time.clone().map_or(0, |c| c.height),
+                timestamp: x.confirmation_time.clone().map_or(0, |c| c.timestamp),
+                id: x.txid.to_string(),
+                received: x.received,
+                sent: x.sent,
+            })
+            .collect())
     }
 }
 
