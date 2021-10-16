@@ -1,4 +1,3 @@
-use bdk::address_validator::AddressValidatorError;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::{Address, Network};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
@@ -9,7 +8,7 @@ use bdk::blockchain::{
 use bdk::database::any::{AnyDatabase, SledDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::AddressIndex;
-use bdk::{Error, Wallet};
+use bdk::{Error, SignOptions, Wallet};
 use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Mutex, MutexGuard};
@@ -66,6 +65,22 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
             .address
             .to_string()
     }
+
+    fn get_balance(&self) -> Result<u64, Error> {
+        self.get_wallet().get_balance()
+    }
+
+    fn sign<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<(), Error> {
+        let mut psbt = psbt.internal.lock().unwrap();
+        let finalized = self.get_wallet().sign(&mut psbt, SignOptions::default())?;
+        match finalized {
+            true => Ok(()),
+            false => Err(BdkError::Generic(format!(
+                "transaction signing not finalized {:?}",
+                psbt
+            ))),
+        }
+    }
 }
 
 impl OfflineWallet {
@@ -114,15 +129,17 @@ impl PartiallySignedBitcoinTransaction {
         let wallet = online_wallet.get_wallet();
         match Address::from_str(&recipient) {
             Ok(address) => {
-                let mut builder = wallet.build_tx();
-                builder.add_recipient(address.script_pubkey(), amount);
-                let (pst, ..) = builder.finish()?;
+                let (psbt, _) = {
+                    let mut builder = wallet.build_tx();
+                    builder.add_recipient(address.script_pubkey(), amount);
+                    builder.finish()?
+                };
                 Ok(PartiallySignedBitcoinTransaction {
-                    internal: Mutex::new(pst),
+                    internal: Mutex::new(psbt),
                 })
             }
-            Err(..) => Err(BdkError::AddressValidator(
-                AddressValidatorError::InvalidScript,
+            Err(..) => Err(BdkError::Generic(
+                "failed to read wallet address".to_string(),
             )),
         }
     }
@@ -187,8 +204,10 @@ impl OnlineWallet {
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
 
-    fn get_balance(&self) -> Result<u64, Error> {
-        self.wallet.lock().unwrap().get_balance()
+    fn broadcast<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<String, Error> {
+        let tx = psbt.internal.lock().unwrap().clone().extract_tx();
+        let tx_id = self.get_wallet().broadcast(tx)?;
+        Ok(tx_id.to_string())
     }
 }
 

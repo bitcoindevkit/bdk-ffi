@@ -6,8 +6,7 @@ import org.junit.Test
 
 class LogProgress: BdkProgress {
     override fun update(progress: Float, message: String? ) {
-        println(progress);
-        println(message);
+        println("progress: $progress, message: $message")
     }
 }
 
