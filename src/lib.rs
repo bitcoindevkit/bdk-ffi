@@ -65,6 +65,22 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
             .address
             .to_string()
     }
+
+    fn get_balance(&self) -> Result<u64, Error> {
+        self.get_wallet().get_balance()
+    }
+
+    fn sign<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<(), Error> {
+        let mut psbt = psbt.internal.lock().unwrap();
+        let finalized = self.get_wallet().sign(&mut psbt, SignOptions::default())?;
+        match finalized {
+            true => Ok(()),
+            false => Err(BdkError::Generic(format!(
+                "transaction signing not finalized {:?}",
+                psbt
+            ))),
+        }
+    }
 }
 
 impl OfflineWallet {
@@ -186,22 +202,6 @@ impl OnlineWallet {
             .lock()
             .unwrap()
             .sync(BdkProgressHolder { progress_update }, max_address_param)
-    }
-
-    fn get_balance(&self) -> Result<u64, Error> {
-        self.wallet.lock().unwrap().get_balance()
-    }
-
-    fn sign<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<(), Error> {
-        let mut psbt = psbt.internal.lock().unwrap();
-        let finalized = self.get_wallet().sign(&mut psbt, SignOptions::default())?;
-        match finalized {
-            true => Ok(()),
-            false => Err(BdkError::Generic(format!(
-                "transaction signing not finalized {:?}",
-                psbt
-            ))),
-        }
     }
 
     fn broadcast<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<String, Error> {
