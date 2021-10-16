@@ -1,4 +1,6 @@
-use bdk::bitcoin::Network;
+use bdk::address_validator::AddressValidatorError;
+use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
+use bdk::bitcoin::{Address, Network};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::Progress;
 use bdk::blockchain::{
@@ -7,9 +9,9 @@ use bdk::blockchain::{
 use bdk::database::any::{AnyDatabase, SledDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::AddressIndex;
-use bdk::Error;
-use bdk::Wallet;
+use bdk::{Error, Wallet};
 use std::convert::TryFrom;
+use std::str::FromStr;
 use std::sync::{Mutex, MutexGuard};
 
 uniffi_macros::include_scaffolding!("bdk");
@@ -100,6 +102,29 @@ impl Progress for BdkProgressHolder {
     fn update(&self, progress: f32, message: Option<String>) -> Result<(), Error> {
         self.progress_update.update(progress, message);
         Ok(())
+    }
+}
+
+struct PartiallySignedBitcoinTransaction {
+    internal: Mutex<PartiallySignedTransaction>,
+}
+
+impl PartiallySignedBitcoinTransaction {
+    fn new(online_wallet: &OnlineWallet, recipient: String, amount: u64) -> Result<Self, Error> {
+        let wallet = online_wallet.get_wallet();
+        match Address::from_str(&recipient) {
+            Ok(address) => {
+                let mut builder = wallet.build_tx();
+                builder.add_recipient(address.script_pubkey(), amount);
+                let (pst, ..) = builder.finish()?;
+                Ok(PartiallySignedBitcoinTransaction {
+                    internal: Mutex::new(pst),
+                })
+            }
+            Err(..) => Err(BdkError::AddressValidator(
+                AddressValidatorError::InvalidScript,
+            )),
+        }
     }
 }
 
