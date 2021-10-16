@@ -2,7 +2,7 @@ import uniffi.bdk.*
 
 class LogProgress: BdkProgress {
     override fun update(progress: Float, message: String? ) {
-        println("progress: $progress, message: $message")
+        println("Syncing..")
     }
 }
 
@@ -26,12 +26,10 @@ fun main(args: Array<String>) {
     val db = DatabaseConfig.Memory("")
     val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u))
     val wallet = OnlineWallet(descriptor, Network.TESTNET, db, client)
-    println("Syncing...")
     wallet.sync(LogProgress(), null)
     println("Initial wallet balance: ${wallet.getBalance()}")
     println("Please send $amount satoshis to address: ${wallet.getNewAddress()}")
     readLine()
-    println("Syncing...")
     wallet.sync(LogProgress(), null)
     println("New wallet balance: ${wallet.getBalance()}")
     println("Press Enter to return funds")
