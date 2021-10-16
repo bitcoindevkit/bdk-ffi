@@ -63,6 +63,15 @@ interface DatabaseConfig {
   Sled(SledDbConfiguration config);
 };
 
+dictionary ConfirmedTransaction {
+    u64? fees;
+    u32 height;
+    u64 timestamp;
+    u64 received;
+    u64 sent;
+    string id;
+};
+
 interface OfflineWallet {
   [Throws=BdkError]
   constructor(string descriptor, Network network, DatabaseConfig database_config);
@@ -73,6 +82,8 @@ interface OfflineWallet {
   u64 get_balance();
   [Throws=BdkError]
   void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+  [Throws=BdkError]
+  sequence<ConfirmedTransaction> get_transactions();
 };
 
 dictionary ElectrumConfig {
@@ -111,6 +122,8 @@ interface OnlineWallet {
   u64 get_balance();
   [Throws=BdkError]
   void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+  [Throws=BdkError]
+  sequence<ConfirmedTransaction> get_transactions();
 
   // OnlineWalletInterface
   Network get_network();
