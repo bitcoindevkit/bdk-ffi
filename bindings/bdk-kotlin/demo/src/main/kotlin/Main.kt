@@ -6,9 +6,14 @@ class LogProgress: BdkProgress {
     }
 }
 
+class NullProgress: BdkProgress {
+    override fun update(progress: Float, message: String? ) {
+
+    }
+}
+
 fun getConfirmedTransaction(wallet: OnlineWalletInterface, transactionId: String): ConfirmedTransaction? {
-    println("Syncing...")
-    wallet.sync(LogProgress(), null)
+    wallet.sync(NullProgress(), null)
     return wallet.getTransactions().stream().filter({ it.id.equals(transactionId) }).findFirst().orElse(null)
 }
 
