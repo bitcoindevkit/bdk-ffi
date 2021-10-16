@@ -6,6 +6,12 @@ class LogProgress: BdkProgress {
     }
 }
 
+fun getConfirmedTransaction(wallet: OnlineWalletInterface, transactionId: String): ConfirmedTransaction? {
+    println("Syncing...")
+    wallet.sync(LogProgress(), null)
+    return wallet.getTransactions().stream().filter({ it.id.equals(transactionId) }).findFirst().orElse(null)
+}
+
 fun main(args: Array<String>) {
     println("Configuring an in-memory wallet on electrum..")
     val descriptor =
@@ -33,9 +39,10 @@ fun main(args: Array<String>) {
     val transactionId = wallet.broadcast(transaction)
     println("Refunded $amount satoshis to $recipient via transaction id $transactionId")
     println("Confirming transaction...")
-    println("Syncing...")
-    wallet.sync(LogProgress(), null)
-    val confirmedTransaction = wallet.getTransactions().stream().filter({ it.id.equals(transactionId) }).findFirst().orElse(null)
+    var confirmedTransaction = getConfirmedTransaction(wallet, transactionId)
+    while(confirmedTransaction == null) {
+        confirmedTransaction = getConfirmedTransaction(wallet, transactionId)
+    }
     println("Confirmed transaction: $confirmedTransaction")
     println("Final wallet balance: ${wallet.getBalance()}")
 }
