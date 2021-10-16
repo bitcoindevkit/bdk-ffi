@@ -44,15 +44,15 @@ open class RustBuffer : Structure() {
 
     companion object {
         internal fun alloc(size: Int = 0) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_70ef_rustbuffer_alloc(size, status)
+            _UniFFILib.INSTANCE.ffi_bdk_1945_rustbuffer_alloc(size, status)
         }
 
         internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_70ef_rustbuffer_free(buf, status)
+            _UniFFILib.INSTANCE.ffi_bdk_1945_rustbuffer_free(buf, status)
         }
 
         internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_70ef_rustbuffer_reserve(buf, additional, status)
+            _UniFFILib.INSTANCE.ffi_bdk_1945_rustbuffer_reserve(buf, additional, status)
         }
     }
 
@@ -405,6 +405,12 @@ internal fun String.write(buf: RustBufferBuilder) {
 
 
 
+
+
+
+
+
+
 // Helper functions for pasing values of type UByte?
 @ExperimentalUnsignedTypes
 internal fun liftOptionalu8(rbuf: RustBuffer.ByValue): UByte? {
@@ -483,6 +489,45 @@ internal fun writeOptionalu32(v: UInt?, buf: RustBufferBuilder) {
 
 
 
+// Helper functions for pasing values of type ULong?
+@ExperimentalUnsignedTypes
+internal fun liftOptionalu64(rbuf: RustBuffer.ByValue): ULong? {
+    return liftFromRustBuffer(rbuf) { buf ->
+        readOptionalu64(buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun readOptionalu64(buf: ByteBuffer): ULong? {
+    if (buf.get().toInt() == 0) {
+        return null
+    }
+    return ULong.read(buf)
+}
+
+@ExperimentalUnsignedTypes
+internal fun lowerOptionalu64(v: ULong?): RustBuffer.ByValue {
+    return lowerIntoRustBuffer(v) { v, buf ->
+        writeOptionalu64(v, buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun writeOptionalu64(v: ULong?, buf: RustBufferBuilder) {
+    if (v == null) {
+        buf.putByte(0)
+    } else {
+        buf.putByte(1)
+        v.write(buf)
+    }
+}
+
+
+
+
+
+
+
 // Helper functions for pasing values of type String?
 
 internal fun liftOptionalstring(rbuf: RustBuffer.ByValue): String? {
@@ -519,6 +564,44 @@ internal fun writeOptionalstring(v: String?, buf: RustBufferBuilder) {
 
 
 
+
+
+
+// Helper functions for pasing values of type List<ConfirmedTransaction>
+
+@ExperimentalUnsignedTypes
+internal fun liftSequenceTypeConfirmedTransaction(rbuf: RustBuffer.ByValue): List<ConfirmedTransaction> {
+    return liftFromRustBuffer(rbuf) { buf ->
+        readSequenceTypeConfirmedTransaction(buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun readSequenceTypeConfirmedTransaction(buf: ByteBuffer): List<ConfirmedTransaction> {
+    val len = buf.getInt()
+    return List<ConfirmedTransaction>(len) {
+        ConfirmedTransaction.read(buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun lowerSequenceTypeConfirmedTransaction(v: List<ConfirmedTransaction>): RustBuffer.ByValue {
+    return lowerIntoRustBuffer(v) { v, buf ->
+        writeSequenceTypeConfirmedTransaction(v, buf)
+    }
+}
+
+@ExperimentalUnsignedTypes
+internal fun writeSequenceTypeConfirmedTransaction(v: List<ConfirmedTransaction>, buf: RustBufferBuilder) {
+    buf.putInt(v.size)
+    v.forEach {
+        it.write(buf)
+    }
+}
+
+
+
+
 @Synchronized
 fun findLibraryName(componentName: String): String {
     val libOverride = System.getProperty("uniffi.component.${componentName}.libraryOverride")
@@ -548,83 +631,91 @@ internal interface _UniFFILib : Library {
         }
     }
 
-    fun ffi_bdk_70ef_OfflineWallet_object_free(ptr: Pointer,
+    fun ffi_bdk_1945_OfflineWallet_object_free(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_70ef_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
+    fun bdk_1945_OfflineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun bdk_70ef_OfflineWallet_get_new_address(ptr: Pointer,
+    fun bdk_1945_OfflineWallet_get_new_address(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun bdk_70ef_OfflineWallet_get_balance(ptr: Pointer,
+    fun bdk_1945_OfflineWallet_get_balance(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Long
 
-    fun bdk_70ef_OfflineWallet_sign(ptr: Pointer,psbt: Pointer,
+    fun bdk_1945_OfflineWallet_sign(ptr: Pointer,psbt: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_70ef_OnlineWallet_object_free(ptr: Pointer,
-    uniffi_out_err: RustCallStatus
-    ): Unit
-
-    fun bdk_70ef_OnlineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,blockchain_config: RustBuffer.ByValue,
-    uniffi_out_err: RustCallStatus
-    ): Pointer
-
-    fun bdk_70ef_OnlineWallet_get_new_address(ptr: Pointer,
+    fun bdk_1945_OfflineWallet_get_transactions(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun bdk_70ef_OnlineWallet_get_balance(ptr: Pointer,
+    fun ffi_bdk_1945_OnlineWallet_object_free(ptr: Pointer,
+    uniffi_out_err: RustCallStatus
+    ): Unit
+
+    fun bdk_1945_OnlineWallet_new(descriptor: RustBuffer.ByValue,network: RustBuffer.ByValue,database_config: RustBuffer.ByValue,blockchain_config: RustBuffer.ByValue,
+    uniffi_out_err: RustCallStatus
+    ): Pointer
+
+    fun bdk_1945_OnlineWallet_get_new_address(ptr: Pointer,
+    uniffi_out_err: RustCallStatus
+    ): RustBuffer.ByValue
+
+    fun bdk_1945_OnlineWallet_get_balance(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): Long
 
-    fun bdk_70ef_OnlineWallet_sign(ptr: Pointer,psbt: Pointer,
+    fun bdk_1945_OnlineWallet_sign(ptr: Pointer,psbt: Pointer,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_70ef_OnlineWallet_get_network(ptr: Pointer,
+    fun bdk_1945_OnlineWallet_get_transactions(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun bdk_70ef_OnlineWallet_sync(ptr: Pointer,progress_update: Long,max_address_param: RustBuffer.ByValue,
-    uniffi_out_err: RustCallStatus
-    ): Unit
-
-    fun bdk_70ef_OnlineWallet_broadcast(ptr: Pointer,psbt: Pointer,
+    fun bdk_1945_OnlineWallet_get_network(ptr: Pointer,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_70ef_PartiallySignedBitcoinTransaction_object_free(ptr: Pointer,
+    fun bdk_1945_OnlineWallet_sync(ptr: Pointer,progress_update: Long,max_address_param: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun bdk_70ef_PartiallySignedBitcoinTransaction_new(wallet: Pointer,recipient: RustBuffer.ByValue,amount: Long,
+    fun bdk_1945_OnlineWallet_broadcast(ptr: Pointer,psbt: Pointer,
+    uniffi_out_err: RustCallStatus
+    ): RustBuffer.ByValue
+
+    fun ffi_bdk_1945_PartiallySignedBitcoinTransaction_object_free(ptr: Pointer,
+    uniffi_out_err: RustCallStatus
+    ): Unit
+
+    fun bdk_1945_PartiallySignedBitcoinTransaction_new(wallet: Pointer,recipient: RustBuffer.ByValue,amount: Long,
     uniffi_out_err: RustCallStatus
     ): Pointer
 
-    fun ffi_bdk_70ef_BdkProgress_init_callback(callback_stub: ForeignCallback,
+    fun ffi_bdk_1945_BdkProgress_init_callback(callback_stub: ForeignCallback,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_70ef_rustbuffer_alloc(size: Int,
+    fun ffi_bdk_1945_rustbuffer_alloc(size: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_70ef_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
+    fun ffi_bdk_1945_rustbuffer_from_bytes(bytes: ForeignBytes.ByValue,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
-    fun ffi_bdk_70ef_rustbuffer_free(buf: RustBuffer.ByValue,
+    fun ffi_bdk_1945_rustbuffer_free(buf: RustBuffer.ByValue,
     uniffi_out_err: RustCallStatus
     ): Unit
 
-    fun ffi_bdk_70ef_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
+    fun ffi_bdk_1945_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
     uniffi_out_err: RustCallStatus
     ): RustBuffer.ByValue
 
@@ -1226,6 +1317,55 @@ data class SledDbConfiguration (
 }
 
 @ExperimentalUnsignedTypes
+data class ConfirmedTransaction (
+    var fees: ULong?, 
+    var height: UInt, 
+    var timestamp: ULong, 
+    var received: ULong, 
+    var sent: ULong, 
+    var id: String 
+)  {
+    companion object {
+        internal fun lift(rbuf: RustBuffer.ByValue): ConfirmedTransaction {
+            return liftFromRustBuffer(rbuf) { buf -> ConfirmedTransaction.read(buf) }
+        }
+
+        internal fun read(buf: ByteBuffer): ConfirmedTransaction {
+            return ConfirmedTransaction(
+            readOptionalu64(buf),
+            UInt.read(buf),
+            ULong.read(buf),
+            ULong.read(buf),
+            ULong.read(buf),
+            String.read(buf)
+            )
+        }
+    }
+
+    internal fun lower(): RustBuffer.ByValue {
+        return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
+    }
+
+    internal fun write(buf: RustBufferBuilder) {
+            writeOptionalu64(this.fees, buf)
+        
+            this.height.write(buf)
+        
+            this.timestamp.write(buf)
+        
+            this.received.write(buf)
+        
+            this.sent.write(buf)
+        
+            this.id.write(buf)
+        
+    }
+
+    
+    
+}
+
+@ExperimentalUnsignedTypes
 data class ElectrumConfig (
     var url: String, 
     var socks5: String?, 
@@ -1326,6 +1466,7 @@ public interface OfflineWalletInterface {
     fun getNewAddress(): String
     fun getBalance(): ULong
     fun sign(psbt: PartiallySignedBitcoinTransaction )
+    fun getTransactions(): List<ConfirmedTransaction>
     
 }
 
@@ -1336,7 +1477,7 @@ class OfflineWallet(
     constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_1945_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() ,status)
 })
 
     /**
@@ -1349,7 +1490,7 @@ class OfflineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_70ef_OfflineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_1945_OfflineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -1364,7 +1505,7 @@ class OfflineWallet(
     override fun getNewAddress(): String =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OfflineWallet_get_new_address(it,  status)
+    _UniFFILib.INSTANCE.bdk_1945_OfflineWallet_get_new_address(it,  status)
 }
         }.let {
             String.lift(it)
@@ -1373,7 +1514,7 @@ class OfflineWallet(
     override fun getBalance(): ULong =
         callWithPointer {
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OfflineWallet_get_balance(it,  status)
+    _UniFFILib.INSTANCE.bdk_1945_OfflineWallet_get_balance(it,  status)
 }
         }.let {
             ULong.lift(it)
@@ -1382,8 +1523,17 @@ class OfflineWallet(
     override fun sign(psbt: PartiallySignedBitcoinTransaction ) =
         callWithPointer {
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OfflineWallet_sign(it, psbt.lower() , status)
+    _UniFFILib.INSTANCE.bdk_1945_OfflineWallet_sign(it, psbt.lower() , status)
 }
+        }
+    
+    override fun getTransactions(): List<ConfirmedTransaction> =
+        callWithPointer {
+    rustCallWithError(BdkException) { status ->
+    _UniFFILib.INSTANCE.bdk_1945_OfflineWallet_get_transactions(it,  status)
+}
+        }.let {
+            liftSequenceTypeConfirmedTransaction(it)
         }
     
     
@@ -1408,6 +1558,7 @@ public interface OnlineWalletInterface {
     fun getNewAddress(): String
     fun getBalance(): ULong
     fun sign(psbt: PartiallySignedBitcoinTransaction )
+    fun getTransactions(): List<ConfirmedTransaction>
     fun getNetwork(): Network
     fun sync(progressUpdate: BdkProgress, maxAddressParam: UInt? )
     fun broadcast(psbt: PartiallySignedBitcoinTransaction ): String
@@ -1421,7 +1572,7 @@ class OnlineWallet(
     constructor(descriptor: String, network: Network, databaseConfig: DatabaseConfig, blockchainConfig: BlockchainConfig ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OnlineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower(), blockchainConfig.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_1945_OnlineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower(), blockchainConfig.lower() ,status)
 })
 
     /**
@@ -1434,7 +1585,7 @@ class OnlineWallet(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_70ef_OnlineWallet_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_1945_OnlineWallet_object_free(this.pointer, status)
         }
     }
 
@@ -1449,7 +1600,7 @@ class OnlineWallet(
     override fun getNewAddress(): String =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OnlineWallet_get_new_address(it,  status)
+    _UniFFILib.INSTANCE.bdk_1945_OnlineWallet_get_new_address(it,  status)
 }
         }.let {
             String.lift(it)
@@ -1458,7 +1609,7 @@ class OnlineWallet(
     override fun getBalance(): ULong =
         callWithPointer {
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OnlineWallet_get_balance(it,  status)
+    _UniFFILib.INSTANCE.bdk_1945_OnlineWallet_get_balance(it,  status)
 }
         }.let {
             ULong.lift(it)
@@ -1467,14 +1618,23 @@ class OnlineWallet(
     override fun sign(psbt: PartiallySignedBitcoinTransaction ) =
         callWithPointer {
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OnlineWallet_sign(it, psbt.lower() , status)
+    _UniFFILib.INSTANCE.bdk_1945_OnlineWallet_sign(it, psbt.lower() , status)
 }
+        }
+    
+    override fun getTransactions(): List<ConfirmedTransaction> =
+        callWithPointer {
+    rustCallWithError(BdkException) { status ->
+    _UniFFILib.INSTANCE.bdk_1945_OnlineWallet_get_transactions(it,  status)
+}
+        }.let {
+            liftSequenceTypeConfirmedTransaction(it)
         }
     
     override fun getNetwork(): Network =
         callWithPointer {
     rustCall() { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OnlineWallet_get_network(it,  status)
+    _UniFFILib.INSTANCE.bdk_1945_OnlineWallet_get_network(it,  status)
 }
         }.let {
             Network.lift(it)
@@ -1483,14 +1643,14 @@ class OnlineWallet(
     override fun sync(progressUpdate: BdkProgress, maxAddressParam: UInt? ) =
         callWithPointer {
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OnlineWallet_sync(it, CallbackInterfaceBdkProgressInternals.lower(progressUpdate), lowerOptionalu32(maxAddressParam) , status)
+    _UniFFILib.INSTANCE.bdk_1945_OnlineWallet_sync(it, CallbackInterfaceBdkProgressInternals.lower(progressUpdate), lowerOptionalu32(maxAddressParam) , status)
 }
         }
     
     override fun broadcast(psbt: PartiallySignedBitcoinTransaction ): String =
         callWithPointer {
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_OnlineWallet_broadcast(it, psbt.lower() , status)
+    _UniFFILib.INSTANCE.bdk_1945_OnlineWallet_broadcast(it, psbt.lower() , status)
 }
         }.let {
             String.lift(it)
@@ -1525,7 +1685,7 @@ class PartiallySignedBitcoinTransaction(
     constructor(wallet: OnlineWallet, recipient: String, amount: ULong ) :
         this(
     rustCallWithError(BdkException) { status ->
-    _UniFFILib.INSTANCE.bdk_70ef_PartiallySignedBitcoinTransaction_new(wallet.lower(), recipient.lower(), amount.lower() ,status)
+    _UniFFILib.INSTANCE.bdk_1945_PartiallySignedBitcoinTransaction_new(wallet.lower(), recipient.lower(), amount.lower() ,status)
 })
 
     /**
@@ -1538,7 +1698,7 @@ class PartiallySignedBitcoinTransaction(
      */
     override protected fun freeRustArcPtr() {
         rustCall() { status ->
-            _UniFFILib.INSTANCE.ffi_bdk_70ef_PartiallySignedBitcoinTransaction_object_free(this.pointer, status)
+            _UniFFILib.INSTANCE.ffi_bdk_1945_PartiallySignedBitcoinTransaction_object_free(this.pointer, status)
         }
     }
 
@@ -1616,7 +1776,7 @@ internal object CallbackInterfaceBdkProgressInternals: CallbackInternals<BdkProg
 ) {
     override fun register(lib: _UniFFILib) {
         rustCall() { status ->
-            lib.ffi_bdk_70ef_BdkProgress_init_callback(this.foreignCallback, status)
+            lib.ffi_bdk_1945_BdkProgress_init_callback(this.foreignCallback, status)
         }
     }
 }
