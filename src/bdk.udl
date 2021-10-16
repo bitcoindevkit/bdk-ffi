@@ -64,25 +64,31 @@ interface DatabaseConfig {
 };
 
 interface OfflineWallet {
-    [Throws=BdkError]
-    constructor(string descriptor, Network network, DatabaseConfig database_config);
-    string get_new_address();
+  [Throws=BdkError]
+  constructor(string descriptor, Network network, DatabaseConfig database_config);
+
+  // OfflineWalletOperations
+  string get_new_address();
+  [Throws=BdkError]
+  u64 get_balance();
+  [Throws=BdkError]
+  void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
 
 dictionary ElectrumConfig {
-    string url;
-    string? socks5;
-    u8 retry;
-    u8? timeout;
-    u64 stop_gap;
+  string url;
+  string? socks5;
+  u8 retry;
+  u8? timeout;
+  u64 stop_gap;
 };
 
 dictionary EsploraConfig {
-    string base_url;
-    string? proxy;
-    u64 timeout_read;
-    u64 timeout_write;
-    u64 stop_gap;
+  string base_url;
+  string? proxy;
+  u64 timeout_read;
+  u64 timeout_write;
+  u64 stop_gap;
 };
 
 [Enum]
@@ -96,14 +102,22 @@ callback interface BdkProgress {
 };
 
 interface OnlineWallet {
-    [Throws=BdkError]
-    constructor(string descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
-    string get_new_address();
-    Network get_network();
-    [Throws=BdkError]
-    void sync(BdkProgress progress_update, u32? max_address_param);
-    [Throws=BdkError]
-    u64 get_balance();
+  [Throws=BdkError]
+  constructor(string descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
+
+  // OfflineWalletOperations
+  string get_new_address();
+  [Throws=BdkError]
+  u64 get_balance();
+  [Throws=BdkError]
+  void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+
+  // OnlineWalletInterface
+  Network get_network();
+  [Throws=BdkError]
+  void sync(BdkProgress progress_update, u32? max_address_param);
+  [Throws=BdkError]
+  string broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
 
 interface PartiallySignedBitcoinTransaction {
