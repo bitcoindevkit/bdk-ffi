@@ -1,4 +1,4 @@
 rootProject.name = 'bdk-kotlin'
 
-include ':jvm' //, ':android', ':test-fixtures'
+include ':jvm', ':demo' //, ':android', ':test-fixtures'
 

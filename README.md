@@ -42,3 +42,14 @@ See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
    1. Use `build.sh` script (TODO do it all in build.rs instead) 
    2. Create tests in `bindings/bdk-kotlin` and/or `bindings/bdk-swift`
    3. Use `test.sh` to run all bindings tests
+
+### Run kotlin demo application
+
+We have a kotlin demo console application which uses bdk.
+It uses stdin for inputs and can be run from gradle.
+
+```sh
+cd bindings/bdk-kotlin
+./gradlew :demo:run
+```
+
