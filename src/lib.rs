@@ -96,6 +96,7 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
         let transactions = self.get_wallet().list_transactions(true)?;
         Ok(transactions
             .iter()
+            .filter(|x| x.confirmation_time.is_some())
             .map(|x| ConfirmedTransaction {
                 fees: x.fee,
                 height: x.confirmation_time.clone().map_or(0, |c| c.height),
