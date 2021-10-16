@@ -10,7 +10,7 @@ use bdk::wallet::AddressIndex;
 use bdk::Error;
 use bdk::Wallet;
 use std::convert::TryFrom;
-use std::sync::Mutex;
+use std::sync::{Mutex, MutexGuard};
 
 uniffi_macros::include_scaffolding!("bdk");
 
@@ -42,8 +42,28 @@ pub enum BlockchainConfig {
     Esplora { config: EsploraConfig },
 }
 
+trait WalletHolder<B> {
+    fn get_wallet(&self) -> MutexGuard<Wallet<B, AnyDatabase>>;
+}
+
 struct OfflineWallet {
     wallet: Mutex<Wallet<(), AnyDatabase>>,
+}
+
+impl WalletHolder<()> for OfflineWallet {
+    fn get_wallet(&self) -> MutexGuard<Wallet<(), AnyDatabase>> {
+        self.wallet.lock().unwrap()
+    }
+}
+
+trait OfflineWalletOperations<B>: WalletHolder<B> {
+    fn get_new_address(&self) -> String {
+        self.get_wallet()
+            .get_address(AddressIndex::New)
+            .unwrap()
+            .address
+            .to_string()
+    }
 }
 
 impl OfflineWallet {
@@ -60,17 +80,9 @@ impl OfflineWallet {
         let wallet = Mutex::new(Wallet::new_offline(&descriptor, None, network, database)?);
         Ok(OfflineWallet { wallet })
     }
-
-    fn get_new_address(&self) -> String {
-        self.wallet
-            .lock()
-            .unwrap()
-            .get_address(AddressIndex::New)
-            .unwrap()
-            .address
-            .to_string()
-    }
 }
+
+impl OfflineWalletOperations<()> for OfflineWallet {}
 
 struct OnlineWallet {
     wallet: Mutex<Wallet<AnyBlockchain, AnyDatabase>>,
@@ -154,6 +166,14 @@ impl OnlineWallet {
         self.wallet.lock().unwrap().get_balance()
     }
 }
+
+impl WalletHolder<AnyBlockchain> for OnlineWallet {
+    fn get_wallet(&self) -> MutexGuard<Wallet<AnyBlockchain, AnyDatabase>> {
+        self.wallet.lock().unwrap()
+    }
+}
+
+impl OfflineWalletOperations<AnyBlockchain> for OnlineWallet {}
 
 uniffi::deps::static_assertions::assert_impl_all!(OfflineWallet: Sync, Send);
 uniffi::deps::static_assertions::assert_impl_all!(OnlineWallet: Sync, Send);
