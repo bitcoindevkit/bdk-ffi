@@ -66,7 +66,13 @@ interface DatabaseConfig {
 interface OfflineWallet {
   [Throws=BdkError]
   constructor(string descriptor, Network network, DatabaseConfig database_config);
+
+  // OfflineWalletOperations
   string get_new_address();
+  [Throws=BdkError]
+  u64 get_balance();
+  [Throws=BdkError]
+  void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
 
 dictionary ElectrumConfig {
@@ -98,14 +104,18 @@ callback interface BdkProgress {
 interface OnlineWallet {
   [Throws=BdkError]
   constructor(string descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
+
+  // OfflineWalletOperations
   string get_new_address();
-  Network get_network();
-  [Throws=BdkError]
-  void sync(BdkProgress progress_update, u32? max_address_param);
   [Throws=BdkError]
   u64 get_balance();
   [Throws=BdkError]
   void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+
+  // OnlineWalletInterface
+  Network get_network();
+  [Throws=BdkError]
+  void sync(BdkProgress progress_update, u32? max_address_param);
   [Throws=BdkError]
   string broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
