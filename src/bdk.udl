@@ -105,3 +105,8 @@ interface OnlineWallet {
     [Throws=BdkError]
     u64 get_balance();
 };
+
+interface PartiallySignedBitcoinTransaction {
+  [Throws=BdkError]
+  constructor([ByRef] OnlineWallet wallet, string recipient, u64 amount);
+};
