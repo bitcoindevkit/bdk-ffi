@@ -49,6 +49,8 @@ build_kotlin() {
 
 ## rust android
 build_android() {
+  build_kotlin
+
   # If ANDROID_NDK_HOME is not set then set it to github actions default
   [ -z "$ANDROID_NDK_HOME" ] && export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
 
@@ -61,27 +63,27 @@ build_android() {
   # IMPORTANT: make sure every target is not a substring of a different one. We check for them with grep later on
   BUILD_TARGETS="${BUILD_TARGETS:-aarch64,armv7,x86_64,i686}"
 
-  mkdir -p bdk-kotlin/android/src/main/jniLibs/ bdk-kotlin/android/src/main/jniLibs/arm64-v8a bdk-kotlin/android/src/main/jniLibs/x86_64 bdk-kotlin/android/src/main/jniLibs/armeabi-v7a bdk-kotlin/android/src/main/jniLibs/x86
+  mkdir -p bindings/bdk-kotlin/android/src/main/jniLibs/ bindings/bdk-kotlin/android/src/main/jniLibs/arm64-v8a bindings/bdk-kotlin/android/src/main/jniLibs/x86_64 bindings/bdk-kotlin/android/src/main/jniLibs/armeabi-v7a bindings/bdk-kotlin/android/src/main/jniLibs/x86
 
   if echo $BUILD_TARGETS | grep "aarch64"; then
       CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="aarch64-linux-android21-clang" CC="aarch64-linux-android21-clang" cargo build --target=aarch64-linux-android
-      cp target/aarch64-linux-android/debug/libbdk_ffi.so bdk-kotlin/android/src/main/jniLibs/arm64-v8a
+      cp target/aarch64-linux-android/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/arm64-v8a
   fi
   if echo $BUILD_TARGETS | grep "x86_64"; then
       CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="x86_64-linux-android21-clang" CC="x86_64-linux-android21-clang" cargo build --target=x86_64-linux-android
-      cp target/x86_64-linux-android/debug/libbdk_ffi.so bdk-kotlin/android/src/main/jniLibs/x86_64
+      cp target/x86_64-linux-android/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/x86_64
   fi
   if echo $BUILD_TARGETS | grep "armv7"; then
       CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER="armv7a-linux-androideabi21-clang" CC="armv7a-linux-androideabi21-clang" cargo build --target=armv7-linux-androideabi
-      cp target/armv7-linux-androideabi/debug/libbdk_ffi.so bdk-kotlin/android/src/main/jniLibs/armeabi-v7a
+      cp target/armv7-linux-androideabi/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/armeabi-v7a
   fi
   if echo $BUILD_TARGETS | grep "i686"; then
       CARGO_TARGET_I686_LINUX_ANDROID_LINKER="i686-linux-android21-clang" CC="i686-linux-android21-clang" cargo build --target=i686-linux-android
-      cp target/i686-linux-android/debug/libbdk_ffi.so bdk-kotlin/android/src/main/jniLibs/x86
+      cp target/i686-linux-android/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/x86
   fi
 
   # bdk-kotlin aar
-  (cd bdk-kotlin && ./gradlew :android:build && ./gradlew :android:publishToMavenLocal)
+  (cd bindings/bdk-kotlin && ./gradlew :android:build && ./gradlew :android:publishToMavenLocal)
 }
 
 OS=$(uname)
@@ -95,6 +97,7 @@ else
 
   while [ -n "$1" ]; do # while loop starts
     case "$1" in
+      -a) build_android ;;
       -k) build_kotlin ;;
       -h) help ;;
       *) echo "Option $1 not recognized" ;;
