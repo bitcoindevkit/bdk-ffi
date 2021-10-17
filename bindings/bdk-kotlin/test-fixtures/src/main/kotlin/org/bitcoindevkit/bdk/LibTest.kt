@@ -1,19 +1,24 @@
-package uniffi.bdk
+package org.bitcoindevkit.bdk
 
-import uniffi.bdk.OfflineWallet
 import org.junit.Assert.*
 import org.junit.Test
-
-class LogProgress: BdkProgress {
-    override fun update(progress: Float, message: String? ) {
-        println("progress: $progress, message: $message")
-    }
-}
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import uniffi.bdk.*
+import java.io.File
 
 /**
  * Library tests which will execute for jvm and android modules.
  */
-class LibTest {
+abstract class LibTest {
+
+    abstract fun getTestDataDir(): String
+
+    fun cleanupTestDataDir(testDataDir: String) {
+        File(testDataDir).deleteRecursively()
+    }
+
+    val log: Logger = LoggerFactory.getLogger(LibTest::class.java)
 
     val desc =
         "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
@@ -27,7 +32,7 @@ class LibTest {
         assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
     }
 
-    @Test(expected=BdkException.Descriptor::class)
+    @Test(expected= BdkException.Descriptor::class)
     fun invalidDescriptorExceptionIsThrown() {
         val config = DatabaseConfig.Memory("")
         OfflineWallet("invalid-descriptor", Network.REGTEST, config)
@@ -35,11 +40,13 @@ class LibTest {
 
     @Test
     fun sledWalletNewAddress() {
-        val config = DatabaseConfig.Sled(SledDbConfiguration("/tmp/testdb", "testdb"))
+        val testDataDir = getTestDataDir()
+        val config = DatabaseConfig.Sled(SledDbConfiguration(testDataDir, "testdb"))
         val wallet = OfflineWallet(desc, Network.REGTEST, config)
         val address = wallet.getNewAddress()
         assertNotNull(address)
         assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
+        cleanupTestDataDir(testDataDir)
     }
 
     @Test
@@ -50,6 +57,14 @@ class LibTest {
         assertNotNull(wallet)
         val network = wallet.getNetwork()
         assertEquals(network, Network.TESTNET)
+    }
+
+    class LogProgress: BdkProgress {
+        val log: Logger = LoggerFactory.getLogger(LibTest::class.java)
+
+        override fun update(progress: Float, message: String?) {
+            log.debug("Syncing...")
+        }
     }
 
     @Test
