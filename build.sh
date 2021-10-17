@@ -32,13 +32,11 @@ copy_lib_kotlin() {
       echo -n "darwin "
       mkdir -p bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
       cp target/debug/libuniffi_bdk.dylib bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
-      cp target/debug/libuniffi_bdk.dylib bindings/bdk-kotlin/demo/src/main/resources/darwin-x86-64
       ;;
     "Linux")
       echo -n "linux "
       mkdir -p bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
       cp target/debug/libuniffi_bdk.so bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
-      cp target/debug/libuniffi_bdk.so bindings/bdk-kotlin/demo/src/main/resources/linux-x86-64
       ;;
   esac
   echo "libs to kotlin sub-project"
