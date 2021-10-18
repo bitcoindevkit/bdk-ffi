@@ -32,7 +32,7 @@ abstract class LibTest {
         assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
     }
 
-    @Test(expected= BdkException.Descriptor::class)
+    @Test(expected = BdkException.Descriptor::class)
     fun invalidDescriptorExceptionIsThrown() {
         val config = DatabaseConfig.Memory("")
         OfflineWallet("invalid-descriptor", Network.REGTEST, config)
@@ -52,14 +52,22 @@ abstract class LibTest {
     @Test
     fun onlineWalletInMemory() {
         val db = DatabaseConfig.Memory("")
-        val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 100u))
+        val client = BlockchainConfig.Electrum(
+            ElectrumConfig(
+                "ssl://electrum.blockstream.info:60002",
+                null,
+                5u,
+                null,
+                100u
+            )
+        )
         val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
         assertNotNull(wallet)
         val network = wallet.getNetwork()
         assertEquals(network, Network.TESTNET)
     }
 
-    class LogProgress: BdkProgress {
+    class LogProgress : BdkProgress {
         val log: Logger = LoggerFactory.getLogger(LibTest::class.java)
 
         override fun update(progress: Float, message: String?) {
@@ -70,7 +78,15 @@ abstract class LibTest {
     @Test
     fun onlineWalletSyncGetBalance() {
         val db = DatabaseConfig.Memory("")
-        val client = BlockchainConfig.Electrum(ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 100u))
+        val client = BlockchainConfig.Electrum(
+            ElectrumConfig(
+                "ssl://electrum.blockstream.info:60002",
+                null,
+                5u,
+                null,
+                100u
+            )
+        )
         val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
         wallet.sync(LogProgress(), null)
         val balance = wallet.getBalance()
