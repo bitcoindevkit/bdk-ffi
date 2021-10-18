@@ -28,7 +28,7 @@ compileTestKotlin {
 }
 
 application {
-    mainClassName = 'MainKt'
+    mainClass.set('MainKt')
 }
 
 run {
