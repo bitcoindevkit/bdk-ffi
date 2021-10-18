@@ -8,7 +8,7 @@ use bdk::blockchain::{
 use bdk::database::any::{AnyDatabase, SledDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::AddressIndex;
-use bdk::{Error, SignOptions, Wallet};
+use bdk::{ConfirmationTime, Error, SignOptions, Wallet};
 use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Mutex, MutexGuard};
@@ -58,13 +58,22 @@ impl WalletHolder<()> for OfflineWallet {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct ConfirmedTransaction {
+pub struct TransactionDetails {
     pub fees: Option<u64>,
-    pub height: u32,
-    pub timestamp: u64,
     pub received: u64,
     pub sent: u64,
     pub id: String,
+}
+
+type Confirmation = ConfirmationTime;
+pub enum Transaction {
+    Unconfirmed {
+        details: TransactionDetails,
+    },
+    Confirmed {
+        details: TransactionDetails,
+        confirmation: Confirmation,
+    },
 }
 
 trait OfflineWalletOperations<B>: WalletHolder<B> {
@@ -92,18 +101,24 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
         }
     }
 
-    fn get_transactions(&self) -> Result<Vec<ConfirmedTransaction>, Error> {
+    fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
         Ok(transactions
             .iter()
-            .filter(|x| x.confirmation_time.is_some())
-            .map(|x| ConfirmedTransaction {
-                fees: x.fee,
-                height: x.confirmation_time.clone().map_or(0, |c| c.height),
-                timestamp: x.confirmation_time.clone().map_or(0, |c| c.timestamp),
-                id: x.txid.to_string(),
-                received: x.received,
-                sent: x.sent,
+            .map(|x| -> Transaction {
+                let details = TransactionDetails {
+                    fees: x.fee,
+                    id: x.txid.to_string(),
+                    received: x.received,
+                    sent: x.sent,
+                };
+                match x.confirmation_time.clone() {
+                    Some(confirmation) => Transaction::Confirmed {
+                        details,
+                        confirmation,
+                    },
+                    None => Transaction::Unconfirmed { details },
+                }
             })
             .collect())
     }
