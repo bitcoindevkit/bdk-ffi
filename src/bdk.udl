@@ -63,13 +63,22 @@ interface DatabaseConfig {
   Sled(SledDbConfiguration config);
 };
 
-dictionary ConfirmedTransaction {
+dictionary TransactionDetails {
     u64? fees;
-    u32 height;
-    u64 timestamp;
     u64 received;
     u64 sent;
     string id;
+};
+
+dictionary Confirmation {
+    u32 height;
+    u64 timestamp;
+};
+
+[Enum]
+interface Transaction {
+  Unconfirmed(TransactionDetails details);
+  Confirmed(TransactionDetails details, Confirmation confirmation);
 };
 
 interface OfflineWallet {
@@ -83,7 +92,7 @@ interface OfflineWallet {
   [Throws=BdkError]
   void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
   [Throws=BdkError]
-  sequence<ConfirmedTransaction> get_transactions();
+  sequence<Transaction> get_transactions();
 };
 
 dictionary ElectrumConfig {
@@ -123,7 +132,7 @@ interface OnlineWallet {
   [Throws=BdkError]
   void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
   [Throws=BdkError]
-  sequence<ConfirmedTransaction> get_transactions();
+  sequence<Transaction> get_transactions();
 
   // OnlineWalletInterface
   Network get_network();
