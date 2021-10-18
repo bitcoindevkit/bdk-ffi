@@ -1,3 +1,5 @@
+import java.util.Optional
+import kotlin.ExperimentalUnsignedTypes
 import uniffi.bdk.*
 
 class LogProgress : BdkProgress {
@@ -10,18 +12,37 @@ class NullProgress : BdkProgress {
     override fun update(progress: Float, message: String?) {}
 }
 
-fun getConfirmedTransaction(
-        wallet: OnlineWalletInterface,
-        transactionId: String
-): ConfirmedTransaction? {
+fun getTransaction(wallet: OnlineWalletInterface, transactionId: String): Optional<Transaction> {
     wallet.sync(NullProgress(), null)
     return wallet.getTransactions()
             .stream()
-            .filter({ it.id.equals(transactionId) })
+            .filter({
+                when (it) {
+                    is Transaction.Confirmed -> it.details.id.equals(transactionId)
+                    is Transaction.Unconfirmed -> it.details.id.equals(transactionId)
+                }
+            })
             .findFirst()
-            .orElse(null)
 }
 
+@ExperimentalUnsignedTypes
+val unconfirmedFirstThenByTimestampDescending =
+        Comparator<Transaction> { a, b ->
+            when {
+                (a is Transaction.Confirmed && b is Transaction.Confirmed) -> {
+                    val comparison = b.confirmation.timestamp.compareTo(a.confirmation.timestamp)
+                    when {
+                        comparison == 0 -> b.details.id.compareTo(a.details.id)
+                        else -> comparison
+                    }
+                }
+                (a is Transaction.Confirmed && b is Transaction.Unconfirmed) -> 1
+                (a is Transaction.Unconfirmed && b is Transaction.Confirmed) -> -1
+                else -> 0
+            }
+        }
+
+@ExperimentalUnsignedTypes
 fun main(args: Array<String>) {
     println("Configuring an in-memory wallet on electrum..")
     val descriptor = "pkh(cSQPHDBwXGjVzWRqAHm6zfvQhaTuj1f2bFH58h55ghbjtFwvmeXR)"
@@ -41,23 +62,19 @@ fun main(args: Array<String>) {
     println("New wallet balance: ${wallet.getBalance()}")
     println("Press Enter to return funds")
     readLine()
-    println(
-            "Creating a PSBT with recipient $recipient and amount $amount satoshis..."
-    )
+    println("Creating a PSBT with recipient $recipient and amount $amount satoshis...")
     val transaction = PartiallySignedBitcoinTransaction(wallet, recipient, amount)
     println("Signing the transaction...")
     wallet.sign(transaction)
     println("Broadcasting the signed transaction...")
     val transactionId = wallet.broadcast(transaction)
     println("Broadcasted transaction with id $transactionId")
-    println("Confirming transaction...")
-    var confirmedTransaction = getConfirmedTransaction(wallet, transactionId)
-    while (confirmedTransaction == null) {
-        confirmedTransaction = getConfirmedTransaction(wallet, transactionId)
-    }
-    println("Confirmed transaction: $confirmedTransaction")
-    val transactions = wallet.getTransactions()
-    println("Listing all ${transactions.size} transactions...")
-    transactions.sortedByDescending { it.timestamp }.forEach { println(it) }
+    val take = 5
+    println("Listing latest $take transactions...")
+    wallet
+            .getTransactions()
+            .sortedWith(unconfirmedFirstThenByTimestampDescending)
+            .take(take)
+            .forEach { println(it) }
     println("Final wallet balance: ${wallet.getBalance()}")
 }
