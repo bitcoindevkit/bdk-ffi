@@ -62,8 +62,10 @@ dependencies {
     api "org.slf4j:slf4j-api:1.7.30"
 
     androidTestImplementation 'com.github.tony19:logback-android:2.0.0'
-    androidTestImplementation(project(':test-fixtures')) {
+    androidTestImplementation(testFixtures(project(':jvm'))) {
         exclude group: 'net.java.dev.jna', module: 'jna'
+        exclude group: 'ch.qos.logback', module: 'logback-core'
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
     }
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
