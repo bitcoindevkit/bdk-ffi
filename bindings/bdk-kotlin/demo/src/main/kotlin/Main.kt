@@ -62,7 +62,7 @@ fun main(args: Array<String>) {
             BlockchainConfig.Electrum(
                     ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u)
             )
-    val wallet = OnlineWallet(descriptor, network, db, client)
+    val wallet = OnlineWallet(descriptor, null, network, db, client)
     wallet.sync(LogProgress(), null)
     println("Initial wallet balance: ${wallet.getBalance()}")
     println("Please send $amount satoshis to address: ${wallet.getNewAddress()}")
