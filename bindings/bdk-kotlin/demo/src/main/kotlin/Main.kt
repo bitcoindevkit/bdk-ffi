@@ -44,6 +44,8 @@ val unconfirmedFirstThenByTimestampDescending =
 
 @ExperimentalUnsignedTypes
 fun main(args: Array<String>) {
+    println("Generating key...")
+    println("${generateExtendedKey(Network.TESTNET, MnemonicType.WORDS12, null)}")
     println("Configuring an in-memory wallet on electrum..")
     val descriptor = "wpkh(tprv8ZgxMBicQKsPeSitUfdxhsVaf4BXAASVAbHypn2jnPcjmQZvqZYkeqx7EHQTWvdubTSDa5ben7zHC7sUsx4d8tbTvWdUtHzR8uhHg2CW7MT/*)"
     val amount = 1000uL
