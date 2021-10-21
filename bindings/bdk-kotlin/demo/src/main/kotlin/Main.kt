@@ -44,8 +44,15 @@ val unconfirmedFirstThenByTimestampDescending =
 
 @ExperimentalUnsignedTypes
 fun main(args: Array<String>) {
+    val network = Network.TESTNET
+    val mnemonicType = MnemonicType.WORDS12
+    val password: String? = null
     println("Generating key...")
-    println("${generateExtendedKey(Network.TESTNET, MnemonicType.WORDS12, null)}")
+    val extendedKey = generateExtendedKey(network, mnemonicType, password)
+    println("generated key: $extendedKey")
+    println("Attempting restore extended key...")
+    val restoredKey = restoreExtendedKey(network, extendedKey.mnemonic, password)
+    println("restored key: $restoredKey")
     println("Configuring an in-memory wallet on electrum..")
     val descriptor = "wpkh(tprv8ZgxMBicQKsPeSitUfdxhsVaf4BXAASVAbHypn2jnPcjmQZvqZYkeqx7EHQTWvdubTSDa5ben7zHC7sUsx4d8tbTvWdUtHzR8uhHg2CW7MT/*)"
     val amount = 1000uL
@@ -55,7 +62,7 @@ fun main(args: Array<String>) {
             BlockchainConfig.Electrum(
                     ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u)
             )
-    val wallet = OnlineWallet(descriptor, Network.TESTNET, db, client)
+    val wallet = OnlineWallet(descriptor, network, db, client)
     wallet.sync(LogProgress(), null)
     println("Initial wallet balance: ${wallet.getBalance()}")
     println("Please send $amount satoshis to address: ${wallet.getNewAddress()}")
