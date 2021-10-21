@@ -33,7 +33,7 @@ afterEvaluate {
                 from components.release
 
                 // You can then customize attributes of the publication as shown below.
-                groupId = 'org.bitcoindevkit'
+                groupId = 'uniffi.bdk'
                 artifactId = 'bdk'
                 version = '0.0.1-SNAPSHOT'
             }
@@ -42,7 +42,7 @@ afterEvaluate {
                 // Applies the component for the debug build variant.
                 from components.debug
 
-                groupId = 'org.bitcoindevkit'
+                groupId = 'uniffi.bdk'
                 artifactId = 'bdk-debug'
                 version = '0.0.1-SNAPSHOT'
             }
@@ -51,9 +51,9 @@ afterEvaluate {
 }
 
 dependencies {
-    implementation(project(':jvm')) {
-        exclude group: 'net.java.dev.jna', module: 'jna'
-    }
+//    implementation(project(':jvm')) {
+//        exclude group: 'net.java.dev.jna', module: 'jna'
+//    }
 
     implementation 'net.java.dev.jna:jna:5.8.0@aar'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
