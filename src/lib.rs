@@ -288,5 +288,21 @@ fn generate_extended_key(
     })
 }
 
+fn restore_extended_key(
+    network: Network,
+    mnemonic: String,
+    password: Option<String>,
+) -> Result<ExtendedKeyInfo, Error> {
+    let mnemonic = Mnemonic::from_phrase(mnemonic.as_ref(), Language::English).unwrap();
+    let xkey: ExtendedKey = (mnemonic.clone(), password).into_extended_key()?;
+    let xprv = xkey.into_xprv(network).unwrap();
+    let fingerprint = xprv.fingerprint(&Secp256k1::new());
+    Ok(ExtendedKeyInfo {
+        mnemonic: mnemonic.to_string(),
+        xprv: xprv.to_string(),
+        fingerprint: fingerprint.to_string(),
+    })
+}
+
 uniffi::deps::static_assertions::assert_impl_all!(OfflineWallet: Sync, Send);
 uniffi::deps::static_assertions::assert_impl_all!(OnlineWallet: Sync, Send);
