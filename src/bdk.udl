@@ -1,6 +1,8 @@
 namespace bdk {
   [Throws=BdkError]
   ExtendedKeyInfo generate_extended_key(Network network, MnemonicType mnemonicType, string? password);
+  [Throws=BdkError]
+  ExtendedKeyInfo restore_extended_key(Network network, string mnemonic, string? password);
 };
 
 [Error]
