@@ -1,4 +1,4 @@
-package org.bitcoindevkit.bdk
+package uniffi.bdk
 
 import android.app.Application
 import android.content.Context.MODE_PRIVATE
