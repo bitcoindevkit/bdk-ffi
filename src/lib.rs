@@ -1,3 +1,4 @@
+use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::{Address, Network};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
@@ -7,6 +8,9 @@ use bdk::blockchain::{
 };
 use bdk::database::any::{AnyDatabase, SledDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
+use bdk::keys::bip39::{Language, Mnemonic, MnemonicType};
+use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
+use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex;
 use bdk::{ConfirmationTime, Error, SignOptions, Wallet};
 use std::convert::TryFrom;
@@ -259,6 +263,30 @@ impl WalletHolder<AnyBlockchain> for OnlineWallet {
 }
 
 impl OfflineWalletOperations<AnyBlockchain> for OnlineWallet {}
+
+pub struct ExtendedKeyInfo {
+    mnemonic: String,
+    xprv: String,
+    fingerprint: String,
+}
+
+fn generate_extended_key(
+    network: Network,
+    mnemonic_type: MnemonicType,
+    password: Option<String>,
+) -> Result<ExtendedKeyInfo, Error> {
+    let mnemonic: GeneratedKey<_, BareCtx> =
+        Mnemonic::generate((mnemonic_type, Language::English)).unwrap();
+    let mnemonic = mnemonic.into_key();
+    let xkey: ExtendedKey = (mnemonic.clone(), password).into_extended_key()?;
+    let xprv = xkey.into_xprv(network).unwrap();
+    let fingerprint = xprv.fingerprint(&Secp256k1::new());
+    Ok(ExtendedKeyInfo {
+        mnemonic: mnemonic.to_string(),
+        xprv: xprv.to_string(),
+        fingerprint: fingerprint.to_string(),
+    })
+}
 
 uniffi::deps::static_assertions::assert_impl_all!(OfflineWallet: Sync, Send);
 uniffi::deps::static_assertions::assert_impl_all!(OnlineWallet: Sync, Send);
