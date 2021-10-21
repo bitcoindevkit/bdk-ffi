@@ -1,5 +1,6 @@
 namespace bdk {
-
+  [Throws=BdkError]
+  ExtendedKeyInfo generate_extended_key(Network network, MnemonicType mnemonicType, string? password);
 };
 
 [Error]
@@ -145,4 +146,18 @@ interface OnlineWallet {
 interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
   constructor([ByRef] OnlineWallet wallet, string recipient, u64 amount);
+};
+
+dictionary ExtendedKeyInfo {
+  string mnemonic;
+  string xprv;
+  string fingerprint;
+};
+
+enum MnemonicType {
+  "Words12",
+  "Words15",
+  "Words18",
+  "Words21",
+  "Words24",
 };
