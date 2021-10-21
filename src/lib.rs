@@ -193,6 +193,7 @@ impl PartiallySignedBitcoinTransaction {
 impl OnlineWallet {
     fn new(
         descriptor: String,
+        change_descriptor: Option<String>,
         network: Network,
         database_config: DatabaseConfig,
         blockchain_config: BlockchainConfig,
@@ -225,7 +226,7 @@ impl OnlineWallet {
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         let wallet = Mutex::new(Wallet::new(
             &descriptor,
-            None,
+            change_descriptor.to_owned().as_ref(),
             network,
             database,
             blockchain,

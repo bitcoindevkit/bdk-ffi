@@ -126,7 +126,7 @@ callback interface BdkProgress {
 
 interface OnlineWallet {
   [Throws=BdkError]
-  constructor(string descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
+  constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
 
   // OfflineWalletOperations
   string get_new_address();
