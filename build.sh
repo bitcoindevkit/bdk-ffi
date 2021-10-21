@@ -82,6 +82,9 @@ build_android() {
       cp target/i686-linux-android/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/x86
   fi
 
+  # copy sources
+  cp -R bindings/bdk-kotlin/jvm/src/main/ bindings/bdk-kotlin/android/src/main/
+
   # bdk-kotlin aar
   (cd bindings/bdk-kotlin && ./gradlew :android:build && ./gradlew :android:publishToMavenLocal)
 }
