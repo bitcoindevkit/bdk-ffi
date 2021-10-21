@@ -61,7 +61,7 @@ abstract class LibTest {
                 100u
             )
         )
-        val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
+        val wallet = OnlineWallet(desc, null, Network.TESTNET, db, client)
         assertNotNull(wallet)
         val network = wallet.getNetwork()
         assertEquals(network, Network.TESTNET)
@@ -87,7 +87,7 @@ abstract class LibTest {
                 100u
             )
         )
-        val wallet = OnlineWallet(desc, Network.TESTNET, db, client)
+        val wallet = OnlineWallet(desc, null, Network.TESTNET, db, client)
         wallet.sync(LogProgress(), null)
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
