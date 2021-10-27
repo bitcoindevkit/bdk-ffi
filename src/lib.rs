@@ -154,13 +154,10 @@ pub trait BdkProgress: Send + Sync {
     fn update(&self, progress: f32, message: Option<String>);
 }
 
-struct BdkProgressHolder {
-    progress_update: Box<dyn BdkProgress>,
-}
+struct BdkProgressHolder {}
 
 impl Progress for BdkProgressHolder {
-    fn update(&self, progress: f32, message: Option<String>) -> Result<(), Error> {
-        self.progress_update.update(progress, message);
+    fn update(&self, _progress: f32, _message: Option<String>) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -238,16 +235,11 @@ impl OnlineWallet {
         self.wallet.lock().unwrap().network()
     }
 
-    fn sync(
-        &self,
-        progress_update: Box<dyn BdkProgress>,
-        max_address_param: Option<u32>,
-    ) -> Result<(), BdkError> {
-        progress_update.update(21.0, Some("message".to_string()));
+    fn sync(&self, max_address_param: Option<u32>) -> Result<(), BdkError> {
         self.wallet
             .lock()
             .unwrap()
-            .sync(BdkProgressHolder { progress_update }, max_address_param)
+            .sync(BdkProgressHolder {}, max_address_param)
     }
 
     fn broadcast<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<String, Error> {
