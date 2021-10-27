@@ -48,6 +48,41 @@ build_kotlin() {
   uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-kotlin/jvm/src/main/kotlin --language kotlin
 }
 
+## bdk swift
+build_swift() {
+  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-swift/ --language swift
+  TARGETDIR=target
+  RELDIR=debug
+  STATIC_LIB_NAME=libuniffi_bdk.a
+
+  # We can't use cargo lipo because we can't link to universal libraries :(
+  # https://github.com/rust-lang/rust/issues/55235
+  LIBS_ARCHS=("x86_64" "arm64")
+  IOS_TRIPLES=("x86_64-apple-ios" "aarch64-apple-ios")
+  for i in "${!LIBS_ARCHS[@]}"; do
+      cargo build --target "${IOS_TRIPLES[${i}]}"
+  done
+
+  UNIVERSAL_BINARY=./${TARGETDIR}/ios/universal/${RELDIR}/${STATIC_LIB_NAME}
+  NEED_LIPO=
+
+  # if the universal binary doesnt exist, or if it's older than the static libs,
+  # we need to run `lipo` again.
+  if [[ ! -f "${UNIVERSAL_BINARY}" ]]; then
+      NEED_LIPO=1
+  elif [[ "$(stat -f "%m" "./${TARGETDIR}/x86_64-apple-ios/${RELDIR}/${STATIC_LIB_NAME}")" -gt "$(stat -f "%m" "${UNIVERSAL_BINARY}")" ]]; then
+      NEED_LIPO=1
+  elif [[ "$(stat -f "%m" "./${TARGETDIR}/aarch64-apple-ios/${RELDIR}/${STATIC_LIB_NAME}")" -gt "$(stat -f "%m" "${UNIVERSAL_BINARY}")" ]]; then
+      NEED_LIPO=1
+  fi
+  if [[ "${NEED_LIPO}" = "1" ]]; then
+      mkdir -p "${TARGETDIR}/ios/universal/${RELDIR}"
+      lipo -create -output "${UNIVERSAL_BINARY}" \
+          "${TARGETDIR}/x86_64-apple-ios/${RELDIR}/${STATIC_LIB_NAME}" \
+          "${TARGETDIR}/aarch64-apple-ios/${RELDIR}/${STATIC_LIB_NAME}"
+  fi
+}
+
 ## rust android
 build_android() {
   build_kotlin
@@ -102,6 +137,7 @@ else
     case "$1" in
       -a) build_android ;;
       -k) build_kotlin ;;
+      -s) build_swift ;;
       -h) help ;;
       *) echo "Option $1 not recognized" ;;
     esac
