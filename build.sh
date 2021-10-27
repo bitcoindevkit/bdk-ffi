@@ -51,6 +51,7 @@ build_kotlin() {
 ## bdk swift
 build_swift() {
   uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-swift/ --language swift
+  swiftc -module-name bdk -emit-library -o libuniffi_bdk.dylib -emit-module -emit-module-path ./bindings/bdk-swift/ -parse-as-library -L ./target/debug/ -luniffi_bdk -Xcc -fmodule-map-file=./bindings/bdk-swift/bdkFFI.modulemap ./bindings/bdk-swift/bdk.swift
   TARGETDIR=target
   RELDIR=debug
   STATIC_LIB_NAME=libuniffi_bdk.a
