@@ -44,6 +44,7 @@ copy_lib_kotlin() {
 
 ## bdk-bdk-kotlin jar
 build_kotlin() {
+  copy_lib_kotlin
   uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-kotlin/jvm/src/main/kotlin --language kotlin
 }
 
@@ -96,7 +97,6 @@ then
   help
 else
   build_rust
-  copy_lib_kotlin
 
   while [ -n "$1" ]; do # while loop starts
     case "$1" in
