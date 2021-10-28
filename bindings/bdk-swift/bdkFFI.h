@@ -28,6 +28,8 @@ typedef struct RustBuffer
     uint8_t *_Nullable data;
 } RustBuffer;
 
+typedef RustBuffer (*ForeignCallback)(uint64_t, int32_t, RustBuffer);
+
 typedef struct ForeignBytes
 {
     int32_t len;
@@ -44,95 +46,99 @@ typedef struct RustCallStatus {
 // ⚠️ increment the version suffix in all instances of UNIFFI_SHARED_HEADER_V3 in this file.           ⚠️
 #endif // def UNIFFI_SHARED_H
 
-void ffi_bdk_5a21_OfflineWallet_object_free(
+void ffi_bdk_62af_OfflineWallet_object_free(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-void*_Nonnull bdk_5a21_OfflineWallet_new(
+void*_Nonnull bdk_62af_OfflineWallet_new(
       RustBuffer descriptor,RustBuffer network,RustBuffer database_config,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer bdk_5a21_OfflineWallet_get_new_address(
+RustBuffer bdk_62af_OfflineWallet_get_new_address(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-uint64_t bdk_5a21_OfflineWallet_get_balance(
+uint64_t bdk_62af_OfflineWallet_get_balance(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-void bdk_5a21_OfflineWallet_sign(
+void bdk_62af_OfflineWallet_sign(
       void*_Nonnull ptr,void*_Nonnull psbt,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer bdk_5a21_OfflineWallet_get_transactions(
+RustBuffer bdk_62af_OfflineWallet_get_transactions(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-void ffi_bdk_5a21_OnlineWallet_object_free(
+void ffi_bdk_62af_OnlineWallet_object_free(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-void*_Nonnull bdk_5a21_OnlineWallet_new(
+void*_Nonnull bdk_62af_OnlineWallet_new(
       RustBuffer descriptor,RustBuffer change_descriptor,RustBuffer network,RustBuffer database_config,RustBuffer blockchain_config,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer bdk_5a21_OnlineWallet_get_new_address(
+RustBuffer bdk_62af_OnlineWallet_get_new_address(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-uint64_t bdk_5a21_OnlineWallet_get_balance(
+uint64_t bdk_62af_OnlineWallet_get_balance(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-void bdk_5a21_OnlineWallet_sign(
+void bdk_62af_OnlineWallet_sign(
       void*_Nonnull ptr,void*_Nonnull psbt,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer bdk_5a21_OnlineWallet_get_transactions(
+RustBuffer bdk_62af_OnlineWallet_get_transactions(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer bdk_5a21_OnlineWallet_get_network(
+RustBuffer bdk_62af_OnlineWallet_get_network(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-void bdk_5a21_OnlineWallet_sync(
-      void*_Nonnull ptr,RustBuffer max_address_param,
+void bdk_62af_OnlineWallet_sync(
+      void*_Nonnull ptr,uint64_t progress_update,RustBuffer max_address_param,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer bdk_5a21_OnlineWallet_broadcast(
+RustBuffer bdk_62af_OnlineWallet_broadcast(
       void*_Nonnull ptr,void*_Nonnull psbt,
     RustCallStatus *_Nonnull out_status
     );
-void ffi_bdk_5a21_PartiallySignedBitcoinTransaction_object_free(
+void ffi_bdk_62af_PartiallySignedBitcoinTransaction_object_free(
       void*_Nonnull ptr,
     RustCallStatus *_Nonnull out_status
     );
-void*_Nonnull bdk_5a21_PartiallySignedBitcoinTransaction_new(
+void*_Nonnull bdk_62af_PartiallySignedBitcoinTransaction_new(
       void*_Nonnull wallet,RustBuffer recipient,uint64_t amount,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer bdk_5a21_generate_extended_key(
+void ffi_bdk_62af_BdkProgress_init_callback(
+      ForeignCallback  _Nonnull callback_stub,
+    RustCallStatus *_Nonnull out_status
+    );
+RustBuffer bdk_62af_generate_extended_key(
       RustBuffer network,RustBuffer mnemonic_type,RustBuffer password,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer bdk_5a21_restore_extended_key(
+RustBuffer bdk_62af_restore_extended_key(
       RustBuffer network,RustBuffer mnemonic,RustBuffer password,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer ffi_bdk_5a21_rustbuffer_alloc(
+RustBuffer ffi_bdk_62af_rustbuffer_alloc(
       int32_t size,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer ffi_bdk_5a21_rustbuffer_from_bytes(
+RustBuffer ffi_bdk_62af_rustbuffer_from_bytes(
       ForeignBytes bytes,
     RustCallStatus *_Nonnull out_status
     );
-void ffi_bdk_5a21_rustbuffer_free(
+void ffi_bdk_62af_rustbuffer_free(
       RustBuffer buf,
     RustCallStatus *_Nonnull out_status
     );
-RustBuffer ffi_bdk_5a21_rustbuffer_reserve(
+RustBuffer ffi_bdk_62af_rustbuffer_reserve(
       RustBuffer buf,int32_t additional,
     RustCallStatus *_Nonnull out_status
     );
