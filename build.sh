@@ -9,10 +9,12 @@ help()
    # Display Help
    echo "Build bdk-uniffi and related libraries."
    echo
-   echo "Syntax: build [-h|k]"
+   echo "Syntax: build [-a|h|k|s]"
    echo "options:"
+   echo "-a     Android."
    echo "-h     Print this Help."
    echo "-k     Kotlin."
+   echo "-s     Swift."
    echo
 }
 
