@@ -10,12 +10,12 @@ crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 bdk = { version = "^0.12.1-dev", features = ["all-keys", "use-esplora-ureq"] }
-uniffi_macros = "0.14.0"
-uniffi = "0.14.0"
+uniffi_macros = "0.14.1"
+uniffi = "0.14.1"
 thiserror = "1.0"
 
 [build-dependencies]
-uniffi_build = "0.14.0"
+uniffi_build = "0.14.1"
 
 [patch.crates-io]
 bdk = { git = "https://github.com/artfuldev/bdk.git", branch = "use-send-and-sync-on-memory-database" }
