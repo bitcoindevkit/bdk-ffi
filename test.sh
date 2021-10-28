@@ -9,7 +9,7 @@ help()
    # Display Help
    echo "Test bdk-uniffi and related libraries."
    echo
-   echo "Syntax: build [-a|h|k|v]"
+   echo "Syntax: build [-a|h|k]"
    echo "options:"
    echo "-a     Android connected device tests."
    echo "-h     Print this Help."
