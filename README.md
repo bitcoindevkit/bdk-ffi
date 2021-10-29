@@ -56,7 +56,7 @@ required by the build scripts)
     ```
 2. A demo android app is available at [notmandatory/bdk-sample-app](https://github.com/notmandatory/bitcoindevkit-android-sample-app/tree/upgrade-to-bdk-ffi/)
 
-## Swift bindings for iOS
+### Swift bindings for iOS
 
 1. Install the latest version of xcode, download and install the advanced tools.
 1. Ensure Swift is installed
@@ -72,16 +72,16 @@ required by the build scripts)
 
 ## Notes
 
-## Adding new structs and functions
+### Adding new structs and functions
 
 See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
 
-### For pass by value objects
+#### For pass by value objects
 
 1. create new rust struct with only fields that are supported UniFFI types
 1. update mapping `bdk.udl` file with new `dictionary`
 
-### For pass by reference values 
+#### For pass by reference values 
 
 1. create wrapper rust struct/impl with only fields that are `Sync + Send`
 1. update mapping `bdk.udl` file with new `interface`
