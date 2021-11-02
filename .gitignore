@@ -3,6 +3,8 @@ build
 Cargo.lock
 /bindings/bdk-kotlin/local.properties
 /bindings/bdk-swift
+/bindings/bdk-swift.swiftdoc
+/bindings/bdk-swift.swiftsourceinfo
 .gradle
 wallet_db
 bdk_ffi_test
@@ -12,3 +14,4 @@ local.properties
 *.so
 .DS_Store
 testdb
+xcuserdata
