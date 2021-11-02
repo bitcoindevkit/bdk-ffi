@@ -30,26 +30,11 @@ struct TransactionView: View {
     var body: some View {
         switch transaction {
         case .unconfirmed(let details):
-            VStack {
-                Text("Unconfirmed (\(details.id))")
-                    .multilineTextAlignment(.center)
-                    .frame(
-                        minWidth: 0,
-                        maxWidth: .infinity,
-                        minHeight: 0,
-                        alignment: .center
-                      )
-                VStack(alignment: .leading) {
-                    Text("sent: \(details.sent)")
-                    Text("received: \(details.received)")
-                    Text("fees: \(details.fees ?? 0)")
-                }.frame(
-                    minWidth: 0,
-                    maxWidth: .infinity,
-                    minHeight: 0,
-                    maxHeight: .infinity,
-                    alignment: .topLeading
-                  )
+            VStack(alignment: .leading) {
+                Text("id: \(details.id)")
+                Text("sent: \(details.sent)")
+                Text("received: \(details.received)")
+                Text("fees: \(details.fees ?? 0)")
             }.frame(
                 minWidth: 0,
                 maxWidth: .infinity,
@@ -58,25 +43,12 @@ struct TransactionView: View {
                 alignment: .topLeading
               )
         case .confirmed(let details, let confirmation):
-            VStack {
-                Text("Confirmed (\(details.id))")
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("sent: \(details.sent)")
-                        Text("received: \(details.received)")
-                        Text("fees: \(details.fees ?? 0)")
-                    }
-                    VStack(alignment: .trailing) {
-                        Text("height: \(confirmation.height)")
-                        Text(Date(timeIntervalSince1970: TimeInterval(confirmation.timestamp)).getFormattedDate(format: "yyyy-MM-dd HH:mm:ss"))
-                    }
-                }.frame(
-                    minWidth: 0,
-                    maxWidth: .infinity,
-                    minHeight: 0,
-                    maxHeight: .infinity,
-                    alignment: .topLeading
-                  )
+            VStack(alignment: .leading) {
+                Text("id: \(details.id)")
+                Text("sent: \(details.sent)")
+                Text("received: \(details.received)")
+                Text("fees: \(details.fees ?? 0)")
+                Text("confirmed via block \(confirmation.height) on \(Date(timeIntervalSince1970: TimeInterval(confirmation.timestamp)).getFormattedDate(format: "yyyy-MM-dd HH:mm:ss"))")
             }.frame(
                 minWidth: 0,
                 maxWidth: .infinity,
