@@ -17,59 +17,86 @@ class Progress : BdkProgress {
 struct WalletView: View {
     @EnvironmentObject var viewModel: WalletViewModel
     @State var balance: UInt64 = 0
-    func getBalance() -> UInt64 {
-        var balance: UInt64 = 0
+    @State var transactions: [Transaction] = []
+    func sync() {
         switch viewModel.state {
         case .loaded(let wallet):
-            do { balance = try wallet.getBalance() }
-            catch { print("failed to fetch balance") }
-        default: do {}
+            do {
+                try wallet.sync(progressUpdate: Progress(), maxAddressParam: nil)
+                balance = try wallet.getBalance()
+                let wallet_transactions = try wallet.getTransactions()
+                transactions = wallet_transactions.sorted(by: {
+                switch $0 {
+                case .confirmed(_, let confirmation_a):
+                    switch $1 {
+                    case .confirmed(_, let confirmation_b): return confirmation_a.timestamp > confirmation_b.timestamp
+                    default: return false
+                    }
+                default:
+                    switch $1 {
+                    case .unconfirmed(_): return true
+                    default: return false
+                    }
+                } })
+          } catch let error {
+              print(error)
+          }
+        default: do { }
         }
-        return balance
     }
     var body: some View {
-        switch viewModel.state {
-        case .empty:
-            Color.clear.onAppear(perform: viewModel.load)
-        case .loading:
-            ProgressView()
-        case .failed(_):
-            Text("Failed to load wallet")
-        case .loaded(let wallet):
-            VStack {
-                Button("Sync") {
-                    do {
-                        try wallet.sync(progressUpdate: Progress(), maxAddressParam: nil)
-                        balance = getBalance()
-                    } catch {
-                        print("Failed to sync wallet")
-                    }
-                    
-                }.padding()
-                Text("Balance")
-                HStack {
-                    Text(String(format: "%.8f", Double(balance) / Double(100000000)))
-                    Text("BTC")
-                }
-                HStack {
-                    Button("Receive") {
-                        print(wallet.getNewAddress())
-                    }.padding()
-                        .foregroundColor(Color.white)
-                        .background(Color.blue)
-                        .cornerRadius(5)
-                        .textCase(.uppercase)
-                    Button("Send") {
-                        
-                    }.padding()
-                        .foregroundColor(Color.white)
-                        .background(Color.blue)
-                        .cornerRadius(5)
-                        .textCase(.uppercase)
-                }
-                Text("Transactions")
-                    .foregroundColor(Color.accentColor)
-                    .padding()
+        NavigationView {
+            switch viewModel.state {
+            case .empty:
+                Color.clear
+                    .onAppear(perform: viewModel.load)
+            case .loading:
+                ProgressView()
+            case .failed(_):
+                Text("Failed to load wallet")
+            case .loaded(let wallet):
+                    VStack {
+                        Button(action: self.sync) {
+                            Text("Sync")
+                        }.padding()
+                        Text("Balance")
+                        HStack {
+                            Text(String(format: "%.8f", Double(balance) / Double(100000000)))
+                            Text("BTC")
+                        }
+                        HStack {
+                            NavigationLink(destination: ReceiveView(address: wallet.getNewAddress())) {
+                                Text("Receive")
+                                    .padding()
+                                    .foregroundColor(Color.white)
+                                    .background(Color.blue)
+                                    .cornerRadius(5)
+                                    .textCase(.uppercase)
+                            }
+                            NavigationLink(destination: SendView(onSend: { recipient, amount in
+                                do {
+                                    let psbt = try PartiallySignedBitcoinTransaction(wallet: wallet, recipient: recipient, amount: amount)
+                                    try wallet.sign(psbt: psbt)
+                                    let id = try wallet.broadcast(psbt: psbt)
+                                    print(id)
+                                } catch let error {
+                                    print(error)
+                                }
+                            })) {
+                                Text("Send")
+                                    .padding()
+                                    .foregroundColor(Color.white)
+                                    .background(Color.blue)
+                                    .cornerRadius(5)
+                                    .textCase(.uppercase)
+                            }
+                        }
+                        NavigationLink(destination: TransactionsView(transactions: transactions)) {
+                            Text("Transactions")
+                                .foregroundColor(Color.accentColor)
+                                .padding()
+                        }
+                    }.navigationBarTitle("BitcoinDevKit")
             }
         }
     }
