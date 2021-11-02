@@ -28,48 +28,52 @@ struct WalletView: View {
         return balance
     }
     var body: some View {
-        switch viewModel.state {
-        case .empty:
-            Color.clear.onAppear(perform: viewModel.load)
-        case .loading:
-            ProgressView()
-        case .failed(_):
-            Text("Failed to load wallet")
-        case .loaded(let wallet):
-            VStack {
-                Button("Sync") {
-                    do {
-                        try wallet.sync(progressUpdate: Progress(), maxAddressParam: nil)
-                        balance = getBalance()
-                    } catch {
-                        print("Failed to sync wallet")
-                    }
-                    
-                }.padding()
-                Text("Balance")
-                HStack {
-                    Text(String(format: "%.8f", Double(balance) / Double(100000000)))
-                    Text("BTC")
-                }
-                HStack {
-                    Button("Receive") {
-                        print(wallet.getNewAddress())
-                    }.padding()
-                        .foregroundColor(Color.white)
-                        .background(Color.blue)
-                        .cornerRadius(5)
-                        .textCase(.uppercase)
-                    Button("Send") {
-                        
-                    }.padding()
-                        .foregroundColor(Color.white)
-                        .background(Color.blue)
-                        .cornerRadius(5)
-                        .textCase(.uppercase)
-                }
-                Text("Transactions")
-                    .foregroundColor(Color.accentColor)
-                    .padding()
+        NavigationView {
+            switch viewModel.state {
+            case .empty:
+                Color.clear
+                    .onAppear(perform: viewModel.load)
+            case .loading:
+                ProgressView()
+            case .failed(_):
+                Text("Failed to load wallet")
+            case .loaded(let wallet):
+                    VStack {
+                        Button("Sync") {
+                            do {
+                                try wallet.sync(progressUpdate: Progress(), maxAddressParam: nil)
+                                balance = getBalance()
+                            } catch {
+                                print("Failed to sync wallet")
+                            }
+                            
+                        }.padding()
+                        Text("Balance")
+                        HStack {
+                            Text(String(format: "%.8f", Double(balance) / Double(100000000)))
+                            Text("BTC")
+                        }
+                        HStack {
+                            NavigationLink(destination: Text(wallet.getNewAddress())) {
+                                Text("Receive")
+                                    .padding()
+                                    .foregroundColor(Color.white)
+                                    .background(Color.blue)
+                                    .cornerRadius(5)
+                                    .textCase(.uppercase)
+                            }
+                            Button("Send") {
+                                
+                            }.padding()
+                                .foregroundColor(Color.white)
+                                .background(Color.blue)
+                                .cornerRadius(5)
+                                .textCase(.uppercase)
+                        }
+                        Text("Transactions")
+                            .foregroundColor(Color.accentColor)
+                            .padding()
+                    }.navigationBarTitle("BitcoinDevKit")
             }
         }
     }
