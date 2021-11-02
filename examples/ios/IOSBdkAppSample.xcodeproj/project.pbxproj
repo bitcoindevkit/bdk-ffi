@@ -16,6 +16,7 @@
 		C03BFBA6272C6AD5003AE940 /* bdk.swiftmodule in Resources */ = {isa = PBXBuildFile; fileRef = C03BFBA4272C6AD4003AE940 /* bdk.swiftmodule */; };
 		C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */; };
 		C03BFBAA272C6B7E003AE940 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA9272C6B7E003AE940 /* WalletView.swift */; };
+		C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009D2731767500CC4724 /* ReceiveView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		C03BFBA4272C6AD4003AE940 /* bdk.swiftmodule */ = {isa = PBXFileReference; lastKnownFileType = file; name = bdk.swiftmodule; path = "../../../bindings/bdk-swift/bdk.swiftmodule"; sourceTree = "<group>"; };
 		C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletViewModel.swift; sourceTree = "<group>"; };
 		C03BFBA9272C6B7E003AE940 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
+		C0FD009D2731767500CC4724 /* ReceiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiveView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -73,6 +75,7 @@
 				C03BFB98272C68CB003AE940 /* Preview Content */,
 				C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */,
 				C03BFBA9272C6B7E003AE940 /* WalletView.swift */,
+				C0FD009D2731767500CC4724 /* ReceiveView.swift */,
 			);
 			path = IOSBdkAppSample;
 			sourceTree = "<group>";
@@ -164,6 +167,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */,
 				C03BFBA5272C6AD5003AE940 /* bdk.swift in Sources */,
 				C03BFBAA272C6B7E003AE940 /* WalletView.swift in Sources */,
 				C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */,

@@ -54,7 +54,7 @@ struct WalletView: View {
                             Text("BTC")
                         }
                         HStack {
-                            NavigationLink(destination: Text(wallet.getNewAddress())) {
+                            NavigationLink(destination: ReceiveView(address: wallet.getNewAddress())) {
                                 Text("Receive")
                                     .padding()
                                     .foregroundColor(Color.white)
