@@ -80,9 +80,11 @@ struct WalletView: View {
                                     .textCase(.uppercase)
                             }
                         }
-                        Text("Transactions")
-                            .foregroundColor(Color.accentColor)
-                            .padding()
+                        NavigationLink(destination: TransactionsView(viewModel: TransactionsViewModel(wallet: wallet))) {
+                            Text("Transactions")
+                                .foregroundColor(Color.accentColor)
+                                .padding()
+                        }
                     }.navigationBarTitle("BitcoinDevKit")
             }
         }
