@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA8DC1642730D7A00084BAA2 /* libbdkffi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA8DC1632730D7A00084BAA2 /* libbdkffi.a */; };
 		C03BFB93272C68C7003AE940 /* IOSBdkAppSampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */; };
 		C03BFB95272C68C7003AE940 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFB94272C68C7003AE940 /* ContentView.swift */; };
 		C03BFB97272C68CB003AE940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C03BFB96272C68CB003AE940 /* Assets.xcassets */; };
@@ -15,17 +16,16 @@
 		C03BFBA6272C6AD5003AE940 /* bdk.swiftmodule in Resources */ = {isa = PBXBuildFile; fileRef = C03BFBA4272C6AD4003AE940 /* bdk.swiftmodule */; };
 		C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */; };
 		C03BFBAA272C6B7E003AE940 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA9272C6B7E003AE940 /* WalletView.swift */; };
-		C03BFBAB272C6CA7003AE940 /* libuniffi_bdk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = C03BFBA2272C6AB8003AE940 /* libuniffi_bdk.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AA8DC1632730D7A00084BAA2 /* libbdkffi.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbdkffi.a; path = ../../target/ios/universal/debug/libbdkffi.a; sourceTree = "<group>"; };
 		C03BFB8F272C68C7003AE940 /* IOSBdkAppSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IOSBdkAppSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBdkAppSampleApp.swift; sourceTree = "<group>"; };
 		C03BFB94272C68C7003AE940 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C03BFB96272C68CB003AE940 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C03BFB99272C68CB003AE940 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C03BFBA0272C6A04003AE940 /* BridgingHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BridgingHeader.h; sourceTree = "<group>"; };
-		C03BFBA2272C6AB8003AE940 /* libuniffi_bdk.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libuniffi_bdk.a; path = ../../target/ios/universal/debug/libuniffi_bdk.a; sourceTree = "<group>"; };
 		C03BFBA3272C6AD4003AE940 /* bdk.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = bdk.swift; path = "../../../bindings/bdk-swift/bdk.swift"; sourceTree = "<group>"; };
 		C03BFBA4272C6AD4003AE940 /* bdk.swiftmodule */ = {isa = PBXFileReference; lastKnownFileType = file; name = bdk.swiftmodule; path = "../../../bindings/bdk-swift/bdk.swiftmodule"; sourceTree = "<group>"; };
 		C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletViewModel.swift; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C03BFBAB272C6CA7003AE940 /* libuniffi_bdk.a in Frameworks */,
+				AA8DC1642730D7A00084BAA2 /* libbdkffi.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -88,7 +88,7 @@
 		C03BFBA1272C6AB7003AE940 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				C03BFBA2272C6AB8003AE940 /* libuniffi_bdk.a */,
+				AA8DC1632730D7A00084BAA2 /* libbdkffi.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -299,6 +299,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"IOSBdkAppSample/Preview Content\"";
+				DEVELOPMENT_TEAM = GAU324YPR8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../bindings/bdk-swift";
@@ -330,6 +331,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"IOSBdkAppSample/Preview Content\"";
+				DEVELOPMENT_TEAM = GAU324YPR8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../bindings/bdk-swift";
