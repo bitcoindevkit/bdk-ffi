@@ -1,7 +1,8 @@
 target
 build
 Cargo.lock
-/bdk-kotlin/local.properties
+/bindings/bdk-kotlin/local.properties
+/bindings/bdk-swift
 .gradle
 wallet_db
 bdk_ffi_test
