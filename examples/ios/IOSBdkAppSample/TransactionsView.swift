@@ -28,35 +28,27 @@ struct TransactionView: View {
     var transaction: Transaction
     
     var body: some View {
-        switch transaction {
-        case .unconfirmed(let details):
-            VStack(alignment: .leading) {
+        VStack(alignment: .leading) {
+            switch transaction {
+            case .unconfirmed(let details):
                 Text("id: \(details.id)")
                 Text("sent: \(details.sent)")
                 Text("received: \(details.received)")
                 Text("fees: \(details.fees ?? 0)")
-            }.frame(
-                minWidth: 0,
-                maxWidth: .infinity,
-                minHeight: 0,
-                maxHeight: .infinity,
-                alignment: .topLeading
-              )
-        case .confirmed(let details, let confirmation):
-            VStack(alignment: .leading) {
+            case .confirmed(let details, let confirmation):
                 Text("id: \(details.id)")
                 Text("sent: \(details.sent)")
                 Text("received: \(details.received)")
                 Text("fees: \(details.fees ?? 0)")
-                Text("confirmed via block \(confirmation.height) on \(Date(timeIntervalSince1970: TimeInterval(confirmation.timestamp)).getFormattedDate(format: "yyyy-MM-dd HH:mm:ss"))")
-            }.frame(
-                minWidth: 0,
-                maxWidth: .infinity,
-                minHeight: 0,
-                maxHeight: .infinity,
-                alignment: .topLeading
-              )
-        }
+                Text("confirmed via block \(confirmation.height) at \(Date(timeIntervalSince1970: TimeInterval(confirmation.timestamp)).getFormattedDate(format: "yyyy-MM-dd HH:mm:ss"))")
+            }
+        }.frame(
+            minWidth: 0,
+            maxWidth: .infinity,
+            minHeight: 0,
+            maxHeight: .infinity,
+            alignment: .topLeading
+          )
     }
 }
 
