@@ -30,11 +30,9 @@ struct SendView: View {
             }
             Section {
                 Button("Send") {
-                    if (to != "" && amount != "") {
-                        onSend(to, UInt64((Double(amount) ?? 0) * Double(100000000)))
-                        presentationMode.wrappedValue.dismiss()
-                    }
-                }
+                    onSend(to, UInt64((Double(amount) ?? 0) * Double(100000000)))
+                    presentationMode.wrappedValue.dismiss()
+                }.disabled(to == "" || (Double(amount) ?? 0) == 0)
             }
         }.navigationBarTitle("Send")
     }
