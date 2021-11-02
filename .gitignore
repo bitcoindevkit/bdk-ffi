@@ -5,7 +5,6 @@ Cargo.lock
 /bindings/bdk-swift
 /bindings/bdk-swift.swiftdoc
 /bindings/bdk-swift.swiftsourceinfo
-examples/ios/IOSBdkAppSample.xcodeproj/project.xcworkspace/xcuserdata/
 .gradle
 wallet_db
 bdk_ffi_test
@@ -15,3 +14,4 @@ local.properties
 *.so
 .DS_Store
 testdb
+xcuserdata
