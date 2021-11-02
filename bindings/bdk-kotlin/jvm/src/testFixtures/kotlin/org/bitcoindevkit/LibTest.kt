@@ -1,10 +1,10 @@
-package org.bitcoindevkit.bdk
+package org.bitcoindevkit
 
 import org.junit.Assert.*
 import org.junit.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import uniffi.bdk.*
+import org.bitcoindevkit.*
 import java.io.File
 
 /**

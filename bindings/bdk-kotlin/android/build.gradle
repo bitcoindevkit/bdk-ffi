@@ -33,7 +33,7 @@ afterEvaluate {
                 from components.release
 
                 // You can then customize attributes of the publication as shown below.
-                groupId = 'uniffi.bdk'
+                groupId = 'org.bitcoindevkit'
                 artifactId = 'bdk'
                 version = '0.0.1-SNAPSHOT'
             }
@@ -42,7 +42,7 @@ afterEvaluate {
                 // Applies the component for the debug build variant.
                 from components.debug
 
-                groupId = 'uniffi.bdk'
+                groupId = 'org.bitcoindevkit'
                 artifactId = 'bdk-debug'
                 version = '0.0.1-SNAPSHOT'
             }

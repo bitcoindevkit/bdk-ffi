@@ -1,4 +1,4 @@
-package org.bitcoindevkit.bdk
+package org.bitcoindevkit
 
 import java.nio.file.Files
 

@@ -1,6 +1,6 @@
 import java.util.Optional
 import kotlin.ExperimentalUnsignedTypes
-import uniffi.bdk.*
+import org.bitcoindevkit.*
 
 class LogProgress : BdkProgress {
     override fun update(progress: Float, message: String?) {

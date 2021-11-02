@@ -7,7 +7,7 @@ set -eo pipefail
 help()
 {
    # Display Help
-   echo "Build bdk-uniffi and related libraries."
+   echo "Build bdk-ffi and related libraries."
    echo
    echo "Syntax: build [-a|h|k|s]"
    echo "options:"
@@ -33,12 +33,12 @@ copy_lib_kotlin() {
     "Darwin")
       echo -n "darwin "
       mkdir -p bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
-      cp target/debug/libuniffi_bdk.dylib bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
+      cp target/debug/libbdkffi.dylib bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
       ;;
     "Linux")
       echo -n "linux "
       mkdir -p bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
-      cp target/debug/libuniffi_bdk.so bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
+      cp target/debug/libbdkffi.so bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
       ;;
   esac
   echo "libs to kotlin sub-project"
@@ -53,10 +53,10 @@ build_kotlin() {
 ## bdk swift
 build_swift() {
   uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-swift/ --language swift
-  swiftc -module-name bdk -emit-library -o libuniffi_bdk.dylib -emit-module -emit-module-path ./bindings/bdk-swift/ -parse-as-library -L ./target/debug/ -luniffi_bdk -Xcc -fmodule-map-file=./bindings/bdk-swift/bdkFFI.modulemap ./bindings/bdk-swift/bdk.swift
+  swiftc -module-name bdk -emit-library -o libbdkffi.dylib -emit-module -emit-module-path ./bindings/bdk-swift/ -parse-as-library -L ./target/debug/ -lbdkffi -Xcc -fmodule-map-file=./bindings/bdk-swift/bdkFFI.modulemap ./bindings/bdk-swift/bdk.swift
   TARGETDIR=target
   RELDIR=debug
-  STATIC_LIB_NAME=libuniffi_bdk.a
+  STATIC_LIB_NAME=libbdkffi.a
 
   # We can't use cargo lipo because we can't link to universal libraries :(
   # https://github.com/rust-lang/rust/issues/55235
@@ -106,19 +106,19 @@ build_android() {
 
   if echo $BUILD_TARGETS | grep "aarch64"; then
       CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="aarch64-linux-android21-clang" CC="aarch64-linux-android21-clang" cargo build --target=aarch64-linux-android
-      cp target/aarch64-linux-android/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/arm64-v8a
+      cp target/aarch64-linux-android/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/arm64-v8a
   fi
   if echo $BUILD_TARGETS | grep "x86_64"; then
       CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="x86_64-linux-android21-clang" CC="x86_64-linux-android21-clang" cargo build --target=x86_64-linux-android
-      cp target/x86_64-linux-android/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/x86_64
+      cp target/x86_64-linux-android/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/x86_64
   fi
   if echo $BUILD_TARGETS | grep "armv7"; then
       CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER="armv7a-linux-androideabi21-clang" CC="armv7a-linux-androideabi21-clang" cargo build --target=armv7-linux-androideabi
-      cp target/armv7-linux-androideabi/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/armeabi-v7a
+      cp target/armv7-linux-androideabi/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/armeabi-v7a
   fi
   if echo $BUILD_TARGETS | grep "i686"; then
       CARGO_TARGET_I686_LINUX_ANDROID_LINKER="i686-linux-android21-clang" CC="i686-linux-android21-clang" cargo build --target=i686-linux-android
-      cp target/i686-linux-android/debug/libuniffi_bdk.so bindings/bdk-kotlin/android/src/main/jniLibs/x86
+      cp target/i686-linux-android/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/x86
   fi
 
   # copy sources
