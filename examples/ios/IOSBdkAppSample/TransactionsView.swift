@@ -48,10 +48,10 @@ struct TransactionsView: View {
                 Text("Failed to load wallet")
             case .loaded(let transactions):
                 if transactions.isEmpty {
-                    Text("No transactions yet.")
+                    Text("No transactions yet.").padding()
                 } else {
                     ForEach(1..<transactions.count) { index in
-                        Text(String(describing: transactions[index]))
+                        Text(String(describing: transactions[index])).padding()
                     }
                 }
             }
