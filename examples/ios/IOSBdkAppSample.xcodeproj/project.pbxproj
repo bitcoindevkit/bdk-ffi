@@ -17,6 +17,7 @@
 		C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */; };
 		C03BFBAA272C6B7E003AE940 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA9272C6B7E003AE940 /* WalletView.swift */; };
 		C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009D2731767500CC4724 /* ReceiveView.swift */; };
+		C0FD00A02731784D00CC4724 /* SendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009F2731784D00CC4724 /* SendView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletViewModel.swift; sourceTree = "<group>"; };
 		C03BFBA9272C6B7E003AE940 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
 		C0FD009D2731767500CC4724 /* ReceiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiveView.swift; sourceTree = "<group>"; };
+		C0FD009F2731784D00CC4724 /* SendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +78,7 @@
 				C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */,
 				C03BFBA9272C6B7E003AE940 /* WalletView.swift */,
 				C0FD009D2731767500CC4724 /* ReceiveView.swift */,
+				C0FD009F2731784D00CC4724 /* SendView.swift */,
 			);
 			path = IOSBdkAppSample;
 			sourceTree = "<group>";
@@ -172,6 +175,7 @@
 				C03BFBAA272C6B7E003AE940 /* WalletView.swift in Sources */,
 				C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */,
 				C03BFB95272C68C7003AE940 /* ContentView.swift in Sources */,
+				C0FD00A02731784D00CC4724 /* SendView.swift in Sources */,
 				C03BFB93272C68C7003AE940 /* IOSBdkAppSampleApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

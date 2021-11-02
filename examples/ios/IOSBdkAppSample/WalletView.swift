@@ -62,13 +62,23 @@ struct WalletView: View {
                                     .cornerRadius(5)
                                     .textCase(.uppercase)
                             }
-                            Button("Send") {
-                                
-                            }.padding()
-                                .foregroundColor(Color.white)
-                                .background(Color.blue)
-                                .cornerRadius(5)
-                                .textCase(.uppercase)
+                            NavigationLink(destination: SendView(onSend: { recipient, amount in
+                                do {
+                                    let psbt = try PartiallySignedBitcoinTransaction(wallet: wallet, recipient: recipient, amount: amount)
+                                    try wallet.sign(psbt: psbt)
+                                    let id = try wallet.broadcast(psbt: psbt)
+                                    print(id)
+                                } catch let error {
+                                    print(error)
+                                }
+                            })) {
+                                Text("Send")
+                                    .padding()
+                                    .foregroundColor(Color.white)
+                                    .background(Color.blue)
+                                    .cornerRadius(5)
+                                    .textCase(.uppercase)
+                            }
                         }
                         Text("Transactions")
                             .foregroundColor(Color.accentColor)
