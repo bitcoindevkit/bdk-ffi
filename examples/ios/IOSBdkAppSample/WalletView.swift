@@ -17,15 +17,32 @@ class Progress : BdkProgress {
 struct WalletView: View {
     @EnvironmentObject var viewModel: WalletViewModel
     @State var balance: UInt64 = 0
-    func getBalance() -> UInt64 {
-        var balance: UInt64 = 0
+    @State var transactions: [Transaction] = []
+    func sync() {
         switch viewModel.state {
         case .loaded(let wallet):
-            do { balance = try wallet.getBalance() }
-            catch { print("failed to fetch balance") }
-        default: do {}
+            do {
+                try wallet.sync(progressUpdate: Progress(), maxAddressParam: nil)
+                balance = try wallet.getBalance()
+                let wallet_transactions = try wallet.getTransactions()
+                transactions = wallet_transactions.sorted(by: {
+                switch $0 {
+                case .confirmed(_, let confirmation_a):
+                    switch $1 {
+                    case .confirmed(_, let confirmation_b): return confirmation_a.timestamp > confirmation_b.timestamp
+                    default: return false
+                    }
+                default:
+                    switch $1 {
+                    case .unconfirmed(_): return true
+                    default: return false
+                    }
+                } })
+          } catch let error {
+              print(error)
+          }
+        default: do { }
         }
-        return balance
     }
     var body: some View {
         NavigationView {
@@ -39,14 +56,8 @@ struct WalletView: View {
                 Text("Failed to load wallet")
             case .loaded(let wallet):
                     VStack {
-                        Button("Sync") {
-                            do {
-                                try wallet.sync(progressUpdate: Progress(), maxAddressParam: nil)
-                                balance = getBalance()
-                            } catch {
-                                print("Failed to sync wallet")
-                            }
-                            
+                        Button(action: self.sync) {
+                            Text("Sync")
                         }.padding()
                         Text("Balance")
                         HStack {
@@ -80,7 +91,7 @@ struct WalletView: View {
                                     .textCase(.uppercase)
                             }
                         }
-                        NavigationLink(destination: TransactionsView(viewModel: TransactionsViewModel(wallet: wallet))) {
+                        NavigationLink(destination: TransactionsView(transactions: transactions)) {
                             Text("Transactions")
                                 .foregroundColor(Color.accentColor)
                                 .padding()
