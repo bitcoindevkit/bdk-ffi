@@ -269,10 +269,13 @@ impl OnlineWallet {
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
 
-    fn broadcast<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<String, Error> {
+    fn broadcast<'a>(
+        &self,
+        psbt: &'a PartiallySignedBitcoinTransaction,
+    ) -> Result<Transaction, Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
-        let tx_id = self.get_wallet().broadcast(tx)?;
-        Ok(tx_id.to_string())
+        self.get_wallet().broadcast(tx)?;
+        Ok(to_transaction(&psbt.details))
     }
 }
 
