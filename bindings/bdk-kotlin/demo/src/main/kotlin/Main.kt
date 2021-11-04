@@ -72,12 +72,12 @@ fun main(args: Array<String>) {
     println("Press Enter to return funds")
     readLine()
     println("Creating a PSBT with recipient $recipient and amount $amount satoshis...")
-    val transaction = PartiallySignedBitcoinTransaction(wallet, recipient, amount)
+    val psbt = PartiallySignedBitcoinTransaction(wallet, recipient, amount, null)
     println("Signing the transaction...")
-    wallet.sign(transaction)
+    wallet.sign(psbt)
     println("Broadcasting the signed transaction...")
-    val transactionId = wallet.broadcast(transaction)
-    println("Broadcasted transaction with id $transactionId")
+    val transaction = wallet.broadcast(psbt)
+    println("Broadcasted transaction $transaction")
     val take = 5
     println("Listing latest $take transactions...")
     wallet
@@ -87,3 +87,4 @@ fun main(args: Array<String>) {
             .forEach { println(it) }
     println("Final wallet balance: ${wallet.getBalance()}")
 }
+
