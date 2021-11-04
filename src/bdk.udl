@@ -90,6 +90,7 @@ interface OfflineWallet {
 
   // OfflineWalletOperations
   string get_new_address();
+  string get_last_unused_address();
   [Throws=BdkError]
   u64 get_balance();
   [Throws=BdkError]
@@ -130,6 +131,7 @@ interface OnlineWallet {
 
   // OfflineWalletOperations
   string get_new_address();
+  string get_last_unused_address();
   [Throws=BdkError]
   u64 get_balance();
   [Throws=BdkError]
