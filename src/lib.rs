@@ -12,7 +12,7 @@ use bdk::keys::bip39::{Language, Mnemonic, MnemonicType};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
 use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex;
-use bdk::{ConfirmationTime, Error, SignOptions, Wallet};
+use bdk::{ConfirmationTime, Error, FeeRate, SignOptions, Wallet};
 use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Mutex, MutexGuard};
@@ -178,13 +178,21 @@ struct PartiallySignedBitcoinTransaction {
 }
 
 impl PartiallySignedBitcoinTransaction {
-    fn new(online_wallet: &OnlineWallet, recipient: String, amount: u64) -> Result<Self, Error> {
+    fn new(
+        online_wallet: &OnlineWallet,
+        recipient: String,
+        amount: u64,
+        fee_rate: Option<f32>, // satoshis per vbyte
+    ) -> Result<Self, Error> {
         let wallet = online_wallet.get_wallet();
         match Address::from_str(&recipient) {
             Ok(address) => {
                 let (psbt, _) = {
                     let mut builder = wallet.build_tx();
                     builder.add_recipient(address.script_pubkey(), amount);
+                    if let Some(sat_per_vb) = fee_rate {
+                        builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
+                    }
                     builder.finish()?
                 };
                 Ok(PartiallySignedBitcoinTransaction {
