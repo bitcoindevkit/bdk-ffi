@@ -193,6 +193,7 @@ impl Progress for BdkProgressHolder {
 
 struct PartiallySignedBitcoinTransaction {
     internal: Mutex<PartiallySignedTransaction>,
+    details: bdk::TransactionDetails,
 }
 
 impl PartiallySignedBitcoinTransaction {
@@ -205,7 +206,7 @@ impl PartiallySignedBitcoinTransaction {
         let wallet = online_wallet.get_wallet();
         match Address::from_str(&recipient) {
             Ok(address) => {
-                let (psbt, _) = {
+                let (psbt, details) = {
                     let mut builder = wallet.build_tx();
                     builder.add_recipient(address.script_pubkey(), amount);
                     if let Some(sat_per_vb) = fee_rate {
@@ -215,6 +216,7 @@ impl PartiallySignedBitcoinTransaction {
                 };
                 Ok(PartiallySignedBitcoinTransaction {
                     internal: Mutex::new(psbt),
+                    details,
                 })
             }
             Err(..) => Err(BdkError::Generic(
