@@ -82,19 +82,21 @@ pub enum Transaction {
     },
 }
 
-fn to_transaction(x: &bdk::TransactionDetails) -> Transaction {
-    let details = TransactionDetails {
-        fees: x.fee,
-        id: x.txid.to_string(),
-        received: x.received,
-        sent: x.sent,
-    };
-    match x.confirmation_time.clone() {
-        Some(confirmation) => Transaction::Confirmed {
-            details,
-            confirmation,
-        },
-        None => Transaction::Unconfirmed { details },
+impl From<&bdk::TransactionDetails> for Transaction {
+    fn from(x: &bdk::TransactionDetails) -> Transaction {
+        let details = TransactionDetails {
+            fees: x.fee,
+            id: x.txid.to_string(),
+            received: x.received,
+            sent: x.sent,
+        };
+        match x.confirmation_time.clone() {
+            Some(confirmation) => Transaction::Confirmed {
+                details,
+                confirmation,
+            },
+            None => Transaction::Unconfirmed { details },
+        }
     }
 }
 
@@ -133,7 +135,7 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
 
     fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
-        Ok(transactions.iter().map(to_transaction).collect())
+        Ok(transactions.iter().map(Transaction::from).collect())
     }
 }
 
@@ -275,7 +277,7 @@ impl OnlineWallet {
     ) -> Result<Transaction, Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
         self.get_wallet().broadcast(tx)?;
-        Ok(to_transaction(&psbt.details))
+        Ok(Transaction::from(&psbt.details))
     }
 }
 
