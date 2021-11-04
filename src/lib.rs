@@ -133,24 +133,7 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
 
     fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
-        Ok(transactions
-            .iter()
-            .map(|x| -> Transaction {
-                let details = TransactionDetails {
-                    fees: x.fee,
-                    id: x.txid.to_string(),
-                    received: x.received,
-                    sent: x.sent,
-                };
-                match x.confirmation_time.clone() {
-                    Some(confirmation) => Transaction::Confirmed {
-                        details,
-                        confirmation,
-                    },
-                    None => Transaction::Unconfirmed { details },
-                }
-            })
-            .collect())
+        Ok(transactions.iter().map(to_transaction).collect())
     }
 }
 
