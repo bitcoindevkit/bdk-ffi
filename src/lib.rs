@@ -82,20 +82,25 @@ pub enum Transaction {
     },
 }
 
-impl From<&bdk::TransactionDetails> for Transaction {
-    fn from(x: &bdk::TransactionDetails) -> Transaction {
-        let details = TransactionDetails {
+impl From<&bdk::TransactionDetails> for TransactionDetails {
+    fn from(x: &bdk::TransactionDetails) -> TransactionDetails {
+        TransactionDetails {
             fees: x.fee,
             id: x.txid.to_string(),
             received: x.received,
             sent: x.sent,
-        };
+        }
+    }
+}
+
+impl From<&bdk::TransactionDetails> for Transaction {
+    fn from(x: &bdk::TransactionDetails) -> Transaction {
         match x.confirmation_time.clone() {
             Some(confirmation) => Transaction::Confirmed {
-                details,
+                details: TransactionDetails::from(x),
                 confirmation,
             },
-            None => Transaction::Unconfirmed { details },
+            None => Transaction::Unconfirmed { details: TransactionDetails::from(x) },
         }
     }
 }
