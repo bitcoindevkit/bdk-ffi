@@ -82,6 +82,22 @@ pub enum Transaction {
     },
 }
 
+fn to_transaction(x: &bdk::TransactionDetails) -> Transaction {
+    let details = TransactionDetails {
+        fees: x.fee,
+        id: x.txid.to_string(),
+        received: x.received,
+        sent: x.sent,
+    };
+    match x.confirmation_time.clone() {
+        Some(confirmation) => Transaction::Confirmed {
+            details,
+            confirmation,
+        },
+        None => Transaction::Unconfirmed { details },
+    }
+}
+
 trait OfflineWalletOperations<B>: WalletHolder<B> {
     fn get_new_address(&self) -> String {
         self.get_wallet()
