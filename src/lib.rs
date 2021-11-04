@@ -70,6 +70,8 @@ pub struct TransactionDetails {
 }
 
 type Confirmation = ConfirmationTime;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Transaction {
     Unconfirmed {
         details: TransactionDetails,
