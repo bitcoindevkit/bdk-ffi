@@ -89,6 +89,14 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
             .to_string()
     }
 
+    fn get_last_unused_address(&self) -> String {
+        self.get_wallet()
+            .get_address(AddressIndex::LastUnused)
+            .unwrap()
+            .address
+            .to_string()
+    }
+
     fn get_balance(&self) -> Result<u64, Error> {
         self.get_wallet().get_balance()
     }
