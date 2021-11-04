@@ -70,6 +70,8 @@ pub struct TransactionDetails {
 }
 
 type Confirmation = ConfirmationTime;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Transaction {
     Unconfirmed {
         details: TransactionDetails,
@@ -78,6 +80,29 @@ pub enum Transaction {
         details: TransactionDetails,
         confirmation: Confirmation,
     },
+}
+
+impl From<&bdk::TransactionDetails> for TransactionDetails {
+    fn from(x: &bdk::TransactionDetails) -> TransactionDetails {
+        TransactionDetails {
+            fees: x.fee,
+            id: x.txid.to_string(),
+            received: x.received,
+            sent: x.sent,
+        }
+    }
+}
+
+impl From<&bdk::TransactionDetails> for Transaction {
+    fn from(x: &bdk::TransactionDetails) -> Transaction {
+        match x.confirmation_time.clone() {
+            Some(confirmation) => Transaction::Confirmed {
+                details: TransactionDetails::from(x),
+                confirmation,
+            },
+            None => Transaction::Unconfirmed { details: TransactionDetails::from(x) },
+        }
+    }
 }
 
 trait OfflineWalletOperations<B>: WalletHolder<B> {
@@ -115,24 +140,7 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
 
     fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
-        Ok(transactions
-            .iter()
-            .map(|x| -> Transaction {
-                let details = TransactionDetails {
-                    fees: x.fee,
-                    id: x.txid.to_string(),
-                    received: x.received,
-                    sent: x.sent,
-                };
-                match x.confirmation_time.clone() {
-                    Some(confirmation) => Transaction::Confirmed {
-                        details,
-                        confirmation,
-                    },
-                    None => Transaction::Unconfirmed { details },
-                }
-            })
-            .collect())
+        Ok(transactions.iter().map(Transaction::from).collect())
     }
 }
 
@@ -175,6 +183,7 @@ impl Progress for BdkProgressHolder {
 
 struct PartiallySignedBitcoinTransaction {
     internal: Mutex<PartiallySignedTransaction>,
+    details: bdk::TransactionDetails,
 }
 
 impl PartiallySignedBitcoinTransaction {
@@ -187,7 +196,7 @@ impl PartiallySignedBitcoinTransaction {
         let wallet = online_wallet.get_wallet();
         match Address::from_str(&recipient) {
             Ok(address) => {
-                let (psbt, _) = {
+                let (psbt, details) = {
                     let mut builder = wallet.build_tx();
                     builder.add_recipient(address.script_pubkey(), amount);
                     if let Some(sat_per_vb) = fee_rate {
@@ -197,6 +206,7 @@ impl PartiallySignedBitcoinTransaction {
                 };
                 Ok(PartiallySignedBitcoinTransaction {
                     internal: Mutex::new(psbt),
+                    details,
                 })
             }
             Err(..) => Err(BdkError::Generic(
@@ -266,10 +276,13 @@ impl OnlineWallet {
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
 
-    fn broadcast<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<String, Error> {
+    fn broadcast<'a>(
+        &self,
+        psbt: &'a PartiallySignedBitcoinTransaction,
+    ) -> Result<Transaction, Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
-        let tx_id = self.get_wallet().broadcast(tx)?;
-        Ok(tx_id.to_string())
+        self.get_wallet().broadcast(tx)?;
+        Ok(Transaction::from(&psbt.details))
     }
 }
 
