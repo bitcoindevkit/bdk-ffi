@@ -75,10 +75,10 @@ struct WalletView: View {
                             }
                             NavigationLink(destination: SendView(onSend: { recipient, amount in
                                 do {
-                                    let psbt = try PartiallySignedBitcoinTransaction(wallet: wallet, recipient: recipient, amount: amount)
+                                    let psbt = try PartiallySignedBitcoinTransaction(wallet: wallet, recipient: recipient, amount: amount, feeRate: nil)
                                     try wallet.sign(psbt: psbt)
-                                    let id = try wallet.broadcast(psbt: psbt)
-                                    print(id)
+                                    let transaction = try wallet.broadcast(psbt: psbt)
+                                    print(transaction)
                                 } catch let error {
                                     print(error)
                                 }
