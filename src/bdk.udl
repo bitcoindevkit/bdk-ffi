@@ -149,7 +149,7 @@ interface OnlineWallet {
 
 interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
-  constructor([ByRef] OnlineWallet wallet, string recipient, u64 amount);
+  constructor([ByRef] OnlineWallet wallet, string recipient, u64 amount, float? fee_rate);
 };
 
 dictionary ExtendedKeyInfo {
