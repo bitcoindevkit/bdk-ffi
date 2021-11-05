@@ -118,7 +118,7 @@ build_android() {
   fi
   if echo $BUILD_TARGETS | grep "i686"; then
       CARGO_TARGET_I686_LINUX_ANDROID_LINKER="i686-linux-android21-clang" CC="i686-linux-android21-clang" cargo build --target=i686-linux-android
-      cp target/i686-linux-android/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/x86
+      # cp target/i686-linux-android/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/x86
   fi
 
   # copy sources
