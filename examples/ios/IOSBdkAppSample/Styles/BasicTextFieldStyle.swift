@@ -11,7 +11,6 @@ struct BasicTextFieldStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .disableAutocorrection(true)
-            .textInputAutocapitalization(.never)
             .padding(10)
             .background(Color("Shadow"))
             .cornerRadius(5)

@@ -31,7 +31,6 @@
 		C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009D2731767500CC4724 /* ReceiveView.swift */; };
 		C0FD00A02731784D00CC4724 /* SendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009F2731784D00CC4724 /* SendView.swift */; };
 		C0FD00A22731829500CC4724 /* TransactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD00A12731829500CC4724 /* TransactionsView.swift */; };
-		D588644B2734AE73006E3FBE /* shcqrcode.png in Resources */ = {isa = PBXBuildFile; fileRef = D588644A2734AE73006E3FBE /* shcqrcode.png */; };
 		D588644E2734B81D006E3FBE /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = D588644D2734B81D006E3FBE /* CodeScanner */; };
 /* End PBXBuildFile section */
 
@@ -62,7 +61,6 @@
 		C0FD009D2731767500CC4724 /* ReceiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiveView.swift; sourceTree = "<group>"; };
 		C0FD009F2731784D00CC4724 /* SendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendView.swift; sourceTree = "<group>"; };
 		C0FD00A12731829500CC4724 /* TransactionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionsView.swift; sourceTree = "<group>"; };
-		D588644A2734AE73006E3FBE /* shcqrcode.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = shcqrcode.png; path = ../../../../../../Downloads/shcqrcode.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,7 +127,6 @@
 				C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */,
 				C03BFB94272C68C7003AE940 /* ContentView.swift */,
 				C03BFB96272C68CB003AE940 /* Assets.xcassets */,
-				D588644A2734AE73006E3FBE /* shcqrcode.png */,
 				C03BFB98272C68CB003AE940 /* Preview Content */,
 				C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */,
 				C03BFBA9272C6B7E003AE940 /* WalletView.swift */,
@@ -224,7 +221,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D588644B2734AE73006E3FBE /* shcqrcode.png in Resources */,
 				C03BFB9A272C68CB003AE940 /* Preview Assets.xcassets in Resources */,
 				C03BFBA6272C6AD5003AE940 /* bdk.swiftmodule in Resources */,
 				C03BFB97272C68CB003AE940 /* Assets.xcassets in Resources */,
@@ -393,6 +389,7 @@
 				DEVELOPMENT_ASSET_PATHS = "\"IOSBdkAppSample/Preview Content\"";
 				DEVELOPMENT_TEAM = 7FGUVM5WTY;
 				ENABLE_PREVIEWS = YES;
+				"EXCLUDED_ARCHS[sdk=*]" = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../bindings/bdk-swift";
 				INFOPLIST_KEY_LSApplicationCategoryType = "";

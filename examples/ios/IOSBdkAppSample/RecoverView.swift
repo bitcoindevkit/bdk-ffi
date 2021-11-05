@@ -21,7 +21,6 @@ struct RecoverView: View {
                     .modifier(BasicTextFieldStyle())
                 }
                 .disableAutocorrection(true).padding(.bottom, 10)
-                .textInputAutocapitalization(.never)
                 BasicButton(action: {}, text: "Recover")
             }
         }
