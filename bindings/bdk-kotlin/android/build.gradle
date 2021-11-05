@@ -1,6 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'maven-publish'
+group = 'org.bitcoindevkit'
+version = '0.1.0'
 
 android {
     compileSdkVersion 30
@@ -26,25 +28,18 @@ android {
 afterEvaluate {
 
     publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                // Applies the component for the release build variant.
-                from components.release
 
-                // You can then customize attributes of the publication as shown below.
-                groupId = 'org.bitcoindevkit'
-                artifactId = 'bdk'
-                version = '0.0.1-SNAPSHOT'
+        repositories {
+            maven {
+                url myMavenRepoWriteUrl
             }
-            // Creates a Maven publication called “debug”.
-            debug(MavenPublication) {
-                // Applies the component for the debug build variant.
-                from components.debug
+        }
 
-                groupId = 'org.bitcoindevkit'
-                artifactId = 'bdk-debug'
-                version = '0.0.1-SNAPSHOT'
+        publications {
+
+            maven(MavenPublication) {
+                from components.release
+                artifactId = 'bdk-android'
             }
         }
     }
