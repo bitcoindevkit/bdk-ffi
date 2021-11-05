@@ -87,7 +87,7 @@ afterEvaluate {
                         developer {
                             id = 'artfuldev'
                             name = 'Sudarsan Balaji'
-                            email = 'artfuldev@noreply.github.org'
+                            email = 'sudarsan.balaji@artfuldev.com'
                         }
                     }
                     scm {
@@ -129,7 +129,7 @@ afterEvaluate {
                         developer {
                             id = 'artfuldev'
                             name = 'Sudarsan Balaji'
-                            email = 'artfuldev@noreply.github.org'
+                            email = 'sudarsan.balaji@artfuldev.com'
                         }
                     }
                     scm {
