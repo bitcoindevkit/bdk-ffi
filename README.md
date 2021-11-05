@@ -11,7 +11,42 @@ for the rust library bdk for the Bitcoin Dev Kit (BDK) project.
 | Kotlin | Android | WIP |
 | Swift | iOS | WIP |
 
-## Getting Started
+
+## Getting Started (User)
+
+If you just want to consume the language bindings:
+
+### Kotlin (JVM)
+
+1. Add the following maven repository location to your build file:
+```
+repositories {
+  maven {
+      url = uri("https://mymavenrepo.com/repo/hvZOau2SW1xzbycfC96m/")
+  }
+}
+```
+1. Add the dependency
+```
+implementation("org.bitcoindevkit:bdk-jvm:0.1.0")
+```
+
+### Kotlin (Android)
+
+1. Add the following maven repository location to your build file:
+```
+repositories {
+  maven {
+      url = uri("https://mymavenrepo.com/repo/hvZOau2SW1xzbycfC96m/")
+  }
+}
+```
+1. Add the dependency
+```
+implementation("org.bitcoindevkit:bdk-android:0.1.0")
+```
+
+## Getting Started (Developer)
 
 This project uses rust. A basic knowledge of the rust ecosystem is helpful.
 
