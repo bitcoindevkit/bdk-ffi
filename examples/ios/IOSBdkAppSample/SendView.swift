@@ -36,11 +36,11 @@ struct SendView: View {
                     presentationMode.wrappedValue.dismiss()
                 }.disabled(to == "" || (Double(amount) ?? 0) == 0)
                 Spacer()
-//                Button(action: self.isShowingScanner = true) {
-//                    Text("Sign In")
-//                }
             }
         }.navigationBarTitle("Send")
+        Button(action: {self.isShowingScanner = true}) {
+            Text("Scan Wallet Address").padding(30)
+        }
     }
 }
 
