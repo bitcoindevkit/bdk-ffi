@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import CodeScanner
+//added code scanner to scan wallet QRs
 
 struct SendView: View {
     @State var to: String = ""
@@ -45,11 +46,6 @@ struct SendView: View {
                             }
                         }
                 }
-//                BasicButton(action: {
-//                    onSend(to, UInt64((Double(amount) ?? 0) * Double(100000000)))
-//                    presentationMode.wrappedValue.dismiss()
-//                }, text: "Send")
-//                    .disabled(to == "" || (Double(amount) ?? 0) == 0)
             }
             .onAppear {
                 UITableView.appearance().backgroundColor = .clear }
