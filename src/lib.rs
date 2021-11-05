@@ -100,7 +100,9 @@ impl From<&bdk::TransactionDetails> for Transaction {
                 details: TransactionDetails::from(x),
                 confirmation,
             },
-            None => Transaction::Unconfirmed { details: TransactionDetails::from(x) },
+            None => Transaction::Unconfirmed {
+                details: TransactionDetails::from(x),
+            },
         }
     }
 }
