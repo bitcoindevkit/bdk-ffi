@@ -7,8 +7,10 @@
 
 import SwiftUI
 import Combine
+import CodeScanner
 
 struct SendView: View {
+    @State private var isShowingScanner = false
     var onSend : (String, UInt64) -> ()
     @Environment(\.presentationMode) var presentationMode
     @State var to: String = ""
@@ -33,6 +35,10 @@ struct SendView: View {
                     onSend(to, UInt64((Double(amount) ?? 0) * Double(100000000)))
                     presentationMode.wrappedValue.dismiss()
                 }.disabled(to == "" || (Double(amount) ?? 0) == 0)
+                Spacer()
+//                Button(action: self.isShowingScanner = true) {
+//                    Text("Sign In")
+//                }
             }
         }.navigationBarTitle("Send")
     }

@@ -19,6 +19,9 @@
 		C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009D2731767500CC4724 /* ReceiveView.swift */; };
 		C0FD00A02731784D00CC4724 /* SendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009F2731784D00CC4724 /* SendView.swift */; };
 		C0FD00A22731829500CC4724 /* TransactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD00A12731829500CC4724 /* TransactionsView.swift */; };
+		D51BAD2A27348C8B00FECE27 /* QRKit in Frameworks */ = {isa = PBXBuildFile; productRef = D51BAD2927348C8B00FECE27 /* QRKit */; };
+		D588644B2734AE73006E3FBE /* shcqrcode.png in Resources */ = {isa = PBXBuildFile; fileRef = D588644A2734AE73006E3FBE /* shcqrcode.png */; };
+		D588644E2734B81D006E3FBE /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = D588644D2734B81D006E3FBE /* CodeScanner */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +39,7 @@
 		C0FD009D2731767500CC4724 /* ReceiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiveView.swift; sourceTree = "<group>"; };
 		C0FD009F2731784D00CC4724 /* SendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SendView.swift; sourceTree = "<group>"; };
 		C0FD00A12731829500CC4724 /* TransactionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionsView.swift; sourceTree = "<group>"; };
+		D588644A2734AE73006E3FBE /* shcqrcode.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = shcqrcode.png; path = ../../../../../../Downloads/shcqrcode.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,7 +47,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D51BAD2A27348C8B00FECE27 /* QRKit in Frameworks */,
 				AA8DC1642730D7A00084BAA2 /* libbdkffi.a in Frameworks */,
+				D588644E2734B81D006E3FBE /* CodeScanner in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -76,6 +82,7 @@
 				C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */,
 				C03BFB94272C68C7003AE940 /* ContentView.swift */,
 				C03BFB96272C68CB003AE940 /* Assets.xcassets */,
+				D588644A2734AE73006E3FBE /* shcqrcode.png */,
 				C03BFB98272C68CB003AE940 /* Preview Content */,
 				C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */,
 				C03BFBA9272C6B7E003AE940 /* WalletView.swift */,
@@ -118,6 +125,10 @@
 			dependencies = (
 			);
 			name = IOSBdkAppSample;
+			packageProductDependencies = (
+				D51BAD2927348C8B00FECE27 /* QRKit */,
+				D588644D2734B81D006E3FBE /* CodeScanner */,
+			);
 			productName = IOSBdkAppSample;
 			productReference = C03BFB8F272C68C7003AE940 /* IOSBdkAppSample.app */;
 			productType = "com.apple.product-type.application";
@@ -146,6 +157,10 @@
 				Base,
 			);
 			mainGroup = C03BFB86272C68C7003AE940;
+			packageReferences = (
+				D51BAD2827348C8B00FECE27 /* XCRemoteSwiftPackageReference "QRKit" */,
+				D588644C2734B81D006E3FBE /* XCRemoteSwiftPackageReference "CodeScanner" */,
+			);
 			productRefGroup = C03BFB90272C68C7003AE940 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -160,6 +175,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D588644B2734AE73006E3FBE /* shcqrcode.png in Resources */,
 				C03BFB9A272C68CB003AE940 /* Preview Assets.xcassets in Resources */,
 				C03BFBA6272C6AD5003AE940 /* bdk.swiftmodule in Resources */,
 				C03BFB97272C68CB003AE940 /* Assets.xcassets in Resources */,
@@ -389,6 +405,38 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D51BAD2827348C8B00FECE27 /* XCRemoteSwiftPackageReference "QRKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Technikabo/QRKit.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		D588644C2734B81D006E3FBE /* XCRemoteSwiftPackageReference "CodeScanner" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/twostraws/CodeScanner";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D51BAD2927348C8B00FECE27 /* QRKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D51BAD2827348C8B00FECE27 /* XCRemoteSwiftPackageReference "QRKit" */;
+			productName = QRKit;
+		};
+		D588644D2734B81D006E3FBE /* CodeScanner */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D588644C2734B81D006E3FBE /* XCRemoteSwiftPackageReference "CodeScanner" */;
+			productName = CodeScanner;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C03BFB87272C68C7003AE940 /* Project object */;
 }
