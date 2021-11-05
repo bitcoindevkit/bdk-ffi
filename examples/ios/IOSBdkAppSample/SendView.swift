@@ -10,15 +10,20 @@ import Combine
 import CodeScanner
 
 struct SendView: View {
-    func handleScan(result: Result<String, CodeScannerView.ScanError>) {
-       self.isShowingScanner = false
-       // more code to come
-    }
-    @State private var isShowingScanner = false
-    var onSend : (String, UInt64) -> ()
-    @Environment(\.presentationMode) var presentationMode
     @State var to: String = ""
     @State var amount: String = "0.000"
+    @State private var isShowingScanner = false
+    @Environment(\.presentationMode) var presentationMode
+    func handleScan(result: Result<String, CodeScannerView.ScanError>) {
+       self.isShowingScanner = false
+        switch result {
+        case .success(let code):
+            self.to = code
+        case .failure(let error):
+            print(error)
+        }
+    }
+    var onSend : (String, UInt64) -> ()
     var body: some View {
         Form {
             Section(header: Text("Recipient")) {
