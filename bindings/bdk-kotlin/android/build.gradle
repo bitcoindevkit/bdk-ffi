@@ -97,48 +97,6 @@ afterEvaluate {
                     }
                 }
             }
-            // Creates a Maven publication called “debug”.
-            debug(MavenPublication) {
-                // Applies the component for the debug build variant.
-                from components.debug
-
-                groupId = 'org.bitcoindevkit'
-                artifactId = 'bdk-android-debug'
-                version = '0.1.0'
-
-                pom {
-                    name = 'bdk-android-debug'
-                    description = 'Bitcoin Dev Kit Kotlin language bindings.'
-                    url = "https://bitcoindevkit.org"
-                    licenses {
-                        license {
-                            name = "APACHE"
-                            url = "https://github.com/bitcoindevkit/bdk/blob/master/LICENSE-APACHE"
-                        }
-                        license {
-                            name = "MIT"
-                            url = "https://github.com/bitcoindevkit/bdk/blob/master/LICENSE-MIT"
-                        }
-                    }
-                    developers {
-                        developer {
-                            id = 'notmandatory'
-                            name = 'Steve Myers'
-                            email = 'notmandatory@noreply.github.org'
-                        }
-                        developer {
-                            id = 'artfuldev'
-                            name = 'Sudarsan Balaji'
-                            email = 'sudarsan.balaji@artfuldev.com'
-                        }
-                    }
-                    scm {
-                        connection = 'scm:git:github.com/bitcoindevkit/bdk-ffi.git'
-                        developerConnection = 'scm:git:ssh://github.com/bitcoindevkit/bdk-ffi.git'
-                        url = 'https://github.com/bitcoindevkit/bdk-ffi/tree/master'
-                    }
-                }
-            }
         }
     }
 }
