@@ -27,11 +27,18 @@ dependencies {
 }
 
 publishing {
+
+    repositories {
+        maven {
+            url myMavenRepoWriteUrl
+        }
+    }
+
     publications {
         maven(MavenPublication) {
             groupId = 'org.bitcoindevkit'
-            artifactId = 'bdk'
-            version = '0.0.1-SNAPSHOT'
+            artifactId = 'bdk-jvm'
+            version = '0.1.0'
 
             from components.java
         }
