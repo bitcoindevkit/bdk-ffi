@@ -125,7 +125,7 @@ build_android() {
   cp -R bindings/bdk-kotlin/jvm/src/main/kotlin bindings/bdk-kotlin/android/src/main
 
   # bdk-kotlin aar
-  (cd bindings/bdk-kotlin && ./gradlew :android:build && ./gradlew :android:publishToMavenLocal)
+  (cd bindings/bdk-kotlin && ./gradlew :android:build)
 }
 
 OS=$(uname)
