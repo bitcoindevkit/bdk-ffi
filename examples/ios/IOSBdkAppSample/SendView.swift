@@ -10,6 +10,10 @@ import Combine
 import CodeScanner
 
 struct SendView: View {
+    func handleScan(result: Result<String, CodeScannerView.ScanError>) {
+       self.isShowingScanner = false
+       // more code to come
+    }
     @State private var isShowingScanner = false
     var onSend : (String, UInt64) -> ()
     @Environment(\.presentationMode) var presentationMode
@@ -38,6 +42,8 @@ struct SendView: View {
                 Spacer()
             }
         }.navigationBarTitle("Send")
+            .sheet(isPresented: $isShowingScanner) {
+                CodeScannerView(codeTypes: [.qr], simulatedData: "Testing1234", completion: self.handleScan)}
         Button(action: {self.isShowingScanner = true}) {
             Text("Scan Wallet Address").padding(30)
         }
