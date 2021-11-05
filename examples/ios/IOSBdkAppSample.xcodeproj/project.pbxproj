@@ -7,6 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6E4B1F5027356E2600CF3612 /* BasicTextFieldStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F4C27356E2600CF3612 /* BasicTextFieldStyle.swift */; };
+		6E4B1F5127356E2600CF3612 /* BackButtonMod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F4D27356E2600CF3612 /* BackButtonMod.swift */; };
+		6E4B1F5227356E2600CF3612 /* BasicTextStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F4E27356E2600CF3612 /* BasicTextStyle.swift */; };
+		6E4B1F5327356E2600CF3612 /* BasicButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F4F27356E2600CF3612 /* BasicButtonStyle.swift */; };
+		6E4B1F5A27356E3400CF3612 /* SendReceiveButtons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F5527356E3400CF3612 /* SendReceiveButtons.swift */; };
+		6E4B1F5B27356E3400CF3612 /* BasicButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F5627356E3400CF3612 /* BasicButton.swift */; };
+		6E4B1F5C27356E3400CF3612 /* SingleTxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F5727356E3400CF3612 /* SingleTxView.swift */; };
+		6E4B1F5D27356E3400CF3612 /* BackgroundWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F5827356E3400CF3612 /* BackgroundWrapper.swift */; };
+		6E4B1F5E27356E3400CF3612 /* BalanceDisplay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F5927356E3400CF3612 /* BalanceDisplay.swift */; };
+		6E4B1F60273572B200CF3612 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F5F273572B200CF3612 /* SettingsView.swift */; };
+		6E4B1F62273572D300CF3612 /* MnemonicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F61273572D300CF3612 /* MnemonicView.swift */; };
+		6E4B1F64273572DF00CF3612 /* RecoverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E4B1F63273572DF00CF3612 /* RecoverView.swift */; };
 		AA8DC1642730D7A00084BAA2 /* libbdkffi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA8DC1632730D7A00084BAA2 /* libbdkffi.a */; };
 		C03BFB93272C68C7003AE940 /* IOSBdkAppSampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */; };
 		C03BFB95272C68C7003AE940 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFB94272C68C7003AE940 /* ContentView.swift */; };
@@ -24,6 +36,18 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6E4B1F4C27356E2600CF3612 /* BasicTextFieldStyle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BasicTextFieldStyle.swift; sourceTree = "<group>"; };
+		6E4B1F4D27356E2600CF3612 /* BackButtonMod.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackButtonMod.swift; sourceTree = "<group>"; };
+		6E4B1F4E27356E2600CF3612 /* BasicTextStyle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BasicTextStyle.swift; sourceTree = "<group>"; };
+		6E4B1F4F27356E2600CF3612 /* BasicButtonStyle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BasicButtonStyle.swift; sourceTree = "<group>"; };
+		6E4B1F5527356E3400CF3612 /* SendReceiveButtons.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SendReceiveButtons.swift; sourceTree = "<group>"; };
+		6E4B1F5627356E3400CF3612 /* BasicButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BasicButton.swift; sourceTree = "<group>"; };
+		6E4B1F5727356E3400CF3612 /* SingleTxView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SingleTxView.swift; sourceTree = "<group>"; };
+		6E4B1F5827356E3400CF3612 /* BackgroundWrapper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BackgroundWrapper.swift; sourceTree = "<group>"; };
+		6E4B1F5927356E3400CF3612 /* BalanceDisplay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BalanceDisplay.swift; sourceTree = "<group>"; };
+		6E4B1F5F273572B200CF3612 /* SettingsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		6E4B1F61273572D300CF3612 /* MnemonicView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MnemonicView.swift; sourceTree = "<group>"; };
+		6E4B1F63273572DF00CF3612 /* RecoverView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecoverView.swift; sourceTree = "<group>"; };
 		AA8DC1632730D7A00084BAA2 /* libbdkffi.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbdkffi.a; path = ../../target/ios/universal/debug/libbdkffi.a; sourceTree = "<group>"; };
 		C03BFB8F272C68C7003AE940 /* IOSBdkAppSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IOSBdkAppSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBdkAppSampleApp.swift; sourceTree = "<group>"; };
@@ -54,6 +78,29 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6E4B1F4B27356E2600CF3612 /* Styles */ = {
+			isa = PBXGroup;
+			children = (
+				6E4B1F4C27356E2600CF3612 /* BasicTextFieldStyle.swift */,
+				6E4B1F4D27356E2600CF3612 /* BackButtonMod.swift */,
+				6E4B1F4E27356E2600CF3612 /* BasicTextStyle.swift */,
+				6E4B1F4F27356E2600CF3612 /* BasicButtonStyle.swift */,
+			);
+			path = Styles;
+			sourceTree = "<group>";
+		};
+		6E4B1F5427356E3400CF3612 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				6E4B1F5527356E3400CF3612 /* SendReceiveButtons.swift */,
+				6E4B1F5627356E3400CF3612 /* BasicButton.swift */,
+				6E4B1F5727356E3400CF3612 /* SingleTxView.swift */,
+				6E4B1F5827356E3400CF3612 /* BackgroundWrapper.swift */,
+				6E4B1F5927356E3400CF3612 /* BalanceDisplay.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		C03BFB86272C68C7003AE940 = {
 			isa = PBXGroup;
 			children = (
@@ -75,6 +122,8 @@
 		C03BFB91272C68C7003AE940 /* IOSBdkAppSample */ = {
 			isa = PBXGroup;
 			children = (
+				6E4B1F5427356E3400CF3612 /* Components */,
+				6E4B1F4B27356E2600CF3612 /* Styles */,
 				C03BFBA3272C6AD4003AE940 /* bdk.swift */,
 				C03BFBA4272C6AD4003AE940 /* bdk.swiftmodule */,
 				C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */,
@@ -84,6 +133,9 @@
 				C03BFB98272C68CB003AE940 /* Preview Content */,
 				C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */,
 				C03BFBA9272C6B7E003AE940 /* WalletView.swift */,
+				6E4B1F61273572D300CF3612 /* MnemonicView.swift */,
+				6E4B1F63273572DF00CF3612 /* RecoverView.swift */,
+				6E4B1F5F273572B200CF3612 /* SettingsView.swift */,
 				C0FD009D2731767500CC4724 /* ReceiveView.swift */,
 				C0FD009F2731784D00CC4724 /* SendView.swift */,
 				C0FD00A12731829500CC4724 /* TransactionsView.swift */,
@@ -186,14 +238,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6E4B1F5B27356E3400CF3612 /* BasicButton.swift in Sources */,
+				6E4B1F5327356E2600CF3612 /* BasicButtonStyle.swift in Sources */,
 				C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */,
+				6E4B1F60273572B200CF3612 /* SettingsView.swift in Sources */,
+				6E4B1F5D27356E3400CF3612 /* BackgroundWrapper.swift in Sources */,
+				6E4B1F64273572DF00CF3612 /* RecoverView.swift in Sources */,
+				6E4B1F5127356E2600CF3612 /* BackButtonMod.swift in Sources */,
+				6E4B1F62273572D300CF3612 /* MnemonicView.swift in Sources */,
 				C03BFBA5272C6AD5003AE940 /* bdk.swift in Sources */,
 				C03BFBAA272C6B7E003AE940 /* WalletView.swift in Sources */,
 				C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */,
+				6E4B1F5027356E2600CF3612 /* BasicTextFieldStyle.swift in Sources */,
 				C03BFB95272C68C7003AE940 /* ContentView.swift in Sources */,
+				6E4B1F5E27356E3400CF3612 /* BalanceDisplay.swift in Sources */,
 				C0FD00A22731829500CC4724 /* TransactionsView.swift in Sources */,
 				C0FD00A02731784D00CC4724 /* SendView.swift in Sources */,
 				C03BFB93272C68C7003AE940 /* IOSBdkAppSampleApp.swift in Sources */,
+				6E4B1F5A27356E3400CF3612 /* SendReceiveButtons.swift in Sources */,
+				6E4B1F5C27356E3400CF3612 /* SingleTxView.swift in Sources */,
+				6E4B1F5227356E2600CF3612 /* BasicTextStyle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -237,6 +301,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				"EXCLUDED_ARCHS[sdk=*]" = arm64;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;

@@ -17,7 +17,7 @@ extension Transaction {
 }
 
 extension Date {
-   func getFormattedDate(format: String) -> String {
+    func getFormattedDate(format: String) -> String {
         let dateformat = DateFormatter()
         dateformat.dateFormat = format
         return dateformat.string(from: self)
@@ -31,24 +31,11 @@ struct TransactionView: View {
         VStack(alignment: .leading) {
             switch transaction {
             case .unconfirmed(let details):
-                Text("id: \(details.id)")
-                Text("sent: \(details.sent)")
-                Text("received: \(details.received)")
-                Text("fees: \(details.fees ?? 0)")
+                SingleTxView(id: details.id, sent: String(details.sent), received: String(details.received), fees: String(details.fees ?? 0))
             case .confirmed(let details, let confirmation):
-                Text("id: \(details.id)")
-                Text("sent: \(details.sent)")
-                Text("received: \(details.received)")
-                Text("fees: \(details.fees ?? 0)")
-                Text("confirmed via block \(confirmation.height) at \(Date(timeIntervalSince1970: TimeInterval(confirmation.timestamp)).getFormattedDate(format: "yyyy-MM-dd HH:mm:ss"))")
+                SingleTxView(id: details.id, sent: String(details.sent), received: String(details.received), fees: String(details.fees ?? 0), confirmed: "block \(confirmation.height) at \(Date(timeIntervalSince1970: TimeInterval(confirmation.timestamp)).getFormattedDate(format: "yyyy-MM-dd HH:mm:ss"))")
             }
-        }.frame(
-            minWidth: 0,
-            maxWidth: .infinity,
-            minHeight: 0,
-            maxHeight: .infinity,
-            alignment: .topLeading
-          )
+        }
     }
 }
 
@@ -56,15 +43,21 @@ struct TransactionsView: View {
     var transactions: [Transaction]
     
     var body: some View {
-        List {
-            if transactions.isEmpty {
-                Text("No transactions yet.").padding()
-            } else {
-                ForEach(transactions, id: \.self) { transaction in
-                    TransactionView(transaction: transaction)
+        BackgroundWrapper {
+            
+            List {
+                if transactions.isEmpty {
+                    Text("No transactions yet.").padding()
+                } else {
+                    ForEach(transactions, id: \.self) { transaction in
+                        TransactionView(transaction: transaction)
+                    }
                 }
             }
-        }.navigationBarTitle("Transactions")
+            .onAppear {
+                UITableView.appearance().backgroundColor = .clear }
+        }.navigationTitle("Transactions")
+            .modifier(BackButtonMod())
     }
 }
 

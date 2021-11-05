@@ -12,7 +12,7 @@ struct IOSBdkAppSampleApp: App {
     @StateObject var wallet = WalletViewModel();
     var body: some Scene {
         WindowGroup {
-            WalletView().environmentObject(wallet)
+            WalletView().environmentObject(wallet).preferredColorScheme(.dark)
         }
     }
 }

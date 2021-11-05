@@ -25,33 +25,47 @@ struct SendView: View {
     }
     var onSend : (String, UInt64) -> ()
     var body: some View {
-        Form {
-            Section(header: Text("Recipient")) {
-                TextField("Address", text: $to)
-            }
-            Section(header: Text("Amount (BTC)")) {
-                TextField("Amount", text: $amount)
-                    .keyboardType(.numberPad)
-                    .onReceive(Just(amount)) { newValue in
-                        let filtered = newValue.filter { "0123456789.".contains($0) }
-                        if filtered != newValue {
-                            self.amount = filtered
+        BackgroundWrapper {
+            VStack {
+                
+            
+            Form {
+                Section(header: Text("Recipient").textStyle(BasicTextStyle(white: true))) {
+                    TextField("Address", text: $to)
+                        .modifier(BasicTextFieldStyle())
+                }
+                Section(header: Text("Amount (BTC)").textStyle(BasicTextStyle(white: true))) {
+                    TextField("Amount", text: $amount)
+                        .modifier(BasicTextFieldStyle())
+                        .keyboardType(.numberPad)
+                        .onReceive(Just(amount)) { newValue in
+                            let filtered = newValue.filter { "0123456789.".contains($0) }
+                            if filtered != newValue {
+                                self.amount = filtered
+                            }
                         }
-                    }
+                }
+//                BasicButton(action: {
+//                    onSend(to, UInt64((Double(amount) ?? 0) * Double(100000000)))
+//                    presentationMode.wrappedValue.dismiss()
+//                }, text: "Send")
+//                    .disabled(to == "" || (Double(amount) ?? 0) == 0)
             }
-            Section {
-                Button("Send") {
+            .onAppear {
+                UITableView.appearance().backgroundColor = .clear }
+                
+                Spacer()
+                BasicButton(action: { self.isShowingScanner = true}, text: "Scan Address")
+                BasicButton(action: {
                     onSend(to, UInt64((Double(amount) ?? 0) * Double(100000000)))
                     presentationMode.wrappedValue.dismiss()
-                }.disabled(to == "" || (Double(amount) ?? 0) == 0)
-                Spacer()
+                }, text: "Broadcast Transaction", color: "Red").disabled(to == "" || (Double(amount) ?? 0) == 0)
             }
-        }.navigationBarTitle("Send")
-            .sheet(isPresented: $isShowingScanner) {
-                CodeScannerView(codeTypes: [.qr], simulatedData: "Testing1234", completion: self.handleScan)}
-        Button(action: {self.isShowingScanner = true}) {
-            Text("Scan Wallet Address").padding(30)
         }
+        .navigationTitle("Send")
+        .modifier(BackButtonMod())
+        .sheet(isPresented: $isShowingScanner) {
+                CodeScannerView(codeTypes: [.qr], simulatedData: "Testing1234", completion: self.handleScan)}
     }
 }
 
