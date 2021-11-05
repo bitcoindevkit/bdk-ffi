@@ -8,7 +8,6 @@
 import SwiftUI
 import Combine
 import CodeScanner
-//added code scanner to scan wallet QRs
 
 struct SendView: View {
     @State var to: String = ""
