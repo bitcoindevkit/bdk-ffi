@@ -19,7 +19,6 @@
 		C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009D2731767500CC4724 /* ReceiveView.swift */; };
 		C0FD00A02731784D00CC4724 /* SendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009F2731784D00CC4724 /* SendView.swift */; };
 		C0FD00A22731829500CC4724 /* TransactionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD00A12731829500CC4724 /* TransactionsView.swift */; };
-		D51BAD2A27348C8B00FECE27 /* QRKit in Frameworks */ = {isa = PBXBuildFile; productRef = D51BAD2927348C8B00FECE27 /* QRKit */; };
 		D588644B2734AE73006E3FBE /* shcqrcode.png in Resources */ = {isa = PBXBuildFile; fileRef = D588644A2734AE73006E3FBE /* shcqrcode.png */; };
 		D588644E2734B81D006E3FBE /* CodeScanner in Frameworks */ = {isa = PBXBuildFile; productRef = D588644D2734B81D006E3FBE /* CodeScanner */; };
 /* End PBXBuildFile section */
@@ -47,7 +46,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D51BAD2A27348C8B00FECE27 /* QRKit in Frameworks */,
 				AA8DC1642730D7A00084BAA2 /* libbdkffi.a in Frameworks */,
 				D588644E2734B81D006E3FBE /* CodeScanner in Frameworks */,
 			);
@@ -126,7 +124,6 @@
 			);
 			name = IOSBdkAppSample;
 			packageProductDependencies = (
-				D51BAD2927348C8B00FECE27 /* QRKit */,
 				D588644D2734B81D006E3FBE /* CodeScanner */,
 			);
 			productName = IOSBdkAppSample;
@@ -329,7 +326,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"IOSBdkAppSample/Preview Content\"";
-				DEVELOPMENT_TEAM = GAU324YPR8;
+				DEVELOPMENT_TEAM = 7FGUVM5WTY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../bindings/bdk-swift";
@@ -363,7 +360,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"IOSBdkAppSample/Preview Content\"";
-				DEVELOPMENT_TEAM = GAU324YPR8;
+				DEVELOPMENT_TEAM = CNBGVNBR39;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../bindings/bdk-swift";
@@ -432,11 +429,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		D51BAD2927348C8B00FECE27 /* QRKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = D51BAD2827348C8B00FECE27 /* XCRemoteSwiftPackageReference "QRKit" */;
-			productName = QRKit;
-		};
 		D588644D2734B81D006E3FBE /* CodeScanner */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = D588644C2734B81D006E3FBE /* XCRemoteSwiftPackageReference "CodeScanner" */;
