@@ -18,33 +18,11 @@ If you just want to consume the language bindings:
 
 ### Kotlin (JVM)
 
-1. Add the following maven repository location to your build file:
-```
-repositories {
-  maven {
-      url = uri("https://mymavenrepo.com/repo/hvZOau2SW1xzbycfC96m/")
-  }
-}
-```
-1. Add the dependency
-```
-implementation("org.bitcoindevkit:bdk-jvm:0.1.0")
-```
+Just add the dependency `org.bitcoindevkit:bdk-jvm:0.1.1`. The package is `org.bitcoindevkit.bdk`.
 
 ### Kotlin (Android)
 
-1. Add the following maven repository location to your build file:
-```
-repositories {
-  maven {
-      url = uri("https://mymavenrepo.com/repo/hvZOau2SW1xzbycfC96m/")
-  }
-}
-```
-1. Add the dependency
-```
-implementation("org.bitcoindevkit:bdk-android:0.1.0")
-```
+Just add the dependency `org.bitcoindevkit:bdk-android:0.1.1`. The package is `org.bitcoindevkit.bdk`.
 
 ## Getting Started (Developer)
 
