@@ -17,9 +17,6 @@ plugins {
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
 }
 
-group = "org.bitcoindevkit"
-version = "0.1.0"
-
 publishing {
     publications {
         mavenJava(MavenPublication) {

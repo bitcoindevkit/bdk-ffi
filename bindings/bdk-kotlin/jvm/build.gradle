@@ -37,7 +37,7 @@ afterEvaluate {
             release(MavenPublication) {
                 groupId = 'org.bitcoindevkit'
                 artifactId = 'bdk-jvm'
-                version = '0.1.0'
+                version = '0.1.2'
 
                 from components.java
 
