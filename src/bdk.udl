@@ -70,7 +70,7 @@ dictionary TransactionDetails {
     u64? fees;
     u64 received;
     u64 sent;
-    string id;
+    string txid;
 };
 
 dictionary Confirmation {
