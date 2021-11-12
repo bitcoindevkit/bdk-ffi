@@ -66,7 +66,7 @@ pub struct TransactionDetails {
     pub fees: Option<u64>,
     pub received: u64,
     pub sent: u64,
-    pub id: String,
+    pub txid: String,
 }
 
 type Confirmation = ConfirmationTime;
@@ -86,7 +86,7 @@ impl From<&bdk::TransactionDetails> for TransactionDetails {
     fn from(x: &bdk::TransactionDetails) -> TransactionDetails {
         TransactionDetails {
             fees: x.fee,
-            id: x.txid.to_string(),
+            txid: x.txid.to_string(),
             received: x.received,
             sent: x.sent,
         }
