@@ -18,8 +18,8 @@ fun getTransaction(wallet: OnlineWalletInterface, transactionId: String): Option
             .stream()
             .filter({
                 when (it) {
-                    is Transaction.Confirmed -> it.details.id.equals(transactionId)
-                    is Transaction.Unconfirmed -> it.details.id.equals(transactionId)
+                    is Transaction.Confirmed -> it.details.txid.equals(transactionId)
+                    is Transaction.Unconfirmed -> it.details.txid.equals(transactionId)
                 }
             })
             .findFirst()
@@ -32,7 +32,7 @@ val unconfirmedFirstThenByTimestampDescending =
                 (a is Transaction.Confirmed && b is Transaction.Confirmed) -> {
                     val comparison = b.confirmation.timestamp.compareTo(a.confirmation.timestamp)
                     when {
-                        comparison == 0 -> b.details.id.compareTo(a.details.id)
+                        comparison == 0 -> b.details.txid.compareTo(a.details.txid)
                         else -> comparison
                     }
                 }

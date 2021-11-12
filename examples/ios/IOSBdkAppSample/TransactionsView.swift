@@ -31,12 +31,12 @@ struct TransactionView: View {
         VStack(alignment: .leading) {
             switch transaction {
             case .unconfirmed(let details):
-                Text("id: \(details.id)")
+                Text("txid: \(details.txid)")
                 Text("sent: \(details.sent)")
                 Text("received: \(details.received)")
                 Text("fees: \(details.fees ?? 0)")
             case .confirmed(let details, let confirmation):
-                Text("id: \(details.id)")
+                Text("txid: \(details.txid)")
                 Text("sent: \(details.sent)")
                 Text("received: \(details.received)")
                 Text("fees: \(details.fees ?? 0)")
@@ -70,6 +70,6 @@ struct TransactionsView: View {
 
 struct TransactionsView_Previews: PreviewProvider {
     static var previews: some View {
-        TransactionsView(transactions: [Transaction.unconfirmed(details: TransactionDetails(fees: nil, received: 1000, sent: 10000, id: "some-tx-id")), Transaction.confirmed(details: TransactionDetails(fees: nil, received: 1000, sent: 10000, id: "some-other-tx-id"), confirmation: Confirmation(height: 20087, timestamp: 1635863544))])
+        TransactionsView(transactions: [Transaction.unconfirmed(details: TransactionDetails(fees: nil, received: 1000, sent: 10000, txid: "some-txid")), Transaction.confirmed(details: TransactionDetails(fees: nil, received: 1000, sent: 10000, txid: "some-other-txid"), confirmation: Confirmation(height: 20087, timestamp: 1635863544))])
     }
 }
