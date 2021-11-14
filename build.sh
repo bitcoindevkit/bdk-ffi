@@ -9,12 +9,13 @@ help()
    # Display Help
    echo "Build bdk-ffi and related libraries."
    echo
-   echo "Syntax: build [-a|h|k|s]"
+   echo "Syntax: build [-a|h|k|s|p]"
    echo "options:"
-   echo "-a     Android."
-   echo "-h     Print this Help."
-   echo "-k     Kotlin."
-   echo "-s     Swift."
+   echo "-a     Android"
+   echo "-h     Print this help"
+   echo "-k     Kotlin"
+   echo "-s     Swift"
+   echo "-p     Python"
    echo
 }
 
@@ -124,6 +125,25 @@ build_android() {
   (cd bindings/bdk-kotlin && ./gradlew :android:build)
 }
 
+copy_lib_python() {
+  echo -n "Copy "
+  case $OS in
+    "Darwin")
+      echo -n "Darwin "
+      mkdir -p bindings/bdk-python/test/
+      cp target/debug/libbdkffi.dylib bindings/bdk-python/test/
+      ;;
+    "Linux")
+      echo -n "linux" ;;
+  esac
+  echo "library to python sub-project"
+}
+
+build_python() {
+  copy_lib_python
+  uniffi-bindgen generate src/bdk-python.udl --no-format --out-dir bindings/bdk-python/test/ --language python
+}
+
 OS=$(uname)
 
 if [ "$1" == "-h" ]
@@ -137,6 +157,7 @@ else
       -a) build_android ;;
       -k) build_kotlin ;;
       -s) build_swift ;;
+      -p) build_python ;;
       -h) help ;;
       *) echo "Option $1 not recognized" ;;
     esac
