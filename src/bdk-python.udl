@@ -1,0 +1,167 @@
+namespace bdk {
+  [Throws=BdkError]
+  ExtendedKeyInfo generate_extended_key(Network network, MnemonicType mnemonic_type, string? password);
+  [Throws=BdkError]
+  ExtendedKeyInfo restore_extended_key(Network network, string mnemonic, string? password);
+};
+
+[Error]
+enum BdkError {
+  "InvalidU32Bytes",
+  "Generic",
+  "ScriptDoesntHaveAddressForm",
+  "NoRecipients",
+  "NoUtxosSelected",
+  "OutputBelowDustLimit",
+  "InsufficientFunds",
+  "BnBTotalTriesExceeded",
+  "BnBNoExactMatch",
+  "UnknownUtxo",
+  "TransactionNotFound",
+  "TransactionConfirmed",
+  "IrreplaceableTransaction",
+  "FeeRateTooLow",
+  "FeeTooLow",
+  "FeeRateUnavailable",
+  "MissingKeyOrigin",
+  "Key",
+  "ChecksumMismatch",
+  "SpendingPolicyRequired",
+  "InvalidPolicyPathError",
+  "Signer",
+  "InvalidNetwork",
+  "InvalidProgressValue",
+  "ProgressUpdateError",
+  "InvalidOutpoint",
+  "Descriptor",
+  "AddressValidator",
+  "Encode",
+  "Miniscript",
+  "Bip32",
+  "Secp256k1",
+  "Json",
+  "Hex",
+  "Psbt",
+  "PsbtParse",
+  "Electrum",
+  "Esplora",
+  "Sled",
+};
+
+enum Network {
+  "Bitcoin",
+  "Testnet",
+  "Signet",
+  "Regtest",
+};
+
+dictionary SledDbConfiguration {
+  string path;
+  string tree_name;
+};
+
+[Enum]
+interface DatabaseConfig {
+  Memory(string junk);
+  Sled(SledDbConfiguration config);
+};
+
+dictionary TransactionDetails {
+    u64? fees;
+    u64 received;
+    u64 sent;
+    string txid;
+};
+
+dictionary Confirmation {
+    u32 height;
+    u64 timestamp;
+};
+
+[Enum]
+interface Transaction {
+  Unconfirmed(TransactionDetails details);
+  Confirmed(TransactionDetails details, Confirmation confirmation);
+};
+
+interface OfflineWallet {
+  [Throws=BdkError]
+  constructor(string descriptor, Network network, DatabaseConfig database_config);
+
+  // OfflineWalletOperations
+  string get_new_address();
+  string get_last_unused_address();
+  [Throws=BdkError]
+  u64 get_balance();
+  [Throws=BdkError]
+  void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+  [Throws=BdkError]
+  sequence<Transaction> get_transactions();
+};
+
+dictionary ElectrumConfig {
+  string url;
+  string? socks5;
+  u8 retry;
+  u8? timeout;
+  u64 stop_gap;
+};
+
+dictionary EsploraConfig {
+  string base_url;
+  string? proxy;
+  u64 timeout_read;
+  u64 timeout_write;
+  u64 stop_gap;
+};
+
+[Enum]
+interface BlockchainConfig {
+  Electrum(ElectrumConfig config);
+  Esplora(EsploraConfig config);
+};
+
+// callback interface BdkProgress {
+//   void update(f32 progress, string? message);
+// };
+
+interface OnlineWallet {
+  [Throws=BdkError]
+  constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
+
+  // OfflineWalletOperations
+  string get_new_address();
+  string get_last_unused_address();
+  [Throws=BdkError]
+  u64 get_balance();
+  [Throws=BdkError]
+  void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+  [Throws=BdkError]
+  sequence<Transaction> get_transactions();
+
+  // OnlineWalletInterface
+  // Network get_network();
+  // [Throws=BdkError]
+  // void sync(BdkProgress progress_update, u32? max_address_param);
+  // [Throws=BdkError]
+  // Transaction broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
+};
+
+interface PartiallySignedBitcoinTransaction {
+  [Throws=BdkError]
+  constructor([ByRef] OnlineWallet wallet, string recipient, u64 amount, float? fee_rate);
+};
+
+dictionary ExtendedKeyInfo {
+  string mnemonic;
+  string xprv;
+  string fingerprint;
+};
+
+enum MnemonicType {
+  "Words12",
+  "Words15",
+  "Words18",
+  "Words21",
+  "Words24",
+};
