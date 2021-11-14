@@ -17,3 +17,8 @@ testdb
 xcuserdata
 .lsp
 .clj-kondo
+
+# python
+/bindings/bdk-python/test/bdk.py
+/bindings/bdk-python/test/__pycache__
+/bindings/bdk-python/test/.pytest_cache
