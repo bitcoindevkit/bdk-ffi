@@ -27,7 +27,7 @@ test_android() {
 }
 
 test_python() {
-  (cd bindings/bdk-python/test/ && pytest test_bdk.py --verbose)
+  (cd bindings/bdk-python/ && pytest --verbose)
 }
 
 if [ $1 = "-h" ]

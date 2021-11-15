@@ -130,8 +130,8 @@ copy_lib_python() {
   case $OS in
     "Darwin")
       echo -n "Darwin "
-      mkdir -p bindings/bdk-python/test/
-      cp target/debug/libbdkffi.dylib bindings/bdk-python/test/
+      mkdir -p bindings/bdk-python/tests/
+      cp target/debug/libbdkffi.dylib bindings/bdk-python/
       ;;
     "Linux")
       echo -n "linux" ;;
@@ -141,7 +141,7 @@ copy_lib_python() {
 
 build_python() {
   copy_lib_python
-  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-python/test/ --language python
+  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-python/src/bdk/ --language python
 }
 
 OS=$(uname)
