@@ -141,7 +141,7 @@ copy_lib_python() {
 
 build_python() {
   copy_lib_python
-  uniffi-bindgen generate src/bdk-python.udl --no-format --out-dir bindings/bdk-python/test/ --language python
+  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-python/test/ --language python
 }
 
 OS=$(uname)

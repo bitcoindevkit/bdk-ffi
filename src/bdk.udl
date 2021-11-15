@@ -121,9 +121,9 @@ interface BlockchainConfig {
   Esplora(EsploraConfig config);
 };
 
-callback interface BdkProgress {
-  void update(f32 progress, string? message);
-};
+// callback interface BdkProgress {
+//   void update(f32 progress, string? message);
+// };
 
 interface OnlineWallet {
   [Throws=BdkError]
@@ -140,11 +140,11 @@ interface OnlineWallet {
   sequence<Transaction> get_transactions();
 
   // OnlineWalletInterface
-  Network get_network();
-  [Throws=BdkError]
-  void sync(BdkProgress progress_update, u32? max_address_param);
-  [Throws=BdkError]
-  Transaction broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
+  // Network get_network();
+  // [Throws=BdkError]
+  // void sync(BdkProgress progress_update, u32? max_address_param);
+  // [Throws=BdkError]
+  // Transaction broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
 
 interface PartiallySignedBitcoinTransaction {
