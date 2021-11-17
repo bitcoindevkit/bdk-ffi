@@ -7,13 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AA8DC1642730D7A00084BAA2 /* libbdkffi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AA8DC1632730D7A00084BAA2 /* libbdkffi.a */; };
+		AADFD19A2745FA8500BB7C35 /* bdk.swift in Sources */ = {isa = PBXBuildFile; fileRef = AADFD1992745FA8500BB7C35 /* bdk.swift */; };
+		AADFD1A027460EBB00BB7C35 /* bdkFFI.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = AADFD19F27460EBB00BB7C35 /* bdkFFI.xcframework */; };
 		C03BFB93272C68C7003AE940 /* IOSBdkAppSampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */; };
 		C03BFB95272C68C7003AE940 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFB94272C68C7003AE940 /* ContentView.swift */; };
 		C03BFB97272C68CB003AE940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C03BFB96272C68CB003AE940 /* Assets.xcassets */; };
 		C03BFB9A272C68CB003AE940 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C03BFB99272C68CB003AE940 /* Preview Assets.xcassets */; };
-		C03BFBA5272C6AD5003AE940 /* bdk.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA3272C6AD4003AE940 /* bdk.swift */; };
-		C03BFBA6272C6AD5003AE940 /* bdk.swiftmodule in Resources */ = {isa = PBXBuildFile; fileRef = C03BFBA4272C6AD4003AE940 /* bdk.swiftmodule */; };
 		C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */; };
 		C03BFBAA272C6B7E003AE940 /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFBA9272C6B7E003AE940 /* WalletView.swift */; };
 		C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FD009D2731767500CC4724 /* ReceiveView.swift */; };
@@ -22,15 +21,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		AA8DC1632730D7A00084BAA2 /* libbdkffi.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libbdkffi.a; path = ../../target/ios/universal/debug/libbdkffi.a; sourceTree = "<group>"; };
+		AADFD1992745FA8500BB7C35 /* bdk.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = bdk.swift; path = "../../../bindings/bdk-swift/bdk.swift"; sourceTree = "<group>"; };
+		AADFD19F27460EBB00BB7C35 /* bdkFFI.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bdkFFI.xcframework; path = "../../bindings/bdk-swift/bdkFFI.xcframework"; sourceTree = "<group>"; };
 		C03BFB8F272C68C7003AE940 /* IOSBdkAppSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IOSBdkAppSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBdkAppSampleApp.swift; sourceTree = "<group>"; };
 		C03BFB94272C68C7003AE940 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C03BFB96272C68CB003AE940 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C03BFB99272C68CB003AE940 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		C03BFBA0272C6A04003AE940 /* BridgingHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BridgingHeader.h; sourceTree = "<group>"; };
-		C03BFBA3272C6AD4003AE940 /* bdk.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = bdk.swift; path = "../../../bindings/bdk-swift/bdk.swift"; sourceTree = "<group>"; };
-		C03BFBA4272C6AD4003AE940 /* bdk.swiftmodule */ = {isa = PBXFileReference; lastKnownFileType = file; name = bdk.swiftmodule; path = "../../../bindings/bdk-swift/bdk.swiftmodule"; sourceTree = "<group>"; };
 		C03BFBA7272C6AF4003AE940 /* WalletViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletViewModel.swift; sourceTree = "<group>"; };
 		C03BFBA9272C6B7E003AE940 /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
 		C0FD009D2731767500CC4724 /* ReceiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiveView.swift; sourceTree = "<group>"; };
@@ -43,7 +40,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AA8DC1642730D7A00084BAA2 /* libbdkffi.a in Frameworks */,
+				AADFD1A027460EBB00BB7C35 /* bdkFFI.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,7 +50,6 @@
 		C03BFB86272C68C7003AE940 = {
 			isa = PBXGroup;
 			children = (
-				C03BFBA0272C6A04003AE940 /* BridgingHeader.h */,
 				C03BFB91272C68C7003AE940 /* IOSBdkAppSample */,
 				C03BFB90272C68C7003AE940 /* Products */,
 				C03BFBA1272C6AB7003AE940 /* Frameworks */,
@@ -71,8 +67,7 @@
 		C03BFB91272C68C7003AE940 /* IOSBdkAppSample */ = {
 			isa = PBXGroup;
 			children = (
-				C03BFBA3272C6AD4003AE940 /* bdk.swift */,
-				C03BFBA4272C6AD4003AE940 /* bdk.swiftmodule */,
+				AADFD1992745FA8500BB7C35 /* bdk.swift */,
 				C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */,
 				C03BFB94272C68C7003AE940 /* ContentView.swift */,
 				C03BFB96272C68CB003AE940 /* Assets.xcassets */,
@@ -97,7 +92,7 @@
 		C03BFBA1272C6AB7003AE940 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				AA8DC1632730D7A00084BAA2 /* libbdkffi.a */,
+				AADFD19F27460EBB00BB7C35 /* bdkFFI.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -161,7 +156,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				C03BFB9A272C68CB003AE940 /* Preview Assets.xcassets in Resources */,
-				C03BFBA6272C6AD5003AE940 /* bdk.swiftmodule in Resources */,
 				C03BFB97272C68CB003AE940 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -174,11 +168,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				C0FD009E2731767500CC4724 /* ReceiveView.swift in Sources */,
-				C03BFBA5272C6AD5003AE940 /* bdk.swift in Sources */,
 				C03BFBAA272C6B7E003AE940 /* WalletView.swift in Sources */,
 				C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */,
 				C03BFB95272C68C7003AE940 /* ContentView.swift in Sources */,
 				C0FD00A22731829500CC4724 /* TransactionsView.swift in Sources */,
+				AADFD19A2745FA8500BB7C35 /* bdk.swift in Sources */,
 				C0FD00A02731784D00CC4724 /* SendView.swift in Sources */,
 				C03BFB93272C68C7003AE940 /* IOSBdkAppSampleApp.swift in Sources */,
 			);
@@ -314,7 +308,7 @@
 				DEVELOPMENT_TEAM = GAU324YPR8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../bindings/bdk-swift";
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -324,12 +318,12 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../target/ios/universal/debug";
+				LIBRARY_SEARCH_PATHS = "";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.bitcoindevkit.IOSBdkAppSample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "${PROJECT_DIR}/BridgingHeader.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -346,7 +340,7 @@
 				DEVELOPMENT_TEAM = GAU324YPR8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../bindings/bdk-swift";
+				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -356,12 +350,12 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/../../target/ios/universal/debug";
+				LIBRARY_SEARCH_PATHS = "";
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = org.bitcoindevkit.IOSBdkAppSample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "${PROJECT_DIR}/BridgingHeader.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
