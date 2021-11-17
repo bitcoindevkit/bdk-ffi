@@ -20,7 +20,8 @@ xcuserdata
 .idea
 
 # python
-/bindings/bdk-python/test/bdk.py
-/bindings/bdk-python/test/__pycache__
-/bindings/bdk-python/test/.pytest_cache
+/bindings/bdk-python/tests/__pycache__
+/bindings/bdk-python/tests/.pytest_cache
 bdk.py
+bitcoindevkit.egg-info
+.tox
