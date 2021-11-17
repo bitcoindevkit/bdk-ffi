@@ -54,36 +54,58 @@ build_kotlin() {
 build_swift() {
   uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-swift/ --language swift
   swiftc -module-name bdk -emit-library -o libbdkffi.dylib -emit-module -emit-module-path ./bindings/bdk-swift/ -parse-as-library -L ./target/debug/ -lbdkffi -Xcc -fmodule-map-file=./bindings/bdk-swift/bdkFFI.modulemap ./bindings/bdk-swift/bdk.swift
-  TARGETDIR=target
-  RELDIR=debug
+  TARGET_DIR=target
+  BUILD_PROFILE=debug
   STATIC_LIB_NAME=libbdkffi.a
 
-  # We can't use cargo lipo because we can't link to universal libraries :(
-  # https://github.com/rust-lang/rust/issues/55235
+  # Build ios and ios x86_64 ios simulator binaries
   LIBS_ARCHS=("x86_64" "arm64")
   IOS_TRIPLES=("x86_64-apple-ios" "aarch64-apple-ios")
   for i in "${!LIBS_ARCHS[@]}"; do
       cargo build --target "${IOS_TRIPLES[${i}]}"
   done
 
-  UNIVERSAL_BINARY=./${TARGETDIR}/ios/universal/${RELDIR}/${STATIC_LIB_NAME}
-  NEED_LIPO=
+  ## Manually construct xcframework
+  LIB_NAME=libbdkffi.a
+  SWIFT_DIR="bindings/bdk-swift"
+  XCFRAMEWORK_NAME="bdkFFI"
+  XCFRAMEWORK_ROOT="$SWIFT_DIR/$XCFRAMEWORK_NAME.xcframework"
 
-  # if the universal binary doesnt exist, or if it's older than the static libs,
-  # we need to run `lipo` again.
-  if [[ ! -f "${UNIVERSAL_BINARY}" ]]; then
-      NEED_LIPO=1
-  elif [[ "$(stat -f "%m" "./${TARGETDIR}/x86_64-apple-ios/${RELDIR}/${STATIC_LIB_NAME}")" -gt "$(stat -f "%m" "${UNIVERSAL_BINARY}")" ]]; then
-      NEED_LIPO=1
-  elif [[ "$(stat -f "%m" "./${TARGETDIR}/aarch64-apple-ios/${RELDIR}/${STATIC_LIB_NAME}")" -gt "$(stat -f "%m" "${UNIVERSAL_BINARY}")" ]]; then
-      NEED_LIPO=1
-  fi
-  if [[ "${NEED_LIPO}" = "1" ]]; then
-      mkdir -p "${TARGETDIR}/ios/universal/${RELDIR}"
-      lipo -create -output "${UNIVERSAL_BINARY}" \
-          "${TARGETDIR}/x86_64-apple-ios/${RELDIR}/${STATIC_LIB_NAME}" \
-          "${TARGETDIR}/aarch64-apple-ios/${RELDIR}/${STATIC_LIB_NAME}"
-  fi
+  # Cleanup prior build
+  rm -rf "$XCFRAMEWORK_ROOT"
+
+  # Common files
+  XCFRAMEWORK_COMMON="$XCFRAMEWORK_ROOT/common/$XCFRAMEWORK_NAME.framework"
+  mkdir -p "$XCFRAMEWORK_COMMON/Modules"
+  cp "$SWIFT_DIR/module.modulemap" "$XCFRAMEWORK_COMMON/Modules/"
+  mkdir -p "$XCFRAMEWORK_COMMON/Headers"
+  cp "$SWIFT_DIR/bdkFFI-umbrella.h" "$XCFRAMEWORK_COMMON/Headers"
+  cp "$SWIFT_DIR/bdkFFI.h" "$XCFRAMEWORK_COMMON/Headers"
+  #mkdir -p "$XCFRAMEWORK_COMMON/$XCFRAMEWORK_NAME"
+  #cp "$SWIFT_DIR/bdk.swift" "$XCFRAMEWORK_COMMON/$XCFRAMEWORK_NAME"
+
+  # iOS hardware
+  mkdir -p "$XCFRAMEWORK_ROOT/ios-arm64"
+  cp -R "$XCFRAMEWORK_COMMON" "$XCFRAMEWORK_ROOT/ios-arm64/$XCFRAMEWORK_NAME.framework"
+  cp "$TARGET_DIR/aarch64-apple-ios/$BUILD_PROFILE/$LIB_NAME" "$XCFRAMEWORK_ROOT/ios-arm64/$XCFRAMEWORK_NAME.framework/$XCFRAMEWORK_NAME"
+
+  # iOS simulator, currently x86_64 only (need to make fat binary to add M1)
+  mkdir -p "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator"
+  cp -R "$XCFRAMEWORK_COMMON" "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator/$XCFRAMEWORK_NAME.framework"
+  cp "$TARGET_DIR/x86_64-apple-ios/$BUILD_PROFILE/$LIB_NAME" "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator/$XCFRAMEWORK_NAME.framework/$XCFRAMEWORK_NAME"
+
+  # Set up the metadata for the XCFramework as a whole.
+  cp "$SWIFT_DIR/Info.plist" "$XCFRAMEWORK_ROOT/Info.plist"
+  # TODO add license info
+
+  # Remove common
+  rm -rf "$XCFRAMEWORK_ROOT/common"
+
+  # Zip it all up into a bundle for distribution.
+  (cd $SWIFT_DIR; zip -9 -r "$XCFRAMEWORK_NAME.xcframework.zip" "$XCFRAMEWORK_NAME.xcframework")
+
+  # Cleanup build
+  # rm -rf "$XCFRAMEWORK_ROOT"
 }
 
 ## rust android
