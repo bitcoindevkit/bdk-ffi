@@ -7,8 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AADFD19A2745FA8500BB7C35 /* bdk.swift in Sources */ = {isa = PBXBuildFile; fileRef = AADFD1992745FA8500BB7C35 /* bdk.swift */; };
-		AADFD1A027460EBB00BB7C35 /* bdkFFI.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = AADFD19F27460EBB00BB7C35 /* bdkFFI.xcframework */; };
+		AAB77A5F274985DC00EAE58B /* BitcoinDevKit in Frameworks */ = {isa = PBXBuildFile; productRef = AAB77A5E274985DC00EAE58B /* BitcoinDevKit */; };
 		C03BFB93272C68C7003AE940 /* IOSBdkAppSampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */; };
 		C03BFB95272C68C7003AE940 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03BFB94272C68C7003AE940 /* ContentView.swift */; };
 		C03BFB97272C68CB003AE940 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C03BFB96272C68CB003AE940 /* Assets.xcassets */; };
@@ -21,8 +20,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		AADFD1992745FA8500BB7C35 /* bdk.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = bdk.swift; path = "../../../bindings/bdk-swift/bdk.swift"; sourceTree = "<group>"; };
-		AADFD19F27460EBB00BB7C35 /* bdkFFI.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = bdkFFI.xcframework; path = "../../bindings/bdk-swift/bdkFFI.xcframework"; sourceTree = "<group>"; };
 		C03BFB8F272C68C7003AE940 /* IOSBdkAppSample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IOSBdkAppSample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSBdkAppSampleApp.swift; sourceTree = "<group>"; };
 		C03BFB94272C68C7003AE940 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -40,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AADFD1A027460EBB00BB7C35 /* bdkFFI.xcframework in Frameworks */,
+				AAB77A5F274985DC00EAE58B /* BitcoinDevKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -67,7 +64,6 @@
 		C03BFB91272C68C7003AE940 /* IOSBdkAppSample */ = {
 			isa = PBXGroup;
 			children = (
-				AADFD1992745FA8500BB7C35 /* bdk.swift */,
 				C03BFB92272C68C7003AE940 /* IOSBdkAppSampleApp.swift */,
 				C03BFB94272C68C7003AE940 /* ContentView.swift */,
 				C03BFB96272C68CB003AE940 /* Assets.xcassets */,
@@ -92,7 +88,6 @@
 		C03BFBA1272C6AB7003AE940 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				AADFD19F27460EBB00BB7C35 /* bdkFFI.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -113,6 +108,9 @@
 			dependencies = (
 			);
 			name = IOSBdkAppSample;
+			packageProductDependencies = (
+				AAB77A5E274985DC00EAE58B /* BitcoinDevKit */,
+			);
 			productName = IOSBdkAppSample;
 			productReference = C03BFB8F272C68C7003AE940 /* IOSBdkAppSample.app */;
 			productType = "com.apple.product-type.application";
@@ -141,6 +139,9 @@
 				Base,
 			);
 			mainGroup = C03BFB86272C68C7003AE940;
+			packageReferences = (
+				AAB77A5D274985DC00EAE58B /* XCRemoteSwiftPackageReference "BitcoinDevKit" */,
+			);
 			productRefGroup = C03BFB90272C68C7003AE940 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -172,7 +173,6 @@
 				C03BFBA8272C6AF4003AE940 /* WalletViewModel.swift in Sources */,
 				C03BFB95272C68C7003AE940 /* ContentView.swift in Sources */,
 				C0FD00A22731829500CC4724 /* TransactionsView.swift in Sources */,
-				AADFD19A2745FA8500BB7C35 /* bdk.swift in Sources */,
 				C0FD00A02731784D00CC4724 /* SendView.swift in Sources */,
 				C03BFB93272C68C7003AE940 /* IOSBdkAppSampleApp.swift in Sources */,
 			);
@@ -184,6 +184,7 @@
 		C03BFB9B272C68CB003AE940 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALLOW_TARGET_PLATFORM_SPECIALIZATION = NO;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -245,6 +246,7 @@
 		C03BFB9C272C68CB003AE940 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALLOW_TARGET_PLATFORM_SPECIALIZATION = NO;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -383,6 +385,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AAB77A5D274985DC00EAE58B /* XCRemoteSwiftPackageReference "BitcoinDevKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/notmandatory/BitcoinDevKit";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.1.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AAB77A5E274985DC00EAE58B /* BitcoinDevKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AAB77A5D274985DC00EAE58B /* XCRemoteSwiftPackageReference "BitcoinDevKit" */;
+			productName = BitcoinDevKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C03BFB87272C68C7003AE940 /* Project object */;
 }

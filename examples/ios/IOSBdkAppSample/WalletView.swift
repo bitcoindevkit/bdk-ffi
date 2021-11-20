@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import BitcoinDevKit
 
 class Progress : BdkProgress {
     func update(progress: Float, message: String?) {
@@ -17,7 +18,7 @@ class Progress : BdkProgress {
 struct WalletView: View {
     @EnvironmentObject var viewModel: WalletViewModel
     @State var balance: UInt64 = 0
-    @State var transactions: [Transaction] = []
+    @State var transactions: [BitcoinDevKit.Transaction] = []
     func sync() {
         switch viewModel.state {
         case .loaded(let wallet):

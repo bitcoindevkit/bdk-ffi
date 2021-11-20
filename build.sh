@@ -22,7 +22,7 @@ help()
 build_rust() {
   echo "Build Rust library"
   cargo fmt
-  cargo build
+  cargo build --release
   cargo test
 }
 
@@ -33,12 +33,12 @@ copy_lib_kotlin() {
     "Darwin")
       echo -n "darwin "
       mkdir -p bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
-      cp target/debug/libbdkffi.dylib bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
+      cp target/release/libbdkffi.dylib bindings/bdk-kotlin/jvm/src/main/resources/darwin-x86-64
       ;;
     "Linux")
       echo -n "linux "
       mkdir -p bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
-      cp target/debug/libbdkffi.so bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
+      cp target/release/libbdkffi.so bindings/bdk-kotlin/jvm/src/main/resources/linux-x86-64
       ;;
   esac
   echo "libs to kotlin sub-project"
@@ -52,17 +52,19 @@ build_kotlin() {
 
 ## bdk swift
 build_swift() {
-  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-swift/ --language swift
-  swiftc -module-name bdk -emit-library -o libbdkffi.dylib -emit-module -emit-module-path ./bindings/bdk-swift/ -parse-as-library -L ./target/debug/ -lbdkffi -Xcc -fmodule-map-file=./bindings/bdk-swift/bdkFFI.modulemap ./bindings/bdk-swift/bdk.swift
+  BUILD_PROFILE=release
   TARGET_DIR=target
-  BUILD_PROFILE=debug
+
+  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-swift/ --language swift
+  swiftc -module-name bdk -emit-library -o libbdkffi.dylib -emit-module -emit-module-path ./bindings/bdk-swift/ -parse-as-library -L ./target/release/ -lbdkffi -Xcc -fmodule-map-file=./bindings/bdk-swift/bdkFFI.modulemap ./bindings/bdk-swift/bdk.swift
+
   STATIC_LIB_NAME=libbdkffi.a
 
   # Build ios and ios x86_64 ios simulator binaries
   LIBS_ARCHS=("x86_64" "arm64")
   IOS_TRIPLES=("x86_64-apple-ios" "aarch64-apple-ios")
   for i in "${!LIBS_ARCHS[@]}"; do
-      cargo build --target "${IOS_TRIPLES[${i}]}"
+      cargo build --release --target "${IOS_TRIPLES[${i}]}"
   done
 
   ## Manually construct xcframework
@@ -127,16 +129,16 @@ build_android() {
   mkdir -p bindings/bdk-kotlin/android/src/main/jniLibs/ bindings/bdk-kotlin/android/src/main/jniLibs/arm64-v8a bindings/bdk-kotlin/android/src/main/jniLibs/x86_64 bindings/bdk-kotlin/android/src/main/jniLibs/x86
 
   if echo $BUILD_TARGETS | grep "aarch64"; then
-      CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="aarch64-linux-android21-clang" CC="aarch64-linux-android21-clang" cargo build --target=aarch64-linux-android
-      cp target/aarch64-linux-android/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/arm64-v8a
+      CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="aarch64-linux-android21-clang" CC="aarch64-linux-android21-clang" cargo build --release --target=aarch64-linux-android
+      cp target/aarch64-linux-android/release/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/arm64-v8a
   fi
   if echo $BUILD_TARGETS | grep "x86_64"; then
-      CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="x86_64-linux-android21-clang" CC="x86_64-linux-android21-clang" cargo build --target=x86_64-linux-android
-      cp target/x86_64-linux-android/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/x86_64
+      CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="x86_64-linux-android21-clang" CC="x86_64-linux-android21-clang" cargo build --release --target=x86_64-linux-android
+      cp target/x86_64-linux-android/release/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/x86_64
   fi
   if echo $BUILD_TARGETS | grep "i686"; then
-      CARGO_TARGET_I686_LINUX_ANDROID_LINKER="i686-linux-android21-clang" CC="i686-linux-android21-clang" cargo build --target=i686-linux-android
-      cp target/i686-linux-android/debug/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/x86
+      CARGO_TARGET_I686_LINUX_ANDROID_LINKER="i686-linux-android21-clang" CC="i686-linux-android21-clang" cargo build --release --target=i686-linux-android
+      cp target/i686-linux-android/release/libbdkffi.so bindings/bdk-kotlin/android/src/main/jniLibs/x86
   fi
 
   # copy sources

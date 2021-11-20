@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "BitcoinDevKit",
+        "repositoryURL": "https://github.com/notmandatory/BitcoinDevKit",
+        "state": {
+          "branch": null,
+          "revision": "b7c96420eea67e7c7b1bf549e59477a472aef744",
+          "version": "0.1.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

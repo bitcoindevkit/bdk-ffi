@@ -6,8 +6,9 @@
 //
 
 import SwiftUI
+import BitcoinDevKit
 
-extension Transaction {
+extension BitcoinDevKit.Transaction {
     public func getDetails() -> TransactionDetails {
         switch self {
         case .unconfirmed(let details): return details
@@ -25,7 +26,7 @@ extension Date {
 }
 
 struct TransactionView: View {
-    var transaction: Transaction
+    var transaction: BitcoinDevKit.Transaction
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -53,7 +54,7 @@ struct TransactionView: View {
 }
 
 struct TransactionsView: View {
-    var transactions: [Transaction]
+    var transactions: [BitcoinDevKit.Transaction]
     
     var body: some View {
         List {

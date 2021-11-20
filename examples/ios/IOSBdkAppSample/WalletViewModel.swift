@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import BitcoinDevKit
 
 class WalletViewModel: ObservableObject {
     enum State {
