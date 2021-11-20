@@ -130,18 +130,21 @@ copy_lib_python() {
   case $OS in
     "Darwin")
       echo -n "Darwin "
-      mkdir -p bindings/bdk-python/tests/
-      cp target/debug/libbdkffi.dylib bindings/bdk-python/
+      mkdir -p bindings/bdk-python/src/bitcoindevkit/
+      cp target/debug/libbdkffi.dylib bindings/bdk-python/src/bitcoindevkit/
       ;;
     "Linux")
-      echo -n "linux" ;;
+      echo -n "linux"
+      mkdir -p bindings/bdk-python/src/bitcoindevkit/
+      cp target/debug/libbdkffi.dylib bindings/bdk-python/src/bitcoindevkit/
+      ;;
   esac
   echo "library to python sub-project"
 }
 
 build_python() {
   copy_lib_python
-  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-python/src/bdk/ --language python
+  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-python/src/bitcoindevkit/ --language python
 }
 
 OS=$(uname)
