@@ -22,6 +22,6 @@ xcuserdata
 # python
 /bindings/bdk-python/tests/__pycache__
 /bindings/bdk-python/tests/.pytest_cache
-bdk.py
 bitcoindevkit.egg-info
 .tox
+dist/

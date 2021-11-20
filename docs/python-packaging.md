@@ -1,6 +1,6 @@
 # Building the Python Package
 
-I am able to package the native library in the tar ball that gets installed with pip, but the `bdk.py` module does not find it by itself. It looks for the native lib on the system path (and if you have it in one of those places it runs fine), but it doesn't seem to know about the path that's right beside it!
+I am able to package the native library in the tar ball that gets installed with pip, but the `bdk.py` module does not find it by itself. It looks for the native lib on the system path (and if you have it in one of those places it runs fine), but it doesn't know about the path where the current directory is.
 
 The current layout is the following:
 ```shell
