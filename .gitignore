@@ -1,0 +1,13 @@
+.DS_Store
+/.build
+/.swiftpm
+/Packages
+/*.xcodeproj
+xcuserdata/
+DerivedData/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+/*.xcframework
+!bdkFFI-umbrella.h
+!module.modulemap
+!info.plist
+*.xcframework.zip
