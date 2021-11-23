@@ -4,7 +4,6 @@
 <dict>
 	<key>AvailableLibraries</key>
 	<array>
-		<!-- If we want to add desktop builds in future, this is the required snippet:
 		<dict>
 			<key>LibraryIdentifier</key>
 			<string>macos-x86_64</string>
@@ -16,7 +15,7 @@
 			</array>
 			<key>SupportedPlatform</key>
 			<string>macos</string>
-		</dict>-->
+		</dict>
 		<dict>
 			<key>LibraryIdentifier</key>
 			<string>ios-arm64</string>
