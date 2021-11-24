@@ -1,14 +1,15 @@
 # bdk-swift
 
-This project builds a swift package that provides swift language bindings to the [`bdk`] 
-library. The swift language bindings are created by the [`bdk-ffi`] project which is 
-included as a git submodule of this repository. 
+This project builds a Swift package that provides [Swift] language bindings for the 
+[`bdk`] library. The Swift language bindings are created by the [`bdk-ffi`] project which 
+is included as a git submodule of this repository. 
 
 ## How to Use
 
-To use the swift language bindings provided by the [`bdk-ffi`] project in your xcode iOS 
-or MacOS project add this github repository and select one of the published versions. You 
-may then import the `BitcoinDevKit` library. For example:
+To use the Swift language bindings for [`bdk`] in your [Xcode] iOS or MacOS project add 
+the github repository (https://github.com/bitcoindevkit/bdk-swift) and select one of the 
+release versions. You may then import and use the `BitcoinDevKit` library in your Swift 
+code. For example:
 
 ```swift
 import BitcoinDevKit
@@ -24,9 +25,9 @@ let address = wallet.getNewAddress()
 ## How to Build and Publish
 
 If you are a maintainer of this project or want to build and publish this project to your 
-own repo use the following steps:
+own Github repository use the following steps:
 
-1. Clone this repo and init and update it's [`bdk-ffi`] submodule
+1. Clone this repository and init and update it's [`bdk-ffi`] submodule.
    ```shell
    git clone https://github.com/bitcoindevkit/bdk-swift
    git submodule update --init
@@ -34,16 +35,16 @@ own repo use the following steps:
 
 1. Follow the "General" `bdk-ffi` ["Getting Started (Developer)"] instructions.
 
-1. Install the latest version of xcode, download and install the advanced tools.
+1. Install the latest version of [Xcode], download and install the advanced tools.
 
-1. Ensure Swift is installed
+1. Ensure Swift is installed.
 
-1. Install required targets
+1. Install required targets.
    ```shell
     rustup target add aarch64-apple-ios x86_64-apple-ios
     ```
     
-1. Build [`bdk-ffi`] swift bindings and bdkFFI.xcframework.zip
+1. Build [`bdk-ffi`] Swift bindings and `bdkFFI.xcframework.zip`.
    ```shell
    ./build.sh
    ```
@@ -67,10 +68,13 @@ own repo use the following steps:
 
 1. Create a github release for your new tag.
 
-1. Upload the newly created zip to the new github release.
+1. Upload the newly created zip to the new github release and publish the release.
 
-1. Tests the new package in xcode.
+1. Test the new package in Xcode. If you get an error you might need to reset the Xcode 
+   package caches: File -> Packages -> Reset Package Caches.
 
+[Swift]: https://developer.apple.com/swift/
+[Xcode]: https://developer.apple.com/documentation/Xcode
 [`bdk`]: https://github.com/bitcoindevkit/bdk
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
 ["Getting Started (Developer)"]: https://github.com/bitcoindevkit/bdk-ffi#getting-started-developer
