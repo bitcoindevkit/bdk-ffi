@@ -1,0 +1,6 @@
+framework module bdkFFI {
+  umbrella header "bdkFFI-umbrella.h"
+
+  export *
+  module * { export * }
+}

@@ -6,8 +6,8 @@
 xcuserdata/
 DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
-/*.xcframework
-!bdkFFI-umbrella.h
-!module.modulemap
-!info.plist
-*.xcframework.zip
+bdkFFI.xcframework.zip
+bdkFFI
+bdkFFI.h
+bdk.swift
+BitcoinDevKit.swift

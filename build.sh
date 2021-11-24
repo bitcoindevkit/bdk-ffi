@@ -1,75 +1,59 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BUILD_PROFILE=release
-BDKFFI_DIR=bdk-ffi
-TARGET_DIR=$BDKFFI_DIR/target
-STATIC_LIB_NAME=libbdkffi.a
-SWIFT_DIR="$BDKFFI_DIR/bindings/bdk-swift"
-XCFRAMEWORK_NAME="bdkFFI"
-XCFRAMEWORK_ROOT="$XCFRAMEWORK_NAME.xcframework"
-XCFRAMEWORK_COMMON="$XCFRAMEWORK_ROOT/common/$XCFRAMEWORK_NAME.framework"
-
-## build bdk-ffi rust libs
-echo "Build bdk-ffi rust library"
-pushd $BDKFFI_DIR
+## confirm bdk-ffi rust lib builds
+pushd bdk-ffi
+echo "Confirm bdk-ffi rust lib builds"
 cargo build --release
 
-echo "Generate bdk-ffi swift bindings"
-uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-swift/ --language swift
-swiftc -module-name bdk -emit-library -o libbdkffi.dylib -emit-module -emit-module-path bindings/bdk-swift/ -parse-as-library -L target/release/ -lbdkffi -Xcc -fmodule-map-file=bindings/bdk-swift/$XCFRAMEWORK_NAME.modulemap bindings/bdk-swift/bdk.swift -suppress-warnings
-
-## build bdk-ffi rust libs into xcframework
-echo "Build bdk-ffi libs into swift xcframework"
+## build bdk-ffi rust libs for apple targets
+echo "Build bdk-ffi libs for apple targets"
 
 TARGET_TRIPLES=("x86_64-apple-darwin" "x86_64-apple-ios" "aarch64-apple-ios")
 for TARGET in ${TARGET_TRIPLES[@]}; do
   echo "Build bdk-ffi lib for target $TARGET"
   cargo build --release --target $TARGET
-  echo $?
 done
 
+echo "Generate bdk-ffi swift bindings"
+uniffi-bindgen generate src/bdk.udl --no-format --out-dir ../Sources/BitcoinDevKit --language swift
 popd
 
-## Manually construct xcframework
+# rename bdk.swift bindings to BitcoinDevKit.swift
+mv Sources/BitcoinDevKit/bdk.swift Sources/BitcoinDevKit/BitcoinDevKit.swift
 
-# Cleanup prior build
-rm -rf "$XCFRAMEWORK_ROOT"
-rm -f $XCFRAMEWORK_ROOT.zip
+# copy bdkFFI.h to bdkFFI.xcframework platforms
+PLATFORMS=("macos-x86_64" "ios-arm64_x86_64-simulator" "ios-arm64")
+for PLATFORM in ${PLATFORMS[@]}; do
+  cp Sources/BitcoinDevKit/bdkFFI.h bdkFFI.xcframework/$PLATFORM/bdkFFI.framework/Headers
+done
 
-# Common files
-mkdir -p "$XCFRAMEWORK_COMMON/Modules"
-cp "$SWIFT_DIR/module.modulemap" "$XCFRAMEWORK_COMMON/Modules/"
-mkdir -p "$XCFRAMEWORK_COMMON/Headers"
-cp "$SWIFT_DIR/$XCFRAMEWORK_NAME-umbrella.h" "$XCFRAMEWORK_COMMON/Headers"
-cp "$SWIFT_DIR/$XCFRAMEWORK_NAME.h" "$XCFRAMEWORK_COMMON/Headers"
+# remove unneed .h and .modulemap files
+rm Sources/BitcoinDevKit/bdkFFI.h
+rm Sources/BitcoinDevkit/bdkFFI.modulemap
 
-# macOS x86_64 hardware
-mkdir -p "$XCFRAMEWORK_ROOT/macos-x86_64"
-cp -R "$XCFRAMEWORK_COMMON" "$XCFRAMEWORK_ROOT/macos-x86_64/$XCFRAMEWORK_NAME.framework"
-cp "$TARGET_DIR/x86_64-apple-darwin/$BUILD_PROFILE/$STATIC_LIB_NAME" "$XCFRAMEWORK_ROOT/macos-x86_64/$XCFRAMEWORK_NAME.framework/$XCFRAMEWORK_NAME"
+# add bdkFFI libs to bdkFFI.xcframework
 
-# iOS hardware
-mkdir -p "$XCFRAMEWORK_ROOT/ios-arm64"
-cp -R "$XCFRAMEWORK_COMMON" "$XCFRAMEWORK_ROOT/ios-arm64/$XCFRAMEWORK_NAME.framework"
-cp "$TARGET_DIR/aarch64-apple-ios/$BUILD_PROFILE/$STATIC_LIB_NAME" "$XCFRAMEWORK_ROOT/ios-arm64/$XCFRAMEWORK_NAME.framework/$XCFRAMEWORK_NAME"
+# macos-x86_64 platform
+cp bdk-ffi/target/x86_64-apple-darwin/release/libbdkffi.a bdkFFI.xcframework/macos-x86_64/bdkFFI.framework/bdkFFI
 
-# iOS simulator, currently x86_64 only (need to make fat binary to add M1)
-mkdir -p "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator"
-cp -R "$XCFRAMEWORK_COMMON" "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator/$XCFRAMEWORK_NAME.framework"
-cp "$TARGET_DIR/x86_64-apple-ios/$BUILD_PROFILE/$STATIC_LIB_NAME" "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator/$XCFRAMEWORK_NAME.framework/$XCFRAMEWORK_NAME"
+# ios-arm64 platform
+cp bdk-ffi/target/aarch64-apple-ios/release/libbdkffi.a bdkFFI.xcframework/ios-arm64/bdkFFI.framework/bdkFFI
 
-# Set up the metadata for the XCFramework as a whole.
-cp "$SWIFT_DIR/Info.plist" "$XCFRAMEWORK_ROOT/Info.plist"
+# ios-arm64_x86_64-simulator, currently x86_64 only (need to make fat binary to add M1)
+cp bdk-ffi/target/x86_64-apple-ios/release/libbdkffi.a bdkFFI.xcframework/ios-arm64_x86_64-simulator/bdkFFI.framework/bdkFFI
+
 # TODO add license info
 
-# Remove common
-rm -rf "$XCFRAMEWORK_ROOT/common"
+# remove any existing bdkFFI.xcframework.zip
+rm bdkFFI.xcframework.zip
 
-# Zip it all up into a bundle for distribution.
-zip -9 -r "$XCFRAMEWORK_ROOT.zip" "$XCFRAMEWORK_ROOT"
+# zip bdkFFI.xcframework directory into a bundle for distribution
+zip -9 -r bdkFFI.xcframework.zip bdkFFI.xcframework
 
+# compute bdkFFI.xcframework.zip checksum
+echo checksum:
 swift package compute-checksum bdkFFI.xcframework.zip
 
-# Cleanup build ?
-# rm -rf "$XCFRAMEWORK_ROOT"
+# TODO update Package.swift with checksum
+# TODO upload zip to github release
