@@ -2,12 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "BitcoinDevKit",
-        "repositoryURL": "https://github.com/notmandatory/BitcoinDevKit",
+        "package": "bdk-swift",
+        "repositoryURL": "https://github.com/bitcoindevkit/bdk-swift",
         "state": {
           "branch": null,
-          "revision": "b7c96420eea67e7c7b1bf549e59477a472aef744",
-          "version": "0.1.1"
+          "revision": "dcefae806d46028b3f478e4acbf1ff2c6da9b09e",
+          "version": "0.1.3"
         }
       }
     ]
