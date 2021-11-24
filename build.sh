@@ -14,7 +14,6 @@ help()
    echo "-a     Android."
    echo "-h     Print this Help."
    echo "-k     Kotlin."
-   echo "-s     Swift."
    echo
 }
 
@@ -48,66 +47,6 @@ copy_lib_kotlin() {
 build_kotlin() {
   copy_lib_kotlin
   uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-kotlin/jvm/src/main/kotlin --language kotlin
-}
-
-## bdk swift
-build_swift() {
-  BUILD_PROFILE=release
-  TARGET_DIR=target
-
-  uniffi-bindgen generate src/bdk.udl --no-format --out-dir bindings/bdk-swift/ --language swift
-  swiftc -module-name bdk -emit-library -o libbdkffi.dylib -emit-module -emit-module-path ./bindings/bdk-swift/ -parse-as-library -L ./target/release/ -lbdkffi -Xcc -fmodule-map-file=./bindings/bdk-swift/bdkFFI.modulemap ./bindings/bdk-swift/bdk.swift
-
-  STATIC_LIB_NAME=libbdkffi.a
-
-  # Build ios and ios x86_64 ios simulator binaries
-  LIBS_ARCHS=("x86_64" "arm64")
-  IOS_TRIPLES=("x86_64-apple-ios" "aarch64-apple-ios")
-  for i in "${!LIBS_ARCHS[@]}"; do
-      cargo build --release --target "${IOS_TRIPLES[${i}]}"
-  done
-
-  ## Manually construct xcframework
-  LIB_NAME=libbdkffi.a
-  SWIFT_DIR="bindings/bdk-swift"
-  XCFRAMEWORK_NAME="bdkFFI"
-  XCFRAMEWORK_ROOT="$SWIFT_DIR/$XCFRAMEWORK_NAME.xcframework"
-
-  # Cleanup prior build
-  rm -rf "$XCFRAMEWORK_ROOT"
-
-  # Common files
-  XCFRAMEWORK_COMMON="$XCFRAMEWORK_ROOT/common/$XCFRAMEWORK_NAME.framework"
-  mkdir -p "$XCFRAMEWORK_COMMON/Modules"
-  cp "$SWIFT_DIR/module.modulemap" "$XCFRAMEWORK_COMMON/Modules/"
-  mkdir -p "$XCFRAMEWORK_COMMON/Headers"
-  cp "$SWIFT_DIR/bdkFFI-umbrella.h" "$XCFRAMEWORK_COMMON/Headers"
-  cp "$SWIFT_DIR/bdkFFI.h" "$XCFRAMEWORK_COMMON/Headers"
-  #mkdir -p "$XCFRAMEWORK_COMMON/$XCFRAMEWORK_NAME"
-  #cp "$SWIFT_DIR/bdk.swift" "$XCFRAMEWORK_COMMON/$XCFRAMEWORK_NAME"
-
-  # iOS hardware
-  mkdir -p "$XCFRAMEWORK_ROOT/ios-arm64"
-  cp -R "$XCFRAMEWORK_COMMON" "$XCFRAMEWORK_ROOT/ios-arm64/$XCFRAMEWORK_NAME.framework"
-  cp "$TARGET_DIR/aarch64-apple-ios/$BUILD_PROFILE/$LIB_NAME" "$XCFRAMEWORK_ROOT/ios-arm64/$XCFRAMEWORK_NAME.framework/$XCFRAMEWORK_NAME"
-
-  # iOS simulator, currently x86_64 only (need to make fat binary to add M1)
-  mkdir -p "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator"
-  cp -R "$XCFRAMEWORK_COMMON" "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator/$XCFRAMEWORK_NAME.framework"
-  cp "$TARGET_DIR/x86_64-apple-ios/$BUILD_PROFILE/$LIB_NAME" "$XCFRAMEWORK_ROOT/ios-arm64_x86_64-simulator/$XCFRAMEWORK_NAME.framework/$XCFRAMEWORK_NAME"
-
-  # Set up the metadata for the XCFramework as a whole.
-  cp "$SWIFT_DIR/Info.plist" "$XCFRAMEWORK_ROOT/Info.plist"
-  # TODO add license info
-
-  # Remove common
-  rm -rf "$XCFRAMEWORK_ROOT/common"
-
-  # Zip it all up into a bundle for distribution.
-  (cd $SWIFT_DIR; zip -9 -r "$XCFRAMEWORK_NAME.xcframework.zip" "$XCFRAMEWORK_NAME.xcframework")
-
-  # Cleanup build
-  # rm -rf "$XCFRAMEWORK_ROOT"
 }
 
 ## rust android
@@ -160,7 +99,6 @@ else
     case "$1" in
       -a) build_android ;;
       -k) build_kotlin ;;
-      -s) build_swift ;;
       -h) help ;;
       *) echo "Option $1 not recognized" ;;
     esac

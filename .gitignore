@@ -2,12 +2,6 @@ target
 build
 Cargo.lock
 /bindings/bdk-kotlin/local.properties
-/bindings/bdk-swift/*
-!bindings/bdk-swift/bdkFFI-umbrella.h
-!bindings/bdk-swift/Info.plist
-!bindings/bdk-swift/module.modulemap
-/bindings/bdk-swift.swiftdoc
-/bindings/bdk-swift.swiftsourceinfo
 .gradle
 wallet_db
 bdk_ffi_test
@@ -20,5 +14,3 @@ testdb
 xcuserdata
 .lsp
 .clj-kondo
-*.xcframework
-*.xcframework.zip
