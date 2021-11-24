@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -euo pipefail
 
 BUILD_PROFILE=release
 BDKFFI_DIR=bdk-ffi
@@ -22,11 +22,13 @@ swiftc -module-name bdk -emit-library -o libbdkffi.dylib -emit-module -emit-modu
 ## build bdk-ffi rust libs into xcframework
 echo "Build bdk-ffi libs into swift xcframework"
 
-APPLE_TRIPLES=("x86_64-apple-darwin" "x86_64-apple-ios" "aarch64-apple-ios")
-for TARGET in $APPLE_TRIPLES; do
+TARGET_TRIPLES=("x86_64-apple-darwin" "x86_64-apple-ios" "aarch64-apple-ios")
+for TARGET in ${TARGET_TRIPLES[@]}; do
   echo "Build bdk-ffi lib for target $TARGET"
   cargo build --release --target $TARGET
+  echo $?
 done
+
 popd
 
 ## Manually construct xcframework
@@ -37,7 +39,7 @@ rm -f $XCFRAMEWORK_ROOT.zip
 
 # Common files
 mkdir -p "$XCFRAMEWORK_COMMON/Modules"
-cp "$SWIFT_DIR/$XCFRAMEWORK_NAME.modulemap" "$XCFRAMEWORK_COMMON/Modules/"
+cp "$SWIFT_DIR/module.modulemap" "$XCFRAMEWORK_COMMON/Modules/"
 mkdir -p "$XCFRAMEWORK_COMMON/Headers"
 cp "$SWIFT_DIR/$XCFRAMEWORK_NAME-umbrella.h" "$XCFRAMEWORK_COMMON/Headers"
 cp "$SWIFT_DIR/$XCFRAMEWORK_NAME.h" "$XCFRAMEWORK_COMMON/Headers"
