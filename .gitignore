@@ -9,5 +9,3 @@ DerivedData/
 bdkFFI.xcframework.zip
 bdkFFI
 bdkFFI.h
-bdk.swift
-BitcoinDevKit.swift
