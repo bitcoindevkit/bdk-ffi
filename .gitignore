@@ -8,4 +8,5 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 bdkFFI.xcframework.zip
 bdkFFI
+libbdkffi.a
 bdkFFI.h
