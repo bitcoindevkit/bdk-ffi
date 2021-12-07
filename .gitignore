@@ -4,3 +4,4 @@ bdkpython.egg-info/
 __pycache__/
 libbdkffi.dylib
 .idea/
+.DS_Store

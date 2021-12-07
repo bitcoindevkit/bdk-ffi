@@ -7,21 +7,25 @@ Install the latest release using
 ```shell
 pip install bdkpython
 ```
+<br/>
 
 ## Run the tests
 ```shell
 python -m tox
 ```
+<br/>
 
 ## Build the package
 ```shell
 python -m build
 ```
+<br/>
 
 ## Install locally
 ```shell
 pip install ./dist/bdkpython-0.0.1-py3-none-any.whl
 ```
+<br/>
 
 ## Known issues
 Note that until the fix is merged upstream in [uniffi-rs](https://github.com/mozilla/uniffi-rs), the `loadIndirect()` function in the `bdk.py` module must be replaced with the following:
