@@ -1,0 +1,6 @@
+.tox/
+dist/
+bdkpython.egg-info/
+__pycache__/
+libbdkffi.dylib
+.idea/
