@@ -65,7 +65,7 @@ setup(
     version='0.0.3-dev',
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    package_data={"bdkpython": ["*.dylib", "*.so"]},
+    package_data={"bdkpython": ["*/*.dylib", "*/*.so"]},
     include_package_data=True,
     zip_safe=False,
     description="The Python language bindings for the bitcoindevkit",
