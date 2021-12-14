@@ -1,112 +1,98 @@
-# Foreign language bindings for BDK (bdk-ffi)
+# bdk-kotlin
 
-This repository contains source code for generating foreign language bindings
-for the rust library bdk for the Bitcoin Dev Kit (BDK) project.
+This project builds .jar and .aar packages for the `jvm` and `android` platforms that provide 
+[Kotlin] language bindings for the [`bdk`] library. The Kotlin language bindings are created by the 
+[`bdk-ffi`] project which is included as a git submodule of this repository.
 
-## Supported target languages and platforms
+## How to Use
 
-| Language | Platform | Status |
-| --- | --- | --- |
-| Kotlin | JVM | WIP |
-| Kotlin | Android | WIP |
-| Swift | iOS | WIP |
+To use the Kotlin language bindings for [`bdk`] in your `jvm` or `android` project add the 
+following to your gradle dependencies:
+```groovy
+repositories {
+    mavenCentral()
+}
 
+dependencies {
+  
+  // for jvm
+  implementation 'org.bitcoindevkit:bdk-jvm:0.2.0'
+  // OR for android
+  implementation 'org.bitcoindevkit:bdk-android:0.2.0'
+  
+}
 
-## Getting Started (User)
+```
 
-If you just want to consume the language bindings:
+You may then import and use the `org.bitcoindevkit` library in your Kotlin code. For example:
 
-### Kotlin (JVM)
+```kotlin
+import org.bitcoindevkit.*
 
-Just add the dependency `org.bitcoindevkit:bdk-jvm:0.1.1`. The package is `org.bitcoindevkit.bdk`.
+// ...
 
-### Kotlin (Android)
+val descriptor = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
+val db = DatabaseConfig.Memory("")
 
-Just add the dependency `org.bitcoindevkit:bdk-android:0.1.1`. The package is `org.bitcoindevkit.bdk`.
+val client =
+  BlockchainConfig.Electrum(
+    ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u)
+  )
+val wallet = OnlineWallet(descriptor, null, Network.TESTNET, db, client)
+val newAddress = wallet.getNewAddress()
+```
 
-## Getting Started (Developer)
-
-This project uses rust. A basic knowledge of the rust ecosystem is helpful.
-
-### General
-1. Install `uniffi-bindgen`
-    ```sh
-    cargo install uniffi_bindgen
-    ```
-1. See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/) for more info
-
-### Kotlin Bindings for JVM (OSX / Linux)
-
-1. Install required targets
-    ```sh
-      rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu
-    ```
-1. Build kotlin (JVM) bindings
-    ```sh
-      ./build.sh -k
-    ```
-1. Generated kotlin bindings are available at `/bindings/bdk-kotlin/`
-1. A demo app is available at `/bindings/bdk-kotlin/demo/`. It uses stdin for
-inputs and can be run from gradle.
-    ```sh
-    cd bindings/bdk-kotlin
-    ./gradlew :demo:run
-    ```
-
-### Kotlin bindings for Android
+### How to build
 
 1. Install required targets
     ```sh
-    rustup target add x86_64-linux-android aarch64-linux-android
-    armv7-linux-androideabi i686-linux-android
+    rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
     ```
 1. Install Android SDK and Build-Tools for API level 30+
-1. Setup `$ANDROID_NDK_HOME` and `$ANDROID_SDK_ROOT` path variables (which are
-required by the build scripts)
-1. Build kotlin (Android) bindings
-    ```sh
-    ./build.sh -a
+1. Setup `$ANDROID_SDK_ROOT` and `$ANDROID_NDK_HOME` path variables (which are required by the 
+   build scripts), for example:
+    ```shell
+    export ANDROID_SDK_ROOT=~/Android/Sdk
+    export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.3.6528147    
     ```
-2. A demo android app is available at [notmandatory/bdk-sample-app](https://github.com/notmandatory/bitcoindevkit-android-sample-app/tree/upgrade-to-bdk-ffi/)
-
-### Swift bindings for iOS
-
-1. Install the latest version of xcode, download and install the advanced tools.
-1. Ensure Swift is installed
-1. Install required targets
+1. Build kotlin bindings
     ```sh
-    rustup target add aarch64-apple-ios x86_64-apple-ios
+    ./build.sh
     ```
-1. Build swift (iOS) bindings
-    ```sh
-    ./build.sh -s
-    ```
-1. Example iOS app can be found in `/examples/iOS` which can be run by xcode.
 
-## Notes
+### How to publish to your local maven repo
 
-### Adding new structs and functions
+1. Set your `~/.gradle/gradle.properties` signing key values
+   ```properties
+   signing.gnupg.keyName=<YOUR_GNUPG_ID>
+   signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
+   ```
+1. Publish   
+   ```shell
+   ./gradlew :jvm:publishReleasePublicationToMavenLocal
+   ./gradlew :android:publishReleasePublicationToMavenLocal
+   ```
 
-See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
+### How to publish to maven central (project maintainers only)
 
-#### For pass by value objects
+1. Set your `~/.gradle/gradle.properties` signing key values and SONATYPE login
+   ```properties
+   signing.gnupg.keyName=<YOUR_GNUPG_ID>
+   signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
+   
+   ossrhUserName=<YOUR_SONATYPE_USERNAME>
+   ossrhPassword=<YOUR_SONATYPE_PASSWORD>
+   ```
+1. Publish
+   ```shell
+   ./gradlew :jvm:publishToSonatype closeAndReleaseSonatypeStagingRepository
+   ./gradlew :android:publishToSonatype closeAndReleaseSonatypeStagingRepository
+   ```
 
-1. create new rust struct with only fields that are supported UniFFI types
-1. update mapping `bdk.udl` file with new `dictionary`
+<!-- TODO A demo android app is available at [notmandatory/bdk-sample-app](https://github.com/notmandatory/bitcoindevkit-android-sample-app/tree/upgrade-to-bdk-ffi/) -->
 
-#### For pass by reference values 
-
-1. create wrapper rust struct/impl with only fields that are `Sync + Send`
-1. update mapping `bdk.udl` file with new `interface`
-
-## Goals
-
-1. Language bindings should feel idiomatic in target languages/platforms
-1. Adding new targets should be easy
-1. Getting up and running should be easy
-1. Contributing should be easy
-1. Get it right, then automate
-
-## Thanks
-
-This project is made possible thanks to the wonderful work on [mozilla/uniffi-rs](https://github.com/mozilla/uniffi-rs)
+[Kotlin]: https://kotlinlang.org/
+[Android Studio]: https://developer.android.com/studio/
+[`bdk`]: https://github.com/bitcoindevkit/bdk
+[`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
+["Getting Started (Developer)"]: https://github.com/bitcoindevkit/bdk-ffi#getting-started-developer
