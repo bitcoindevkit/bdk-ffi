@@ -62,7 +62,7 @@ print(f"Wallet balance is: {balance}")
 
 setup(
     name='bdkpython',
-    version='0.0.3-dev',
+    version='0.0.4',
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     package_data={"bdkpython": ["*/*.dylib", "*/*.so"]},
