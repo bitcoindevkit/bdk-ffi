@@ -71,7 +71,7 @@ setup(
     description="The Python language bindings for the bitcoindevkit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    url="https://github.com/bitcoindevkit/bdk-ffi",
+    url="https://github.com/thunderbiscuit/bdk-python",
     author="Alekos Filini <alekos.filini@gmail.com>, Steve Myers <steve@notmandatory.org>",
     license="MIT or Apache 2.0",
 )
