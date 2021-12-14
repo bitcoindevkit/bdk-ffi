@@ -3,6 +3,14 @@ The Python language bindings for the [bitcoindevkit](https://github.com/bitcoind
 
 See the [package on PyPI](https://pypi.org/project/bdkpython/).
 
+Currently supported architectures: 
+- macOS `arm64`
+- macOS `x86_64`
+- linux `x86_64`
+
+<br/>
+
+## Install from PyPI
 Install the latest release using
 ```shell
 pip install bdkpython
