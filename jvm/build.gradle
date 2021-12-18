@@ -34,11 +34,11 @@ afterEvaluate {
         publications {
 
             release(MavenPublication) {
+                from components.java
+
                 groupId = 'org.bitcoindevkit'
                 artifactId = 'bdk-jvm'
-                version = '0.2.0'
-
-                from components.java
+                version = '0.2.2'
 
                 pom {
                     name = 'bdk-jvm'

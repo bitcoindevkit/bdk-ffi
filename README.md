@@ -69,11 +69,11 @@ val newAddress = wallet.getNewAddress()
    ```
 1. Publish   
    ```shell
-   ./gradlew :jvm:publishReleasePublicationToMavenLocal
-   ./gradlew :android:publishReleasePublicationToMavenLocal
+   ./gradlew :jvm:publishToMavenLocal
+   ./gradlew :android:publishToMavenLocal
    ```
 
-### How to publish to maven central (project maintainers only)
+### How to publish to maven central with [Gradle Nexus Publish Plugin] (project maintainers only)
 
 1. Set your `~/.gradle/gradle.properties` signing key values and SONATYPE login
    ```properties
@@ -96,3 +96,4 @@ val newAddress = wallet.getNewAddress()
 [`bdk`]: https://github.com/bitcoindevkit/bdk
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
 ["Getting Started (Developer)"]: https://github.com/bitcoindevkit/bdk-ffi#getting-started-developer
+[Gradle Nexus Publish Plugin]: https://github.com/gradle-nexus/publish-plugin
