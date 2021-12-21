@@ -44,7 +44,7 @@ allprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         kotlinOptions {
             freeCompilerArgs += [
-                "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes",
+                "-Xopt-in=kotlin.ExperimentalUnsignedTypes",
             ]
         }
     }
