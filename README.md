@@ -42,7 +42,17 @@ val wallet = OnlineWallet(descriptor, null, Network.TESTNET, db, client)
 val newAddress = wallet.getNewAddress()
 ```
 
-### How to build
+### Example Projects
+
+#### `bdk-android`
+
+* [padawan-wallet](https://github.com/thunderbiscuit/padawan-wallet)
+
+#### `bdk-jvm`
+
+* [tatooine](https://github.com/thunderbiscuit/tatooine)
+
+## How to build
 
 1. Clone this repository and init and update it's [`bdk-ffi`] submodule.
    ```shell
@@ -66,7 +76,9 @@ val newAddress = wallet.getNewAddress()
     ./build.sh
     ```
 
-### How to publish to your local maven repo
+## How to publish
+
+### Publish to your local maven repo
 
 1. Set your `~/.gradle/gradle.properties` signing key values
    ```properties
@@ -79,7 +91,7 @@ val newAddress = wallet.getNewAddress()
    ./gradlew :android:publishToMavenLocal
    ```
 
-### How to publish to maven central with [Gradle Nexus Publish Plugin] (project maintainers only)
+### Publish to maven central with [Gradle Nexus Publish Plugin] (project maintainers only)
 
 1. Set your `~/.gradle/gradle.properties` signing key values and SONATYPE login
    ```properties
@@ -94,8 +106,6 @@ val newAddress = wallet.getNewAddress()
    ./gradlew :jvm:publishToSonatype closeAndReleaseSonatypeStagingRepository
    ./gradlew :android:publishToSonatype closeAndReleaseSonatypeStagingRepository
    ```
-
-<!-- TODO A demo android app is available at [notmandatory/bdk-sample-app](https://github.com/notmandatory/bitcoindevkit-android-sample-app/tree/upgrade-to-bdk-ffi/) -->
 
 [Kotlin]: https://kotlinlang.org/
 [Android Studio]: https://developer.android.com/studio/
