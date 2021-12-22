@@ -10,7 +10,7 @@ crate-type = ["staticlib", "cdylib"]
 name = "bdkffi"
 
 [dependencies]
-bdk = { version = "0.13", features = ["all-keys", "use-esplora-ureq"] }
+bdk = { version = "0.14", features = ["all-keys", "use-esplora-ureq"] }
 uniffi_macros = "0.14.1"
 uniffi = "0.16.0"
 thiserror = "1.0"
