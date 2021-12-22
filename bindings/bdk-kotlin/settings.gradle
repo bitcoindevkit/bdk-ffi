@@ -1,4 +1,0 @@
-rootProject.name = 'bdk-kotlin'
-
-include ':jvm',':demo',':android'
-

@@ -1,7 +1,0 @@
-.idea
-.gradle
-local.properties
-build
-*.so
-*.dylib
-bdk.kt
