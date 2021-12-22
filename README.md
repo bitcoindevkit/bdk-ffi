@@ -1,89 +1,34 @@
-# Foreign language bindings for BDK (bdk-ffi)
+# Native language bindings for BDK
 
-This repository contains source code for generating foreign language bindings
-for the rust library bdk for the Bitcoin Dev Kit (BDK) project.
+This repository contains source code for generating native language bindings for the rust based 
+[bdk] library which is the central artifact of the [Bitcoin Dev Kit] project.
+
+Each supported language has it's own repository that includes this project as a [git submodule]. 
+The rust code in this project is a wrapper around the [bdk] library to expose it's APIs in a 
+uniform way using the [mozilla/uniffi-rs] bindings generator for each supported target language.
 
 ## Supported target languages and platforms
 
-| Language | Platform | Status |
-| --- | --- | --- |
-| Kotlin | JVM | WIP |
-| Kotlin | Android | WIP |
-| Swift | iOS | WIP |
+The below repositories include instructions for using, building, and publishing the native 
+language binding for [bdk] supported by this project.
 
+| Language | Platform     | Repository   |
+| -------- | ------------ | ------------ |
+| Kotlin   | jvm          | [bdk-kotlin] |
+| Kotlin   | android      | [bdk-kotlin] |
+| Swift    | iOS, macOS   | [bdk-swift]  |
+| Python   | linux, macOS | [bdk-python] |
 
-## Getting Started (User)
+[bdk]: https://github.com/bitcoindevkit/bdk
+[Bitcoin Dev Kit]: https://github.com/bitcoindevkit
+[git submodule]: https://git-scm.com/book/en/v2/Git-Tools-Submodules
+[uniffi-rs]: https://github.com/mozilla/uniffi-rs
 
-If you just want to consume the language bindings:
+[bdk-kotlin]: https://github.com/bitcoindevkit/bdk-kotlin
+[bdk-swift]: https://github.com/bitcoindevkit/bdk-swift
+[bdk-python]: https://github.com/thunderbiscuit/bdk-python
 
-### Kotlin (JVM)
-
-Just add the dependency `org.bitcoindevkit:bdk-jvm:0.1.1`. The package is `org.bitcoindevkit.bdk`.
-
-### Kotlin (Android)
-
-Just add the dependency `org.bitcoindevkit:bdk-android:0.1.1`. The package is `org.bitcoindevkit.bdk`.
-
-## Getting Started (Developer)
-
-This project uses rust. A basic knowledge of the rust ecosystem is helpful.
-
-### General
-1. Install `uniffi-bindgen`
-    ```sh
-    cargo install uniffi_bindgen
-    ```
-1. See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/) for more info
-
-### Kotlin Bindings for JVM (OSX / Linux)
-
-1. Install required targets
-    ```sh
-      rustup target add x86_64-apple-darwin x86_64-unknown-linux-gnu
-    ```
-1. Build kotlin (JVM) bindings
-    ```sh
-      ./build.sh -k
-    ```
-1. Generated kotlin bindings are available at `/bindings/bdk-kotlin/`
-1. A demo app is available at `/bindings/bdk-kotlin/demo/`. It uses stdin for
-inputs and can be run from gradle.
-    ```sh
-    cd bindings/bdk-kotlin
-    ./gradlew :demo:run
-    ```
-
-### Kotlin bindings for Android
-
-1. Install required targets
-    ```sh
-    rustup target add x86_64-linux-android aarch64-linux-android
-    armv7-linux-androideabi i686-linux-android
-    ```
-1. Install Android SDK and Build-Tools for API level 30+
-1. Setup `$ANDROID_NDK_HOME` and `$ANDROID_SDK_ROOT` path variables (which are
-required by the build scripts)
-1. Build kotlin (Android) bindings
-    ```sh
-    ./build.sh -a
-    ```
-2. A demo android app is available at [notmandatory/bdk-sample-app](https://github.com/notmandatory/bitcoindevkit-android-sample-app/tree/upgrade-to-bdk-ffi/)
-
-### Swift bindings for iOS
-
-1. Install the latest version of xcode, download and install the advanced tools.
-1. Ensure Swift is installed
-1. Install required targets
-    ```sh
-    rustup target add aarch64-apple-ios x86_64-apple-ios
-    ```
-1. Build swift (iOS) bindings
-    ```sh
-    ./build.sh -s
-    ```
-1. Example iOS app can be found in `/examples/iOS` which can be run by xcode.
-
-## Notes
+## Contributing
 
 ### Adding new structs and functions
 
@@ -109,4 +54,6 @@ See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
 
 ## Thanks
 
-This project is made possible thanks to the wonderful work on [mozilla/uniffi-rs](https://github.com/mozilla/uniffi-rs)
+This project is made possible thanks to the wonderful work by the [mozilla/uniffi-rs] team.
+
+[mozilla/uniffi-rs]: https://github.com/mozilla/uniffi-rs
