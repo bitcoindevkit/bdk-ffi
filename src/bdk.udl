@@ -1,6 +1,6 @@
 namespace bdk {
   [Throws=BdkError]
-  ExtendedKeyInfo generate_extended_key(Network network, MnemonicType mnemonic_type, string? password);
+  ExtendedKeyInfo generate_extended_key(Network network, WordCount word_count, string? password);
   [Throws=BdkError]
   ExtendedKeyInfo restore_extended_key(Network network, string mnemonic, string? password);
 };
@@ -73,7 +73,7 @@ dictionary TransactionDetails {
     string txid;
 };
 
-dictionary Confirmation {
+dictionary BlockTime {
     u32 height;
     u64 timestamp;
 };
@@ -81,7 +81,7 @@ dictionary Confirmation {
 [Enum]
 interface Transaction {
   Unconfirmed(TransactionDetails details);
-  Confirmed(TransactionDetails details, Confirmation confirmation);
+  Confirmed(TransactionDetails details, BlockTime confirmation);
 };
 
 interface OfflineWallet {
@@ -158,7 +158,7 @@ dictionary ExtendedKeyInfo {
   string fingerprint;
 };
 
-enum MnemonicType {
+enum WordCount {
   "Words12",
   "Words15",
   "Words18",

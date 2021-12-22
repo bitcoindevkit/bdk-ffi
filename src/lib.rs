@@ -8,11 +8,11 @@ use bdk::blockchain::{
 };
 use bdk::database::any::{AnyDatabase, SledDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
-use bdk::keys::bip39::{Language, Mnemonic, MnemonicType};
+use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
 use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex;
-use bdk::{ConfirmationTime, Error, FeeRate, SignOptions, Wallet};
+use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet};
 use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Mutex, MutexGuard};
@@ -69,8 +69,6 @@ pub struct TransactionDetails {
     pub txid: String,
 }
 
-type Confirmation = ConfirmationTime;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Transaction {
     Unconfirmed {
@@ -78,7 +76,7 @@ pub enum Transaction {
     },
     Confirmed {
         details: TransactionDetails,
-        confirmation: Confirmation,
+        confirmation: BlockTime,
     },
 }
 
@@ -96,9 +94,9 @@ impl From<&bdk::TransactionDetails> for TransactionDetails {
 impl From<&bdk::TransactionDetails> for Transaction {
     fn from(x: &bdk::TransactionDetails) -> Transaction {
         match x.confirmation_time.clone() {
-            Some(confirmation) => Transaction::Confirmed {
+            Some(block_time) => Transaction::Confirmed {
                 details: TransactionDetails::from(x),
-                confirmation,
+                confirmation: block_time,
             },
             None => Transaction::Unconfirmed {
                 details: TransactionDetails::from(x),
@@ -128,7 +126,7 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
         self.get_wallet().get_balance()
     }
 
-    fn sign<'a>(&self, psbt: &'a PartiallySignedBitcoinTransaction) -> Result<(), Error> {
+    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), Error> {
         let mut psbt = psbt.internal.lock().unwrap();
         let finalized = self.get_wallet().sign(&mut psbt, SignOptions::default())?;
         match finalized {
@@ -278,12 +276,12 @@ impl OnlineWallet {
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
 
-    fn broadcast<'a>(
+    fn broadcast(
         &self,
-        psbt: &'a PartiallySignedBitcoinTransaction,
+        psbt: &PartiallySignedBitcoinTransaction,
     ) -> Result<Transaction, Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
-        self.get_wallet().broadcast(tx)?;
+        self.get_wallet().broadcast(&tx)?;
         Ok(Transaction::from(&psbt.details))
     }
 }
@@ -304,11 +302,11 @@ pub struct ExtendedKeyInfo {
 
 fn generate_extended_key(
     network: Network,
-    mnemonic_type: MnemonicType,
+    word_count: WordCount,
     password: Option<String>,
 ) -> Result<ExtendedKeyInfo, Error> {
     let mnemonic: GeneratedKey<_, BareCtx> =
-        Mnemonic::generate((mnemonic_type, Language::English)).unwrap();
+        Mnemonic::generate((word_count, Language::English)).unwrap();
     let mnemonic = mnemonic.into_key();
     let xkey: ExtendedKey = (mnemonic.clone(), password).into_extended_key()?;
     let xprv = xkey.into_xprv(network).unwrap();
@@ -325,7 +323,7 @@ fn restore_extended_key(
     mnemonic: String,
     password: Option<String>,
 ) -> Result<ExtendedKeyInfo, Error> {
-    let mnemonic = Mnemonic::from_phrase(mnemonic.as_ref(), Language::English).unwrap();
+    let mnemonic = Mnemonic::parse_in(Language::English, mnemonic).unwrap();
     let xkey: ExtendedKey = (mnemonic.clone(), password).into_extended_key()?;
     let xprv = xkey.into_xprv(network).unwrap();
     let fingerprint = xprv.fingerprint(&Secp256k1::new());
