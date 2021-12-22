@@ -30,6 +30,14 @@ language binding for [bdk] supported by this project.
 
 ## Contributing
 
+### Install uniffi-bindgen cli tool
+
+Install the uniffi-bindgen binary on your system using:
+
+`cargo install uniffi_bindgen`
+
+The version must be the same as the `uniffi` dependency in `Cargo.toml`.
+
 ### Adding new structs and functions
 
 See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
