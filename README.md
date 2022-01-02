@@ -69,6 +69,11 @@ val newAddress = wallet.getNewAddress()
     ```sh
     rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
     ```
+1. Install `uniffi-bindgen`
+    ```sh
+    cargo install uniffi_bindgen
+    ```
+    See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/) for more info
 1. Install Android SDK and Build-Tools for API level 30+
 1. Setup `$ANDROID_SDK_ROOT` and `$ANDROID_NDK_HOME` path variables (which are required by the 
    build scripts), for example (NDK major version 21 is required):
