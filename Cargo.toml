@@ -11,10 +11,10 @@ name = "bdkffi"
 
 [dependencies]
 bdk = { version = "0.14", features = ["all-keys", "use-esplora-ureq"] }
-uniffi_macros = "0.14.1"
+uniffi_macros = "0.16.0"
 uniffi = "0.16.0"
 thiserror = "1.0"
 anyhow = "=1.0.45" # remove after upgrading to next version of uniffi
 
 [build-dependencies]
-uniffi_build = "0.14.1"
+uniffi_build = "0.16.0"
