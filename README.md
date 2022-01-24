@@ -44,6 +44,12 @@ val newAddress = wallet.getNewAddress()
 
 ### How to build
 
+1. Clone this repository and init and update it's [`bdk-ffi`] submodule.
+   ```shell
+   git clone https://github.com/bitcoindevkit/bdk-kotlin
+   git submodule update --init
+   ```
+1. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions.
 1. Install required targets
     ```sh
     rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
