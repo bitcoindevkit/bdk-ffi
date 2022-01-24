@@ -44,16 +44,22 @@ val newAddress = wallet.getNewAddress()
 
 ### How to build
 
+1. Clone this repository and init and update it's [`bdk-ffi`] submodule.
+   ```shell
+   git clone https://github.com/bitcoindevkit/bdk-kotlin
+   git submodule update --init
+   ```
+1. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions.
 1. Install required targets
     ```sh
     rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
     ```
 1. Install Android SDK and Build-Tools for API level 30+
 1. Setup `$ANDROID_SDK_ROOT` and `$ANDROID_NDK_HOME` path variables (which are required by the 
-   build scripts), for example:
+   build scripts), for example (NDK major version 21 is required):
     ```shell
     export ANDROID_SDK_ROOT=~/Android/Sdk
-    export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.3.6528147    
+    export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.<NDK_VERSION>
     ```
 1. Build kotlin bindings
     ```sh
@@ -69,11 +75,11 @@ val newAddress = wallet.getNewAddress()
    ```
 1. Publish   
    ```shell
-   ./gradlew :jvm:publishReleasePublicationToMavenLocal
-   ./gradlew :android:publishReleasePublicationToMavenLocal
+   ./gradlew :jvm:publishToMavenLocal
+   ./gradlew :android:publishToMavenLocal
    ```
 
-### How to publish to maven central (project maintainers only)
+### How to publish to maven central with [Gradle Nexus Publish Plugin] (project maintainers only)
 
 1. Set your `~/.gradle/gradle.properties` signing key values and SONATYPE login
    ```properties
@@ -96,3 +102,4 @@ val newAddress = wallet.getNewAddress()
 [`bdk`]: https://github.com/bitcoindevkit/bdk
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
 ["Getting Started (Developer)"]: https://github.com/bitcoindevkit/bdk-ffi#getting-started-developer
+[Gradle Nexus Publish Plugin]: https://github.com/gradle-nexus/publish-plugin

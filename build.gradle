@@ -1,28 +1,19 @@
 buildscript {
-    ext.kotlin_version = '1.5.10'
+    ext.kotlin_version = '1.6.10'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.1'
+        classpath 'com.android.tools.build:gradle:7.0.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
 plugins {
-    id "java-library"
     id "signing"
     id "maven-publish"
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
-}
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from(components.java)
-        }
-    }
 }
 
 signing {
@@ -53,7 +44,7 @@ allprojects {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
         kotlinOptions {
             freeCompilerArgs += [
-                "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes",
+                "-Xopt-in=kotlin.ExperimentalUnsignedTypes",
             ]
         }
     }
