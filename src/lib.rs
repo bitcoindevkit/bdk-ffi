@@ -12,7 +12,7 @@ use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
 use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex;
-use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet};
+use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet as BdkWallet };
 use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Mutex, MutexGuard};
@@ -48,17 +48,7 @@ pub enum BlockchainConfig {
 }
 
 trait WalletHolder<B> {
-    fn get_wallet(&self) -> MutexGuard<Wallet<B, AnyDatabase>>;
-}
-
-struct OfflineWallet {
-    wallet: Mutex<Wallet<(), AnyDatabase>>,
-}
-
-impl WalletHolder<()> for OfflineWallet {
-    fn get_wallet(&self) -> MutexGuard<Wallet<(), AnyDatabase>> {
-        self.wallet.lock().unwrap()
-    }
+    fn get_wallet(&self) -> MutexGuard<BdkWallet<B, AnyDatabase>>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -105,7 +95,7 @@ impl From<&bdk::TransactionDetails> for Transaction {
     }
 }
 
-trait OfflineWalletOperations<B>: WalletHolder<B> {
+trait WalletOperations<B>: WalletHolder<B> {
     fn get_new_address(&self) -> String {
         self.get_wallet()
             .get_address(AddressIndex::New)
@@ -144,26 +134,8 @@ trait OfflineWalletOperations<B>: WalletHolder<B> {
     }
 }
 
-impl OfflineWallet {
-    fn new(
-        descriptor: String,
-        network: Network,
-        database_config: DatabaseConfig,
-    ) -> Result<Self, BdkError> {
-        let any_database_config = match database_config {
-            DatabaseConfig::Memory { .. } => AnyDatabaseConfig::Memory(()),
-            DatabaseConfig::Sled { config } => AnyDatabaseConfig::Sled(config),
-        };
-        let database = AnyDatabase::from_config(&any_database_config)?;
-        let wallet = Mutex::new(Wallet::new_offline(&descriptor, None, network, database)?);
-        Ok(OfflineWallet { wallet })
-    }
-}
-
-impl OfflineWalletOperations<()> for OfflineWallet {}
-
-struct OnlineWallet {
-    wallet: Mutex<Wallet<AnyBlockchain, AnyDatabase>>,
+struct Wallet {
+    _wallet: Mutex<BdkWallet<AnyBlockchain, AnyDatabase>>,
 }
 
 pub trait BdkProgress: Send + Sync {
@@ -188,12 +160,12 @@ struct PartiallySignedBitcoinTransaction {
 
 impl PartiallySignedBitcoinTransaction {
     fn new(
-        online_wallet: &OnlineWallet,
+        wallet: &Wallet,
         recipient: String,
         amount: u64,
         fee_rate: Option<f32>, // satoshis per vbyte
     ) -> Result<Self, Error> {
-        let wallet = online_wallet.get_wallet();
+        let wallet = wallet.get_wallet();
         match Address::from_str(&recipient) {
             Ok(address) => {
                 let (psbt, details) = {
@@ -216,7 +188,15 @@ impl PartiallySignedBitcoinTransaction {
     }
 }
 
-impl OnlineWallet {
+impl WalletHolder<AnyBlockchain> for Wallet {
+    fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyBlockchain, AnyDatabase>> {
+        self._wallet.lock().unwrap()
+    }
+}
+
+impl WalletOperations<AnyBlockchain> for Wallet {}
+
+impl Wallet {
     fn new(
         descriptor: String,
         change_descriptor: Option<String>,
@@ -250,18 +230,18 @@ impl OnlineWallet {
         };
         let database = AnyDatabase::from_config(&any_database_config)?;
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
-        let wallet = Mutex::new(Wallet::new(
+        let _wallet = Mutex::new(BdkWallet::new(
             &descriptor,
             change_descriptor.to_owned().as_ref(),
             network,
             database,
             blockchain,
         )?);
-        Ok(OnlineWallet { wallet })
+        Ok(Wallet { _wallet })
     }
 
     fn get_network(&self) -> Network {
-        self.wallet.lock().unwrap().network()
+        self.get_wallet().network()
     }
 
     fn sync(
@@ -270,9 +250,7 @@ impl OnlineWallet {
         max_address_param: Option<u32>,
     ) -> Result<(), BdkError> {
         progress_update.update(21.0, Some("message".to_string()));
-        self.wallet
-            .lock()
-            .unwrap()
+        self.get_wallet()
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
 
@@ -285,14 +263,6 @@ impl OnlineWallet {
         Ok(Transaction::from(&psbt.details))
     }
 }
-
-impl WalletHolder<AnyBlockchain> for OnlineWallet {
-    fn get_wallet(&self) -> MutexGuard<Wallet<AnyBlockchain, AnyDatabase>> {
-        self.wallet.lock().unwrap()
-    }
-}
-
-impl OfflineWalletOperations<AnyBlockchain> for OnlineWallet {}
 
 pub struct ExtendedKeyInfo {
     mnemonic: String,
@@ -334,5 +304,4 @@ fn restore_extended_key(
     })
 }
 
-uniffi::deps::static_assertions::assert_impl_all!(OfflineWallet: Sync, Send);
-uniffi::deps::static_assertions::assert_impl_all!(OnlineWallet: Sync, Send);
+uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);

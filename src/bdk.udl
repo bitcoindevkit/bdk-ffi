@@ -84,21 +84,6 @@ interface Transaction {
   Confirmed(TransactionDetails details, BlockTime confirmation);
 };
 
-interface OfflineWallet {
-  [Throws=BdkError]
-  constructor(string descriptor, Network network, DatabaseConfig database_config);
-
-  // OfflineWalletOperations
-  string get_new_address();
-  string get_last_unused_address();
-  [Throws=BdkError]
-  u64 get_balance();
-  [Throws=BdkError]
-  void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
-  [Throws=BdkError]
-  sequence<Transaction> get_transactions();
-};
-
 dictionary ElectrumConfig {
   string url;
   string? socks5;
@@ -125,11 +110,9 @@ callback interface BdkProgress {
   void update(f32 progress, string? message);
 };
 
-interface OnlineWallet {
+interface Wallet {
   [Throws=BdkError]
   constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
-
-  // OfflineWalletOperations
   string get_new_address();
   string get_last_unused_address();
   [Throws=BdkError]
@@ -138,8 +121,6 @@ interface OnlineWallet {
   void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
   [Throws=BdkError]
   sequence<Transaction> get_transactions();
-
-  // OnlineWalletInterface
   Network get_network();
   [Throws=BdkError]
   void sync(BdkProgress progress_update, u32? max_address_param);
@@ -149,7 +130,7 @@ interface OnlineWallet {
 
 interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
-  constructor([ByRef] OnlineWallet wallet, string recipient, u64 amount, float? fee_rate);
+  constructor([ByRef] Wallet wallet, string recipient, u64 amount, float? fee_rate);
 };
 
 dictionary ExtendedKeyInfo {
