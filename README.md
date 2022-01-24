@@ -50,10 +50,10 @@ val newAddress = wallet.getNewAddress()
     ```
 1. Install Android SDK and Build-Tools for API level 30+
 1. Setup `$ANDROID_SDK_ROOT` and `$ANDROID_NDK_HOME` path variables (which are required by the 
-   build scripts), for example:
+   build scripts), for example (NDK major version 21 is required):
     ```shell
     export ANDROID_SDK_ROOT=~/Android/Sdk
-    export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.3.6528147    
+    export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/21.<NDK_VERSION>
     ```
 1. Build kotlin bindings
     ```sh
