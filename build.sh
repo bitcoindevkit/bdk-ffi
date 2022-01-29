@@ -4,20 +4,23 @@ set -eo pipefail
 echo "Build and test bdk-ffi library for local platform (darwin or linux)"
 pushd bdk-ffi
 
-cargo fmt
-cargo build --release
-cargo test
-
 OS=$(uname)
 echo -n "Copy "
 case $OS in
   "Darwin")
     echo -n "darwin "
+    # x86_64 (intel)
+    cargo build --release --target x86_64-apple-darwin
     mkdir -p ../jvm/src/main/resources/darwin-x86-64
-    cp target/release/libbdkffi.dylib ../jvm/src/main/resources/darwin-x86-64
+    cp target/x86_64-apple-darwin/release/libbdkffi.dylib ../jvm/src/main/resources/darwin-x86-64
+    # aarch64 (m1)
+    cargo build --release --target aarch64-apple-darwin
+    mkdir -p ../jvm/src/main/resources/darwin-arm64
+    cp target/aarch64-apple-darwin/release/libbdkffi.dylib ../jvm/src/main/resources/darwin-arm64
     ;;
   "Linux")
     echo -n "linux "
+    cargo build --release
     mkdir -p ../jvm/src/main/resources/linux-x86-64
     cp target/release/libbdkffi.so ../jvm/src/main/resources/linux-x86-64
     ;;

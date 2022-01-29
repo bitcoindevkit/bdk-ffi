@@ -16,9 +16,9 @@ repositories {
 dependencies {
   
   // for jvm
-  implementation 'org.bitcoindevkit:bdk-jvm:0.2.0'
+  implementation 'org.bitcoindevkit:bdk-jvm:0.3.0'
   // OR for android
-  implementation 'org.bitcoindevkit:bdk-android:0.2.0'
+  implementation 'org.bitcoindevkit:bdk-android:0.3.0'
   
 }
 
@@ -52,7 +52,7 @@ val newAddress = wallet.getNewAddress()
 
 * [tatooine](https://github.com/thunderbiscuit/tatooine)
 
-## How to build
+### How to build
 
 1. Clone this repository and init and update it's [`bdk-ffi`] submodule.
    ```shell
@@ -60,6 +60,10 @@ val newAddress = wallet.getNewAddress()
    git submodule update --init
    ```
 1. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions.
+1. If building on MacOS install required intel and m1 jvm targets
+   ```sh
+   rustup target add x86_64-apple-darwin aarch64-apple-darwin
+   ```
 1. Install required targets
     ```sh
     rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
@@ -75,6 +79,10 @@ val newAddress = wallet.getNewAddress()
     ```sh
     ./build.sh
     ```
+1. Start android emulator and run tests
+   ```sh
+   ./gradlew connectedAndroidTest 
+   ```
 
 ## How to publish
 
