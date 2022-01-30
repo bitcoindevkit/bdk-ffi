@@ -135,7 +135,7 @@ trait WalletOperations<B>: WalletHolder<B> {
 }
 
 struct Wallet {
-    _wallet: Mutex<BdkWallet<AnyBlockchain, AnyDatabase>>,
+    wallet_mutex: Mutex<BdkWallet<AnyBlockchain, AnyDatabase>>,
 }
 
 pub trait BdkProgress: Send + Sync {
@@ -190,7 +190,7 @@ impl PartiallySignedBitcoinTransaction {
 
 impl WalletHolder<AnyBlockchain> for Wallet {
     fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyBlockchain, AnyDatabase>> {
-        self._wallet.lock().unwrap()
+        self.wallet_mutex.lock().unwrap()
     }
 }
 
@@ -230,14 +230,14 @@ impl Wallet {
         };
         let database = AnyDatabase::from_config(&any_database_config)?;
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
-        let _wallet = Mutex::new(BdkWallet::new(
+        let wallet_mutex = Mutex::new(BdkWallet::new(
             &descriptor,
             change_descriptor.to_owned().as_ref(),
             network,
             database,
             blockchain,
         )?);
-        Ok(Wallet { _wallet })
+        Ok(Wallet { wallet_mutex })
     }
 
     fn get_network(&self) -> Network {
