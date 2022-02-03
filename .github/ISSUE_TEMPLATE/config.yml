@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📝 Official Documentation
+    url: https://bitcoindevkit.org/getting-started/
+    about: Check our documentation for answers to common questions
+  - name: 💬 Community Chat
+    url: https://discord.com/invite/dstn4dQ
+    about: Ask general questions and get community support in real-time
