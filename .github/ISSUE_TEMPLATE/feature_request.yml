@@ -1,4 +1,4 @@
-name: New Feature
+name: Feature Request
 description: Request a new feature
 labels: [ "enhancement", "triage" ]
 body:
@@ -7,60 +7,26 @@ body:
       value: |
         Thanks for taking the time to request and document this new feature!
   - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: A concise description of the problem you need this new feature to solve.
+      placeholder: What is the problem you are trying to solve...
+    validations:
+      required: true
+  - type: textarea
     id: description
     attributes:
       label: Description
-      description: A concise description of the new feature.
-      placeholder: What new behavior would you like to see...
+      description: A concise description of the new feature you need.
+      placeholder: What will this new feature do, how will it work...
     validations:
       required: true
   - type: textarea
-    id: benefits
+    id: alternatives
     attributes:
-      label: How to Reproduce
-      description: Steps or code to reproduce the behavior.
-      placeholder: How can we can reproduce it...
+      label: Alternatives
+      description: Describe any other alternatives you considered.
+      placeholder: Other ways you considered to solve your problem...
     validations:
-      required: true
-  - type: textarea
-    id: expected
-    attributes:
-      label: Expected Result
-      description: What did you expected to happen.
-      placeholder: Tell us what you were expecting...
-    validations:
-      required: true
-  - type: textarea
-    id: version
-    attributes:
-      label: Version
-      description: Which release version(s), commit, or branch of code do you see this bug?
-      placeholder: Tell us which version(s) of code you saw the bug in...
-    validations:
-      required: true
-  - type: checkboxes
-    id: artifact
-    attributes:
-      label: Artifact
-      description: With which artifact(s) are you seeing this bug?
-      options:
-        - label: bdk-jvm
-        - label: bdk-android
-  - type: checkboxes
-    id: platform
-    attributes:
-      label: Platform
-      description: What target platform(s) are you seeing the problem on?
-      options:
-        - label: ARM64 Android
-        - label: 64-bit x86 Android
-        - label: 32-bit x86 Android
-        - label: 64-bit x86 Linux (kernel 2.6.32+, glibc 2.11+)
-        - label: 64-bit x86 macOS (10.7+, Lion+)
-        - label: ARM64 macOS (11.0+, Big Sur+)
-  - type: textarea
-    id: logs
-    attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
+      required: false

@@ -19,7 +19,7 @@ body:
     attributes:
       label: How to Reproduce
       description: Steps or code to reproduce the behavior.
-      placeholder: How can we can reproduce it...
+      placeholder: How can we reproduce it...
     validations:
       required: true
   - type: textarea
