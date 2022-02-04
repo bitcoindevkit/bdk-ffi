@@ -15,8 +15,8 @@ case $OS in
     cp target/x86_64-apple-darwin/release/libbdkffi.dylib ../jvm/src/main/resources/darwin-x86-64
     # aarch64 (m1)
     cargo build --release --target aarch64-apple-darwin
-    mkdir -p ../jvm/src/main/resources/darwin-arm64
-    cp target/aarch64-apple-darwin/release/libbdkffi.dylib ../jvm/src/main/resources/darwin-arm64
+    mkdir -p ../jvm/src/main/resources/darwin-aarch64
+    cp target/aarch64-apple-darwin/release/libbdkffi.dylib ../jvm/src/main/resources/darwin-aarch64
     ;;
   "Linux")
     echo -n "linux "
