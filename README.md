@@ -46,11 +46,12 @@ val newAddress = wallet.getNewAddress()
 
 #### `bdk-android`
 
-* [padawan-wallet](https://github.com/thunderbiscuit/padawan-wallet)
+* [Devkit Wallet](https://github.com/thunderbiscuit/devkit-wallet)  
+* [Padawan Wallet](https://github.com/thunderbiscuit/padawan-wallet)
 
 #### `bdk-jvm`
 
-* [tatooine](https://github.com/thunderbiscuit/tatooine)
+* [Tatooine Faucet](https://github.com/thunderbiscuit/tatooine)
 
 ## How to build
 
