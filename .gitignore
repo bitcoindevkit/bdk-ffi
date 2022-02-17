@@ -10,3 +10,4 @@ libbdkffi.dylib
 
 src/bdkpython/bdk.py
 *.whl
+build/
