@@ -13,24 +13,10 @@ The Python language bindings for the [bitcoindevkit](https://github.com/bitcoind
 pip install bdkpython
 ```
 
-## Simple examples
-**Generate a testnet address**
+## Simple example
 ```python
 import bdkpython as bdk
 
-
-descriptor = "wpkh(tprv8ZgxMBicQKsPcx5nBGsR63Pe8KnRUqmbJNENAfGftF3yuXoMMoVJJcYeUw5eVkm9WBPjWYt6HMWYJNesB5HaNVBaFc1M6dRjWSYnmewUMYy/84h/1h/0h/0/*)"
-config = bdk.DatabaseConfig.MEMORY("")
-
-wallet = bdk.OfflineWallet(descriptor, bdk.Network.TESTNET, config)
-address = wallet.get_new_address()
-
-print(f"New BIP84 testnet address: {address}")
-```  
-
-**Sync a wallet using Electrum**
-```python
-import bdkpython as bdk
 
 descriptor = "wpkh(tprv8ZgxMBicQKsPcx5nBGsR63Pe8KnRUqmbJNENAfGftF3yuXoMMoVJJcYeUw5eVkm9WBPjWYt6HMWYJNesB5HaNVBaFc1M6dRjWSYnmewUMYy/84h/1h/0h/0/*)"
 config = bdk.DatabaseConfig.MEMORY("")
@@ -44,7 +30,7 @@ client = bdk.BlockchainConfig.ELECTRUM(
              )   
          )
 
-wallet = bdk.OnlineWallet(
+wallet = bdk.Wallet(
              descriptor=descriptor,
              change_descriptor=descriptor,
              network=bdk.Network.TESTNET,
@@ -52,15 +38,19 @@ wallet = bdk.OnlineWallet(
              blockchain_config=client
          )
 
+# print new receive address
+address = wallet.get_new_address()
+print(f"New BIP84 testnet address: {address}")
+
+
+# print wallet balance
 class LogProgress(bdk.BdkProgress):
     def update(self, progress, update):
         pass
-        
+
 wallet.sync(progress_update=LogProgress(), max_address_param=20)
 balance = wallet.get_balance()
-
 print(f"Wallet balance is: {balance}")
-```
 """
 
 rust_ext = RustExtension(
@@ -71,7 +61,7 @@ rust_ext = RustExtension(
 
 setup(
     name = 'bdkpython',
-    version = '0.0.4',
+    version = '0.1.0',
     description="The Python language bindings for the bitcoindevkit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
