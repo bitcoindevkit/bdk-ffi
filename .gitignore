@@ -5,3 +5,8 @@ __pycache__/
 libbdkffi.dylib
 .idea/
 .DS_Store
+
+*.swp
+
+src/bdkpython/bdk.py
+*.whl
