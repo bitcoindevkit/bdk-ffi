@@ -45,6 +45,7 @@ jobs:
         with:
           name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
           path: /tmp/wheelhouse-repaired/*.whl
+
   build-macos-universal-wheel:
     name: 'Build macOS universal wheel'
     runs-on: macos-latest
@@ -76,6 +77,7 @@ jobs:
         with:
           name: bdkpython-macos-${{ matrix.python }}
           path: dist/*.whl
+
   build-windows-wheel:
     name: 'Build windows wheel'
     runs-on: windows-latest
@@ -105,3 +107,14 @@ jobs:
         with:
           name: bdkpython-win-${{ matrix.python }}
           path: dist/*.whl
+
+  publish-pypi:
+    needs: [build-manylinux2014-x86_64-wheel, build-macos-universal-wheel, build-windows-wheel]
+    - name: 'Publish on PyPI'
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+
