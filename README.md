@@ -71,7 +71,7 @@ val newAddress = wallet.getNewAddress()
     ```
 1. Install `uniffi-bindgen`
     ```sh
-    cargo install uniffi_bindgen
+    cargo install uniffi_bindgen --version 0.16.0
     ```
     See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/) for more info
 1. Install Android SDK and Build-Tools for API level 30+
