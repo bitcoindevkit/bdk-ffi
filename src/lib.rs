@@ -12,7 +12,7 @@ use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
 use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex;
-use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet as BdkWallet };
+use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet as BdkWallet};
 use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Mutex, MutexGuard};
@@ -155,7 +155,6 @@ impl Progress for BdkProgressHolder {
 
 struct PartiallySignedBitcoinTransaction {
     internal: Mutex<PartiallySignedTransaction>,
-    details: bdk::TransactionDetails,
 }
 
 impl PartiallySignedBitcoinTransaction {
@@ -168,7 +167,7 @@ impl PartiallySignedBitcoinTransaction {
         let wallet = wallet.get_wallet();
         match Address::from_str(&recipient) {
             Ok(address) => {
-                let (psbt, details) = {
+                let (psbt, _details) = {
                     let mut builder = wallet.build_tx();
                     builder.add_recipient(address.script_pubkey(), amount);
                     if let Some(sat_per_vb) = fee_rate {
@@ -178,13 +177,24 @@ impl PartiallySignedBitcoinTransaction {
                 };
                 Ok(PartiallySignedBitcoinTransaction {
                     internal: Mutex::new(psbt),
-                    details,
                 })
             }
             Err(..) => Err(BdkError::Generic(
                 "failed to read wallet address".to_string(),
             )),
         }
+    }
+
+    pub fn deserialize(psbt_base64: String) -> Result<Self, Error> {
+        let psbt: PartiallySignedTransaction = PartiallySignedTransaction::from_str(&psbt_base64)?;
+        Ok(PartiallySignedBitcoinTransaction {
+            internal: Mutex::new(psbt),
+        })
+    }
+
+    pub fn serialize(&self) -> String {
+        let psbt = self.internal.lock().unwrap().clone();
+        psbt.to_string()
     }
 }
 
@@ -254,13 +264,11 @@ impl Wallet {
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
 
-    fn broadcast(
-        &self,
-        psbt: &PartiallySignedBitcoinTransaction,
-    ) -> Result<Transaction, Error> {
+    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<Transaction, Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
         self.get_wallet().broadcast(&tx)?;
-        Ok(Transaction::from(&psbt.details))
+        let tx_details = self.get_wallet().get_tx(&tx.txid(), true)?;
+        Ok(Transaction::from(&tx_details.unwrap()))
     }
 }
 

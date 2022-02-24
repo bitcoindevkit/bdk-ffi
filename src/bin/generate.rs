@@ -45,7 +45,13 @@ fn generate_python() -> Result<(), Box<dyn std::error::Error>> {
 
     let out_path = env::var("GENERATE_PYTHON_BINDINGS_OUT")
         .map_err(|_| String::from("`GENERATE_PYTHON_BINDINGS_OUT` env variable missing"))?;
-    uniffi_bindgen::generate_bindings(&format!("{}/{}", env!("CARGO_MANIFEST_DIR"), BDK_UDL), None, vec!["python"], Some(&out_path), false)?;
+    uniffi_bindgen::generate_bindings(
+        &format!("{}/{}", env!("CARGO_MANIFEST_DIR"), BDK_UDL),
+        None,
+        vec!["python"],
+        Some(&out_path),
+        false,
+    )?;
 
     if let Some(name) = env::var("GENERATE_PYTHON_BINDINGS_FIXUP_LIB_PATH").ok() {
         fixup_python_lib_path(&out_path, &name)?;
