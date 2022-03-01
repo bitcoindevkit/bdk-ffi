@@ -90,16 +90,6 @@ class JvmLibTest {
 
     @Test
     fun onlineWalletSyncGetBalance() {
-        val db = DatabaseConfig.Memory("")
-        val client = BlockchainConfig.Electrum(
-            ElectrumConfig(
-                "ssl://electrum.blockstream.info:60002",
-                null,
-                5u,
-                null,
-                100u
-            )
-        )
         val wallet = Wallet(descriptor, null, Network.REGTEST, databaseConfig, blockchainConfig)
         wallet.sync(LogProgress(), null)
         val balance = wallet.getBalance()
