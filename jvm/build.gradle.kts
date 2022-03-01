@@ -6,6 +6,7 @@ plugins {
     id("java-library")
     id("maven-publish")
     id("signing")
+    id("org.jetbrains.dokka") version "1.6.10"
 }
 
 java {
@@ -89,4 +90,13 @@ afterEvaluate {
 signing {
     useGpgCmd()
     sign(publishing.publications)
+}
+
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+    dokkaSourceSets {
+        named("main") {
+            moduleName.set("bdk-jvm")
+            includes.from("Module.md")
+        }
+    }
 }
