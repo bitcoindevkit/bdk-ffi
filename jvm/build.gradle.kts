@@ -32,6 +32,7 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.8.0")
     api("org.slf4j:slf4j-api:1.7.30")
     testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
     testImplementation("ch.qos.logback:logback-classic:1.2.3")
     testImplementation("ch.qos.logback:logback-core:1.2.3")
 }
