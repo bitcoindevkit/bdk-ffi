@@ -16,9 +16,9 @@ repositories {
 dependencies {
   
   // for jvm
-  implementation 'org.bitcoindevkit:bdk-jvm:0.3.2'
+  implementation 'org.bitcoindevkit:bdk-jvm:0.4.0'
   // OR for android
-  implementation 'org.bitcoindevkit:bdk-android:0.3.2'
+  implementation 'org.bitcoindevkit:bdk-android:0.4.0'
   
 }
 
@@ -31,14 +31,16 @@ import org.bitcoindevkit.*
 
 // ...
 
-val descriptor = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
-val db = DatabaseConfig.Memory("")
+val externalDescriptor = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
+val internalDescriptor = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)"
 
-val client =
+val databaseConfig = DatabaseConfig.Memory("")
+
+val blockchainConfig =
   BlockchainConfig.Electrum(
     ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u)
   )
-val wallet = OnlineWallet(descriptor, null, Network.TESTNET, db, client)
+val wallet = Wallet(externalDescriptor, internalDescriptor, Network.TESTNET, databaseConfig, blockchainConfig)
 val newAddress = wallet.getNewAddress()
 ```
 
