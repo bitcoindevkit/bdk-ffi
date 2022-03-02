@@ -19,13 +19,13 @@ fileprivate extension RustBuffer {
     }
 
     static func from(_ ptr: UnsafeBufferPointer<UInt8>) -> RustBuffer {
-        try! rustCall { ffi_bdk_2e4d_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
+        try! rustCall { ffi_bdk_d04b_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
     }
 
     // Frees the buffer in place.
     // The buffer must not be used after this is called.
     func deallocate() {
-        try! rustCall { ffi_bdk_2e4d_rustbuffer_free(self, $0) }
+        try! rustCall { ffi_bdk_d04b_rustbuffer_free(self, $0) }
     }
 }
 
@@ -576,7 +576,7 @@ extension DatabaseConfig: Equatable, Hashable {}
 public enum Transaction {
     
     case unconfirmed(details: TransactionDetails )
-    case confirmed(details: TransactionDetails, confirmation: Confirmation )
+    case confirmed(details: TransactionDetails, confirmation: BlockTime )
 }
 
 extension Transaction: ViaFfiUsingByteBuffer, ViaFfi {
@@ -589,7 +589,7 @@ extension Transaction: ViaFfiUsingByteBuffer, ViaFfi {
             )
         case 2: return .confirmed(
             details: try TransactionDetails.read(from: buf),
-            confirmation: try Confirmation.read(from: buf)
+            confirmation: try BlockTime.read(from: buf)
             )
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -669,7 +669,7 @@ extension BlockchainConfig: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
-public enum MnemonicType {
+public enum WordCount {
     
     case words12
     case words15
@@ -678,8 +678,8 @@ public enum MnemonicType {
     case words24
 }
 
-extension MnemonicType: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> MnemonicType {
+extension WordCount: ViaFfiUsingByteBuffer, ViaFfi {
+    fileprivate static func read(from buf: Reader) throws -> WordCount {
         let variant: Int32 = try buf.readInt()
         switch variant {
         
@@ -720,168 +720,49 @@ extension MnemonicType: ViaFfiUsingByteBuffer, ViaFfi {
 }
 
 
-extension MnemonicType: Equatable, Hashable {}
+extension WordCount: Equatable, Hashable {}
 
 
 
-public func generateExtendedKey(network: Network, mnemonicType: MnemonicType, password: String? ) throws -> ExtendedKeyInfo {
+public func generateExtendedKey( network: Network,  wordCount: WordCount,  password: String? ) throws -> ExtendedKeyInfo {
     let _retval = try
     
     
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_generate_extended_key(network.lower(), mnemonicType.lower(), FfiConverterOptionString.lower(password) , $0)
+    bdk_d04b_generate_extended_key(network.lower(), wordCount.lower(), FfiConverterOptionString.lower(password) , $0)
 }
     return try ExtendedKeyInfo.lift(_retval)
 }
 
 
 
-public func restoreExtendedKey(network: Network, mnemonic: String, password: String? ) throws -> ExtendedKeyInfo {
+public func restoreExtendedKey( network: Network,  mnemonic: String,  password: String? ) throws -> ExtendedKeyInfo {
     let _retval = try
     
     
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_restore_extended_key(network.lower(), mnemonic.lower(), FfiConverterOptionString.lower(password) , $0)
+    bdk_d04b_restore_extended_key(network.lower(), mnemonic.lower(), FfiConverterOptionString.lower(password) , $0)
 }
     return try ExtendedKeyInfo.lift(_retval)
 }
 
 
 
-public protocol OfflineWalletProtocol {
+public protocol WalletProtocol {
     func getNewAddress()  -> String
     func getLastUnusedAddress()  -> String
     func getBalance() throws -> UInt64
-    func sign(psbt: PartiallySignedBitcoinTransaction ) throws
-    func getTransactions() throws -> [Transaction]
-    
-}
-
-public class OfflineWallet: OfflineWalletProtocol {
-    fileprivate let pointer: UnsafeMutableRawPointer
-
-    // TODO: We'd like this to be `private` but for Swifty reasons,
-    // we can't implement `ViaFfi` without making this `required` and we can't
-    // make it `required` without making it `public`.
-    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
-        self.pointer = pointer
-    }
-    public convenience init(descriptor: String, network: Network, databaseConfig: DatabaseConfig ) throws {
-        self.init(unsafeFromRawPointer: try
-    
-    
-    rustCallWithError(BdkError.self) {
-    
-    bdk_2e4d_OfflineWallet_new(descriptor.lower(), network.lower(), databaseConfig.lower() , $0)
-})
-    }
-
-    deinit {
-        try! rustCall { ffi_bdk_2e4d_OfflineWallet_object_free(pointer, $0) }
-    }
-
-    
-
-    
-    public func getNewAddress()  -> String {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_2e4d_OfflineWallet_get_new_address(self.pointer,  $0
-    )
-}
-        return try! String.lift(_retval)
-    }
-    public func getLastUnusedAddress()  -> String {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_2e4d_OfflineWallet_get_last_unused_address(self.pointer,  $0
-    )
-}
-        return try! String.lift(_retval)
-    }
-    public func getBalance() throws -> UInt64 {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_2e4d_OfflineWallet_get_balance(self.pointer,  $0
-    )
-}
-        return try UInt64.lift(_retval)
-    }
-    public func sign(psbt: PartiallySignedBitcoinTransaction ) throws {
-        try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_2e4d_OfflineWallet_sign(self.pointer, psbt.lower() , $0
-    )
-}
-    }
-    public func getTransactions() throws -> [Transaction] {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_2e4d_OfflineWallet_get_transactions(self.pointer,  $0
-    )
-}
-        return try FfiConverterSequenceEnumTransaction.lift(_retval)
-    }
-    
-}
-
-
-fileprivate extension OfflineWallet {
-    fileprivate typealias FfiType = UnsafeMutableRawPointer
-
-    fileprivate static func read(from buf: Reader) throws -> Self {
-        let v: UInt64 = try buf.readInt()
-        // The Rust code won't compile if a pointer won't fit in a UInt64.
-        // We have to go via `UInt` because that's the thing that's the size of a pointer.
-        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
-        if (ptr == nil) {
-            throw UniffiInternalError.unexpectedNullPointer
-        }
-        return try self.lift(ptr!)
-    }
-
-    fileprivate func write(into buf: Writer) {
-        // This fiddling is because `Int` is the thing that's the same size as a pointer.
-        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
-        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
-    }
-
-    fileprivate static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
-        return Self(unsafeFromRawPointer: pointer)
-    }
-
-    fileprivate func lower() -> UnsafeMutableRawPointer {
-        return self.pointer
-    }
-}
-
-// Ideally this would be `fileprivate`, but Swift says:
-// """
-// 'private' modifier cannot be used with extensions that declare protocol conformances
-// """
-extension OfflineWallet : ViaFfi, Serializable {}
-
-
-public protocol OnlineWalletProtocol {
-    func getNewAddress()  -> String
-    func getLastUnusedAddress()  -> String
-    func getBalance() throws -> UInt64
-    func sign(psbt: PartiallySignedBitcoinTransaction ) throws
+    func sign( psbt: PartiallySignedBitcoinTransaction ) throws
     func getTransactions() throws -> [Transaction]
     func getNetwork()  -> Network
-    func sync(progressUpdate: BdkProgress, maxAddressParam: UInt32? ) throws
-    func broadcast(psbt: PartiallySignedBitcoinTransaction ) throws -> Transaction
+    func sync( progressUpdate: BdkProgress,  maxAddressParam: UInt32? ) throws
+    func broadcast( psbt: PartiallySignedBitcoinTransaction ) throws -> Transaction
     
 }
 
-public class OnlineWallet: OnlineWalletProtocol {
+public class Wallet: WalletProtocol {
     fileprivate let pointer: UnsafeMutableRawPointer
 
     // TODO: We'd like this to be `private` but for Swifty reasons,
@@ -890,18 +771,18 @@ public class OnlineWallet: OnlineWalletProtocol {
     required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
-    public convenience init(descriptor: String, changeDescriptor: String?, network: Network, databaseConfig: DatabaseConfig, blockchainConfig: BlockchainConfig ) throws {
+    public convenience init( descriptor: String,  changeDescriptor: String?,  network: Network,  databaseConfig: DatabaseConfig,  blockchainConfig: BlockchainConfig ) throws {
         self.init(unsafeFromRawPointer: try
     
     
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_OnlineWallet_new(descriptor.lower(), FfiConverterOptionString.lower(changeDescriptor), network.lower(), databaseConfig.lower(), blockchainConfig.lower() , $0)
+    bdk_d04b_Wallet_new(descriptor.lower(), FfiConverterOptionString.lower(changeDescriptor), network.lower(), databaseConfig.lower(), blockchainConfig.lower() , $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_2e4d_OnlineWallet_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_d04b_Wallet_object_free(pointer, $0) }
     }
 
     
@@ -911,7 +792,7 @@ public class OnlineWallet: OnlineWalletProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_2e4d_OnlineWallet_get_new_address(self.pointer,  $0
+    bdk_d04b_Wallet_get_new_address(self.pointer,  $0
     )
 }
         return try! String.lift(_retval)
@@ -920,7 +801,7 @@ public class OnlineWallet: OnlineWalletProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_2e4d_OnlineWallet_get_last_unused_address(self.pointer,  $0
+    bdk_d04b_Wallet_get_last_unused_address(self.pointer,  $0
     )
 }
         return try! String.lift(_retval)
@@ -929,16 +810,16 @@ public class OnlineWallet: OnlineWalletProtocol {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_OnlineWallet_get_balance(self.pointer,  $0
+    bdk_d04b_Wallet_get_balance(self.pointer,  $0
     )
 }
         return try UInt64.lift(_retval)
     }
-    public func sign(psbt: PartiallySignedBitcoinTransaction ) throws {
+    public func sign( psbt: PartiallySignedBitcoinTransaction ) throws {
         try
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_OnlineWallet_sign(self.pointer, psbt.lower() , $0
+    bdk_d04b_Wallet_sign(self.pointer, psbt.lower() , $0
     )
 }
     }
@@ -946,7 +827,7 @@ public class OnlineWallet: OnlineWalletProtocol {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_OnlineWallet_get_transactions(self.pointer,  $0
+    bdk_d04b_Wallet_get_transactions(self.pointer,  $0
     )
 }
         return try FfiConverterSequenceEnumTransaction.lift(_retval)
@@ -955,24 +836,24 @@ public class OnlineWallet: OnlineWalletProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_2e4d_OnlineWallet_get_network(self.pointer,  $0
+    bdk_d04b_Wallet_get_network(self.pointer,  $0
     )
 }
         return try! Network.lift(_retval)
     }
-    public func sync(progressUpdate: BdkProgress, maxAddressParam: UInt32? ) throws {
+    public func sync( progressUpdate: BdkProgress,  maxAddressParam: UInt32? ) throws {
         try
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_OnlineWallet_sync(self.pointer, ffiConverterCallbackInterfaceBdkProgress.lower(progressUpdate), FfiConverterOptionUInt32.lower(maxAddressParam) , $0
+    bdk_d04b_Wallet_sync(self.pointer, ffiConverterCallbackInterfaceBdkProgress.lower(progressUpdate), FfiConverterOptionUInt32.lower(maxAddressParam) , $0
     )
 }
     }
-    public func broadcast(psbt: PartiallySignedBitcoinTransaction ) throws -> Transaction {
+    public func broadcast( psbt: PartiallySignedBitcoinTransaction ) throws -> Transaction {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_OnlineWallet_broadcast(self.pointer, psbt.lower() , $0
+    bdk_d04b_Wallet_broadcast(self.pointer, psbt.lower() , $0
     )
 }
         return try Transaction.lift(_retval)
@@ -981,10 +862,10 @@ public class OnlineWallet: OnlineWalletProtocol {
 }
 
 
-fileprivate extension OnlineWallet {
-    fileprivate typealias FfiType = UnsafeMutableRawPointer
+fileprivate extension Wallet {
+    typealias FfiType = UnsafeMutableRawPointer
 
-    fileprivate static func read(from buf: Reader) throws -> Self {
+    static func read(from buf: Reader) throws -> Self {
         let v: UInt64 = try buf.readInt()
         // The Rust code won't compile if a pointer won't fit in a UInt64.
         // We have to go via `UInt` because that's the thing that's the size of a pointer.
@@ -995,17 +876,17 @@ fileprivate extension OnlineWallet {
         return try self.lift(ptr!)
     }
 
-    fileprivate func write(into buf: Writer) {
+    func write(into buf: Writer) {
         // This fiddling is because `Int` is the thing that's the same size as a pointer.
         // The Rust code won't compile if a pointer won't fit in a `UInt64`.
         buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
     }
 
-    fileprivate static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
         return Self(unsafeFromRawPointer: pointer)
     }
 
-    fileprivate func lower() -> UnsafeMutableRawPointer {
+    func lower() -> UnsafeMutableRawPointer {
         return self.pointer
     }
 }
@@ -1014,10 +895,11 @@ fileprivate extension OnlineWallet {
 // """
 // 'private' modifier cannot be used with extensions that declare protocol conformances
 // """
-extension OnlineWallet : ViaFfi, Serializable {}
+extension Wallet : ViaFfi, Serializable {}
 
 
 public protocol PartiallySignedBitcoinTransactionProtocol {
+    func serialize()  -> String
     
 }
 
@@ -1030,31 +912,50 @@ public class PartiallySignedBitcoinTransaction: PartiallySignedBitcoinTransactio
     required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
-    public convenience init(wallet: OnlineWallet, recipient: String, amount: UInt64, feeRate: Float? ) throws {
+    public convenience init( wallet: Wallet,  recipient: String,  amount: UInt64,  feeRate: Float? ) throws {
         self.init(unsafeFromRawPointer: try
     
     
     rustCallWithError(BdkError.self) {
     
-    bdk_2e4d_PartiallySignedBitcoinTransaction_new(wallet.lower(), recipient.lower(), amount.lower(), FfiConverterOptionFloat.lower(feeRate) , $0)
+    bdk_d04b_PartiallySignedBitcoinTransaction_new(wallet.lower(), recipient.lower(), amount.lower(), FfiConverterOptionFloat.lower(feeRate) , $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_2e4d_PartiallySignedBitcoinTransaction_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_d04b_PartiallySignedBitcoinTransaction_object_free(pointer, $0) }
     }
 
     
+    public static func deserialize( psbtBase64: String ) throws -> PartiallySignedBitcoinTransaction {
+        return PartiallySignedBitcoinTransaction(unsafeFromRawPointer: try
+    
+    
+    rustCallWithError(BdkError.self) {
+    
+    bdk_d04b_PartiallySignedBitcoinTransaction_deserialize(psbtBase64.lower() , $0)
+})
+    }
+    
 
     
+    public func serialize()  -> String {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_d04b_PartiallySignedBitcoinTransaction_serialize(self.pointer,  $0
+    )
+}
+        return try! String.lift(_retval)
+    }
     
 }
 
 
 fileprivate extension PartiallySignedBitcoinTransaction {
-    fileprivate typealias FfiType = UnsafeMutableRawPointer
+    typealias FfiType = UnsafeMutableRawPointer
 
-    fileprivate static func read(from buf: Reader) throws -> Self {
+    static func read(from buf: Reader) throws -> Self {
         let v: UInt64 = try buf.readInt()
         // The Rust code won't compile if a pointer won't fit in a UInt64.
         // We have to go via `UInt` because that's the thing that's the size of a pointer.
@@ -1065,17 +966,17 @@ fileprivate extension PartiallySignedBitcoinTransaction {
         return try self.lift(ptr!)
     }
 
-    fileprivate func write(into buf: Writer) {
+    func write(into buf: Writer) {
         // This fiddling is because `Int` is the thing that's the same size as a pointer.
         // The Rust code won't compile if a pointer won't fit in a `UInt64`.
         buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
     }
 
-    fileprivate static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
         return Self(unsafeFromRawPointer: pointer)
     }
 
-    fileprivate func lower() -> UnsafeMutableRawPointer {
+    func lower() -> UnsafeMutableRawPointer {
         return self.pointer
     }
 }
@@ -1196,7 +1097,7 @@ fileprivate extension TransactionDetails {
 
 extension TransactionDetails: ViaFfiUsingByteBuffer, ViaFfi {}
 
-public struct Confirmation {
+public struct BlockTime {
     public var height: UInt32
     public var timestamp: UInt64
 
@@ -1209,8 +1110,8 @@ public struct Confirmation {
 }
 
 
-extension Confirmation: Equatable, Hashable {
-    public static func ==(lhs: Confirmation, rhs: Confirmation) -> Bool {
+extension BlockTime: Equatable, Hashable {
+    public static func ==(lhs: BlockTime, rhs: BlockTime) -> Bool {
         if lhs.height != rhs.height {
             return false
         }
@@ -1227,9 +1128,9 @@ extension Confirmation: Equatable, Hashable {
 }
 
 
-fileprivate extension Confirmation {
-    static func read(from buf: Reader) throws -> Confirmation {
-        return try Confirmation(
+fileprivate extension BlockTime {
+    static func read(from buf: Reader) throws -> BlockTime {
+        return try BlockTime(
             height: UInt32.read(from: buf),
             timestamp: UInt64.read(from: buf)
         )
@@ -1241,7 +1142,7 @@ fileprivate extension Confirmation {
     }
 }
 
-extension Confirmation: ViaFfiUsingByteBuffer, ViaFfi {}
+extension BlockTime: ViaFfiUsingByteBuffer, ViaFfi {}
 
 public struct ElectrumConfig {
     public var url: String
@@ -1868,13 +1769,13 @@ extension BdkError: Error { }
 // Declaration and FfiConverters for BdkProgress Callback Interface
 
 public protocol BdkProgress : AnyObject {
-    func update(progress: Float, message: String? ) 
+    func update( progress: Float,  message: String? ) 
     
 }
 
 // The ForeignCallback that is passed to Rust.
 fileprivate let foreignCallbackCallbackInterfaceBdkProgress : ForeignCallback =
-    { (handle: Handle, method: Int32, args: RustBuffer) -> RustBuffer in
+    { (handle: Handle, method: Int32, args: RustBuffer, out_buf: UnsafeMutablePointer<RustBuffer>) -> Int32 in
         func invokeUpdate(_ swiftCallbackInterface: BdkProgress, _ args: RustBuffer) throws -> RustBuffer {
         defer { args.deallocate() }
 
@@ -1894,20 +1795,30 @@ fileprivate let foreignCallbackCallbackInterfaceBdkProgress : ForeignCallback =
         switch method {
             case IDX_CALLBACK_FREE:
                 ffiConverterCallbackInterfaceBdkProgress.drop(handle: handle)
-                return RustBuffer()
-            case 1: return try! invokeUpdate(cb, args)
+                // No return value.
+                // See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
+                return 0
+            case 1:
+                let buffer = try! invokeUpdate(cb, args)
+                out_buf.pointee = buffer
+                // Value written to out buffer.
+                // See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
+                return 1
             
             // This should never happen, because an out of bounds method index won't
             // ever be used. Once we can catch errors, we should return an InternalError.
             // https://github.com/mozilla/uniffi-rs/issues/351
-            default: return RustBuffer()
+            default:
+                // An unexpected error happened.
+                // See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
+                return -1
         }
     }
 
 // The ffiConverter which transforms the Callbacks in to Handles to pass to Rust.
 private let ffiConverterCallbackInterfaceBdkProgress: FfiConverterCallbackInterface<BdkProgress> = {
     try! rustCall { (err: UnsafeMutablePointer<RustCallStatus>) in
-            ffi_bdk_2e4d_BdkProgress_init_callback(foreignCallbackCallbackInterfaceBdkProgress, err)
+            ffi_bdk_d04b_BdkProgress_init_callback(foreignCallbackCallbackInterfaceBdkProgress, err)
     }
     return FfiConverterCallbackInterface<BdkProgress>()
 }()
@@ -1983,10 +1894,9 @@ extension String: ViaFfi {
         buf.writeBytes(self.utf8)
     }
 }
-// Helper code for OfflineWallet class is found in ObjectTemplate.swift
-// Helper code for OnlineWallet class is found in ObjectTemplate.swift
 // Helper code for PartiallySignedBitcoinTransaction class is found in ObjectTemplate.swift
-// Helper code for Confirmation record is found in RecordTemplate.swift
+// Helper code for Wallet class is found in ObjectTemplate.swift
+// Helper code for BlockTime record is found in RecordTemplate.swift
 // Helper code for ElectrumConfig record is found in RecordTemplate.swift
 // Helper code for EsploraConfig record is found in RecordTemplate.swift
 // Helper code for ExtendedKeyInfo record is found in RecordTemplate.swift
@@ -1994,9 +1904,9 @@ extension String: ViaFfi {
 // Helper code for TransactionDetails record is found in RecordTemplate.swift
 // Helper code for BlockchainConfig enum is found in EnumTemplate.swift
 // Helper code for DatabaseConfig enum is found in EnumTemplate.swift
-// Helper code for MnemonicType enum is found in EnumTemplate.swift
 // Helper code for Network enum is found in EnumTemplate.swift
 // Helper code for Transaction enum is found in EnumTemplate.swift
+// Helper code for WordCount enum is found in EnumTemplate.swift
 // Helper code for BdkError error is found in ErrorTemplate.swift
 
 fileprivate enum FfiConverterOptionUInt8: FfiConverterUsingByteBuffer {
