@@ -259,7 +259,6 @@ impl Wallet {
         progress_update: Box<dyn BdkProgress>,
         max_address_param: Option<u32>,
     ) -> Result<(), BdkError> {
-        progress_update.update(21.0, Some("message".to_string()));
         self.get_wallet()
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
