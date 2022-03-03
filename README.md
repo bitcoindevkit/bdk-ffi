@@ -22,6 +22,10 @@ let wallet = try OfflineWallet.init(descriptor: desc, network: Network.regtest, 
 let address = wallet.getNewAddress()
 ```
 
+### Example Projects
+
+* [BdkSwiftSample](https://github.com/futurepaul/BdkSwiftSample)
+
 ## How to Build and Publish
 
 If you are a maintainer of this project or want to build and publish this project to your 
