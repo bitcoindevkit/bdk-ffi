@@ -263,6 +263,13 @@ impl Wallet {
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
 
+    fn flush(
+        &self,
+    ) -> Result<(), Error> {
+        self.get_wallet()
+            .flush()
+    }
+
     fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<Transaction, Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
         self.get_wallet().broadcast(&tx)?;
