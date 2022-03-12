@@ -6,7 +6,7 @@ use bdk::blockchain::Progress;
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig, ConfigurableBlockchain,
 };
-use bdk::database::any::{AnyDatabase, SledDbConfiguration};
+use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
@@ -24,6 +24,7 @@ type BdkError = Error;
 pub enum DatabaseConfig {
     Memory { junk: String },
     Sled { config: SledDbConfiguration },
+    Sqlite { config: SqliteDbConfiguration },
 }
 
 pub struct ElectrumConfig {
@@ -217,6 +218,7 @@ impl Wallet {
         let any_database_config = match database_config {
             DatabaseConfig::Memory { .. } => AnyDatabaseConfig::Memory(()),
             DatabaseConfig::Sled { config } => AnyDatabaseConfig::Sled(config),
+            DatabaseConfig::Sqlite { config } => AnyDatabaseConfig::Sqlite(config),
         };
         let any_blockchain_config = match blockchain_config {
             BlockchainConfig::Electrum { config } => {

@@ -46,6 +46,7 @@ enum BdkError {
   "Electrum",
   "Esplora",
   "Sled",
+  "Rusqlite",
 };
 
 enum Network {
@@ -60,10 +61,15 @@ dictionary SledDbConfiguration {
   string tree_name;
 };
 
+dictionary SqliteDbConfiguration {
+  string path;
+};
+
 [Enum]
 interface DatabaseConfig {
   Memory(string junk);
   Sled(SledDbConfiguration config);
+  Sqlite(SqliteDbConfiguration config);
 };
 
 dictionary TransactionDetails {
