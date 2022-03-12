@@ -63,6 +63,17 @@ class JvmLibTest {
     }
 
     @Test
+    fun sqliteWalletSyncGetBalance() {
+        val testDataDir = getTestDataDir()+"/bdk-wallet.sqlite"
+        val databaseConfig = DatabaseConfig.Sqlite(SqliteDbConfiguration(testDataDir))
+        val wallet = Wallet(descriptor, null, Network.REGTEST, databaseConfig, blockchainConfig)
+        wallet.sync(LogProgress(), null)
+        val balance = wallet.getBalance()
+        assertTrue(balance > 0u)
+        cleanupTestDataDir(testDataDir)
+    }
+
+    @Test
     fun onlineWalletInMemory() {
         val database = DatabaseConfig.Memory("")
         val blockchain = BlockchainConfig.Electrum(
