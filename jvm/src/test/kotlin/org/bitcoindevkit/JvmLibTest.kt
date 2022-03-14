@@ -27,7 +27,7 @@ class JvmLibTest {
     val descriptor =
         "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
 
-    val databaseConfig = DatabaseConfig.Memory("")
+    val databaseConfig = DatabaseConfig.Memory
     val blockchainConfig = BlockchainConfig.Electrum(
         ElectrumConfig(
             "ssl://electrum.blockstream.info:60002",
@@ -75,7 +75,7 @@ class JvmLibTest {
 
     @Test
     fun onlineWalletInMemory() {
-        val database = DatabaseConfig.Memory("")
+        val database = DatabaseConfig.Memory
         val blockchain = BlockchainConfig.Electrum(
             ElectrumConfig(
                 "ssl://electrum.blockstream.info:60002",
