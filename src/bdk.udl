@@ -67,7 +67,7 @@ dictionary SqliteDbConfiguration {
 
 [Enum]
 interface DatabaseConfig {
-  Memory(string junk);
+  Memory();
   Sled(SledDbConfiguration config);
   Sqlite(SqliteDbConfiguration config);
 };

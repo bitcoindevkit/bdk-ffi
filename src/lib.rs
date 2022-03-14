@@ -22,7 +22,7 @@ uniffi_macros::include_scaffolding!("bdk");
 type BdkError = Error;
 
 pub enum DatabaseConfig {
-    Memory { junk: String },
+    Memory,
     Sled { config: SledDbConfiguration },
     Sqlite { config: SqliteDbConfiguration },
 }
@@ -216,7 +216,7 @@ impl Wallet {
         blockchain_config: BlockchainConfig,
     ) -> Result<Self, BdkError> {
         let any_database_config = match database_config {
-            DatabaseConfig::Memory { .. } => AnyDatabaseConfig::Memory(()),
+            DatabaseConfig::Memory => AnyDatabaseConfig::Memory(()),
             DatabaseConfig::Sled { config } => AnyDatabaseConfig::Sled(config),
             DatabaseConfig::Sqlite { config } => AnyDatabaseConfig::Sqlite(config),
         };
