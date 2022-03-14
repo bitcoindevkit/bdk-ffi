@@ -56,6 +56,7 @@ val newAddress = wallet.getNewAddress()
 * [Tatooine Faucet](https://github.com/thunderbiscuit/tatooine)
 
 ### How to build
+_Note that Kotlin version `1.6.10` or later is required to build the library._
 
 1. Clone this repository and init and update it's [`bdk-ffi`] submodule.
    ```shell
