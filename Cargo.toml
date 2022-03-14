@@ -1,6 +1,6 @@
 [package]
 name = "bdk-ffi"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
 edition = "2018"
 
