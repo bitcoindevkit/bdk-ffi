@@ -21,7 +21,6 @@ dependencies {
   implementation 'org.bitcoindevkit:bdk-android:0.4.0'
   
 }
-
 ```
 
 You may then import and use the `org.bitcoindevkit` library in your Kotlin code. For example:
@@ -107,6 +106,12 @@ _Note that Kotlin version `1.6.10` or later is required to build the library._
    ./gradlew :jvm:publishToMavenLocal
    ./gradlew :android:publishToMavenLocal
    ```
+
+Note that if you do not have gpg keys set up to sign the publication, the task will fail. If you wish to publish to your local Maven repository for local testing without signing the release, you can do so by excluding the `signMavenPublication` subtask like so:
+```shell
+./gradlew :jvm:publishToMavenLocal --exclude-task signMavenPublication
+./gradlew :android:publishToMavenLocal --exclude-task signMavenPublication
+```
 
 ### Publish to maven central with [Gradle Nexus Publish Plugin] (project maintainers only)
 
