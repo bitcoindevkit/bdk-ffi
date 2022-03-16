@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Fix Wallet.broadcast function, now returns a tx id as a hex string
+
 ## [v0.4.0]
 
 - Add dual license MIT and Apache 2.0

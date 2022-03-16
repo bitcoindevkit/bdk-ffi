@@ -1,3 +1,4 @@
+use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::{Address, Network};
@@ -201,7 +202,7 @@ impl PartiallySignedBitcoinTransaction {
 
 impl WalletHolder<AnyBlockchain> for Wallet {
     fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyBlockchain, AnyDatabase>> {
-        self.wallet_mutex.lock().unwrap()
+        self.wallet_mutex.lock().expect("wallet")
     }
 }
 
@@ -265,11 +266,10 @@ impl Wallet {
             .sync(BdkProgressHolder { progress_update }, max_address_param)
     }
 
-    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<Transaction, Error> {
+    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<String, Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
-        self.get_wallet().broadcast(&tx)?;
-        let tx_details = self.get_wallet().get_tx(&tx.txid(), true)?;
-        Ok(Transaction::from(&tx_details.unwrap()))
+        let txid = self.get_wallet().broadcast(&tx)?;
+        Ok(txid.to_hex())
     }
 }
 
