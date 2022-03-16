@@ -131,7 +131,7 @@ interface Wallet {
   [Throws=BdkError]
   void sync(BdkProgress progress_update, u32? max_address_param);
   [Throws=BdkError]
-  Transaction broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
+  string broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
 
 interface PartiallySignedBitcoinTransaction {
