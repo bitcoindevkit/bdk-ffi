@@ -16,9 +16,9 @@ repositories {
 dependencies {
   
   // for jvm
-  implementation 'org.bitcoindevkit:bdk-jvm:0.4.0'
+  implementation 'org.bitcoindevkit:bdk-jvm:<version>'
   // OR for android
-  implementation 'org.bitcoindevkit:bdk-android:0.4.0'
+  implementation 'org.bitcoindevkit:bdk-android:<version>'
   
 }
 ```
