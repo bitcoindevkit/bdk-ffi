@@ -1,0 +1,22 @@
+name: Tests
+
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Run Android tests
+        run: ./gradlew :android:test --console=rich
+
+      - name: Run JVM tests
+        run: ./gradlew :jvm:test --console=rich
