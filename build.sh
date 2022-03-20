@@ -32,11 +32,11 @@ uniffi-bindgen generate src/bdk.udl --no-format --out-dir ../jvm/src/main/kotlin
 
 ## android
 
-# If ANDROID_NDK_HOME is not set then set it to github actions default
-[ -z "$ANDROID_NDK_HOME" ] && export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
+# If ANDROID_NDK_ROOT is not set then set it to github actions default
+[ -z "$ANDROID_NDK_ROOT" ] && export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk-bundle
 
 # Update this line accordingly if you are not building *from* darwin-x86_64 or linux-x86_64
-export PATH=$PATH:$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/`uname | tr '[:upper:]' '[:lower:]'`-x86_64/bin
+export PATH=$PATH:$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/`uname | tr '[:upper:]' '[:lower:]'`-x86_64/bin
 
 # Required for 'ring' dependency to cross-compile to Android platform, must be at least 21
 export CFLAGS="-D__ANDROID_API__=21"
