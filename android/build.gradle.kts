@@ -23,6 +23,13 @@ android {
             proguardFiles(file("proguard-android-optimize.txt"), file("proguard-rules.pro"))
         }
     }
+
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
+    }
 }
 
 dependencies {
