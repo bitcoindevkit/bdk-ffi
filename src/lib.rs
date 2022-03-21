@@ -49,10 +49,6 @@ pub enum BlockchainConfig {
     Esplora { config: EsploraConfig },
 }
 
-trait WalletHolder<B> {
-    fn get_wallet(&self) -> MutexGuard<BdkWallet<B, AnyDatabase>>;
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TransactionDetails {
     pub fees: Option<u64>,
@@ -94,45 +90,6 @@ impl From<&bdk::TransactionDetails> for Transaction {
                 details: TransactionDetails::from(x),
             },
         }
-    }
-}
-
-trait WalletOperations<B>: WalletHolder<B> {
-    fn get_new_address(&self) -> String {
-        self.get_wallet()
-            .get_address(AddressIndex::New)
-            .unwrap()
-            .address
-            .to_string()
-    }
-
-    fn get_last_unused_address(&self) -> String {
-        self.get_wallet()
-            .get_address(AddressIndex::LastUnused)
-            .unwrap()
-            .address
-            .to_string()
-    }
-
-    fn get_balance(&self) -> Result<u64, Error> {
-        self.get_wallet().get_balance()
-    }
-
-    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), Error> {
-        let mut psbt = psbt.internal.lock().unwrap();
-        let finalized = self.get_wallet().sign(&mut psbt, SignOptions::default())?;
-        match finalized {
-            true => Ok(()),
-            false => Err(BdkError::Generic(format!(
-                "transaction signing not finalized {:?}",
-                psbt
-            ))),
-        }
-    }
-
-    fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
-        let transactions = self.get_wallet().list_transactions(true)?;
-        Ok(transactions.iter().map(Transaction::from).collect())
     }
 }
 
@@ -200,14 +157,6 @@ impl PartiallySignedBitcoinTransaction {
     }
 }
 
-impl WalletHolder<AnyBlockchain> for Wallet {
-    fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyBlockchain, AnyDatabase>> {
-        self.wallet_mutex.lock().expect("wallet")
-    }
-}
-
-impl WalletOperations<AnyBlockchain> for Wallet {}
-
 impl Wallet {
     fn new(
         descriptor: String,
@@ -253,6 +202,10 @@ impl Wallet {
         Ok(Wallet { wallet_mutex })
     }
 
+    fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyBlockchain, AnyDatabase>> {
+        self.wallet_mutex.lock().expect("wallet")
+    }
+
     fn get_network(&self) -> Network {
         self.get_wallet().network()
     }
@@ -264,6 +217,43 @@ impl Wallet {
     ) -> Result<(), BdkError> {
         self.get_wallet()
             .sync(BdkProgressHolder { progress_update }, max_address_param)
+    }
+
+    fn get_new_address(&self) -> String {
+        self.get_wallet()
+            .get_address(AddressIndex::New)
+            .unwrap()
+            .address
+            .to_string()
+    }
+
+    fn get_last_unused_address(&self) -> String {
+        self.get_wallet()
+            .get_address(AddressIndex::LastUnused)
+            .unwrap()
+            .address
+            .to_string()
+    }
+
+    fn get_balance(&self) -> Result<u64, Error> {
+        self.get_wallet().get_balance()
+    }
+
+    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), Error> {
+        let mut psbt = psbt.internal.lock().unwrap();
+        let finalized = self.get_wallet().sign(&mut psbt, SignOptions::default())?;
+        match finalized {
+            true => Ok(()),
+            false => Err(BdkError::Generic(format!(
+                "transaction signing not finalized {:?}",
+                psbt
+            ))),
+        }
+    }
+
+    fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
+        let transactions = self.get_wallet().list_transactions(true)?;
+        Ok(transactions.iter().map(Transaction::from).collect())
     }
 
     fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<String, Error> {
