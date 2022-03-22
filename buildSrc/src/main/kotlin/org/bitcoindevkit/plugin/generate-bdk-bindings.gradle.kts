@@ -11,31 +11,33 @@ val architecture: Arch = when (System.getProperty("os.arch")) {
     else -> Arch.OTHER
 }
 
-tasks.register<Exec>("buildJvmBinaries") {
+val buildJvmBinary by tasks.register<Exec>("buildJvmBinary") {
     group = "Bitcoindevkit"
-    description = "Build the JVM native binaries for the bitcoindevkit"
+    description = "Build the JVM binaries for the bitcoindevkit"
 
     workingDir("${project.projectDir}/../bdk-ffi")
     val cargoArgs: MutableList<String> = mutableListOf("build", "--release", "--target")
 
     if (operatingSystem == OS.MAC && architecture == Arch.X86_64) {
-        println("Building the JVM native libs for macOS x86_64")
         cargoArgs.add("x86_64-apple-darwin")
     } else if (operatingSystem == OS.MAC && architecture == Arch.AARCH64) {
-        println("Building the JVM native libs for macOS x86_64")
         cargoArgs.add("aarch64-apple-darwin")
     } else if (operatingSystem == OS.LINUX) {
-        println("Building the JVM native libs for Linux x86_64")
         cargoArgs.add("x86_64-unknown-linux-gnu")
     }
 
     executable("cargo")
     args(cargoArgs)
+
+    doLast {
+        println("Native library for bdk-jvm on ${cargoArgs.last()} successfully built")
+    }
 }
 
-tasks.register<Copy>("moveNativeLibs") {
+val moveNativeJvmLib by tasks.register<Copy>("moveNativeJvmLib") {
     group = "Bitcoindevkit"
-    description = "Move the native libraries in the bdk-jvm project"
+    description = "Move the native libraries to the bdk-jvm project"
+    dependsOn(buildJvmBinary)
 
     var targetDir = ""
     var resDir = ""
@@ -52,25 +54,28 @@ tasks.register<Copy>("moveNativeLibs") {
 
     from("${project.projectDir}/../bdk-ffi/target/$targetDir/release/libbdkffi.dylib")
     into("${project.projectDir}/../jvm/src/main/resources/$resDir/")
+
+    doLast {
+        println("$targetDir native binaries for JVM moved to ./jvm/src/main/resources/$resDir/")
+    }
 }
 
-tasks.register<Exec>("generateBindings") {
+val generateJvmBindings by tasks.register<Exec>("generateJvmBindings") {
     group = "Bitcoindevkit"
     description = "Building the bindings file for the bitcoindevkit"
+    dependsOn(moveNativeJvmLib)
 
     workingDir("${project.projectDir}/../bdk-ffi")
     executable("uniffi-bindgen")
     args("generate", "./src/bdk.udl", "--no-format", "--out-dir", "../jvm/src/main/kotlin", "--language", "kotlin")
+
+    doLast {
+        println("JVM bindings file successfully created")
+    }
 }
 
-enum class Arch {
-    AARCH64,
-    X86_64,
-    OTHER,
-}
-
-enum class OS {
-    MAC,
-    LINUX,
-    OTHER,
+tasks.register("buildJvmLib") {
+    group = "Bitcoindevkit"
+    description = "Aggregate task to build JVM library"
+    dependsOn(buildJvmBinary, moveNativeJvmLib, generateJvmBindings)
 }
