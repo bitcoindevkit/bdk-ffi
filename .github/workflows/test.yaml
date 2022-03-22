@@ -1,6 +1,6 @@
 name: Tests
 
-on: pull_request
+on: [push, pull_request]
 
 jobs:
   build:
@@ -9,14 +9,38 @@ jobs:
       - name: Check out PR branch
         uses: actions/checkout@v2
 
+      - name: Update bdk-ffi git submodule
+        run: |
+          git submodule set-url bdk-ffi https://github.com/bitcoindevkit/bdk-ffi.git
+          git submodule update --init bdk-ffi
+
+      - name: cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           distribution: temurin
           java-version: 11
 
+      - name: Install rust android targets
+        run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
+
+      - name: Install uniffi-bindgen
+        run: cargo install uniffi_bindgen --version 0.16.0
+
+      - name: Build bdk-ffi libraries
+        run: ./build.sh
+
       - name: Run Android tests
         run: ./gradlew :android:test --console=rich
 
       - name: Run JVM tests
         run: ./gradlew :jvm:test --console=rich
+
