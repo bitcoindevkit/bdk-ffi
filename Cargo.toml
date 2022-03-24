@@ -19,14 +19,15 @@ uniffi_macros = { version = "0.16.0", features = ["builtin-bindgen"] }
 uniffi = { version = "0.16.0", features = ["builtin-bindgen"] }
 thiserror = "1.0"
 anyhow = "=1.0.45" # remove after upgrading to next version of uniffi
+uniffi_bindgen = "0.16.0"
 
-uniffi_bindgen = { version = "0.16.0", optional = true }
+#uniffi_bindgen = { version = "0.16.0", optional = true }
 
 [build-dependencies]
 uniffi_build = { version = "0.16.0", features = ["builtin-bindgen"] }
 
 [features]
-generate-python = ["uniffi_bindgen"]
+#generate-python = ["uniffi_bindgen"]
 
 [[bin]]
 name = "generate"
