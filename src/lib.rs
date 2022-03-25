@@ -112,6 +112,7 @@ impl Progress for BdkProgressHolder {
     }
 }
 
+#[derive(Debug)]
 struct PartiallySignedBitcoinTransaction {
     internal: Mutex<PartiallySignedTransaction>,
 }
@@ -123,25 +124,16 @@ impl PartiallySignedBitcoinTransaction {
         amount: u64,
         fee_rate: Option<f32>, // satoshis per vbyte
     ) -> Result<Self, Error> {
-        let wallet = wallet.get_wallet();
-        match Address::from_str(&recipient) {
-            Ok(address) => {
-                let (psbt, _details) = {
-                    let mut builder = wallet.build_tx();
-                    builder.add_recipient(address.script_pubkey(), amount);
-                    if let Some(sat_per_vb) = fee_rate {
-                        builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
-                    }
-                    builder.finish()?
-                };
-                Ok(PartiallySignedBitcoinTransaction {
-                    internal: Mutex::new(psbt),
-                })
-            }
-            Err(..) => Err(BdkError::Generic(
-                "failed to read wallet address".to_string(),
-            )),
+        let mut tx_builder = TxBuilder::new().add_recipient(recipient, amount);
+        if let Some(sat_per_vb) = fee_rate {
+            tx_builder = tx_builder.fee_rate(sat_per_vb);
         }
+        tx_builder
+            .build(wallet)
+            .map(|a| {
+                Arc::<PartiallySignedBitcoinTransaction>::try_unwrap(a).expect("unwrap Arc failed")
+            })
+            .map_err(|_| BdkError::Generic("failed to create PSBT".to_string()))
     }
 
     pub fn deserialize(psbt_base64: String) -> Result<Self, Error> {
