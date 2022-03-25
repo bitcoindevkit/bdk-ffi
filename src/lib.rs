@@ -194,7 +194,7 @@ impl Wallet {
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         let wallet_mutex = Mutex::new(BdkWallet::new(
             &descriptor,
-            change_descriptor.to_owned().as_ref(),
+            change_descriptor.as_ref(),
             network,
             database,
             blockchain,
