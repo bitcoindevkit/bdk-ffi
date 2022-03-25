@@ -118,32 +118,14 @@ struct PartiallySignedBitcoinTransaction {
 }
 
 impl PartiallySignedBitcoinTransaction {
-    fn new(
-        wallet: &Wallet,
-        recipient: String,
-        amount: u64,
-        fee_rate: Option<f32>, // satoshis per vbyte
-    ) -> Result<Self, Error> {
-        let mut tx_builder = TxBuilder::new().add_recipient(recipient, amount);
-        if let Some(sat_per_vb) = fee_rate {
-            tx_builder = tx_builder.fee_rate(sat_per_vb);
-        }
-        tx_builder
-            .build(wallet)
-            .map(|a| {
-                Arc::<PartiallySignedBitcoinTransaction>::try_unwrap(a).expect("unwrap Arc failed")
-            })
-            .map_err(|_| BdkError::Generic("failed to create PSBT".to_string()))
-    }
-
-    pub fn deserialize(psbt_base64: String) -> Result<Self, Error> {
+    fn new(psbt_base64: String) -> Result<Self, Error> {
         let psbt: PartiallySignedTransaction = PartiallySignedTransaction::from_str(&psbt_base64)?;
         Ok(PartiallySignedBitcoinTransaction {
             internal: Mutex::new(psbt),
         })
     }
 
-    pub fn serialize(&self) -> String {
+    fn serialize(&self) -> String {
         let psbt = self.internal.lock().unwrap().clone();
         psbt.to_string()
     }

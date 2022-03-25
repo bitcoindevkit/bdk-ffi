@@ -136,8 +136,6 @@ interface Wallet {
 
 interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
-  constructor([ByRef] Wallet wallet, string recipient, u64 amount, float? fee_rate);
-  [Name=deserialize,Throws=BdkError]
   constructor(string psbt_base64);
   string serialize();
 };
