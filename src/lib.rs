@@ -16,7 +16,7 @@ use bdk::wallet::AddressIndex;
 use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet as BdkWallet};
 use std::convert::TryFrom;
 use std::str::FromStr;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 uniffi_macros::include_scaffolding!("bdk");
 
@@ -301,6 +301,55 @@ fn restore_extended_key(
         xprv: xprv.to_string(),
         fingerprint: fingerprint.to_string(),
     })
+}
+
+struct TxBuilder {
+    recipients: Vec<(String, u64)>,
+    fee_rate: Option<f32>,
+}
+
+impl TxBuilder {
+    fn new() -> Self {
+        TxBuilder {
+            recipients: Vec::new(),
+            fee_rate: None,
+        }
+    }
+
+    fn add_recipient(&self, recipient: String, amount: u64) -> Arc<Self> {
+        let mut recipients = self.recipients.to_vec();
+        recipients.append(&mut vec![(recipient, amount)]);
+        Arc::new(TxBuilder {
+            recipients,
+            fee_rate: self.fee_rate,
+        })
+    }
+
+    fn fee_rate(&self, sat_per_vb: f32) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            recipients: self.recipients.to_vec(),
+            fee_rate: Some(sat_per_vb),
+        })
+    }
+
+    fn build(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+        let wallet = wallet.get_wallet();
+        let mut tx_builder = wallet.build_tx();
+        for (address, amount) in &self.recipients {
+            let address = Address::from_str(address).expect("recipient address parsing failed");
+            tx_builder.add_recipient(address.script_pubkey(), *amount);
+        }
+        if let Some(sat_per_vb) = self.fee_rate {
+            tx_builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
+        }
+        tx_builder
+            .finish()
+            .map(|(psbt, _)| PartiallySignedBitcoinTransaction {
+                internal: Mutex::new(psbt),
+            })
+            .map(Arc::new)
+            .map_err(|_| BdkError::Generic("Failed to build transaction".to_string()))
+    }
 }
 
 uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);

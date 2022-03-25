@@ -142,6 +142,14 @@ interface PartiallySignedBitcoinTransaction {
   string serialize();
 };
 
+interface TxBuilder {
+  constructor();
+  TxBuilder add_recipient(string address, u64 amount);
+  TxBuilder fee_rate(float sat_per_vbyte);
+  [Throws=BdkError]
+  PartiallySignedBitcoinTransaction build([ByRef] Wallet wallet);
+};
+
 dictionary ExtendedKeyInfo {
   string mnemonic;
   string xprv;
