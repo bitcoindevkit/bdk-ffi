@@ -322,7 +322,6 @@ impl TxBuilder {
                 internal: Mutex::new(psbt),
             })
             .map(Arc::new)
-            .map_err(|_| BdkError::Generic("Failed to build transaction".to_string()))
     }
 }
 
