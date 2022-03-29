@@ -40,33 +40,33 @@ class JvmLibTest {
 
     @Test
     fun memoryWalletNewAddress() {
-        val wallet = Wallet(descriptor, null, Network.REGTEST, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
         val address = wallet.getNewAddress()
         assertNotNull(address)
-        assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
+        assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
     }
 
     @Test(expected = BdkException.Descriptor::class)
     fun invalidDescriptorExceptionIsThrown() {
-        Wallet("invalid-descriptor", null, Network.REGTEST, databaseConfig, blockchainConfig)
+        Wallet("invalid-descriptor", null, Network.TESTNET, databaseConfig, blockchainConfig)
     }
 
     @Test
     fun sledWalletNewAddress() {
         val testDataDir = getTestDataDir()
         val databaseConfig = DatabaseConfig.Sled(SledDbConfiguration(testDataDir, "testdb"))
-        val wallet = Wallet(descriptor, null, Network.REGTEST, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
         val address = wallet.getNewAddress()
         assertNotNull(address)
-        assertEquals(address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
+        assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
         cleanupTestDataDir(testDataDir)
     }
 
     @Test
     fun sqliteWalletSyncGetBalance() {
-        val testDataDir = getTestDataDir()+"/bdk-wallet.sqlite"
+        val testDataDir = getTestDataDir() + "/bdk-wallet.sqlite"
         val databaseConfig = DatabaseConfig.Sqlite(SqliteDbConfiguration(testDataDir))
-        val wallet = Wallet(descriptor, null, Network.REGTEST, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
         wallet.sync(LogProgress(), null)
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
@@ -101,7 +101,7 @@ class JvmLibTest {
 
     @Test
     fun onlineWalletSyncGetBalance() {
-        val wallet = Wallet(descriptor, null, Network.REGTEST, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
         wallet.sync(LogProgress(), null)
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
