@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Fix Wallet.broadcast function, now returns a tx id as a hex string
+- Add core RPC blockchain client via RpcConfig, BlockchainConfig::Rpc, and Auth structs  
 
 ## [v0.4.0]
 

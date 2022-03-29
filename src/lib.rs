@@ -3,9 +3,11 @@ use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::{Address, Network};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
+use bdk::blockchain::rpc::Auth as BdkAuth;
 use bdk::blockchain::Progress;
 use bdk::blockchain::{
-    electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig, ConfigurableBlockchain,
+    electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
+    rpc::RpcConfig as RpcBlockchainConfig, ConfigurableBlockchain,
 };
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
@@ -15,6 +17,7 @@ use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex;
 use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet as BdkWallet};
 use std::convert::TryFrom;
+use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -44,9 +47,35 @@ pub struct EsploraConfig {
     pub stop_gap: u64,
 }
 
+pub enum Auth {
+    None,
+    UserPass { username: String, password: String },
+    Cookie { file: String },
+}
+impl From<Auth> for BdkAuth {
+    fn from(auth: Auth) -> Self {
+        match auth {
+            Auth::None => BdkAuth::None,
+            Auth::UserPass { username, password } => BdkAuth::UserPass { username, password },
+            Auth::Cookie { file } => BdkAuth::Cookie {
+                file: PathBuf::from(file),
+            },
+        }
+    }
+}
+
+pub struct RpcConfig {
+    pub url: String,
+    pub auth: Auth,
+    pub network: Network,
+    pub wallet_name: String,
+    pub skip_blocks: Option<u32>,
+}
+
 pub enum BlockchainConfig {
     Electrum { config: ElectrumConfig },
     Esplora { config: EsploraConfig },
+    Rpc { config: RpcConfig },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -163,6 +192,13 @@ impl Wallet {
                     stop_gap: usize::try_from(config.stop_gap).unwrap(),
                 })
             }
+            BlockchainConfig::Rpc { config } => AnyBlockchainConfig::Rpc(RpcBlockchainConfig {
+                url: config.url,
+                auth: BdkAuth::from(config.auth),
+                network,
+                wallet_name: config.wallet_name,
+                skip_blocks: config.skip_blocks,
+            }),
         };
         let database = AnyDatabase::from_config(&any_database_config)?;
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
@@ -310,7 +346,8 @@ impl TxBuilder {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
         for (address, amount) in &self.recipients {
-            let address = Address::from_str(address).map_err(|e| BdkError::Generic(e.to_string()))?;
+            let address =
+                Address::from_str(address).map_err(|e| BdkError::Generic(e.to_string()))?;
             tx_builder.add_recipient(address.script_pubkey(), *amount);
         }
         if let Some(sat_per_vb) = self.fee_rate {

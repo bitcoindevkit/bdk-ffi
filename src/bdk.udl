@@ -47,6 +47,7 @@ enum BdkError {
   "Esplora",
   "Sled",
   "Rusqlite",
+  "Rpc"
 };
 
 enum Network {
@@ -107,9 +108,25 @@ dictionary EsploraConfig {
 };
 
 [Enum]
+interface Auth {
+  None();
+  UserPass(string username, string password);
+  Cookie(string file);
+};
+
+dictionary RpcConfig {
+    string url;
+    Auth auth;
+    Network network;
+    string wallet_name;
+    u32? skip_blocks;
+};
+
+[Enum]
 interface BlockchainConfig {
   Electrum(ElectrumConfig config);
   Esplora(EsploraConfig config);
+  Rpc(RpcConfig config);
 };
 
 callback interface BdkProgress {

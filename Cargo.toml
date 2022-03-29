@@ -10,7 +10,7 @@ crate-type = ["staticlib", "cdylib"]
 name = "bdkffi"
 
 [dependencies]
-bdk = { version = "0.14", features = ["all-keys", "use-esplora-ureq", "sqlite"] }
+bdk = { version = "0.14", features = ["all-keys", "use-esplora-ureq", "rpc", "sqlite"] }
 
 # TODO remove when bdk "sqlite-bundled" feature added
 rusqlite = { version = "0.25.3", features = ["bundled"] }
