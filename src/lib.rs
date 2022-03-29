@@ -310,7 +310,7 @@ impl TxBuilder {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
         for (address, amount) in &self.recipients {
-            let address = Address::from_str(address).expect("recipient address parsing failed");
+            let address = Address::from_str(address).map_err(|e| BdkError::Generic(e.to_string()))?;
             tx_builder.add_recipient(address.script_pubkey(), *amount);
         }
         if let Some(sat_per_vb) = self.fee_rate {
