@@ -3,6 +3,7 @@ plugins {
     id("kotlin-android")
     id("maven-publish")
     id("signing")
+    id("org.jetbrains.dokka") version "1.6.10"
 }
 
 android {
@@ -93,4 +94,13 @@ afterEvaluate {
 signing {
     useGpgCmd()
     sign(publishing.publications)
+}
+
+tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+    dokkaSourceSets {
+        named("main") {
+            moduleName.set("bdk-android")
+            includes.from("Module.md")
+        }
+    }
 }
