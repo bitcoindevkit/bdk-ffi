@@ -116,18 +116,16 @@ struct Opt {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
-    println!("{:?}", opt);
 
     println!("Chosen language is {}", opt.language);
     println!("Output directory is {}", opt.out_dir);
-    println!("Python fix up lib path is {:?}", opt.python_fixup_path);
 
     generate_bindings(&opt)?;
 
     if opt.language == Language::PYTHON {
-        if let Some(name) = opt.python_fixup_path {
-            println!("Fixing up python lib path");
-            fixup_python_lib_path(&opt.out_dir, &name)?;
+        if let Some(path) = &opt.python_fixup_path {
+            println!("Fixing up python lib path, {}", &path);
+            fixup_python_lib_path(&opt.out_dir, &path)?;
         }
     }
     Ok(())
