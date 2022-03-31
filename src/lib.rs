@@ -336,9 +336,10 @@ impl TxBuilder {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
         for (address, amount) in &self.recipients {
-            let address =
-                Address::from_str(address).map_err(|e| BdkError::Generic(e.to_string()))?;
-            tx_builder.add_recipient(address.script_pubkey(), *amount);
+            let script_pubkey = Address::from_str(address)
+                .map(|x| x.script_pubkey())
+                .map_err(|e| BdkError::Generic(e.to_string()))?;
+            tx_builder.add_recipient(script_pubkey, *amount);
         }
         if let Some(sat_per_vb) = self.fee_rate {
             tx_builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
@@ -347,9 +348,10 @@ impl TxBuilder {
             tx_builder.drain_wallet();
         }
         if let Some(address) = &self.drain_to {
-            let drain_to =
-                Address::from_str(address).map_err(|e| BdkError::Generic(e.to_string()))?;
-            tx_builder.drain_to(drain_to.script_pubkey());
+            let script_pubkey = Address::from_str(address)
+                .map(|a| a.script_pubkey())
+                .map_err(|e| BdkError::Generic(e.to_string()))?;
+            tx_builder.drain_to(script_pubkey);
         }
         tx_builder
             .finish()
