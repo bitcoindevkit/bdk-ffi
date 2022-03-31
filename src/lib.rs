@@ -1,7 +1,7 @@
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
-use bdk::bitcoin::{Address, Network};
+use bdk::bitcoin::{Address, Network, Script};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::Progress;
 use bdk::blockchain::{
@@ -277,6 +277,12 @@ fn restore_extended_key(
     })
 }
 
+fn to_script_pubkey(address: &str) -> Result<Script, BdkError> {
+    Address::from_str(address)
+        .map(|x| x.script_pubkey())
+        .map_err(|e| BdkError::Generic(e.to_string()))
+}
+
 struct TxBuilder {
     recipients: Vec<(String, u64)>,
     fee_rate: Option<f32>,
@@ -336,10 +342,7 @@ impl TxBuilder {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
         for (address, amount) in &self.recipients {
-            let script_pubkey = Address::from_str(address)
-                .map(|x| x.script_pubkey())
-                .map_err(|e| BdkError::Generic(e.to_string()))?;
-            tx_builder.add_recipient(script_pubkey, *amount);
+            tx_builder.add_recipient(to_script_pubkey(address)?, *amount);
         }
         if let Some(sat_per_vb) = self.fee_rate {
             tx_builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
@@ -348,10 +351,7 @@ impl TxBuilder {
             tx_builder.drain_wallet();
         }
         if let Some(address) = &self.drain_to {
-            let script_pubkey = Address::from_str(address)
-                .map(|a| a.script_pubkey())
-                .map_err(|e| BdkError::Generic(e.to_string()))?;
-            tx_builder.drain_to(script_pubkey);
+            tx_builder.drain_to(to_script_pubkey(address)?);
         }
         tx_builder
             .finish()
