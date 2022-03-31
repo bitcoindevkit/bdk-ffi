@@ -281,6 +281,7 @@ struct TxBuilder {
     recipients: Vec<(String, u64)>,
     fee_rate: Option<f32>,
     drain_wallet: bool,
+    drain_to: Option<String>,
 }
 
 impl TxBuilder {
@@ -289,6 +290,7 @@ impl TxBuilder {
             recipients: Vec::new(),
             fee_rate: None,
             drain_wallet: false,
+            drain_to: None,
         }
     }
 
@@ -299,6 +301,7 @@ impl TxBuilder {
             recipients,
             fee_rate: self.fee_rate,
             drain_wallet: self.drain_wallet,
+            drain_to: self.drain_to.clone(),
         })
     }
 
@@ -307,6 +310,7 @@ impl TxBuilder {
             recipients: self.recipients.to_vec(),
             fee_rate: Some(sat_per_vb),
             drain_wallet: self.drain_wallet,
+            drain_to: self.drain_to.clone(),
         })
     }
 
@@ -315,6 +319,16 @@ impl TxBuilder {
             recipients: self.recipients.to_vec(),
             fee_rate: self.fee_rate,
             drain_wallet: true,
+            drain_to: self.drain_to.clone(),
+        })
+    }
+
+    fn drain_to(&self, address: String) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            recipients: self.recipients.to_vec(),
+            fee_rate: self.fee_rate,
+            drain_wallet: self.drain_wallet,
+            drain_to: Some(address),
         })
     }
 
@@ -330,6 +344,11 @@ impl TxBuilder {
         }
         if self.drain_wallet {
             tx_builder.drain_wallet();
+        }
+        if let Some(address) = &self.drain_to {
+            let drain_to =
+                Address::from_str(address).map_err(|e| BdkError::Generic(e.to_string()))?;
+            tx_builder.drain_to(drain_to.script_pubkey());
         }
         tx_builder
             .finish()
