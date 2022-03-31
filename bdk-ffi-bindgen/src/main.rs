@@ -1,9 +1,8 @@
 use std::fmt;
+use std::path::PathBuf;
 use std::str::FromStr;
 use structopt::StructOpt;
 use uniffi_bindgen;
-
-pub const BDK_UDL: &str = "src/bdk.udl";
 
 #[derive(Debug, PartialEq)]
 pub enum Language {
@@ -47,7 +46,7 @@ impl FromStr for Language {
 
 fn generate_bindings(opt: &Opt) -> anyhow::Result<(), anyhow::Error> {
     uniffi_bindgen::generate_bindings(
-        &format!("{}/{}", env!("CARGO_MANIFEST_DIR"), BDK_UDL),
+        &opt.udl_file,
         None,
         vec![opt.language.to_string().as_str()],
         Some(&opt.out_dir),
@@ -57,16 +56,16 @@ fn generate_bindings(opt: &Opt) -> anyhow::Result<(), anyhow::Error> {
     Ok(())
 }
 
-fn fixup_python_lib_path<O: AsRef<std::path::Path>>(
-    out_dir: O,
-    lib_name: &str,
+fn fixup_python_lib_path(
+    out_dir: &PathBuf,
+    lib_name: &PathBuf,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use std::fs;
     use std::io::Write;
 
     const LOAD_INDIRECT_DEF: &str = "def loadIndirect():";
 
-    let bindings_file = out_dir.as_ref().join("bdk.py");
+    let bindings_file = out_dir.join("bdk.py");
     let mut data = fs::read_to_string(&bindings_file)?;
 
     let pos = data.find(LOAD_INDIRECT_DEF).expect(&format!(
@@ -82,7 +81,7 @@ def loadIndirect():
     return getattr(ctypes.cdll, glob.glob(os.path.join(os.path.dirname(os.path.abspath(__file__)), '{}.*'))[0])
 
 def _loadIndirectOld():"#,
-        lib_name
+        &lib_name.to_str().expect("lib name")
     );
     data.replace_range(range, &replacement);
 
@@ -97,34 +96,39 @@ def _loadIndirectOld():"#,
 
 #[derive(Debug, StructOpt)]
 #[structopt(
-    name = "generate-bindings",
+    name = "bdk-ffi-bindgen",
     about = "A tool to generate bdk-ffi language bindings"
 )]
 struct Opt {
+    /// UDL file
+    #[structopt(env = "BDKFFI_BINDGEN_UDL", short, long, default_value("src/bdk.udl"), parse(try_from_str = PathBuf::from_str))]
+    udl_file: PathBuf,
+
     /// Language to generate bindings for
-    #[structopt(env = "UNIFFI_BINDGEN_LANGUAGE", short, long, possible_values(&["kotlin","swift","python"]), parse(try_from_str = Language::from_str))]
+    #[structopt(env = "BDKFFI_BINDGEN_LANGUAGE", short, long, possible_values(&["kotlin","swift","python"]), parse(try_from_str = Language::from_str))]
     language: Language,
 
     /// Output directory to put generated language bindings
-    #[structopt(env = "UNIFFI_BINDGEN_OUTPUT_DIR", short, long)]
-    out_dir: String,
+    #[structopt(env = "BDKFFI_BINDGEN_OUTPUT_DIR", short, long, parse(try_from_str = PathBuf::from_str))]
+    out_dir: PathBuf,
 
     /// Python fix up lib path
-    #[structopt(env = "UNIFFI_BINDGEN_PYTHON_FIXUP_PATH", short, long)]
-    python_fixup_path: Option<String>,
+    #[structopt(env = "BDKFFI_BINDGEN_PYTHON_FIXUP_PATH", short, long, parse(try_from_str = PathBuf::from_str))]
+    python_fixup_path: Option<PathBuf>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
 
+    println!("Input UDL file is {:?}", opt.udl_file);
     println!("Chosen language is {}", opt.language);
-    println!("Output directory is {}", opt.out_dir);
+    println!("Output directory is {:?}", opt.out_dir);
 
     generate_bindings(&opt)?;
 
     if opt.language == Language::PYTHON {
-        if let Some(path) = &opt.python_fixup_path {
-            println!("Fixing up python lib path, {}", &path);
+        if let Some(path) = opt.python_fixup_path {
+            println!("Fixing up python lib path, {:?}", &path);
             fixup_python_lib_path(&opt.out_dir, &path)?;
         }
     }
