@@ -280,6 +280,7 @@ fn restore_extended_key(
 struct TxBuilder {
     recipients: Vec<(String, u64)>,
     fee_rate: Option<f32>,
+    drain_wallet: bool,
 }
 
 impl TxBuilder {
@@ -287,6 +288,7 @@ impl TxBuilder {
         TxBuilder {
             recipients: Vec::new(),
             fee_rate: None,
+            drain_wallet: false,
         }
     }
 
@@ -296,6 +298,7 @@ impl TxBuilder {
         Arc::new(TxBuilder {
             recipients,
             fee_rate: self.fee_rate,
+            drain_wallet: self.drain_wallet,
         })
     }
 
@@ -303,6 +306,15 @@ impl TxBuilder {
         Arc::new(TxBuilder {
             recipients: self.recipients.to_vec(),
             fee_rate: Some(sat_per_vb),
+            drain_wallet: self.drain_wallet,
+        })
+    }
+
+    fn drain_wallet(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            recipients: self.recipients.to_vec(),
+            fee_rate: self.fee_rate,
+            drain_wallet: true,
         })
     }
 
@@ -315,6 +327,9 @@ impl TxBuilder {
         }
         if let Some(sat_per_vb) = self.fee_rate {
             tx_builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
+        }
+        if self.drain_wallet {
+            tx_builder.drain_wallet();
         }
         tx_builder
             .finish()
