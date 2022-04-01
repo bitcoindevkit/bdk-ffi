@@ -3,7 +3,7 @@
 This repository contains source code for generating native language bindings for the rust based 
 [bdk] library which is the central artifact of the [Bitcoin Dev Kit] project.
 
-Each supported language has it's own repository that includes this project as a [git submodule]. 
+Each supported language has its own repository that includes this project as a [git submodule]. 
 The rust code in this project is a wrapper around the [bdk] library to expose it's APIs in a 
 uniform way using the [mozilla/uniffi-rs] bindings generator for each supported target language.
 
