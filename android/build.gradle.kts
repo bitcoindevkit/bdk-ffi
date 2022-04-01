@@ -100,6 +100,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
     dokkaSourceSets {
         named("main") {
             moduleName.set("bdk-android")
+            moduleVersion.set("0.6.0-SNAPSHOT")
             includes.from("Module.md")
         }
     }
