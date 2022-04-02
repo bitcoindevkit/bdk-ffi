@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.5.0]
+
 - Fix Wallet.broadcast function, now returns a tx id as a hex string
+- Remove creating a new spending Transaction via the PartiallySignedBitcoinTransaction constructor
+- Add TxBuilder for creating new spending PartiallySignedBitcoinTransaction
+- Add TxBuilder .add_recipient, .fee_rate, and .build functions
+- Add TxBuilder .drain_wallet and .drain_to functions
+- Update generate cli tool to generate all binding languages and rename to bdk-ffi-bindgen
 
 ## [v0.4.0]
 
@@ -30,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.2.0]
 
-[unreleased]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.4.0...HEAD
+[unreleased]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.3.1...v0.4.0
 [v0.3.1]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.2.0...v0.3.0
