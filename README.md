@@ -1,7 +1,8 @@
 # Native language bindings for BDK
 
-This repository contains source code for generating native language bindings for the rust based 
-[bdk] library which is the central artifact of the [Bitcoin Dev Kit] project.
+The workspace in this repository creates the `libbdkffi` multi-language library for the rust based 
+[bdk] library from the [Bitcoin Dev Kit] project. The `bdk-ffi-bindgen` package builds a tool for 
+generating the actual language binding code used to access the `libbdkffi` library.
 
 Each supported language has its own repository that includes this project as a [git submodule]. 
 The rust code in this project is a wrapper around the [bdk] library to expose it's APIs in a 
@@ -19,6 +20,14 @@ language binding for [bdk] supported by this project.
 | Swift    | iOS, macOS   | [bdk-swift]  |
 | Python   | linux, macOS | [bdk-python] |
 
+## Language bindings generator tool
+
+Use the `bdk-ffi-bindgen` tool to generate language binding code for the above supported languages. 
+To run `bdk-ffi-bindgen` and see the available options use the command:
+```shell
+cargo run -p bdk-ffi-bindgen -- --help
+```
+
 [bdk]: https://github.com/bitcoindevkit/bdk
 [Bitcoin Dev Kit]: https://github.com/bitcoindevkit
 [git submodule]: https://git-scm.com/book/en/v2/Git-Tools-Submodules
@@ -29,14 +38,6 @@ language binding for [bdk] supported by this project.
 [bdk-python]: https://github.com/thunderbiscuit/bdk-python
 
 ## Contributing
-
-### Install uniffi-bindgen cli tool
-
-Install the uniffi-bindgen binary on your system using:
-
-`cargo install uniffi_bindgen`
-
-The version must be the same as the `uniffi` dependency in `Cargo.toml`.
 
 ### Adding new structs and functions
 
