@@ -1,5 +1,5 @@
 use std::fmt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use structopt::StructOpt;
 
@@ -56,8 +56,8 @@ fn generate_bindings(opt: &Opt) -> anyhow::Result<(), anyhow::Error> {
 }
 
 fn fixup_python_lib_path(
-    out_dir: &PathBuf,
-    lib_name: &PathBuf,
+    out_dir: &Path,
+    lib_name: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
     use std::fs;
     use std::io::Write;
