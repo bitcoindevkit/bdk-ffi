@@ -6,17 +6,17 @@ use uniffi_bindgen;
 
 #[derive(Debug, PartialEq)]
 pub enum Language {
-    KOTLIN,
-    PYTHON,
-    SWIFT,
+    Kotlin,
+    Python,
+    Swift,
 }
 
 impl fmt::Display for Language {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Language::KOTLIN => write!(f, "kotlin"),
-            Language::SWIFT => write!(f, "swift"),
-            Language::PYTHON => write!(f, "python"),
+            Language::Kotlin => write!(f, "kotlin"),
+            Language::Swift => write!(f, "swift"),
+            Language::Python => write!(f, "python"),
         }
     }
 }
@@ -36,9 +36,9 @@ impl FromStr for Language {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "kotlin" => Ok(Language::KOTLIN),
-            "python" => Ok(Language::PYTHON),
-            "swift" => Ok(Language::SWIFT),
+            "kotlin" => Ok(Language::Kotlin),
+            "python" => Ok(Language::Python),
+            "swift" => Ok(Language::Swift),
             _ => Err(Error::UnsupportedLanguage),
         }
     }
@@ -126,7 +126,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     generate_bindings(&opt)?;
 
-    if opt.language == Language::PYTHON {
+    if opt.language == Language::Python {
         if let Some(path) = opt.python_fixup_path {
             println!("Fixing up python lib path, {:?}", &path);
             fixup_python_lib_path(&opt.out_dir, &path)?;
