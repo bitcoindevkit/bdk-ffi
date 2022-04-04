@@ -2,7 +2,6 @@ use std::fmt;
 use std::path::PathBuf;
 use std::str::FromStr;
 use structopt::StructOpt;
-use uniffi_bindgen;
 
 #[derive(Debug, PartialEq)]
 pub enum Language {
@@ -89,7 +88,7 @@ def _loadIndirectOld():"#,
         .write(true)
         .truncate(true)
         .open(&bindings_file)?;
-    file.write(data.as_bytes())?;
+    file.write_all(data.as_bytes())?;
 
     Ok(())
 }
