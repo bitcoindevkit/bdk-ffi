@@ -67,10 +67,9 @@ fn fixup_python_lib_path(
     let bindings_file = out_dir.join("bdk.py");
     let mut data = fs::read_to_string(&bindings_file)?;
 
-    let pos = data.find(LOAD_INDIRECT_DEF).expect(&format!(
-        "loadIndirect not found in `{}`",
-        bindings_file.display()
-    ));
+    let pos = data
+        .find(LOAD_INDIRECT_DEF)
+        .unwrap_or_else(|| panic!("loadIndirect not found in `{}`", bindings_file.display()));
     let range = pos..pos + LOAD_INDIRECT_DEF.len();
 
     let replacement = format!(
