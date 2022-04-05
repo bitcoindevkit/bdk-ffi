@@ -149,27 +149,29 @@ class JvmLibTest {
         txBuilder.build(wallet)
     }
 
-    @Test
-    fun walletTxBuilderDrainWallet() {
-        val descriptor =
-            "wpkh([8da6afbe/84'/1'/0'/0]tprv8hY7jbMbe17EH1cLw2feTyNDYvjcFYauLmbneBqVnDERBrV51LrxWjCYRZwWS5keYn3ijb7iHJuEzXQk7EzgPeKRBVNBgC4oFPDxGND5S3V/*)"
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
-        wallet.sync(LogProgress(), null)
-        val balance = wallet.getBalance()
-        if (balance > 2000u) {
-            println("balance $balance")
-            // send all coins back to https://bitcoinfaucet.uo1.net
-            val faucetAddress = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt"
-            val txBuilder = TxBuilder().drainWallet().drainTo(faucetAddress).feeRate(1.1f)
-            val psbt = txBuilder.build(wallet)
-            wallet.sign(psbt)
-            val txid = wallet.broadcast(psbt)
-            println("https://mempool.space/testnet/tx/$txid")
-            assertNotNull(txid)
-        } else {
-            val depositAddress = wallet.getLastUnusedAddress()
-            fail("Send more testnet coins to: $depositAddress")
-        }
-    }
+      // Comment this test in for local testing, you will need let it fail ones to get an address
+      // to pre-fund the test wallet before the test will pass.
+//    @Test
+//    fun walletTxBuilderDrainWallet() {
+//        val descriptor =
+//            "wpkh([8da6afbe/84'/1'/0'/0]tprv8hY7jbMbe17EH1cLw2feTyNDYvjcFYauLmbneBqVnDERBrV51LrxWjCYRZwWS5keYn3ijb7iHJuEzXQk7EzgPeKRBVNBgC4oFPDxGND5S3V/*)"
+//        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
+//        wallet.sync(LogProgress(), null)
+//        val balance = wallet.getBalance()
+//        if (balance > 2000u) {
+//            println("balance $balance")
+//            // send all coins back to https://bitcoinfaucet.uo1.net
+//            val faucetAddress = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt"
+//            val txBuilder = TxBuilder().drainWallet().drainTo(faucetAddress).feeRate(1.1f)
+//            val psbt = txBuilder.build(wallet)
+//            wallet.sign(psbt)
+//            val txid = wallet.broadcast(psbt)
+//            println("https://mempool.space/testnet/tx/$txid")
+//            assertNotNull(txid)
+//        } else {
+//            val depositAddress = wallet.getLastUnusedAddress()
+//            fail("Send more testnet coins to: $depositAddress")
+//        }
+//    }
 
 }
