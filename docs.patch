@@ -1,8 +1,7 @@
-*** bdk-0.5.1-undocumented.kt	2022-03-19 10:29:15.000000000 -0400
---- bdk-0.5.1-documented.kt	2022-03-19 10:27:57.000000000 -0400
+*** bdkwithoutdocs.kt	2022-04-05 16:38:27.692000000 -0700
+--- bdk.kt	2022-04-05 16:40:51.727000000 -0700
 ***************
 *** 17,131 ****
---- 17,144 ----
   // compile the Rust component. The easiest way to ensure this is to bundle the Kotlin
   // helpers directly inline like we're doing here.
   
@@ -23,7 +22,122 @@
   // A rust-owned buffer is represented by its capacity, its current length, and a
   // pointer to the underlying data.
   
-+ 
+  @Structure.FieldOrder("capacity", "len", "data")
+  open class RustBuffer : Structure() {
+      @JvmField var capacity: Int = 0
+      @JvmField var len: Int = 0
+      @JvmField var data: Pointer? = null
+  
+      class ByValue : RustBuffer(), Structure.ByValue
+      class ByReference : RustBuffer(), Structure.ByReference
+  
+      companion object {
+          internal fun alloc(size: Int = 0) = rustCall() { status ->
+              _UniFFILib.INSTANCE.ffi_bdk_9c03_rustbuffer_alloc(size, status).also {
+                  if(it.data == null) {
+                     throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
+                 }
+              }
+          }
+  
+          internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
+              _UniFFILib.INSTANCE.ffi_bdk_9c03_rustbuffer_free(buf, status)
+          }
+  
+          internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
+              _UniFFILib.INSTANCE.ffi_bdk_9c03_rustbuffer_reserve(buf, additional, status)
+          }
+      }
+  
+      @Suppress("TooGenericExceptionThrown")
+      fun asByteBuffer() =
+          this.data?.getByteBuffer(0, this.len.toLong())?.also {
+              it.order(ByteOrder.BIG_ENDIAN)
+          }
+  }
+  
+  /**
+!  * The equivalent of the `*mut RustBuffer` type.
+!  * Required for callbacks taking in an out pointer.
+!  *
+!  * Size is the sum of all values in the struct.
+   */
+  class RustBufferByReference : ByReference(16) {
+      /**
+       * Set the pointed-to `RustBuffer` to the given value.
+       */
+      fun setValue(value: RustBuffer.ByValue) {
+          // NOTE: The offsets are as they are in the C-like struct.
+          val pointer = getPointer()
+          pointer.setInt(0, value.capacity)
+          pointer.setInt(4, value.len)
+          pointer.setPointer(8, value.data)
+      }
+  }
+  
+  // This is a helper for safely passing byte references into the rust code.
+  // It's not actually used at the moment, because there aren't many things that you
+  // can take a direct pointer to in the JVM, and if we're going to copy something
+  // then we might as well copy it into a `RustBuffer`. But it's here for API
+  // completeness.
+  
+  @Structure.FieldOrder("len", "data")
+  open class ForeignBytes : Structure() {
+      @JvmField var len: Int = 0
+      @JvmField var data: Pointer? = null
+  
+      class ByValue : ForeignBytes(), Structure.ByValue
+  }
+  
+  
+  // A helper for structured writing of data into a `RustBuffer`.
+  // This is very similar to `java.nio.ByteBuffer` but it knows how to grow
+  // the underlying `RustBuffer` on demand.
+  //
+  // TODO: we should benchmark writing things into a `RustBuffer` versus building
+  // up a bytearray and then copying it across.
+! 
+  class RustBufferBuilder() {
+      var rbuf = RustBuffer.ByValue()
+      var bbuf: ByteBuffer? = null
+  
+      init {
+          val rbuf = RustBuffer.alloc(16) // Totally arbitrary initial size
+          rbuf.writeField("len", 0)
+          this.setRustBuffer(rbuf)
+      }
+  
+      internal fun setRustBuffer(rbuf: RustBuffer.ByValue) {
+          this.rbuf = rbuf
+          this.bbuf = this.rbuf.data?.getByteBuffer(0, this.rbuf.capacity.toLong())?.also {
+              it.order(ByteOrder.BIG_ENDIAN)
+              it.position(rbuf.len)
+          }
+      }
+  
+      fun finalize() : RustBuffer.ByValue {
+          val rbuf = this.rbuf
+--- 17,145 ----
+  // compile the Rust component. The easiest way to ensure this is to bundle the Kotlin
+  // helpers directly inline like we're doing here.
+  
+  import com.sun.jna.Library
+  import com.sun.jna.Native
+  import com.sun.jna.Pointer
+  import com.sun.jna.Structure
+  import com.sun.jna.ptr.ByReference
+  import java.nio.ByteBuffer
+  import java.nio.ByteOrder
+  import java.util.concurrent.atomic.AtomicBoolean
+  import java.util.concurrent.atomic.AtomicLong
+  import java.util.concurrent.locks.ReentrantLock
+  import kotlin.concurrent.withLock
+  
+  // The Rust Buffer and 3 templated methods (alloc, free, reserve).
+  // This is a helper for safely working with byte buffers returned from the Rust code.
+  // A rust-owned buffer is represented by its capacity, its current length, and a
+  // pointer to the underlying data.
+  
 + /**
 +  * @suppress
 +  */
@@ -36,9 +150,12 @@
       class ByValue : RustBuffer(), Structure.ByValue
       class ByReference : RustBuffer(), Structure.ByReference
   
++     /**
++      * @suppress
++      */
       companion object {
           internal fun alloc(size: Int = 0) = rustCall() { status ->
-              _UniFFILib.INSTANCE.ffi_bdk_2b7a_rustbuffer_alloc(size, status).also {
+              _UniFFILib.INSTANCE.ffi_bdk_9c03_rustbuffer_alloc(size, status).also {
                   if(it.data == null) {
                      throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
                  }
@@ -46,11 +163,11 @@
           }
   
           internal fun free(buf: RustBuffer.ByValue) = rustCall() { status ->
-              _UniFFILib.INSTANCE.ffi_bdk_2b7a_rustbuffer_free(buf, status)
+              _UniFFILib.INSTANCE.ffi_bdk_9c03_rustbuffer_free(buf, status)
           }
   
           internal fun reserve(buf: RustBuffer.ByValue, additional: Int) = rustCall() { status ->
-              _UniFFILib.INSTANCE.ffi_bdk_2b7a_rustbuffer_reserve(buf, additional, status)
+              _UniFFILib.INSTANCE.ffi_bdk_9c03_rustbuffer_reserve(buf, additional, status)
           }
       }
   
@@ -61,15 +178,15 @@
           }
   }
   
++ ///**
++ // * The equivalent of the `*mut RustBuffer` type.
++ // * Required for callbacks taking in an out pointer.
++ // *
++ // * Size is the sum of all values in the struct.
++ // */
   /**
-   * The equivalent of the `*mut RustBuffer` type.
-   * Required for callbacks taking in an out pointer.
-   *
-   * Size is the sum of all values in the struct.
+!  * @suppress
    */
-+ /**
-+  * @suppress
-+  */
   class RustBufferByReference : ByReference(16) {
       /**
        * Set the pointed-to `RustBuffer` to the given value.
@@ -107,10 +224,9 @@
   //
   // TODO: we should benchmark writing things into a `RustBuffer` versus building
   // up a bytearray and then copying it across.
-  
-+ /**
-+  * @suppress
-+  */
+! /**
+!  * @suppress
+!  */
   class RustBufferBuilder() {
       var rbuf = RustBuffer.ByValue()
       var bbuf: ByteBuffer? = null
@@ -132,8 +248,48 @@
       fun finalize() : RustBuffer.ByValue {
           val rbuf = this.rbuf
 ***************
-*** 266,305 ****
---- 279,321 ----
+*** 232,304 ****
+--- 246,327 ----
+  // This would be a good candidate for isolating in its own ffi-support lib.
+  // Error runtime.
+  @Structure.FieldOrder("code", "error_buf")
+  internal open class RustCallStatus : Structure() {
+      @JvmField var code: Int = 0
+      @JvmField var error_buf: RustBuffer.ByValue = RustBuffer.ByValue()
+  
+      fun isSuccess(): Boolean {
+          return code == 0
+      }
+  
+      fun isError(): Boolean {
+          return code == 1
+      }
+  
+      fun isPanic(): Boolean {
+          return code == 2
+      }
+  }
+  
++ /**
++  * @suppress
++  */
+  class InternalException(message: String) : Exception(message)
+  
++ /**
++  * @suppress
++  */
+  // Each top-level error class has a companion object that can lift the error from the call status's rust buffer
+  interface CallStatusErrorHandler<E> {
+      fun lift(error_buf: RustBuffer.ByValue): E;
+  }
+  
+  // Helpers for calling Rust
+  // In practice we usually need to be synchronized to call this safely, so it doesn't
+  // synchronize itself
+  
+  // Call a rust function that returns a Result<>.  Pass in the Error class companion that corresponds to the Err
+  private inline fun <U, E: Exception> rustCallWithError(errorHandler: CallStatusErrorHandler<E>, callback: (RustCallStatus) -> U): U {
+      var status = RustCallStatus();
       val return_value = callback(status)
       if (status.isSuccess()) {
           return return_value
@@ -153,10 +309,10 @@
       }
   }
   
-  // CallStatusErrorHandler implementation for times when we don't expect a CALL_ERROR
 + /**
 +  * @suppress
 +  */
+  // CallStatusErrorHandler implementation for times when we don't expect a CALL_ERROR
   object NullCallStatusErrorHandler: CallStatusErrorHandler<InternalException> {
       override fun lift(error_buf: RustBuffer.ByValue): InternalException {
           RustBuffer.free(error_buf)
@@ -176,14 +332,13 @@
       val libOverride = System.getProperty("uniffi.component.$componentName.libraryOverride")
       if (libOverride != null) {
           return libOverride
-      }
 ***************
-*** 406,455 ****
---- 422,477 ----
+*** 430,479 ****
+--- 453,508 ----
       uniffi_out_err: RustCallStatus
       ): Unit
   
-      fun ffi_bdk_2b7a_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
+      fun ffi_bdk_9c03_rustbuffer_reserve(buf: RustBuffer.ByValue,additional: Int,
       uniffi_out_err: RustCallStatus
       ): RustBuffer.ByValue
   
@@ -237,8 +392,8 @@
   // struct after it has been dropped, and because we must expose a public API for freeing
   // the Kotlin wrapper object in lieu of reliable finalizers. The core requirements are:
 ***************
-*** 509,548 ****
---- 531,573 ----
+*** 533,572 ****
+--- 562,604 ----
   //      Otherwise we atomically decrement and check the counter.
   //      If it has reached zero then we destroy the underlying Rust struct.
   //
@@ -283,8 +438,8 @@
               }
           }
 ***************
-*** 595,712 ****
---- 620,746 ----
+*** 619,736 ****
+--- 651,777 ----
                       }
               }
   
@@ -413,8 +568,8 @@
   
       internal fun lower(): RustBuffer.ByValue {
 ***************
-*** 737,776 ****
---- 771,813 ----
+*** 761,800 ****
+--- 802,844 ----
   }
   
   
@@ -459,19 +614,8 @@
   
       internal fun lower(): RustBuffer.ByValue {
 ***************
-*** 786,836 ****
---- 823,879 ----
-              }
-              is Transaction.Confirmed -> {
-                  buf.putInt(2)
-                  this.details.write(buf)
-                  this.confirmation.write(buf)
-                  
-              }
-          }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
-      }
-  
-      
+*** 821,860 ****
+--- 865,907 ----
       
   }
   
@@ -481,9 +625,6 @@
   
   
   
-+ /**
-+  * Sealed class that can be of either blockchain configuration defined by the library.
-+  */
   sealed class BlockchainConfig  {
       
       data class Electrum(
@@ -519,8 +660,8 @@
       internal fun lower(): RustBuffer.ByValue {
           return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
 ***************
-*** 845,884 ****
---- 888,930 ----
+*** 869,908 ****
+--- 916,958 ----
               }
               is BlockchainConfig.Esplora -> {
                   buf.putInt(2)
@@ -565,8 +706,54 @@
       }
   }
 ***************
-*** 1084,1123 ****
---- 1130,1172 ----
+*** 1045,1084 ****
+--- 1095,1137 ----
+      
+      @Throws(BdkException::class)override fun sync(progressUpdate: BdkProgress, maxAddressParam: UInt? ) =
+          callWithPointer {
+      rustCallWithError(BdkException) { status ->
+      _UniFFILib.INSTANCE.bdk_9c03_Wallet_sync(it, FfiConverterCallbackInterfaceBdkProgress.lower(progressUpdate), lowerOptionalUInt(maxAddressParam) , status)
+  }
+          }
+      
+      
+      @Throws(BdkException::class)override fun broadcast(psbt: PartiallySignedBitcoinTransaction ): String =
+          callWithPointer {
+      rustCallWithError(BdkException) { status ->
+      _UniFFILib.INSTANCE.bdk_9c03_Wallet_broadcast(it, psbt.lower() , status)
+  }
+          }.let {
+              String.lift(it)
+          }
+      
+      
+  
++     /**
++      * @suppress
++      */
+      companion object {
+          internal fun lift(ptr: Pointer): Wallet {
+              return Wallet(ptr)
+          }
+  
+          internal fun read(buf: ByteBuffer): Wallet {
+              // The Rust code always writes pointers as 8 bytes, and will
+              // fail to compile if they don't fit.
+              return Wallet.lift(Pointer(buf.getLong()))
+          }
+  
+          
+      }
+  }
+  
+  public interface PartiallySignedBitcoinTransactionInterface {
+      
+      fun serialize(): String
+      
+  }
+***************
+*** 1108,1147 ****
+--- 1161,1203 ----
   
       internal fun lower(): Pointer = callWithPointer { it }
   
@@ -579,7 +766,7 @@
       override fun serialize(): String =
           callWithPointer {
       rustCall() { status ->
-      _UniFFILib.INSTANCE.bdk_2b7a_PartiallySignedBitcoinTransaction_serialize(it,  status)
+      _UniFFILib.INSTANCE.bdk_9c03_PartiallySignedBitcoinTransaction_serialize(it,  status)
   }
           }.let {
               String.lift(it)
@@ -601,18 +788,147 @@
               return PartiallySignedBitcoinTransaction.lift(Pointer(buf.getLong()))
           }
   
-          fun deserialize(psbtBase64: String ): PartiallySignedBitcoinTransaction =
-              PartiallySignedBitcoinTransaction(
-      rustCallWithError(BdkException) { status ->
-      _UniFFILib.INSTANCE.bdk_2b7a_PartiallySignedBitcoinTransaction_deserialize(psbtBase64.lower() ,status)
-  })
           
       }
   }
   
+  public interface TxBuilderInterface {
+      
+      fun addRecipient(address: String, amount: ULong ): TxBuilder
+      
+      fun feeRate(satPerVbyte: Float ): TxBuilder
 ***************
-*** 1204,1282 ****
---- 1253,1349 ----
+*** 1217,1410 ****
+--- 1273,1486 ----
+          callWithPointer {
+      rustCall() { status ->
+      _UniFFILib.INSTANCE.bdk_9c03_TxBuilder_drain_to(it, address.lower() , status)
+  }
+          }.let {
+              TxBuilder.lift(it)
+          }
+      
+      
+      @Throws(BdkException::class)override fun build(wallet: Wallet ): PartiallySignedBitcoinTransaction =
+          callWithPointer {
+      rustCallWithError(BdkException) { status ->
+      _UniFFILib.INSTANCE.bdk_9c03_TxBuilder_build(it, wallet.lower() , status)
+  }
+          }.let {
+              PartiallySignedBitcoinTransaction.lift(it)
+          }
+      
+      
+  
++     /**
++      * @suppress
++      */
+      companion object {
+          internal fun lift(ptr: Pointer): TxBuilder {
+              return TxBuilder(ptr)
+          }
+  
+          internal fun read(buf: ByteBuffer): TxBuilder {
+              // The Rust code always writes pointers as 8 bytes, and will
+              // fail to compile if they don't fit.
+              return TxBuilder.lift(Pointer(buf.getLong()))
+          }
+  
+          
+      }
+  }
+  
+  data class SledDbConfiguration (
+      var path: String, 
+      var treeName: String 
+  )  {
++     /**
++      * @suppress
++      */
+      companion object {
+          internal fun lift(rbuf: RustBuffer.ByValue): SledDbConfiguration {
+              return liftFromRustBuffer(rbuf) { buf -> SledDbConfiguration.read(buf) }
+          }
+  
+          internal fun read(buf: ByteBuffer): SledDbConfiguration {
+              return SledDbConfiguration(
+              String.read(buf),
+              String.read(buf)
+              )
+          }
+      }
+  
+      internal fun lower(): RustBuffer.ByValue {
+          return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
+      }
+  
+      internal fun write(buf: RustBufferBuilder) {
+              this.path.write(buf)
+          
+              this.treeName.write(buf)
+          
+      }
+  
+      
+      
+  }
+  
+  data class SqliteDbConfiguration (
+      var path: String 
+  )  {
++ 
++     /**
++      * @suppress
++      */
+      companion object {
+          internal fun lift(rbuf: RustBuffer.ByValue): SqliteDbConfiguration {
+              return liftFromRustBuffer(rbuf) { buf -> SqliteDbConfiguration.read(buf) }
+          }
+  
+          internal fun read(buf: ByteBuffer): SqliteDbConfiguration {
+              return SqliteDbConfiguration(
+              String.read(buf)
+              )
+          }
+      }
+  
+      internal fun lower(): RustBuffer.ByValue {
+          return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
+      }
+  
+      internal fun write(buf: RustBufferBuilder) {
+              this.path.write(buf)
+          
+      }
+  
+      
+      
+  }
+  
+  data class TransactionDetails (
+      var fees: ULong?, 
+      var received: ULong, 
+      var sent: ULong, 
+      var txid: String 
+  )  {
++ 
++     /**
++      * @suppress
++      */
+      companion object {
+          internal fun lift(rbuf: RustBuffer.ByValue): TransactionDetails {
+              return liftFromRustBuffer(rbuf) { buf -> TransactionDetails.read(buf) }
+          }
+  
+          internal fun read(buf: ByteBuffer): TransactionDetails {
+              return TransactionDetails(
+              readOptionalULong(buf),
+              ULong.read(buf),
+              ULong.read(buf),
+              String.read(buf)
+              )
+          }
+      }
   
       internal fun lower(): RustBuffer.ByValue {
           return lowerIntoRustBuffer(this, {v, buf -> v.write(buf)})
@@ -633,9 +949,6 @@
       
   }
   
-+ /**
-+  * Block height and timestamp of a block
-+  */
   data class BlockTime (
       var height: UInt, 
       var timestamp: ULong 
@@ -671,15 +984,6 @@
       
   }
   
-+ /**
-+  * Configuration for an ElectrumBlockchain
-+  *
-+  * @property url URL of the Electrum server (such as ElectrumX, Esplora, BWT). May start with `ssl://` or `tcp://` and include a port, `e.g. ssl://electrum.blockstream.info:60002`
-+  * @property socks5 URL of the socks5 proxy server or a Tor service
-+  * @property retry Request retry count
-+  * @property timeout Request timeout in seconds
-+  * @property stopGap Stop searching addresses for transactions after finding an unused gap of this length
-+  */
   data class ElectrumConfig (
       var url: String, 
       var socks5: String?, 
@@ -711,8 +1015,8 @@
       }
   
 ***************
-*** 1287,1326 ****
---- 1354,1396 ----
+*** 1415,1454 ****
+--- 1491,1533 ----
           
               this.retry.write(buf)
           
@@ -757,8 +1061,8 @@
       }
   
 ***************
-*** 1329,1368 ****
---- 1399,1441 ----
+*** 1457,1496 ****
+--- 1536,1578 ----
           
               writeOptionalString(this.proxy, buf)
           
@@ -802,3 +1106,49 @@
   
       internal fun write(buf: RustBufferBuilder) {
               this.mnemonic.write(buf)
+***************
+*** 1535,1574 ****
+--- 1617,1659 ----
+          class InvalidNetwork(message: String) : BdkException(message)
+          class InvalidProgressValue(message: String) : BdkException(message)
+          class ProgressUpdateException(message: String) : BdkException(message)
+          class InvalidOutpoint(message: String) : BdkException(message)
+          class Descriptor(message: String) : BdkException(message)
+          class AddressValidator(message: String) : BdkException(message)
+          class Encode(message: String) : BdkException(message)
+          class Miniscript(message: String) : BdkException(message)
+          class Bip32(message: String) : BdkException(message)
+          class Secp256k1(message: String) : BdkException(message)
+          class Json(message: String) : BdkException(message)
+          class Hex(message: String) : BdkException(message)
+          class Psbt(message: String) : BdkException(message)
+          class PsbtParse(message: String) : BdkException(message)
+          class Electrum(message: String) : BdkException(message)
+          class Esplora(message: String) : BdkException(message)
+          class Sled(message: String) : BdkException(message)
+          class Rusqlite(message: String) : BdkException(message)
+          
+  
++     /**
++      * @suppress
++      */
+      companion object ErrorHandler : CallStatusErrorHandler<BdkException> {
+          override fun lift(error_buf: RustBuffer.ByValue): BdkException {
+              return liftFromRustBuffer(error_buf) { error_buf -> read(error_buf) }
+          }
+  
+          fun read(error_buf: ByteBuffer): BdkException {
+              
+                  return when(error_buf.getInt()) {
+                  1 -> BdkException.InvalidU32Bytes(String.read(error_buf))
+                  2 -> BdkException.Generic(String.read(error_buf))
+                  3 -> BdkException.ScriptDoesntHaveAddressForm(String.read(error_buf))
+                  4 -> BdkException.NoRecipients(String.read(error_buf))
+                  5 -> BdkException.NoUtxosSelected(String.read(error_buf))
+                  6 -> BdkException.OutputBelowDustLimit(String.read(error_buf))
+                  7 -> BdkException.InsufficientFunds(String.read(error_buf))
+                  8 -> BdkException.BnBTotalTriesExceeded(String.read(error_buf))
+                  9 -> BdkException.BnBNoExactMatch(String.read(error_buf))
+                  10 -> BdkException.UnknownUtxo(String.read(error_buf))
+                  11 -> BdkException.TransactionNotFound(String.read(error_buf))
+                  12 -> BdkException.TransactionConfirmed(String.read(error_buf))
