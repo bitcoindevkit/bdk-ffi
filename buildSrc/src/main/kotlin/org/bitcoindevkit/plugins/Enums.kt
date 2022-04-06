@@ -1,4 +1,4 @@
-package org.bitcoindevkit.plugin
+package org.bitcoindevkit.plugins
 
 enum class Arch {
     AARCH64,

@@ -1,4 +1,4 @@
-package org.bitcoindevkit.plugin
+package org.bitcoindevkit.plugins
 
 val operatingSystem: OS = when {
     System.getProperty("os.name").contains("mac", ignoreCase = true) -> OS.MAC
@@ -11,9 +11,12 @@ val architecture: Arch = when (System.getProperty("os.arch")) {
     else -> Arch.OTHER
 }
 
+// register a task of type Exec called buildJvmBinary
+// which will run something like
+// cargo build --release --target aarch64-apple-darwin
 val buildJvmBinary by tasks.register<Exec>("buildJvmBinary") {
-    group = "Bitcoindevkit"
-    description = "Build the JVM binaries for the bitcoindevkit"
+    // group = "Bitcoindevkit"
+    // description = "Build the JVM binaries for the bitcoindevkit"
 
     workingDir("${project.projectDir}/../bdk-ffi")
     val cargoArgs: MutableList<String> = mutableListOf("build", "--release", "--target")
@@ -34,9 +37,11 @@ val buildJvmBinary by tasks.register<Exec>("buildJvmBinary") {
     }
 }
 
+// move the native libs build by cargo from bdk-ffi/target/.../release/
+// to their place in the bdk-jvm library
 val moveNativeJvmLib by tasks.register<Copy>("moveNativeJvmLib") {
-    group = "Bitcoindevkit"
-    description = "Move the native libraries to the bdk-jvm project"
+    // group = "Bitcoindevkit"
+    // description = "Move the native libraries to the bdk-jvm project"
     dependsOn(buildJvmBinary)
 
     var targetDir = ""
@@ -60,14 +65,16 @@ val moveNativeJvmLib by tasks.register<Copy>("moveNativeJvmLib") {
     }
 }
 
+// generate the bindings using the bdk-ffi-bindgen tool
+// created in the bdk-ffi submodule
 val generateJvmBindings by tasks.register<Exec>("generateJvmBindings") {
-    group = "Bitcoindevkit"
-    description = "Building the bindings file for the bitcoindevkit"
+    // group = "Bitcoindevkit"
+    // description = "Building the bindings file for the bitcoindevkit"
     dependsOn(moveNativeJvmLib)
 
     workingDir("${project.projectDir}/../bdk-ffi")
-    executable("uniffi-bindgen")
-    args("generate", "./src/bdk.udl", "--no-format", "--out-dir", "../jvm/src/main/kotlin", "--language", "kotlin")
+    executable("cargo")
+    args("run", "--package", "bdk-ffi-bindgen", "--", "--language", "kotlin", "--out-dir", "../jvm/src/main/kotlin")
 
     doLast {
         println("JVM bindings file successfully created")
