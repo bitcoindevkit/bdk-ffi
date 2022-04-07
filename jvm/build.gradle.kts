@@ -6,7 +6,7 @@ plugins {
     id("java-library")
     id("maven-publish")
     id("signing")
-    id("org.jetbrains.dokka") version "1.6.10"
+    id("org.jetbrains.dokka")
 }
 
 java {
