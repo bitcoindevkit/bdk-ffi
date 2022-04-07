@@ -1,7 +1,7 @@
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::{All, Message, Secp256k1, SecretKey};
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
-use bdk::bitcoin::{Address, Network, PrivateKey, Script};
+use bdk::bitcoin::{Address, Network, PrivateKey, PublicKey, Script};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::Progress;
 use bdk::blockchain::{
@@ -18,7 +18,7 @@ use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 use bdk::bitcoin::hashes::Hash;
-use bdk::bitcoin::util::bip32::ExtendedPrivKey;
+use bdk::bitcoin::util::bip32::{ExtendedPrivKey, ExtendedPubKey};
 use bdk::bitcoin::util::misc::{MessageSignature, signed_msg_hash};
 
 uniffi_macros::include_scaffolding!("bdk");
@@ -412,6 +412,61 @@ impl MessageSigner for EcdsaMessageSigner {
             &self.secret_key,
         );
         MessageSignature::new(sig, false).to_base64()
+    }
+}
+
+pub trait MessageSignatureVerifier {
+    fn verify(&self, sig: String, msg: String) -> bool;
+}
+
+pub struct EcdsaMessageSignatureVerifier {
+    secp: Secp256k1<All>,
+    address: Address,
+}
+
+impl EcdsaMessageSignatureVerifier {
+
+    pub fn from_address(address: String) -> Result<Self, Error> {
+        let address = Address::from_str(address.as_str()).unwrap();
+        EcdsaMessageSignatureVerifier::from_addr_struct(address)
+    }
+
+    pub fn from_pub(str: String) -> Result<Self, Error> {
+        let public_key = PublicKey::from_str(str.as_str()).unwrap();
+        let address = Address::p2pkh(&public_key, Network::Bitcoin);
+        EcdsaMessageSignatureVerifier::from_addr_struct(address)
+    }
+
+    pub fn from_xpub(str: String) -> Result<Self, Error> {
+        let public_key = ExtendedPubKey::from_str(str.as_str()).unwrap();
+        EcdsaMessageSignatureVerifier::from_pub(public_key.public_key.to_string())
+    }
+
+    fn from_addr_struct(address: Address) -> Result<Self, Error> {
+        Ok(EcdsaMessageSignatureVerifier {
+            address,
+            secp: Secp256k1::new(),
+        })
+    }
+}
+
+impl MessageSignatureVerifier for EcdsaMessageSignatureVerifier {
+
+    fn verify(&self, sig: String, msg: String) -> bool {
+        let msg_sig = MessageSignature::from_base64(sig.as_str());
+        let pub_key = match msg_sig {
+            Ok(sig) => sig.recover_pubkey(&self.secp, signed_msg_hash(msg.as_str())),
+            Err(_) => return false
+        };
+        let compressed_pub_key = match pub_key {
+            Ok(pub_key) => PublicKey::from_str(&pub_key.key.to_string()),
+            Err(_) => return false
+        };
+        let address = match compressed_pub_key {
+            Ok(pub_key) => Address::p2pkh(&pub_key, self.address.network),
+            Err(_) => return false
+        };
+        address == self.address
     }
 }
 

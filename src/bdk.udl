@@ -144,6 +144,16 @@ interface EcdsaMessageSigner {
   string sign(string msg);
 };
 
+interface EcdsaMessageSignatureVerifier {
+  [Throws=BdkError, Name=from_pub]
+  constructor(string pubkey);
+  [Throws=BdkError, Name=from_xpub]
+  constructor(string xpub);
+  [Throws=BdkError, Name=from_address]
+  constructor(string address);
+  boolean verify(string sig, string msg);
+};
+
 interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
   constructor(string psbt_base64);
