@@ -1,7 +1,7 @@
 use bdk::bitcoin::hashes::hex::ToHex;
-use bdk::bitcoin::secp256k1::Secp256k1;
+use bdk::bitcoin::secp256k1::{All, Message, Secp256k1, SecretKey};
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
-use bdk::bitcoin::{Address, Network, Script};
+use bdk::bitcoin::{Address, Network, PrivateKey, Script};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::Progress;
 use bdk::blockchain::{
@@ -17,6 +17,9 @@ use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet as BdkWallet};
 use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
+use bdk::bitcoin::hashes::Hash;
+use bdk::bitcoin::util::bip32::ExtendedPrivKey;
+use bdk::bitcoin::util::misc::{MessageSignature, signed_msg_hash};
 
 uniffi_macros::include_scaffolding!("bdk");
 
@@ -359,6 +362,56 @@ impl TxBuilder {
                 internal: Mutex::new(psbt),
             })
             .map(Arc::new)
+    }
+}
+
+pub trait MessageSigner {
+    fn sign(&self, msg: String) -> String;
+}
+
+pub struct EcdsaMessageSigner {
+    secp: Secp256k1<All>,
+    secret_key: SecretKey
+}
+
+impl EcdsaMessageSigner {
+
+    pub fn from_wif(wif: String) -> Result<Self, Error> {
+        let prv = match PrivateKey::from_wif(wif.as_str()) {
+            Ok(prv ) => prv,
+            Err(e) => return Err(Error::Generic(e.to_string()))
+        };
+
+        EcdsaMessageSigner::from_secret_key(prv.key)
+    }
+
+    pub fn from_prv(str: String) -> Result<Self, Error> {
+        let prv = SecretKey::from_str(str.as_str()).unwrap();
+        EcdsaMessageSigner::from_secret_key(prv)
+    }
+
+    pub fn from_xprv(str: String) -> Result<Self, Error> {
+        let xprv = ExtendedPrivKey::from_str(str.as_str()).unwrap();
+        EcdsaMessageSigner::from_secret_key(xprv.private_key.key)
+    }
+
+    fn from_secret_key(secret_key: SecretKey) -> Result<Self, Error> {
+        Ok(EcdsaMessageSigner {
+            secret_key,
+            secp: Secp256k1::new(),
+        })
+    }
+}
+
+impl MessageSigner for EcdsaMessageSigner {
+
+    fn sign(&self, msg: String) -> String {
+        let msg_hash = signed_msg_hash(msg.as_str());
+        let sig = self.secp.sign_recoverable(
+            &Message::from_slice(&msg_hash.into_inner()[..]).unwrap(),
+            &self.secret_key,
+        );
+        MessageSignature::new(sig, false).to_base64()
     }
 }
 

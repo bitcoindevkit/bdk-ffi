@@ -134,6 +134,16 @@ interface Wallet {
   string broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
 
+interface EcdsaMessageSigner {
+  [Throws=BdkError, Name=from_wif]
+  constructor(string wif);
+  [Throws=BdkError, Name=from_prv]
+  constructor(string prv);
+  [Throws=BdkError, Name=from_xprv]
+  constructor(string xprv);
+  string sign(string msg);
+};
+
 interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
   constructor(string psbt_base64);
