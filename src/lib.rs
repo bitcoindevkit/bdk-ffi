@@ -13,6 +13,7 @@ use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
 use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex;
+use bdk::wallet::AddressInfo;
 use bdk::{
     BlockTime, Error, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
@@ -25,6 +26,11 @@ use std::sync::{Arc, Mutex, MutexGuard};
 uniffi_macros::include_scaffolding!("bdk");
 
 type BdkError = Error;
+
+pub struct AddressInformation {
+    pub index: u32,
+    pub address: String,
+}
 
 pub enum DatabaseConfig {
     Memory,
@@ -243,12 +249,22 @@ impl Wallet {
             .to_string()
     }
 
-    fn get_last_unused_address(&self) -> String {
-        self.get_wallet()
+    // fn get_last_unused_address(&self) -> String {
+    //     self.get_wallet()
+    //         .get_address(AddressIndex::LastUnused)
+    //         .unwrap()
+    //         .address
+    //         .to_string()
+    // }
+
+    fn get_last_unused_address(&self) -> AddressInformation {
+        let address_info = self.get_wallet()
             .get_address(AddressIndex::LastUnused)
-            .unwrap()
-            .address
-            .to_string()
+            .unwrap();
+        return AddressInformation {
+            index: address_info.index,
+            address: address_info.address.to_string()
+        }
     }
 
     fn get_balance(&self) -> Result<u64, Error> {

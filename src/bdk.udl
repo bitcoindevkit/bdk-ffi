@@ -49,6 +49,11 @@ enum BdkError {
   "Rusqlite",
 };
 
+dictionary AddressInformation {
+  u32 index;
+  string address;
+};
+
 enum Network {
   "Bitcoin",
   "Testnet",
@@ -127,7 +132,7 @@ interface Wallet {
   [Throws=BdkError]
   constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
   string get_new_address();
-  string get_last_unused_address();
+  AddressInformation get_last_unused_address();
   [Throws=BdkError]
   u64 get_balance();
   [Throws=BdkError]
