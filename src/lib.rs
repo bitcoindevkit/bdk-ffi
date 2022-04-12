@@ -243,6 +243,7 @@ impl Wallet {
 pub struct ExtendedKeyInfo {
     mnemonic: String,
     xprv: String,
+    xpub: String,
     fingerprint: String,
 }
 
@@ -256,10 +257,13 @@ fn generate_extended_key(
     let mnemonic = mnemonic.into_key();
     let xkey: ExtendedKey = (mnemonic.clone(), password).into_extended_key()?;
     let xprv = xkey.into_xprv(network).unwrap();
-    let fingerprint = xprv.fingerprint(&Secp256k1::new());
+    let secp = Secp256k1::new();
+    let xpub = ExtendedPubKey::from_private(&secp, &xprv);
+    let fingerprint = xprv.fingerprint(&secp);
     Ok(ExtendedKeyInfo {
         mnemonic: mnemonic.to_string(),
         xprv: xprv.to_string(),
+        xpub: xpub.to_string(),
         fingerprint: fingerprint.to_string(),
     })
 }
@@ -272,10 +276,13 @@ fn restore_extended_key(
     let mnemonic = Mnemonic::parse_in(Language::English, mnemonic).unwrap();
     let xkey: ExtendedKey = (mnemonic.clone(), password).into_extended_key()?;
     let xprv = xkey.into_xprv(network).unwrap();
-    let fingerprint = xprv.fingerprint(&Secp256k1::new());
+    let secp = Secp256k1::new();
+    let xpub = ExtendedPubKey::from_private(&secp, &xprv);
+    let fingerprint = xprv.fingerprint(&secp);
     Ok(ExtendedKeyInfo {
         mnemonic: mnemonic.to_string(),
         xprv: xprv.to_string(),
+        xpub: xpub.to_string(),
         fingerprint: fingerprint.to_string(),
     })
 }

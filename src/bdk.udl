@@ -173,6 +173,7 @@ interface TxBuilder {
 dictionary ExtendedKeyInfo {
   string mnemonic;
   string xprv;
+  string xpub;
   string fingerprint;
 };
 
