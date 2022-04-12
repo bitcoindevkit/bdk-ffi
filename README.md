@@ -46,66 +46,63 @@ val newAddress = wallet.getNewAddress()
 ### Example Projects
 
 #### `bdk-android`
-
 * [Devkit Wallet](https://github.com/thunderbiscuit/devkit-wallet)  
 * [Padawan Wallet](https://github.com/thunderbiscuit/padawan-wallet)
 
 #### `bdk-jvm`
-
 * [Tatooine Faucet](https://github.com/thunderbiscuit/tatooine)
 
 ### How to build
 _Note that Kotlin version `1.6.10` or later is required to build the library._
 
-1. Clone this repository and init and update it's [`bdk-ffi`] submodule.
-   ```shell
-   git clone https://github.com/bitcoindevkit/bdk-kotlin
-   git submodule update --init
-   ```
-1. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions.
-1. If building on MacOS install required intel and m1 jvm targets
-   ```sh
-   rustup target add x86_64-apple-darwin aarch64-apple-darwin
-   ```
-1. Install required targets
-    ```sh
-    rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
-    ```
-1. Install `uniffi-bindgen`
-    ```sh
-    cargo install uniffi_bindgen --version 0.16.0
-    ```
-    See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/) for more info
-1. Install Android SDK and Build-Tools for API level 30+
-1. Setup `$ANDROID_SDK_ROOT` and `$ANDROID_NDK_ROOT` path variables (which are required by the 
-   build scripts), for example (NDK major version 21 is required):
-    ```shell
-    export ANDROID_SDK_ROOT=~/Android/Sdk
-    export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/21.<NDK_VERSION>
-    ```
-1. Build kotlin bindings
-    ```sh
-    ./build.sh
-    ```
-1. Start android emulator and run tests
-   ```sh
-   ./gradlew connectedAndroidTest 
-   ```
+1. Clone this repository and initialize and update its [`bdk-ffi`] submodule.
+```shell
+git clone https://github.com/bitcoindevkit/bdk-kotlin
+git submodule update --init
+```
+2. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions.
+3. If building on MacOS install required intel and m1 jvm targets
+```sh
+rustup target add x86_64-apple-darwin aarch64-apple-darwin
+```
+4. Install required targets
+ ```sh
+ rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
+ ```
+5. Install Android SDK and Build-Tools for API level 30+
+6. Setup `$ANDROID_SDK_ROOT` and `$ANDROID_NDK_ROOT` path variables (which are required by the 
+   build tool), for example (NDK major version 21 is required):
+ ```shell
+ export ANDROID_SDK_ROOT=~/Android/Sdk
+ export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/21.<NDK_VERSION>
+ ```
+7. Build kotlin bindings
+ ```sh
+ # build JVM library
+ ./gradlew :jvm:buildJvmLib
+ 
+ # build Android library
+ ./gradlew :jvm:buildAndroidLib
+ ```
+8. Start android emulator and run tests
+```sh
+./gradlew connectedAndroidTest 
+```
 
 ## How to publish
 
 ### Publish to your local maven repo
 
 1. Set your `~/.gradle/gradle.properties` signing key values
-   ```properties
-   signing.gnupg.keyName=<YOUR_GNUPG_ID>
-   signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
-   ```
-1. Publish   
-   ```shell
-   ./gradlew :jvm:publishToMavenLocal
-   ./gradlew :android:publishToMavenLocal
-   ```
+```properties
+signing.gnupg.keyName=<YOUR_GNUPG_ID>
+signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
+```
+2. Publish   
+```shell
+./gradlew :jvm:publishToMavenLocal
+./gradlew :android:publishToMavenLocal
+```
 
 Note that if you do not have gpg keys set up to sign the publication, the task will fail. If you wish to publish to your local Maven repository for local testing without signing the release, you can do so by excluding the `signMavenPublication` subtask like so:
 ```shell
@@ -116,18 +113,18 @@ Note that if you do not have gpg keys set up to sign the publication, the task w
 ### Publish to maven central with [Gradle Nexus Publish Plugin] (project maintainers only)
 
 1. Set your `~/.gradle/gradle.properties` signing key values and SONATYPE login
-   ```properties
-   signing.gnupg.keyName=<YOUR_GNUPG_ID>
-   signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
-   
-   ossrhUserName=<YOUR_SONATYPE_USERNAME>
-   ossrhPassword=<YOUR_SONATYPE_PASSWORD>
-   ```
-1. Publish
-   ```shell
-   ./gradlew :jvm:publishToSonatype closeAndReleaseSonatypeStagingRepository
-   ./gradlew :android:publishToSonatype closeAndReleaseSonatypeStagingRepository
-   ```
+```properties
+signing.gnupg.keyName=<YOUR_GNUPG_ID>
+signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
+
+ossrhUserName=<YOUR_SONATYPE_USERNAME>
+ossrhPassword=<YOUR_SONATYPE_PASSWORD>
+```
+2. Publish
+```shell
+./gradlew :jvm:publishToSonatype closeAndReleaseSonatypeStagingRepository
+./gradlew :android:publishToSonatype closeAndReleaseSonatypeStagingRepository
+```
 
 [Kotlin]: https://kotlinlang.org/
 [Android Studio]: https://developer.android.com/studio/
