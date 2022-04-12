@@ -1,22 +1,9 @@
 package org.bitcoindevkit.plugins
 
-val operatingSystem: OS = when {
-    System.getProperty("os.name").contains("mac", ignoreCase = true) -> OS.MAC
-    System.getProperty("os.name").contains("linux", ignoreCase = true) -> OS.LINUX
-    else -> OS.OTHER
-}
-val architecture: Arch = when (System.getProperty("os.arch")) {
-    "x86_64" -> Arch.X86_64
-    "aarch64" -> Arch.AARCH64
-    else -> Arch.OTHER
-}
-
 // register a task of type Exec called buildJvmBinary
 // which will run something like
 // cargo build --release --target aarch64-apple-darwin
 val buildJvmBinary by tasks.register<Exec>("buildJvmBinary") {
-    // group = "Bitcoindevkit"
-    // description = "Build the JVM binaries for the bitcoindevkit"
 
     workingDir("${project.projectDir}/../bdk-ffi")
     val cargoArgs: MutableList<String> = mutableListOf("build", "--release", "--target")
@@ -40,8 +27,7 @@ val buildJvmBinary by tasks.register<Exec>("buildJvmBinary") {
 // move the native libs build by cargo from bdk-ffi/target/.../release/
 // to their place in the bdk-jvm library
 val moveNativeJvmLib by tasks.register<Copy>("moveNativeJvmLib") {
-    // group = "Bitcoindevkit"
-    // description = "Move the native libraries to the bdk-jvm project"
+
     dependsOn(buildJvmBinary)
 
     var targetDir = ""
@@ -68,8 +54,7 @@ val moveNativeJvmLib by tasks.register<Copy>("moveNativeJvmLib") {
 // generate the bindings using the bdk-ffi-bindgen tool
 // created in the bdk-ffi submodule
 val generateJvmBindings by tasks.register<Exec>("generateJvmBindings") {
-    // group = "Bitcoindevkit"
-    // description = "Building the bindings file for the bitcoindevkit"
+
     dependsOn(moveNativeJvmLib)
 
     workingDir("${project.projectDir}/../bdk-ffi")
@@ -81,8 +66,15 @@ val generateJvmBindings by tasks.register<Exec>("generateJvmBindings") {
     }
 }
 
+// create an aggregate task which will run the 3 required tasks to build the JVM libs in order
+// the task will also appear in the printout of the ./gradlew tasks task with group and description
 tasks.register("buildJvmLib") {
     group = "Bitcoindevkit"
     description = "Aggregate task to build JVM library"
-    dependsOn(buildJvmBinary, moveNativeJvmLib, generateJvmBindings)
+
+    dependsOn(
+        buildJvmBinary,
+        moveNativeJvmLib,
+        generateJvmBindings
+    )
 }
