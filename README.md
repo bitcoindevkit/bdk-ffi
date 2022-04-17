@@ -82,7 +82,7 @@ rustup target add x86_64-apple-darwin aarch64-apple-darwin
  ./gradlew :jvm:buildJvmLib
  
  # build Android library
- ./gradlew :jvm:buildAndroidLib
+ ./gradlew :android:buildAndroidLib
  ```
 8. Start android emulator and run tests
 ```sh
