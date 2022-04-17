@@ -5,7 +5,7 @@ plugins {
     id("signing")
 
     // API docs
-    id("org.jetbrains.dokka") version "1.6.10"
+    id("org.jetbrains.dokka")
 
     // Custom plugin to generate the native libs and bindings file
     id("org.bitcoindevkit.plugins.generate-android-bindings")
