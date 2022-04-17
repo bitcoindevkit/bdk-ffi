@@ -30,17 +30,19 @@ jobs:
           java-version: 11
 
       - name: Install rust android targets
-        run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi i686-linux-android
+        run: rustup target add x86_64-linux-android aarch64-linux-android
 
       - name: Install uniffi-bindgen
         run: cargo install uniffi_bindgen --version 0.16.0
 
-      - name: Build bdk-ffi libraries
-        run: ./build.sh
+      - name: Build bdk-android library
+        run: ./gradlew :android:buildAndroidLib
 
       - name: Run Android tests
         run: ./gradlew :android:test --console=rich
 
+      - name: Build bdk-jvm library
+        run: ./gradlew :jvm:buildJvmLib
+
       - name: Run JVM tests
         run: ./gradlew :jvm:test --console=rich
-
