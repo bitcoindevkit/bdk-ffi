@@ -283,11 +283,18 @@ fn to_script_pubkey(address: &str) -> Result<Script, BdkError> {
         .map_err(|e| BdkError::Generic(e.to_string()))
 }
 
+#[derive(Clone)]
+enum RbfValue {
+    Default,
+    Value(u32),
+}
+
 struct TxBuilder {
     recipients: Vec<(String, u64)>,
     fee_rate: Option<f32>,
     drain_wallet: bool,
     drain_to: Option<String>,
+    rbf: Option<RbfValue>,
 }
 
 impl TxBuilder {
@@ -297,6 +304,7 @@ impl TxBuilder {
             fee_rate: None,
             drain_wallet: false,
             drain_to: None,
+            rbf: None,
         }
     }
 
@@ -308,6 +316,7 @@ impl TxBuilder {
             fee_rate: self.fee_rate,
             drain_wallet: self.drain_wallet,
             drain_to: self.drain_to.clone(),
+            rbf: self.rbf.clone(),
         })
     }
 
@@ -317,6 +326,7 @@ impl TxBuilder {
             fee_rate: Some(sat_per_vb),
             drain_wallet: self.drain_wallet,
             drain_to: self.drain_to.clone(),
+            rbf: self.rbf.clone(),
         })
     }
 
@@ -326,6 +336,7 @@ impl TxBuilder {
             fee_rate: self.fee_rate,
             drain_wallet: true,
             drain_to: self.drain_to.clone(),
+            rbf: self.rbf.clone(),
         })
     }
 
@@ -335,6 +346,27 @@ impl TxBuilder {
             fee_rate: self.fee_rate,
             drain_wallet: self.drain_wallet,
             drain_to: Some(address),
+            rbf: self.rbf.clone(),
+        })
+    }
+
+    fn enable_rbf(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            recipients: self.recipients.to_vec(),
+            fee_rate: self.fee_rate,
+            drain_wallet: self.drain_wallet,
+            drain_to: self.drain_to.clone(),
+            rbf: Some(RbfValue::Default),
+        })
+    }
+
+    fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            recipients: self.recipients.to_vec(),
+            fee_rate: self.fee_rate,
+            drain_wallet: self.drain_wallet,
+            drain_to: self.drain_to.clone(),
+            rbf: Some(RbfValue::Value(nsequence)),
         })
     }
 
@@ -352,6 +384,16 @@ impl TxBuilder {
         }
         if let Some(address) = &self.drain_to {
             tx_builder.drain_to(to_script_pubkey(address)?);
+        }
+        if let Some(rbf) = &self.rbf {
+            match *rbf {
+                RbfValue::Default => {
+                    tx_builder.enable_rbf();
+                }
+                RbfValue::Value(nsequence) => {
+                    tx_builder.enable_rbf_with_sequence(nsequence);
+                }
+            }
         }
         tx_builder
             .finish()
