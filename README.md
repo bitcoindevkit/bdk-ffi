@@ -84,7 +84,7 @@ rustup target add x86_64-apple-darwin aarch64-apple-darwin
  # build Android library
  ./gradlew :android:buildAndroidLib
  ```
-8. Start android emulator and run tests
+8. Start android emulator (must be x86_64) and run tests
 ```sh
 ./gradlew connectedAndroidTest 
 ```
