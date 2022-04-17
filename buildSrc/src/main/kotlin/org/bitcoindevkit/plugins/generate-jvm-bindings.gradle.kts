@@ -32,18 +32,22 @@ val moveNativeJvmLib by tasks.register<Copy>("moveNativeJvmLib") {
 
     var targetDir = ""
     var resDir = ""
+    var ext = ""
     if (operatingSystem == OS.MAC && architecture == Arch.X86_64) {
         targetDir = "x86_64-apple-darwin"
         resDir = "darwin-x86-64"
+        ext = "dylib"
     } else if (operatingSystem == OS.MAC && architecture == Arch.AARCH64) {
         targetDir = "aarch64-apple-darwin"
         resDir = "darwin-aarch64"
+        ext = "dylib"
     } else if (operatingSystem == OS.LINUX) {
         targetDir = "x86_64-unknown-linux-gnu"
         resDir = "linux-x86-64"
+        ext = "so"
     }
 
-    from("${project.projectDir}/../bdk-ffi/target/$targetDir/release/libbdkffi.dylib")
+    from("${project.projectDir}/../bdk-ffi/target/$targetDir/release/libbdkffi.$ext")
     into("${project.projectDir}/../jvm/src/main/resources/$resDir/")
 
     doLast {
