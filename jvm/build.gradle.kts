@@ -8,7 +8,7 @@ plugins {
     id("signing")
 
     // API docs
-    id("org.jetbrains.dokka") version
+    id("org.jetbrains.dokka")
 
     // Custom plugin to generate the native libs and bindings file
     id("org.bitcoindevkit.plugins.generate-jvm-bindings")
