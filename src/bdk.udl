@@ -49,9 +49,14 @@ enum BdkError {
   "Rusqlite",
 };
 
-dictionary AddressInformation {
+dictionary AddressInfo {
   u32 index;
   string address;
+};
+
+enum AddressIndex {
+  "New",
+  "LastUnused",
 };
 
 enum Network {
@@ -131,8 +136,7 @@ callback interface Progress {
 interface Wallet {
   [Throws=BdkError]
   constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
-  string get_new_address();
-  AddressInformation get_last_unused_address();
+  AddressInfo get_address(AddressIndex address_index);
   [Throws=BdkError]
   u64 get_balance();
   [Throws=BdkError]
