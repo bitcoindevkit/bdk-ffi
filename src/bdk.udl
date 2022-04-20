@@ -73,7 +73,7 @@ interface DatabaseConfig {
 };
 
 dictionary TransactionDetails {
-    u64? fees;
+    u64? fee;
     u64 received;
     u64 sent;
     string txid;
