@@ -11,13 +11,13 @@ use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
-use bdk::wallet::AddressInfo as BdkAddressInfo;
-use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::miniscript::BareCtx;
-use std::convert::{TryFrom, From};
+use bdk::wallet::AddressIndex as BdkAddressIndex;
+use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{
     BlockTime, Error, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
+use std::convert::{From, TryFrom};
 use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -36,7 +36,7 @@ impl From<BdkAddressInfo> for AddressInfo {
     fn from(x: bdk::wallet::AddressInfo) -> AddressInfo {
         AddressInfo {
             index: x.index,
-            address: x.address.to_string()
+            address: x.address.to_string(),
         }
     }
 }
@@ -50,7 +50,7 @@ impl From<AddressIndex> for BdkAddressIndex {
     fn from(x: AddressIndex) -> BdkAddressIndex {
         match x {
             AddressIndex::New => BdkAddressIndex::New,
-            AddressIndex::LastUnused => BdkAddressIndex::LastUnused
+            AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
         }
     }
 }
@@ -338,13 +338,13 @@ fn to_script_pubkey(address: &str) -> Result<Script, BdkError> {
         .map_err(|e| BdkError::Generic(e.to_string()))
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum RbfValue {
     Default,
     Value(u32),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct TxBuilder {
     recipients: Vec<(String, u64)>,
     fee_rate: Option<f32>,
@@ -512,3 +512,70 @@ impl BumpFeeTxBuilder {
 }
 
 uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
+
+// The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.
+// These tests should not be used to verify `bdk` behavior that is already tested in the `bdk`
+// crate.
+#[cfg(test)]
+mod test {
+    use crate::{TxBuilder, Wallet};
+    use bdk::bitcoin::Address;
+    use bdk::bitcoin::Network::Testnet;
+    use bdk::wallet::get_funded_wallet;
+    use std::str::FromStr;
+    use std::sync::Mutex;
+
+    #[test]
+    fn test_drain_wallet() {
+        let test_wpkh = "wpkh(cVpPVruEDdmutPzisEsYvtST1usBR3ntr8pXSyt6D2YYqXRyPcFW)";
+        let (funded_wallet, _, _) = get_funded_wallet(test_wpkh);
+        let test_wallet = Wallet {
+            wallet_mutex: Mutex::new(funded_wallet),
+        };
+        let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
+        let tx_builder = TxBuilder::new()
+            .drain_wallet()
+            .drain_to(drain_to_address.clone());
+        //dbg!(&tx_builder);
+        assert_eq!(tx_builder.drain_wallet, true);
+        assert_eq!(tx_builder.drain_to, Some(drain_to_address));
+
+        let psbt = tx_builder.finish(&test_wallet).unwrap();
+        let psbt = psbt.internal.lock().unwrap().clone();
+
+        // confirm one input with 50,000 sats
+        assert_eq!(psbt.inputs.len(), 1);
+        let input_value = psbt
+            .inputs
+            .get(0)
+            .cloned()
+            .unwrap()
+            .non_witness_utxo
+            .unwrap()
+            .output
+            .get(0)
+            .unwrap()
+            .value;
+        assert_eq!(input_value, 50_000 as u64);
+
+        // confirm one output to correct address with all sats - fee
+        assert_eq!(psbt.outputs.len(), 1);
+        let output_address = Address::from_script(
+            &psbt
+                .unsigned_tx
+                .output
+                .get(0)
+                .cloned()
+                .unwrap()
+                .script_pubkey,
+            Testnet,
+        )
+        .unwrap();
+        assert_eq!(
+            output_address,
+            Address::from_str("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt").unwrap()
+        );
+        let output_value = psbt.unsigned_tx.output.get(0).cloned().unwrap().value;
+        assert_eq!(output_value, 49_890 as u64); // input - fee
+    }
+}
