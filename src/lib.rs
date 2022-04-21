@@ -3,18 +3,22 @@ use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::{Address, Network, Script};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
-use bdk::blockchain::Progress;
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig, ConfigurableBlockchain,
 };
+use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
 use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex;
-use bdk::{BlockTime, Error, FeeRate, SignOptions, Wallet as BdkWallet};
+use bdk::{
+    BlockTime, Error, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
+};
 use std::convert::TryFrom;
+use std::fmt;
+use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -39,9 +43,9 @@ pub struct ElectrumConfig {
 pub struct EsploraConfig {
     pub base_url: String,
     pub proxy: Option<String>,
-    pub timeout_read: u64,
-    pub timeout_write: u64,
+    pub concurrency: Option<u8>,
     pub stop_gap: u64,
+    pub timeout: Option<u64>,
 }
 
 pub enum BlockchainConfig {
@@ -93,22 +97,73 @@ impl From<&bdk::TransactionDetails> for Transaction {
     }
 }
 
-struct Wallet {
-    wallet_mutex: Mutex<BdkWallet<AnyBlockchain, AnyDatabase>>,
+struct Blockchain {
+    blockchain_mutex: Mutex<AnyBlockchain>,
 }
 
-pub trait BdkProgress: Send + Sync {
+impl Blockchain {
+    fn new(blockchain_config: BlockchainConfig) -> Result<Self, BdkError> {
+        let any_blockchain_config = match blockchain_config {
+            BlockchainConfig::Electrum { config } => {
+                AnyBlockchainConfig::Electrum(ElectrumBlockchainConfig {
+                    retry: config.retry,
+                    socks5: config.socks5,
+                    timeout: config.timeout,
+                    url: config.url,
+                    stop_gap: usize::try_from(config.stop_gap).unwrap(),
+                })
+            }
+            BlockchainConfig::Esplora { config } => {
+                AnyBlockchainConfig::Esplora(EsploraBlockchainConfig {
+                    base_url: config.base_url,
+                    proxy: config.proxy,
+                    concurrency: config.concurrency,
+                    stop_gap: usize::try_from(config.stop_gap).unwrap(),
+                    timeout: config.timeout,
+                })
+            }
+        };
+        let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
+        Ok(Self {
+            blockchain_mutex: Mutex::new(blockchain),
+        })
+    }
+
+    fn get_blockchain(&self) -> MutexGuard<AnyBlockchain> {
+        self.blockchain_mutex.lock().expect("blockchain")
+    }
+
+    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<String, Error> {
+        let tx = psbt.internal.lock().unwrap().clone().extract_tx();
+        self.get_blockchain().broadcast(&tx)?;
+        // TODO move txid getter to PartiallySignedBitcoinTransaction
+        let txid = tx.txid();
+        Ok(txid.to_hex())
+    }
+}
+
+struct Wallet {
+    wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
+}
+
+pub trait Progress: Send + Sync + 'static {
     fn update(&self, progress: f32, message: Option<String>);
 }
 
-struct BdkProgressHolder {
-    progress_update: Box<dyn BdkProgress>,
+struct ProgressHolder {
+    progress: Box<dyn Progress>,
 }
 
-impl Progress for BdkProgressHolder {
+impl BdkProgress for ProgressHolder {
     fn update(&self, progress: f32, message: Option<String>) -> Result<(), Error> {
-        self.progress_update.update(progress, message);
+        self.progress.update(progress, message);
         Ok(())
+    }
+}
+
+impl fmt::Debug for ProgressHolder {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ProgressHolder").finish_non_exhaustive()
     }
 }
 
@@ -137,46 +192,23 @@ impl Wallet {
         change_descriptor: Option<String>,
         network: Network,
         database_config: DatabaseConfig,
-        blockchain_config: BlockchainConfig,
     ) -> Result<Self, BdkError> {
         let any_database_config = match database_config {
             DatabaseConfig::Memory => AnyDatabaseConfig::Memory(()),
             DatabaseConfig::Sled { config } => AnyDatabaseConfig::Sled(config),
             DatabaseConfig::Sqlite { config } => AnyDatabaseConfig::Sqlite(config),
         };
-        let any_blockchain_config = match blockchain_config {
-            BlockchainConfig::Electrum { config } => {
-                AnyBlockchainConfig::Electrum(ElectrumBlockchainConfig {
-                    retry: config.retry,
-                    socks5: config.socks5,
-                    timeout: config.timeout,
-                    url: config.url,
-                    stop_gap: usize::try_from(config.stop_gap).unwrap(),
-                })
-            }
-            BlockchainConfig::Esplora { config } => {
-                AnyBlockchainConfig::Esplora(EsploraBlockchainConfig {
-                    base_url: config.base_url,
-                    proxy: config.proxy,
-                    timeout_read: config.timeout_read,
-                    timeout_write: config.timeout_write,
-                    stop_gap: usize::try_from(config.stop_gap).unwrap(),
-                })
-            }
-        };
         let database = AnyDatabase::from_config(&any_database_config)?;
-        let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         let wallet_mutex = Mutex::new(BdkWallet::new(
             &descriptor,
             change_descriptor.as_ref(),
             network,
             database,
-            blockchain,
         )?);
         Ok(Wallet { wallet_mutex })
     }
 
-    fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyBlockchain, AnyDatabase>> {
+    fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyDatabase>> {
         self.wallet_mutex.lock().expect("wallet")
     }
 
@@ -186,11 +218,20 @@ impl Wallet {
 
     fn sync(
         &self,
-        progress_update: Box<dyn BdkProgress>,
-        max_address_param: Option<u32>,
+        blockchain: &Blockchain,
+        progress: Option<Box<dyn Progress>>,
+        //progress_update: Box<dyn BdkProgress>,
+        //max_address_param: Option<u32>,
     ) -> Result<(), BdkError> {
-        self.get_wallet()
-            .sync(BdkProgressHolder { progress_update }, max_address_param)
+        let bdk_sync_opts = BdkSyncOptions {
+            progress: progress.map(|p| {
+                Box::new(ProgressHolder { progress: p })
+                    as Box<(dyn bdk::blockchain::Progress + 'static)>
+            }),
+        };
+
+        let blockchain = blockchain.get_blockchain();
+        self.get_wallet().sync(blockchain.deref(), bdk_sync_opts)
     }
 
     fn get_new_address(&self) -> String {
@@ -228,12 +269,6 @@ impl Wallet {
     fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
         Ok(transactions.iter().map(Transaction::from).collect())
-    }
-
-    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<String, Error> {
-        let tx = psbt.internal.lock().unwrap().clone().extract_tx();
-        let txid = self.get_wallet().broadcast(&tx)?;
-        Ok(txid.to_hex())
     }
 }
 
