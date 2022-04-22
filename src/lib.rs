@@ -133,12 +133,9 @@ impl Blockchain {
         self.blockchain_mutex.lock().expect("blockchain")
     }
 
-    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<String, Error> {
+    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
-        self.get_blockchain().broadcast(&tx)?;
-        // TODO move txid getter to PartiallySignedBitcoinTransaction
-        let txid = tx.txid();
-        Ok(txid.to_hex())
+        self.get_blockchain().broadcast(&tx)
     }
 }
 
@@ -184,6 +181,12 @@ impl PartiallySignedBitcoinTransaction {
         let psbt = self.internal.lock().unwrap().clone();
         psbt.to_string()
     }
+
+    fn txid(&self) -> String {
+        let tx = self.internal.lock().unwrap().clone().extract_tx();
+        let txid = tx.txid();
+        txid.to_hex()
+    }
 }
 
 impl Wallet {
@@ -220,8 +223,6 @@ impl Wallet {
         &self,
         blockchain: &Blockchain,
         progress: Option<Box<dyn Progress>>,
-        //progress_update: Box<dyn BdkProgress>,
-        //max_address_param: Option<u32>,
     ) -> Result<(), BdkError> {
         let bdk_sync_opts = BdkSyncOptions {
             progress: progress.map(|p| {

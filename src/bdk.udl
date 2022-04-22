@@ -116,7 +116,7 @@ interface Blockchain {
   [Throws=BdkError]
   constructor(BlockchainConfig config);
   [Throws=BdkError]
-  string broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
+  void broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
 
 callback interface Progress {
@@ -143,6 +143,7 @@ interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
   constructor(string psbt_base64);
   string serialize();
+  string txid();
 };
 
 interface TxBuilder {
