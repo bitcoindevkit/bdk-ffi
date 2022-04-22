@@ -46,7 +46,7 @@ class AndroidLibTest {
 
     @Test
     fun memoryWalletNewAddress() {
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
         val address = wallet.getNewAddress()
         assertNotNull(address)
         assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
@@ -54,14 +54,14 @@ class AndroidLibTest {
 
     @Test(expected = BdkException.Descriptor::class)
     fun invalidDescriptorExceptionIsThrown() {
-        Wallet("invalid-descriptor", null, Network.TESTNET, databaseConfig, blockchainConfig)
+        Wallet("invalid-descriptor", null, Network.TESTNET, databaseConfig)
     }
 
     @Test
     fun sledWalletNewAddress() {
         val testDataDir = getTestDataDir()
         val databaseConfig = DatabaseConfig.Sled(SledDbConfiguration(testDataDir, "testdb"))
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
         val address = wallet.getNewAddress()
         assertNotNull(address)
         assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
@@ -72,8 +72,9 @@ class AndroidLibTest {
     fun sqliteWalletSyncGetBalance() {
         val testDataDir = getTestDataDir()+"/bdk-wallet.sqlite"
         val databaseConfig = DatabaseConfig.Sqlite(SqliteDbConfiguration(testDataDir))
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
-        wallet.sync(LogProgress(), null)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
+        val blockchain = Blockchain(blockchainConfig);
+        wallet.sync(blockchain, LogProgress())
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
         cleanupTestDataDir(testDataDir)
@@ -90,13 +91,13 @@ class AndroidLibTest {
                 100u
             )
         )
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchain)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
         assertNotNull(wallet)
         val network = wallet.getNetwork()
         assertEquals(network, Network.TESTNET)
     }
 
-    class LogProgress : BdkProgress {
+    class LogProgress : Progress {
         val log: Logger = LoggerFactory.getLogger(AndroidLibTest::class.java)
 
         override fun update(progress: Float, message: String?) {
@@ -106,8 +107,9 @@ class AndroidLibTest {
 
     @Test
     fun onlineWalletSyncGetBalance() {
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
-        wallet.sync(LogProgress(), null)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
+        val blockchain = Blockchain(blockchainConfig);
+        wallet.sync(blockchain, LogProgress())
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
     }

@@ -40,7 +40,7 @@ class JvmLibTest {
 
     @Test
     fun memoryWalletNewAddress() {
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
         val address = wallet.getNewAddress()
         assertNotNull(address)
         assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
@@ -48,14 +48,14 @@ class JvmLibTest {
 
     @Test(expected = BdkException.Descriptor::class)
     fun invalidDescriptorExceptionIsThrown() {
-        Wallet("invalid-descriptor", null, Network.TESTNET, databaseConfig, blockchainConfig)
+        Wallet("invalid-descriptor", null, Network.TESTNET, databaseConfig)
     }
 
     @Test
     fun sledWalletNewAddress() {
         val testDataDir = getTestDataDir()
         val databaseConfig = DatabaseConfig.Sled(SledDbConfiguration(testDataDir, "testdb"))
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
         val address = wallet.getNewAddress()
         assertNotNull(address)
         assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
@@ -66,8 +66,9 @@ class JvmLibTest {
     fun sqliteWalletSyncGetBalance() {
         val testDataDir = getTestDataDir() + "/bdk-wallet.sqlite"
         val databaseConfig = DatabaseConfig.Sqlite(SqliteDbConfiguration(testDataDir))
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
-        wallet.sync(LogProgress(), null)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
+        val blockchain = Blockchain(blockchainConfig);
+        wallet.sync(blockchain, LogProgress())
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
         cleanupTestDataDir(testDataDir)
@@ -85,13 +86,13 @@ class JvmLibTest {
                 100u
             )
         )
-        val wallet = Wallet(descriptor, null, Network.TESTNET, database, blockchain)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, database)
         assertNotNull(wallet)
         val network = wallet.getNetwork()
         assertEquals(network, Network.TESTNET)
     }
 
-    class LogProgress : BdkProgress {
+    class LogProgress : Progress {
         val log: Logger = LoggerFactory.getLogger(JvmLibTest::class.java)
 
         override fun update(progress: Float, message: String?) {
@@ -101,8 +102,9 @@ class JvmLibTest {
 
     @Test
     fun onlineWalletSyncGetBalance() {
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
-        wallet.sync(LogProgress(), null)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
+        val blockchain = Blockchain(blockchainConfig);
+        wallet.sync(blockchain, LogProgress())
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
     }
@@ -121,8 +123,9 @@ class JvmLibTest {
     fun walletTxBuilderBroadcast() {
         val descriptor =
             "wpkh([c1ed86ca/84'/1'/0'/0]tprv8hTkxK6QT7fCQx1wbuHuwbNh4STr2Ruz8RwEX7ymk6qnpixtbRG4T99mHxJwKTHPuKQ61heWrrpxZ8jpHj4sbisrQhDxnyx3HoQEZebtraN/*)"
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
-        wallet.sync(LogProgress(), null)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
+        val blockchain = Blockchain(blockchainConfig);
+        wallet.sync(blockchain, LogProgress())
         val balance = wallet.getBalance()
         if (balance > 2000u) {
             println("balance $balance")
@@ -131,7 +134,8 @@ class JvmLibTest {
             val txBuilder = TxBuilder().addRecipient(faucetAddress, 1000u).feeRate(1.2f)
             val psbt = txBuilder.build(wallet)
             wallet.sign(psbt)
-            val txid = wallet.broadcast(psbt)
+            blockchain.broadcast(psbt)
+            val txid = psbt.txid()
             println("https://mempool.space/testnet/tx/$txid")
             assertNotNull(txid)
         } else {
@@ -144,7 +148,7 @@ class JvmLibTest {
     fun walletTxBuilderInvalidAddress() {
         val descriptor =
             "wpkh([c1ed86ca/84'/1'/0'/0]tprv8hTkxK6QT7fCQx1wbuHuwbNh4STr2Ruz8RwEX7ymk6qnpixtbRG4T99mHxJwKTHPuKQ61heWrrpxZ8jpHj4sbisrQhDxnyx3HoQEZebtraN/*)"
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig, blockchainConfig)
+        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
         val txBuilder = TxBuilder().addRecipient("INVALID_ADDRESS", 1000u).feeRate(1.2f)
         txBuilder.build(wallet)
     }
