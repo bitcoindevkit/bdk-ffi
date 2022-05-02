@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Update BDK to version 0.18.0
+
 ## [v0.5.0]
 
 - Fix Wallet.broadcast function, now returns a tx id as a hex string
