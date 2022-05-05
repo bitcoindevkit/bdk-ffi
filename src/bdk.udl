@@ -101,9 +101,9 @@ dictionary ElectrumConfig {
 dictionary EsploraConfig {
   string base_url;
   string? proxy;
-  u64 timeout_read;
-  u64 timeout_write;
+  u8? concurrency;
   u64 stop_gap;
+  u64? timeout;
 };
 
 [Enum]
@@ -112,13 +112,20 @@ interface BlockchainConfig {
   Esplora(EsploraConfig config);
 };
 
-callback interface BdkProgress {
+interface Blockchain {
+  [Throws=BdkError]
+  constructor(BlockchainConfig config);
+  [Throws=BdkError]
+  void broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
+};
+
+callback interface Progress {
   void update(f32 progress, string? message);
 };
 
 interface Wallet {
   [Throws=BdkError]
-  constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config, BlockchainConfig blockchain_config);
+  constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
   string get_new_address();
   string get_last_unused_address();
   [Throws=BdkError]
@@ -129,15 +136,14 @@ interface Wallet {
   sequence<Transaction> get_transactions();
   Network get_network();
   [Throws=BdkError]
-  void sync(BdkProgress progress_update, u32? max_address_param);
-  [Throws=BdkError]
-  string broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
+  void sync([ByRef] Blockchain blockchain, Progress? progress);
 };
 
 interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
   constructor(string psbt_base64);
   string serialize();
+  string txid();
 };
 
 interface TxBuilder {
