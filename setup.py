@@ -60,16 +60,16 @@ rust_ext = RustExtension(
 )
 
 setup(
-    name = 'bdkpython',
-    version = '0.0.5',
+    name='bdkpython',
+    version='0.0.6.dev0',
     description="The Python language bindings for the bitcoindevkit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
     rust_extensions=[rust_ext],
     zip_safe=False,
     packages=['bdkpython'],
-    package_dir={ 'bdkpython': './src/bdkpython' },
-    url="https://github.com/thunderbiscuit/bdk-python",
+    package_dir={'bdkpython': './src/bdkpython'},
+    url="https://github.com/bitcoindevkit/bdk-python",
     author="Alekos Filini <alekos.filini@gmail.com>, Steve Myers <steve@notmandatory.org>",
     license="MIT or Apache 2.0",
 )

@@ -20,13 +20,13 @@ python -m tox
 ## Build the package
 ```shell
 # Install dependecies
-pip install -r requirements.txt
+pip install --requirement requirements.txt
 
 # Generate the bindings first
 bash generate.sh
 
 # Build the wheel
-python3 setup.py -v bdist_wheel
+python3 setup.py --verbose bdist_wheel
 ```
 <br/>
 
