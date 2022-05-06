@@ -406,7 +406,7 @@ impl TxBuilder {
         })
     }
 
-    fn build(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
         for (address, amount) in &self.recipients {
@@ -484,7 +484,7 @@ impl BumpFeeTxBuilder {
         })
     }
 
-    fn build(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
         let wallet = wallet.get_wallet();
         let txid = Txid::from_str(self.txid.as_str())?;
         let mut tx_builder = wallet.build_fee_bump(txid)?;
