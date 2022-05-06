@@ -443,8 +443,8 @@ impl TxBuilder {
 struct BumpFeeTxBuilder {
     txid: String,
     fee_rate: f32,
-    rbf: Option<RbfValue>,
     allow_shrinking: Option<String>,
+    rbf: Option<RbfValue>,
 }
 
 impl BumpFeeTxBuilder {
@@ -470,8 +470,8 @@ impl BumpFeeTxBuilder {
         Arc::new(Self {
             txid: self.txid.clone(),
             fee_rate: self.fee_rate,
-            rbf: Some(RbfValue::Default),
             allow_shrinking: self.allow_shrinking.clone(),
+            rbf: Some(RbfValue::Default),
         })
     }
 
@@ -479,8 +479,8 @@ impl BumpFeeTxBuilder {
         Arc::new(Self {
             txid: self.txid.clone(),
             fee_rate: self.fee_rate,
-            rbf: Some(RbfValue::Value(nsequence)),
             allow_shrinking: self.allow_shrinking.clone(),
+            rbf: Some(RbfValue::Value(nsequence)),
         })
     }
 
@@ -489,6 +489,12 @@ impl BumpFeeTxBuilder {
         let txid = Txid::from_str(self.txid.as_str())?;
         let mut tx_builder = wallet.build_fee_bump(txid)?;
         tx_builder.fee_rate(FeeRate::from_sat_per_vb(self.fee_rate));
+        if let Some(allow_shrinking) = &self.allow_shrinking {
+            let address =
+                Address::from_str(allow_shrinking).map_err(|e| Error::Generic(e.to_string()))?;
+            let script = address.script_pubkey();
+            tx_builder.allow_shrinking(script)?;
+        }
         if let Some(rbf) = &self.rbf {
             match *rbf {
                 RbfValue::Default => {
@@ -498,12 +504,6 @@ impl BumpFeeTxBuilder {
                     tx_builder.enable_rbf_with_sequence(nsequence);
                 }
             }
-        }
-        if let Some(allow_shrinking) = &self.allow_shrinking {
-            let address =
-                Address::from_str(allow_shrinking).map_err(|e| Error::Generic(e.to_string()))?;
-            let script = address.script_pubkey();
-            tx_builder.allow_shrinking(script)?;
         }
         tx_builder
             .finish()
