@@ -13,7 +13,11 @@ pip install bdkpython
 
 ## Run the tests
 ```shell
-python -m tox
+pip3 install --requirement requirements.txt
+bash ./generate.sh
+python3 setup.py --verbose bdist_wheel
+pip3 install ./dist/bdkpython-<yourversion>-py3-none-any.whl
+python3 ./tests/test_bdk.py
 ```
 <br/>
 
@@ -32,5 +36,5 @@ python3 setup.py --verbose bdist_wheel
 
 ## Install locally
 ```shell
-pip install ./dist/bdkpython-0.0.1-py3-none-any.whl
+pip install ./dist/bdkpython-<yourversion>-py3-none-any.whl
 ```
