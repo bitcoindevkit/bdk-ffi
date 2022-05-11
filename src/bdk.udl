@@ -155,7 +155,16 @@ interface TxBuilder {
   TxBuilder enable_rbf();
   TxBuilder enable_rbf_with_sequence(u32 nsequence);
   [Throws=BdkError]
-  PartiallySignedBitcoinTransaction build([ByRef] Wallet wallet);
+  PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
+};
+
+interface BumpFeeTxBuilder {
+  constructor(string txid, float new_fee_rate);
+  BumpFeeTxBuilder allow_shrinking(string address);
+  BumpFeeTxBuilder enable_rbf();
+  BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
+  [Throws=BdkError]
+  PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
 };
 
 dictionary ExtendedKeyInfo {

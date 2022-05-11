@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Update BDK to version 0.18.0
+- Add BumpFeeTxBuilder to bump the fee on an unconfirmed tx created by the Wallet
+- Change TxBuilder.build() to TxBuilder.finish() to align with bdk function name 
 
 ## [v0.5.0]
 

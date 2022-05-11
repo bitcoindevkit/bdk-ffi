@@ -1,7 +1,7 @@
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
-use bdk::bitcoin::{Address, Network, Script};
+use bdk::bitcoin::{Address, Network, Script, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig, ConfigurableBlockchain,
@@ -406,7 +406,7 @@ impl TxBuilder {
         })
     }
 
-    fn build(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
         for (address, amount) in &self.recipients {
@@ -420,6 +420,80 @@ impl TxBuilder {
         }
         if let Some(address) = &self.drain_to {
             tx_builder.drain_to(to_script_pubkey(address)?);
+        }
+        if let Some(rbf) = &self.rbf {
+            match *rbf {
+                RbfValue::Default => {
+                    tx_builder.enable_rbf();
+                }
+                RbfValue::Value(nsequence) => {
+                    tx_builder.enable_rbf_with_sequence(nsequence);
+                }
+            }
+        }
+        tx_builder
+            .finish()
+            .map(|(psbt, _)| PartiallySignedBitcoinTransaction {
+                internal: Mutex::new(psbt),
+            })
+            .map(Arc::new)
+    }
+}
+
+struct BumpFeeTxBuilder {
+    txid: String,
+    fee_rate: f32,
+    allow_shrinking: Option<String>,
+    rbf: Option<RbfValue>,
+}
+
+impl BumpFeeTxBuilder {
+    fn new(txid: String, fee_rate: f32) -> Self {
+        Self {
+            txid,
+            fee_rate,
+            allow_shrinking: None,
+            rbf: None,
+        }
+    }
+
+    fn allow_shrinking(&self, address: String) -> Arc<Self> {
+        Arc::new(Self {
+            txid: self.txid.clone(),
+            fee_rate: self.fee_rate,
+            allow_shrinking: Some(address),
+            rbf: self.rbf.clone(),
+        })
+    }
+
+    fn enable_rbf(&self) -> Arc<Self> {
+        Arc::new(Self {
+            txid: self.txid.clone(),
+            fee_rate: self.fee_rate,
+            allow_shrinking: self.allow_shrinking.clone(),
+            rbf: Some(RbfValue::Default),
+        })
+    }
+
+    fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
+        Arc::new(Self {
+            txid: self.txid.clone(),
+            fee_rate: self.fee_rate,
+            allow_shrinking: self.allow_shrinking.clone(),
+            rbf: Some(RbfValue::Value(nsequence)),
+        })
+    }
+
+    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+        let wallet = wallet.get_wallet();
+        let txid = Txid::from_str(self.txid.as_str())?;
+        let mut tx_builder = wallet.build_fee_bump(txid)?;
+        tx_builder.fee_rate(FeeRate::from_sat_per_vb(self.fee_rate));
+        if let Some(allow_shrinking) = &self.allow_shrinking {
+            let address =
+                Address::from_str(allow_shrinking).map_err(|e| Error::Generic(e.to_string()))?;
+            let script = address.script_pubkey();
+            tx_builder.allow_shrinking(script)?;
         }
         if let Some(rbf) = &self.rbf {
             match *rbf {
