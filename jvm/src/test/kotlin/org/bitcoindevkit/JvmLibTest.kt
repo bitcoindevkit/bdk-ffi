@@ -118,31 +118,31 @@ class JvmLibTest {
         assertEquals(psbtSerialized, validSerializedPsbt)
     }
 
-    // TODO switch all tests to REGTEST, especially this one
-    @Test
-    fun walletTxBuilderBroadcast() {
-        val descriptor =
-            "wpkh([c1ed86ca/84'/1'/0'/0]tprv8hTkxK6QT7fCQx1wbuHuwbNh4STr2Ruz8RwEX7ymk6qnpixtbRG4T99mHxJwKTHPuKQ61heWrrpxZ8jpHj4sbisrQhDxnyx3HoQEZebtraN/*)"
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val blockchain = Blockchain(blockchainConfig);
-        wallet.sync(blockchain, LogProgress())
-        val balance = wallet.getBalance()
-        if (balance > 2000u) {
-            println("balance $balance")
-            // send coins back to https://bitcoinfaucet.uo1.net
-            val faucetAddress = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt"
-            val txBuilder = TxBuilder().addRecipient(faucetAddress, 1000u).feeRate(1.2f)
-            val psbt = txBuilder.build(wallet)
-            wallet.sign(psbt)
-            blockchain.broadcast(psbt)
-            val txid = psbt.txid()
-            println("https://mempool.space/testnet/tx/$txid")
-            assertNotNull(txid)
-        } else {
-            val depositAddress = wallet.getLastUnusedAddress()
-            fail("Send more testnet coins to: $depositAddress")
-        }
-    }
+    // TODO move tx_builder tests to bdk-ffi, especially this one
+//    @Test
+//    fun walletTxBuilderBroadcast() {
+//        val descriptor =
+//            "wpkh([c1ed86ca/84'/1'/0'/0]tprv8hTkxK6QT7fCQx1wbuHuwbNh4STr2Ruz8RwEX7ymk6qnpixtbRG4T99mHxJwKTHPuKQ61heWrrpxZ8jpHj4sbisrQhDxnyx3HoQEZebtraN/*)"
+//        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
+//        val blockchain = Blockchain(blockchainConfig);
+//        wallet.sync(blockchain, LogProgress())
+//        val balance = wallet.getBalance()
+//        if (balance > 2000u) {
+//            println("balance $balance")
+//            // send coins back to https://bitcoinfaucet.uo1.net
+//            val faucetAddress = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt"
+//            val txBuilder = TxBuilder().addRecipient(faucetAddress, 1000u).feeRate(1.2f)
+//            val psbt = txBuilder.finish(wallet)
+//            wallet.sign(psbt)
+//            blockchain.broadcast(psbt)
+//            val txid = psbt.txid()
+//            println("https://mempool.space/testnet/tx/$txid")
+//            assertNotNull(txid)
+//        } else {
+//            val depositAddress = wallet.getLastUnusedAddress()
+//            fail("Send more testnet coins to: $depositAddress")
+//        }
+//    }
 
     @Test(expected = BdkException.Generic::class)
     fun walletTxBuilderInvalidAddress() {
@@ -150,7 +150,7 @@ class JvmLibTest {
             "wpkh([c1ed86ca/84'/1'/0'/0]tprv8hTkxK6QT7fCQx1wbuHuwbNh4STr2Ruz8RwEX7ymk6qnpixtbRG4T99mHxJwKTHPuKQ61heWrrpxZ8jpHj4sbisrQhDxnyx3HoQEZebtraN/*)"
         val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
         val txBuilder = TxBuilder().addRecipient("INVALID_ADDRESS", 1000u).feeRate(1.2f)
-        txBuilder.build(wallet)
+        txBuilder.finish(wallet)
     }
 
       // Comment this test in for local testing, you will need let it fail ones to get an address
