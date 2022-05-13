@@ -325,6 +325,7 @@ enum RbfValue {
     Value(u32),
 }
 
+#[derive(Clone)]
 struct TxBuilder {
     recipients: Vec<(String, u64)>,
     fee_rate: Option<f32>,
@@ -349,60 +350,42 @@ impl TxBuilder {
         recipients.append(&mut vec![(recipient, amount)]);
         Arc::new(TxBuilder {
             recipients,
-            fee_rate: self.fee_rate,
-            drain_wallet: self.drain_wallet,
-            drain_to: self.drain_to.clone(),
-            rbf: self.rbf.clone(),
+            ..self.clone()
         })
     }
 
     fn fee_rate(&self, sat_per_vb: f32) -> Arc<Self> {
         Arc::new(TxBuilder {
-            recipients: self.recipients.to_vec(),
             fee_rate: Some(sat_per_vb),
-            drain_wallet: self.drain_wallet,
-            drain_to: self.drain_to.clone(),
-            rbf: self.rbf.clone(),
+            ..self.clone()
         })
     }
 
     fn drain_wallet(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
-            recipients: self.recipients.to_vec(),
-            fee_rate: self.fee_rate,
             drain_wallet: true,
-            drain_to: self.drain_to.clone(),
-            rbf: self.rbf.clone(),
+            ..self.clone()
         })
     }
 
     fn drain_to(&self, address: String) -> Arc<Self> {
         Arc::new(TxBuilder {
-            recipients: self.recipients.to_vec(),
-            fee_rate: self.fee_rate,
-            drain_wallet: self.drain_wallet,
             drain_to: Some(address),
-            rbf: self.rbf.clone(),
+            ..self.clone()
         })
     }
 
     fn enable_rbf(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
-            recipients: self.recipients.to_vec(),
-            fee_rate: self.fee_rate,
-            drain_wallet: self.drain_wallet,
-            drain_to: self.drain_to.clone(),
             rbf: Some(RbfValue::Default),
+            ..self.clone()
         })
     }
 
     fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(TxBuilder {
-            recipients: self.recipients.to_vec(),
-            fee_rate: self.fee_rate,
-            drain_wallet: self.drain_wallet,
-            drain_to: self.drain_to.clone(),
             rbf: Some(RbfValue::Value(nsequence)),
+            ..self.clone()
         })
     }
 
@@ -440,6 +423,7 @@ impl TxBuilder {
     }
 }
 
+#[derive(Clone)]
 struct BumpFeeTxBuilder {
     txid: String,
     fee_rate: f32,
@@ -459,28 +443,22 @@ impl BumpFeeTxBuilder {
 
     fn allow_shrinking(&self, address: String) -> Arc<Self> {
         Arc::new(Self {
-            txid: self.txid.clone(),
-            fee_rate: self.fee_rate,
             allow_shrinking: Some(address),
-            rbf: self.rbf.clone(),
+            ..self.clone()
         })
     }
 
     fn enable_rbf(&self) -> Arc<Self> {
         Arc::new(Self {
-            txid: self.txid.clone(),
-            fee_rate: self.fee_rate,
-            allow_shrinking: self.allow_shrinking.clone(),
             rbf: Some(RbfValue::Default),
+            ..self.clone()
         })
     }
 
     fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(Self {
-            txid: self.txid.clone(),
-            fee_rate: self.fee_rate,
-            allow_shrinking: self.allow_shrinking.clone(),
             rbf: Some(RbfValue::Value(nsequence)),
+            ..self.clone()
         })
     }
 
