@@ -19,13 +19,13 @@ fileprivate extension RustBuffer {
     }
 
     static func from(_ ptr: UnsafeBufferPointer<UInt8>) -> RustBuffer {
-        try! rustCall { ffi_bdk_d04b_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
+        try! rustCall { ffi_bdk_360_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
     }
 
     // Frees the buffer in place.
     // The buffer must not be used after this is called.
     func deallocate() {
-        try! rustCall { ffi_bdk_d04b_rustbuffer_free(self, $0) }
+        try! rustCall { ffi_bdk_360_rustbuffer_free(self, $0) }
     }
 }
 
@@ -528,8 +528,9 @@ extension Network: Equatable, Hashable {}
 
 public enum DatabaseConfig {
     
-    case memory(junk: String )
+    case memory
     case sled(config: SledDbConfiguration )
+    case sqlite(config: SqliteDbConfiguration )
 }
 
 extension DatabaseConfig: ViaFfiUsingByteBuffer, ViaFfi {
@@ -537,11 +538,12 @@ extension DatabaseConfig: ViaFfiUsingByteBuffer, ViaFfi {
         let variant: Int32 = try buf.readInt()
         switch variant {
         
-        case 1: return .memory(
-            junk: try String.read(from: buf)
-            )
+        case 1: return .memory
         case 2: return .sled(
             config: try SledDbConfiguration.read(from: buf)
+            )
+        case 3: return .sqlite(
+            config: try SqliteDbConfiguration.read(from: buf)
             )
         default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -551,14 +553,18 @@ extension DatabaseConfig: ViaFfiUsingByteBuffer, ViaFfi {
         switch self {
         
         
-        case let .memory(junk):
+        case .memory:
             buf.writeInt(Int32(1))
-            junk.write(into: buf)
-            
         
         
         case let .sled(config):
             buf.writeInt(Int32(2))
+            config.write(into: buf)
+            
+        
+        
+        case let .sqlite(config):
+            buf.writeInt(Int32(3))
             config.write(into: buf)
             
         
@@ -730,7 +736,7 @@ public func generateExtendedKey( network: Network,  wordCount: WordCount,  passw
     
     rustCallWithError(BdkError.self) {
     
-    bdk_d04b_generate_extended_key(network.lower(), wordCount.lower(), FfiConverterOptionString.lower(password) , $0)
+    bdk_360_generate_extended_key(network.lower(), wordCount.lower(), FfiConverterOptionString.lower(password) , $0)
 }
     return try ExtendedKeyInfo.lift(_retval)
 }
@@ -743,11 +749,90 @@ public func restoreExtendedKey( network: Network,  mnemonic: String,  password: 
     
     rustCallWithError(BdkError.self) {
     
-    bdk_d04b_restore_extended_key(network.lower(), mnemonic.lower(), FfiConverterOptionString.lower(password) , $0)
+    bdk_360_restore_extended_key(network.lower(), mnemonic.lower(), FfiConverterOptionString.lower(password) , $0)
 }
     return try ExtendedKeyInfo.lift(_retval)
 }
 
+
+
+public protocol BlockchainProtocol {
+    func broadcast( psbt: PartiallySignedBitcoinTransaction ) throws
+    
+}
+
+public class Blockchain: BlockchainProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `ViaFfi` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init( config: BlockchainConfig ) throws {
+        self.init(unsafeFromRawPointer: try
+    
+    
+    rustCallWithError(BdkError.self) {
+    
+    bdk_360_Blockchain_new(config.lower() , $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_360_Blockchain_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func broadcast( psbt: PartiallySignedBitcoinTransaction ) throws {
+        try
+    rustCallWithError(BdkError.self) {
+    
+    bdk_360_Blockchain_broadcast(self.pointer, psbt.lower() , $0
+    )
+}
+    }
+    
+}
+
+
+fileprivate extension Blockchain {
+    typealias FfiType = UnsafeMutableRawPointer
+
+    static func read(from buf: Reader) throws -> Self {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try self.lift(ptr!)
+    }
+
+    func write(into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
+        return Self(unsafeFromRawPointer: pointer)
+    }
+
+    func lower() -> UnsafeMutableRawPointer {
+        return self.pointer
+    }
+}
+
+// Ideally this would be `fileprivate`, but Swift says:
+// """
+// 'private' modifier cannot be used with extensions that declare protocol conformances
+// """
+extension Blockchain : ViaFfi, Serializable {}
 
 
 public protocol WalletProtocol {
@@ -757,8 +842,7 @@ public protocol WalletProtocol {
     func sign( psbt: PartiallySignedBitcoinTransaction ) throws
     func getTransactions() throws -> [Transaction]
     func getNetwork()  -> Network
-    func sync( progressUpdate: BdkProgress,  maxAddressParam: UInt32? ) throws
-    func broadcast( psbt: PartiallySignedBitcoinTransaction ) throws -> Transaction
+    func sync( blockchain: Blockchain,  progress: Progress? ) throws
     
 }
 
@@ -771,18 +855,18 @@ public class Wallet: WalletProtocol {
     required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
-    public convenience init( descriptor: String,  changeDescriptor: String?,  network: Network,  databaseConfig: DatabaseConfig,  blockchainConfig: BlockchainConfig ) throws {
+    public convenience init( descriptor: String,  changeDescriptor: String?,  network: Network,  databaseConfig: DatabaseConfig ) throws {
         self.init(unsafeFromRawPointer: try
     
     
     rustCallWithError(BdkError.self) {
     
-    bdk_d04b_Wallet_new(descriptor.lower(), FfiConverterOptionString.lower(changeDescriptor), network.lower(), databaseConfig.lower(), blockchainConfig.lower() , $0)
+    bdk_360_Wallet_new(descriptor.lower(), FfiConverterOptionString.lower(changeDescriptor), network.lower(), databaseConfig.lower() , $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_d04b_Wallet_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_360_Wallet_object_free(pointer, $0) }
     }
 
     
@@ -792,7 +876,7 @@ public class Wallet: WalletProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_d04b_Wallet_get_new_address(self.pointer,  $0
+    bdk_360_Wallet_get_new_address(self.pointer,  $0
     )
 }
         return try! String.lift(_retval)
@@ -801,7 +885,7 @@ public class Wallet: WalletProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_d04b_Wallet_get_last_unused_address(self.pointer,  $0
+    bdk_360_Wallet_get_last_unused_address(self.pointer,  $0
     )
 }
         return try! String.lift(_retval)
@@ -810,7 +894,7 @@ public class Wallet: WalletProtocol {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_d04b_Wallet_get_balance(self.pointer,  $0
+    bdk_360_Wallet_get_balance(self.pointer,  $0
     )
 }
         return try UInt64.lift(_retval)
@@ -819,7 +903,7 @@ public class Wallet: WalletProtocol {
         try
     rustCallWithError(BdkError.self) {
     
-    bdk_d04b_Wallet_sign(self.pointer, psbt.lower() , $0
+    bdk_360_Wallet_sign(self.pointer, psbt.lower() , $0
     )
 }
     }
@@ -827,7 +911,7 @@ public class Wallet: WalletProtocol {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_d04b_Wallet_get_transactions(self.pointer,  $0
+    bdk_360_Wallet_get_transactions(self.pointer,  $0
     )
 }
         return try FfiConverterSequenceEnumTransaction.lift(_retval)
@@ -836,27 +920,18 @@ public class Wallet: WalletProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_d04b_Wallet_get_network(self.pointer,  $0
+    bdk_360_Wallet_get_network(self.pointer,  $0
     )
 }
         return try! Network.lift(_retval)
     }
-    public func sync( progressUpdate: BdkProgress,  maxAddressParam: UInt32? ) throws {
+    public func sync( blockchain: Blockchain,  progress: Progress? ) throws {
         try
     rustCallWithError(BdkError.self) {
     
-    bdk_d04b_Wallet_sync(self.pointer, ffiConverterCallbackInterfaceBdkProgress.lower(progressUpdate), FfiConverterOptionUInt32.lower(maxAddressParam) , $0
+    bdk_360_Wallet_sync(self.pointer, blockchain.lower(), FfiConverterOptionCallbackInterfaceProgress.lower(progress) , $0
     )
 }
-    }
-    public func broadcast( psbt: PartiallySignedBitcoinTransaction ) throws -> Transaction {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_d04b_Wallet_broadcast(self.pointer, psbt.lower() , $0
-    )
-}
-        return try Transaction.lift(_retval)
     }
     
 }
@@ -900,6 +975,7 @@ extension Wallet : ViaFfi, Serializable {}
 
 public protocol PartiallySignedBitcoinTransactionProtocol {
     func serialize()  -> String
+    func txid()  -> String
     
 }
 
@@ -912,30 +988,20 @@ public class PartiallySignedBitcoinTransaction: PartiallySignedBitcoinTransactio
     required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
         self.pointer = pointer
     }
-    public convenience init( wallet: Wallet,  recipient: String,  amount: UInt64,  feeRate: Float? ) throws {
+    public convenience init( psbtBase64: String ) throws {
         self.init(unsafeFromRawPointer: try
     
     
     rustCallWithError(BdkError.self) {
     
-    bdk_d04b_PartiallySignedBitcoinTransaction_new(wallet.lower(), recipient.lower(), amount.lower(), FfiConverterOptionFloat.lower(feeRate) , $0)
+    bdk_360_PartiallySignedBitcoinTransaction_new(psbtBase64.lower() , $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_d04b_PartiallySignedBitcoinTransaction_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_360_PartiallySignedBitcoinTransaction_object_free(pointer, $0) }
     }
 
-    
-    public static func deserialize( psbtBase64: String ) throws -> PartiallySignedBitcoinTransaction {
-        return PartiallySignedBitcoinTransaction(unsafeFromRawPointer: try
-    
-    
-    rustCallWithError(BdkError.self) {
-    
-    bdk_d04b_PartiallySignedBitcoinTransaction_deserialize(psbtBase64.lower() , $0)
-})
-    }
     
 
     
@@ -943,7 +1009,16 @@ public class PartiallySignedBitcoinTransaction: PartiallySignedBitcoinTransactio
         let _retval = try!
     rustCall() {
     
-    bdk_d04b_PartiallySignedBitcoinTransaction_serialize(self.pointer,  $0
+    bdk_360_PartiallySignedBitcoinTransaction_serialize(self.pointer,  $0
+    )
+}
+        return try! String.lift(_retval)
+    }
+    public func txid()  -> String {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_PartiallySignedBitcoinTransaction_txid(self.pointer,  $0
     )
 }
         return try! String.lift(_retval)
@@ -986,6 +1061,256 @@ fileprivate extension PartiallySignedBitcoinTransaction {
 // 'private' modifier cannot be used with extensions that declare protocol conformances
 // """
 extension PartiallySignedBitcoinTransaction : ViaFfi, Serializable {}
+
+
+public protocol TxBuilderProtocol {
+    func addRecipient( address: String,  amount: UInt64 )  -> TxBuilder
+    func feeRate( satPerVbyte: Float )  -> TxBuilder
+    func drainWallet()  -> TxBuilder
+    func drainTo( address: String )  -> TxBuilder
+    func enableRbf()  -> TxBuilder
+    func enableRbfWithSequence( nsequence: UInt32 )  -> TxBuilder
+    func finish( wallet: Wallet ) throws -> PartiallySignedBitcoinTransaction
+    
+}
+
+public class TxBuilder: TxBuilderProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `ViaFfi` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init()  {
+        self.init(unsafeFromRawPointer: try!
+    
+    
+    rustCall() {
+    
+    bdk_360_TxBuilder_new( $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_360_TxBuilder_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func addRecipient( address: String,  amount: UInt64 )  -> TxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_TxBuilder_add_recipient(self.pointer, address.lower(), amount.lower() , $0
+    )
+}
+        return try! TxBuilder.lift(_retval)
+    }
+    public func feeRate( satPerVbyte: Float )  -> TxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_TxBuilder_fee_rate(self.pointer, satPerVbyte.lower() , $0
+    )
+}
+        return try! TxBuilder.lift(_retval)
+    }
+    public func drainWallet()  -> TxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_TxBuilder_drain_wallet(self.pointer,  $0
+    )
+}
+        return try! TxBuilder.lift(_retval)
+    }
+    public func drainTo( address: String )  -> TxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_TxBuilder_drain_to(self.pointer, address.lower() , $0
+    )
+}
+        return try! TxBuilder.lift(_retval)
+    }
+    public func enableRbf()  -> TxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_TxBuilder_enable_rbf(self.pointer,  $0
+    )
+}
+        return try! TxBuilder.lift(_retval)
+    }
+    public func enableRbfWithSequence( nsequence: UInt32 )  -> TxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_TxBuilder_enable_rbf_with_sequence(self.pointer, nsequence.lower() , $0
+    )
+}
+        return try! TxBuilder.lift(_retval)
+    }
+    public func finish( wallet: Wallet ) throws -> PartiallySignedBitcoinTransaction {
+        let _retval = try
+    rustCallWithError(BdkError.self) {
+    
+    bdk_360_TxBuilder_finish(self.pointer, wallet.lower() , $0
+    )
+}
+        return try PartiallySignedBitcoinTransaction.lift(_retval)
+    }
+    
+}
+
+
+fileprivate extension TxBuilder {
+    typealias FfiType = UnsafeMutableRawPointer
+
+    static func read(from buf: Reader) throws -> Self {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try self.lift(ptr!)
+    }
+
+    func write(into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
+        return Self(unsafeFromRawPointer: pointer)
+    }
+
+    func lower() -> UnsafeMutableRawPointer {
+        return self.pointer
+    }
+}
+
+// Ideally this would be `fileprivate`, but Swift says:
+// """
+// 'private' modifier cannot be used with extensions that declare protocol conformances
+// """
+extension TxBuilder : ViaFfi, Serializable {}
+
+
+public protocol BumpFeeTxBuilderProtocol {
+    func allowShrinking( address: String )  -> BumpFeeTxBuilder
+    func enableRbf()  -> BumpFeeTxBuilder
+    func enableRbfWithSequence( nsequence: UInt32 )  -> BumpFeeTxBuilder
+    func finish( wallet: Wallet ) throws -> PartiallySignedBitcoinTransaction
+    
+}
+
+public class BumpFeeTxBuilder: BumpFeeTxBuilderProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `ViaFfi` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init( txid: String,  newFeeRate: Float )  {
+        self.init(unsafeFromRawPointer: try!
+    
+    
+    rustCall() {
+    
+    bdk_360_BumpFeeTxBuilder_new(txid.lower(), newFeeRate.lower() , $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_360_BumpFeeTxBuilder_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func allowShrinking( address: String )  -> BumpFeeTxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_BumpFeeTxBuilder_allow_shrinking(self.pointer, address.lower() , $0
+    )
+}
+        return try! BumpFeeTxBuilder.lift(_retval)
+    }
+    public func enableRbf()  -> BumpFeeTxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_BumpFeeTxBuilder_enable_rbf(self.pointer,  $0
+    )
+}
+        return try! BumpFeeTxBuilder.lift(_retval)
+    }
+    public func enableRbfWithSequence( nsequence: UInt32 )  -> BumpFeeTxBuilder {
+        let _retval = try!
+    rustCall() {
+    
+    bdk_360_BumpFeeTxBuilder_enable_rbf_with_sequence(self.pointer, nsequence.lower() , $0
+    )
+}
+        return try! BumpFeeTxBuilder.lift(_retval)
+    }
+    public func finish( wallet: Wallet ) throws -> PartiallySignedBitcoinTransaction {
+        let _retval = try
+    rustCallWithError(BdkError.self) {
+    
+    bdk_360_BumpFeeTxBuilder_finish(self.pointer, wallet.lower() , $0
+    )
+}
+        return try PartiallySignedBitcoinTransaction.lift(_retval)
+    }
+    
+}
+
+
+fileprivate extension BumpFeeTxBuilder {
+    typealias FfiType = UnsafeMutableRawPointer
+
+    static func read(from buf: Reader) throws -> Self {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try self.lift(ptr!)
+    }
+
+    func write(into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
+        return Self(unsafeFromRawPointer: pointer)
+    }
+
+    func lower() -> UnsafeMutableRawPointer {
+        return self.pointer
+    }
+}
+
+// Ideally this would be `fileprivate`, but Swift says:
+// """
+// 'private' modifier cannot be used with extensions that declare protocol conformances
+// """
+extension BumpFeeTxBuilder : ViaFfi, Serializable {}
 
 public struct SledDbConfiguration {
     public var path: String
@@ -1034,16 +1359,55 @@ fileprivate extension SledDbConfiguration {
 
 extension SledDbConfiguration: ViaFfiUsingByteBuffer, ViaFfi {}
 
+public struct SqliteDbConfiguration {
+    public var path: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(path: String ) {
+        self.path = path
+    }
+}
+
+
+extension SqliteDbConfiguration: Equatable, Hashable {
+    public static func ==(lhs: SqliteDbConfiguration, rhs: SqliteDbConfiguration) -> Bool {
+        if lhs.path != rhs.path {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(path)
+    }
+}
+
+
+fileprivate extension SqliteDbConfiguration {
+    static func read(from buf: Reader) throws -> SqliteDbConfiguration {
+        return try SqliteDbConfiguration(
+            path: String.read(from: buf)
+        )
+    }
+
+    func write(into buf: Writer) {
+        self.path.write(into: buf)
+    }
+}
+
+extension SqliteDbConfiguration: ViaFfiUsingByteBuffer, ViaFfi {}
+
 public struct TransactionDetails {
-    public var fees: UInt64?
+    public var fee: UInt64?
     public var received: UInt64
     public var sent: UInt64
     public var txid: String
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(fees: UInt64?, received: UInt64, sent: UInt64, txid: String ) {
-        self.fees = fees
+    public init(fee: UInt64?, received: UInt64, sent: UInt64, txid: String ) {
+        self.fee = fee
         self.received = received
         self.sent = sent
         self.txid = txid
@@ -1053,7 +1417,7 @@ public struct TransactionDetails {
 
 extension TransactionDetails: Equatable, Hashable {
     public static func ==(lhs: TransactionDetails, rhs: TransactionDetails) -> Bool {
-        if lhs.fees != rhs.fees {
+        if lhs.fee != rhs.fee {
             return false
         }
         if lhs.received != rhs.received {
@@ -1069,7 +1433,7 @@ extension TransactionDetails: Equatable, Hashable {
     }
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(fees)
+        hasher.combine(fee)
         hasher.combine(received)
         hasher.combine(sent)
         hasher.combine(txid)
@@ -1080,7 +1444,7 @@ extension TransactionDetails: Equatable, Hashable {
 fileprivate extension TransactionDetails {
     static func read(from buf: Reader) throws -> TransactionDetails {
         return try TransactionDetails(
-            fees: FfiConverterOptionUInt64.read(from: buf),
+            fee: FfiConverterOptionUInt64.read(from: buf),
             received: UInt64.read(from: buf),
             sent: UInt64.read(from: buf),
             txid: String.read(from: buf)
@@ -1088,7 +1452,7 @@ fileprivate extension TransactionDetails {
     }
 
     func write(into buf: Writer) {
-        FfiConverterOptionUInt64.write(self.fees, into: buf)
+        FfiConverterOptionUInt64.write(self.fee, into: buf)
         self.received.write(into: buf)
         self.sent.write(into: buf)
         self.txid.write(into: buf)
@@ -1218,18 +1582,18 @@ extension ElectrumConfig: ViaFfiUsingByteBuffer, ViaFfi {}
 public struct EsploraConfig {
     public var baseUrl: String
     public var proxy: String?
-    public var timeoutRead: UInt64
-    public var timeoutWrite: UInt64
+    public var concurrency: UInt8?
     public var stopGap: UInt64
+    public var timeout: UInt64?
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(baseUrl: String, proxy: String?, timeoutRead: UInt64, timeoutWrite: UInt64, stopGap: UInt64 ) {
+    public init(baseUrl: String, proxy: String?, concurrency: UInt8?, stopGap: UInt64, timeout: UInt64? ) {
         self.baseUrl = baseUrl
         self.proxy = proxy
-        self.timeoutRead = timeoutRead
-        self.timeoutWrite = timeoutWrite
+        self.concurrency = concurrency
         self.stopGap = stopGap
+        self.timeout = timeout
     }
 }
 
@@ -1242,13 +1606,13 @@ extension EsploraConfig: Equatable, Hashable {
         if lhs.proxy != rhs.proxy {
             return false
         }
-        if lhs.timeoutRead != rhs.timeoutRead {
-            return false
-        }
-        if lhs.timeoutWrite != rhs.timeoutWrite {
+        if lhs.concurrency != rhs.concurrency {
             return false
         }
         if lhs.stopGap != rhs.stopGap {
+            return false
+        }
+        if lhs.timeout != rhs.timeout {
             return false
         }
         return true
@@ -1257,9 +1621,9 @@ extension EsploraConfig: Equatable, Hashable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(baseUrl)
         hasher.combine(proxy)
-        hasher.combine(timeoutRead)
-        hasher.combine(timeoutWrite)
+        hasher.combine(concurrency)
         hasher.combine(stopGap)
+        hasher.combine(timeout)
     }
 }
 
@@ -1269,18 +1633,18 @@ fileprivate extension EsploraConfig {
         return try EsploraConfig(
             baseUrl: String.read(from: buf),
             proxy: FfiConverterOptionString.read(from: buf),
-            timeoutRead: UInt64.read(from: buf),
-            timeoutWrite: UInt64.read(from: buf),
-            stopGap: UInt64.read(from: buf)
+            concurrency: FfiConverterOptionUInt8.read(from: buf),
+            stopGap: UInt64.read(from: buf),
+            timeout: FfiConverterOptionUInt64.read(from: buf)
         )
     }
 
     func write(into buf: Writer) {
         self.baseUrl.write(into: buf)
         FfiConverterOptionString.write(self.proxy, into: buf)
-        self.timeoutRead.write(into: buf)
-        self.timeoutWrite.write(into: buf)
+        FfiConverterOptionUInt8.write(self.concurrency, into: buf)
         self.stopGap.write(into: buf)
+        FfiConverterOptionUInt64.write(self.timeout, into: buf)
     }
 }
 
@@ -1462,6 +1826,9 @@ public enum BdkError {
     // Simple error enums only carry a message
     case Sled(message: String)
     
+    // Simple error enums only carry a message
+    case Rusqlite(message: String)
+    
 }
 
 extension BdkError: ViaFfiUsingByteBuffer, ViaFfi {
@@ -1628,6 +1995,10 @@ extension BdkError: ViaFfiUsingByteBuffer, ViaFfi {
             message: try String.read(from: buf)
         )
         
+        case 40: return .Rusqlite(
+            message: try String.read(from: buf)
+        )
+        
 
          default: throw UniffiInternalError.unexpectedEnumCase
         }
@@ -1756,6 +2127,9 @@ extension BdkError: ViaFfiUsingByteBuffer, ViaFfi {
         case let .Sled(message):
             buf.writeInt(Int32(39))
             message.write(into: buf)
+        case let .Rusqlite(message):
+            buf.writeInt(Int32(40))
+            message.write(into: buf)
         }
     }
 }
@@ -1766,17 +2140,17 @@ extension BdkError: Equatable, Hashable {}
 extension BdkError: Error { }
 
 
-// Declaration and FfiConverters for BdkProgress Callback Interface
+// Declaration and FfiConverters for Progress Callback Interface
 
-public protocol BdkProgress : AnyObject {
+public protocol Progress : AnyObject {
     func update( progress: Float,  message: String? ) 
     
 }
 
 // The ForeignCallback that is passed to Rust.
-fileprivate let foreignCallbackCallbackInterfaceBdkProgress : ForeignCallback =
+fileprivate let foreignCallbackCallbackInterfaceProgress : ForeignCallback =
     { (handle: Handle, method: Int32, args: RustBuffer, out_buf: UnsafeMutablePointer<RustBuffer>) -> Int32 in
-        func invokeUpdate(_ swiftCallbackInterface: BdkProgress, _ args: RustBuffer) throws -> RustBuffer {
+        func invokeUpdate(_ swiftCallbackInterface: Progress, _ args: RustBuffer) throws -> RustBuffer {
         defer { args.deallocate() }
 
             let reader = Reader(data: Data(rustBuffer: args))
@@ -1791,10 +2165,10 @@ fileprivate let foreignCallbackCallbackInterfaceBdkProgress : ForeignCallback =
     }
     
 
-        let cb = try! ffiConverterCallbackInterfaceBdkProgress.lift(handle)
+        let cb = try! ffiConverterCallbackInterfaceProgress.lift(handle)
         switch method {
             case IDX_CALLBACK_FREE:
-                ffiConverterCallbackInterfaceBdkProgress.drop(handle: handle)
+                ffiConverterCallbackInterfaceProgress.drop(handle: handle)
                 // No return value.
                 // See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
                 return 0
@@ -1816,11 +2190,11 @@ fileprivate let foreignCallbackCallbackInterfaceBdkProgress : ForeignCallback =
     }
 
 // The ffiConverter which transforms the Callbacks in to Handles to pass to Rust.
-private let ffiConverterCallbackInterfaceBdkProgress: FfiConverterCallbackInterface<BdkProgress> = {
+private let ffiConverterCallbackInterfaceProgress: FfiConverterCallbackInterface<Progress> = {
     try! rustCall { (err: UnsafeMutablePointer<RustCallStatus>) in
-            ffi_bdk_d04b_BdkProgress_init_callback(foreignCallbackCallbackInterfaceBdkProgress, err)
+            ffi_bdk_360_Progress_init_callback(foreignCallbackCallbackInterfaceProgress, err)
     }
-    return FfiConverterCallbackInterface<BdkProgress>()
+    return FfiConverterCallbackInterface<Progress>()
 }()
 extension UInt8: Primitive, ViaFfi {
     fileprivate static func read(from buf: Reader) throws -> Self {
@@ -1894,13 +2268,17 @@ extension String: ViaFfi {
         buf.writeBytes(self.utf8)
     }
 }
+// Helper code for Blockchain class is found in ObjectTemplate.swift
+// Helper code for BumpFeeTxBuilder class is found in ObjectTemplate.swift
 // Helper code for PartiallySignedBitcoinTransaction class is found in ObjectTemplate.swift
+// Helper code for TxBuilder class is found in ObjectTemplate.swift
 // Helper code for Wallet class is found in ObjectTemplate.swift
 // Helper code for BlockTime record is found in RecordTemplate.swift
 // Helper code for ElectrumConfig record is found in RecordTemplate.swift
 // Helper code for EsploraConfig record is found in RecordTemplate.swift
 // Helper code for ExtendedKeyInfo record is found in RecordTemplate.swift
 // Helper code for SledDbConfiguration record is found in RecordTemplate.swift
+// Helper code for SqliteDbConfiguration record is found in RecordTemplate.swift
 // Helper code for TransactionDetails record is found in RecordTemplate.swift
 // Helper code for BlockchainConfig enum is found in EnumTemplate.swift
 // Helper code for DatabaseConfig enum is found in EnumTemplate.swift
@@ -1925,22 +2303,6 @@ fileprivate enum FfiConverterOptionUInt8: FfiConverterUsingByteBuffer {
     }
 }
 
-fileprivate enum FfiConverterOptionUInt32: FfiConverterUsingByteBuffer {
-    typealias SwiftType = UInt32?
-
-    static func write(_ value: SwiftType, into buf: Writer) {
-        FfiConverterOptional.write(value, into: buf) { item, buf in
-            item.write(into: buf)
-        }
-    }
-
-    static func read(from buf: Reader) throws -> SwiftType {
-        try FfiConverterOptional.read(from: buf) { buf in
-            try UInt32.read(from: buf)
-        }
-    }
-}
-
 fileprivate enum FfiConverterOptionUInt64: FfiConverterUsingByteBuffer {
     typealias SwiftType = UInt64?
 
@@ -1957,22 +2319,6 @@ fileprivate enum FfiConverterOptionUInt64: FfiConverterUsingByteBuffer {
     }
 }
 
-fileprivate enum FfiConverterOptionFloat: FfiConverterUsingByteBuffer {
-    typealias SwiftType = Float?
-
-    static func write(_ value: SwiftType, into buf: Writer) {
-        FfiConverterOptional.write(value, into: buf) { item, buf in
-            item.write(into: buf)
-        }
-    }
-
-    static func read(from buf: Reader) throws -> SwiftType {
-        try FfiConverterOptional.read(from: buf) { buf in
-            try Float.read(from: buf)
-        }
-    }
-}
-
 fileprivate enum FfiConverterOptionString: FfiConverterUsingByteBuffer {
     typealias SwiftType = String?
 
@@ -1985,6 +2331,22 @@ fileprivate enum FfiConverterOptionString: FfiConverterUsingByteBuffer {
     static func read(from buf: Reader) throws -> SwiftType {
         try FfiConverterOptional.read(from: buf) { buf in
             try String.read(from: buf)
+        }
+    }
+}
+
+fileprivate enum FfiConverterOptionCallbackInterfaceProgress: FfiConverterUsingByteBuffer {
+    typealias SwiftType = Progress?
+
+    static func write(_ value: SwiftType, into buf: Writer) {
+        FfiConverterOptional.write(value, into: buf) { item, buf in
+            ffiConverterCallbackInterfaceProgress.write(item, into: buf)
+        }
+    }
+
+    static func read(from buf: Reader) throws -> SwiftType {
+        try FfiConverterOptional.read(from: buf) { buf in
+            try ffiConverterCallbackInterfaceProgress.read(from: buf)
         }
     }
 }

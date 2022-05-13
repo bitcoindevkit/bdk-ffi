@@ -7,7 +7,7 @@ echo "Confirm bdk-ffi rust lib builds"
 cargo build --release
 
 echo "Generate bdk-ffi swift bindings"
-uniffi-bindgen generate src/bdk.udl --no-format --out-dir ../Sources/BitcoinDevKit --language swift
+cargo run --package bdk-ffi-bindgen -- --language swift --out-dir ../Sources/BitcoinDevKit
 
 ## build bdk-ffi rust libs for apple targets and add to xcframework
 echo "Build bdk-ffi libs for apple targets and add to xcframework"
@@ -36,7 +36,7 @@ lipo target/aarch64-apple-darwin/release/libbdkffi.a target/x86_64-apple-darwin/
 #    -library target/lipo-macos/release/libbdkffi.a \
 #    -library target/aarch64-apple-ios/release/libbdkffi.a \
 #    -output ../bdkFFI.xcframework
-    
+
 popd
 
 # rename bdk.swift bindings to BitcoinDevKit.swift
