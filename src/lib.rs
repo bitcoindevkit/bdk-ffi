@@ -11,12 +11,13 @@ use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
+use bdk::wallet::AddressInfo as BdkAddressInfo;
+use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::miniscript::BareCtx;
+use std::convert::{TryFrom, From};
 use bdk::{
     BlockTime, Error, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
-use std::convert::TryFrom;
-use std::convert::From;
 use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -26,15 +27,12 @@ uniffi_macros::include_scaffolding!("bdk");
 
 type BdkError = Error;
 
-// we redefine a simpler version of bdk::wallet::AddressInfo
-// it has an `address` field of type String
-// instead of the `address` field of type `Address` defined in bitcoin::util::address::Address
 pub struct AddressInfo {
     pub index: u32,
     pub address: String,
 }
 
-impl From<bdk::wallet::AddressInfo> for AddressInfo {
+impl From<BdkAddressInfo> for AddressInfo {
     fn from(x: bdk::wallet::AddressInfo) -> AddressInfo {
         AddressInfo {
             index: x.index,
@@ -43,18 +41,16 @@ impl From<bdk::wallet::AddressInfo> for AddressInfo {
     }
 }
 
-// we redefine a simpler version of bdk::wallet::AddressIndex
-// only keeping the `New` and `LastUnused` variants of the enum
 pub enum AddressIndex {
     New,
     LastUnused,
 }
 
-impl From<AddressIndex> for bdk::wallet::AddressIndex {
-    fn from(x: AddressIndex) -> bdk::wallet::AddressIndex {
+impl From<AddressIndex> for BdkAddressIndex {
+    fn from(x: AddressIndex) -> BdkAddressIndex {
         match x {
-            AddressIndex::New => bdk::wallet::AddressIndex::New,
-            AddressIndex::LastUnused => bdk::wallet::AddressIndex::LastUnused
+            AddressIndex::New => BdkAddressIndex::New,
+            AddressIndex::LastUnused => BdkAddressIndex::LastUnused
         }
     }
 }
@@ -269,25 +265,10 @@ impl Wallet {
     }
 
     fn get_address(&self, address_index: AddressIndex) -> Result<AddressInfo, BdkError> {
-        match self.get_wallet().get_address(bdk::wallet::AddressIndex::from(address_index)) {
-            Ok(address_info) => Ok(AddressInfo::from(address_info)),
-            Err(bdk_error) => Err(bdk_error),
-        }
+        self.get_wallet()
+            .get_address(address_index.into())
+            .map(AddressInfo::from)
     }
-
-    // fn get_new_address(&self) -> Result<AddressInformation, BdkError> {
-    //     match self.get_wallet().get_address(AddressIndex::New) {
-    //         Ok(address_info) => Ok(AddressInformation::from(address_info)),
-    //         Err(BdkError) => Err(BdkError),
-    //     }
-    // }
-
-    // fn get_last_unused_address(&self) -> Result<AddressInformation, BdkError> {
-    //     match self.get_wallet().get_address(AddressIndex::LastUnused) {
-    //         Ok(address_info) => Ok(AddressInformation::from(address_info)),
-    //         Err(BdkError) => Err(BdkError),
-    //     }
-    // }
 
     fn get_balance(&self) -> Result<u64, Error> {
         self.get_wallet().get_balance()
