@@ -11,12 +11,13 @@ use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
+use bdk::wallet::AddressInfo as BdkAddressInfo;
+use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::miniscript::BareCtx;
-use bdk::wallet::AddressIndex;
+use std::convert::{TryFrom, From};
 use bdk::{
     BlockTime, Error, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
-use std::convert::TryFrom;
 use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -25,6 +26,34 @@ use std::sync::{Arc, Mutex, MutexGuard};
 uniffi_macros::include_scaffolding!("bdk");
 
 type BdkError = Error;
+
+pub struct AddressInfo {
+    pub index: u32,
+    pub address: String,
+}
+
+impl From<BdkAddressInfo> for AddressInfo {
+    fn from(x: bdk::wallet::AddressInfo) -> AddressInfo {
+        AddressInfo {
+            index: x.index,
+            address: x.address.to_string()
+        }
+    }
+}
+
+pub enum AddressIndex {
+    New,
+    LastUnused,
+}
+
+impl From<AddressIndex> for BdkAddressIndex {
+    fn from(x: AddressIndex) -> BdkAddressIndex {
+        match x {
+            AddressIndex::New => BdkAddressIndex::New,
+            AddressIndex::LastUnused => BdkAddressIndex::LastUnused
+        }
+    }
+}
 
 pub enum DatabaseConfig {
     Memory,
@@ -235,20 +264,10 @@ impl Wallet {
         self.get_wallet().sync(blockchain.deref(), bdk_sync_opts)
     }
 
-    fn get_new_address(&self) -> String {
+    fn get_address(&self, address_index: AddressIndex) -> Result<AddressInfo, BdkError> {
         self.get_wallet()
-            .get_address(AddressIndex::New)
-            .unwrap()
-            .address
-            .to_string()
-    }
-
-    fn get_last_unused_address(&self) -> String {
-        self.get_wallet()
-            .get_address(AddressIndex::LastUnused)
-            .unwrap()
-            .address
-            .to_string()
+            .get_address(address_index.into())
+            .map(AddressInfo::from)
     }
 
     fn get_balance(&self) -> Result<u64, Error> {
