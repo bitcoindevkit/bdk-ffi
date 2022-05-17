@@ -1,6 +1,7 @@
 namespace bdk {
   [Throws=BdkError]
   ExtendedKeyInfo generate_extended_key(Network network, WordCount word_count, string? password);
+
   [Throws=BdkError]
   ExtendedKeyInfo restore_extended_key(Network network, string mnemonic, string? password);
 };
@@ -83,21 +84,35 @@ interface DatabaseConfig {
 };
 
 dictionary TransactionDetails {
-    u64? fee;
-    u64 received;
-    u64 sent;
-    string txid;
+  u64? fee;
+  u64 received;
+  u64 sent;
+  string txid;
 };
 
 dictionary BlockTime {
-    u32 height;
-    u64 timestamp;
+  u32 height;
+  u64 timestamp;
 };
 
 [Enum]
 interface Transaction {
   Unconfirmed(TransactionDetails details);
   Confirmed(TransactionDetails details, BlockTime confirmation);
+};
+
+dictionary ExtendedKeyInfo {
+  string mnemonic;
+  string xprv;
+  string fingerprint;
+};
+
+enum WordCount {
+  "Words12",
+  "Words15",
+  "Words18",
+  "Words21",
+  "Words24",
 };
 
 dictionary ElectrumConfig {
@@ -125,6 +140,7 @@ interface BlockchainConfig {
 interface Blockchain {
   [Throws=BdkError]
   constructor(BlockchainConfig config);
+
   [Throws=BdkError]
   void broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 };
@@ -136,15 +152,21 @@ callback interface Progress {
 interface Wallet {
   [Throws=BdkError]
   constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
+
   [Throws=BdkError]
   AddressInfo get_address(AddressIndex address_index);
+
   [Throws=BdkError]
   u64 get_balance();
+
   [Throws=BdkError]
   void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+
   [Throws=BdkError]
   sequence<Transaction> get_transactions();
+
   Network get_network();
+
   [Throws=BdkError]
   void sync([ByRef] Blockchain blockchain, Progress? progress);
 };
@@ -152,41 +174,40 @@ interface Wallet {
 interface PartiallySignedBitcoinTransaction {
   [Throws=BdkError]
   constructor(string psbt_base64);
+
   string serialize();
+
   string txid();
 };
 
 interface TxBuilder {
   constructor();
+
   TxBuilder add_recipient(string address, u64 amount);
+
   TxBuilder fee_rate(float sat_per_vbyte);
+
   TxBuilder drain_wallet();
+
   TxBuilder drain_to(string address);
+
   TxBuilder enable_rbf();
+
   TxBuilder enable_rbf_with_sequence(u32 nsequence);
+
   [Throws=BdkError]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
 };
 
 interface BumpFeeTxBuilder {
   constructor(string txid, float new_fee_rate);
+
   BumpFeeTxBuilder allow_shrinking(string address);
+
   BumpFeeTxBuilder enable_rbf();
+
   BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
+
   [Throws=BdkError]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
-};
-
-dictionary ExtendedKeyInfo {
-  string mnemonic;
-  string xprv;
-  string fingerprint;
-};
-
-enum WordCount {
-  "Words12",
-  "Words15",
-  "Words18",
-  "Words21",
-  "Words24",
 };
