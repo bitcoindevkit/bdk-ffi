@@ -7,18 +7,6 @@ val operatingSystem: OS = when {
     else -> OS.OTHER
 }
 
-val architecture: Arch = when (System.getProperty("os.arch")) {
-    "x86_64" -> Arch.X86_64
-    "aarch64" -> Arch.AARCH64
-    else -> Arch.OTHER
-}
-
-enum class Arch {
-    AARCH64,
-    X86_64,
-    OTHER,
-}
-
 enum class OS {
     MAC,
     LINUX,
