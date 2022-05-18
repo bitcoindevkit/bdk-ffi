@@ -1,65 +1,81 @@
 package org.bitcoindevkit.plugins
 
-// register a task of type Exec called buildJvmBinary
-// which will run something like
+// register a task called buildJvmBinaries which will run something like
 // cargo build --release --target aarch64-apple-darwin
-val buildJvmBinary by tasks.register<Exec>("buildJvmBinary") {
-
-    workingDir("${project.projectDir}/../bdk-ffi")
-    val cargoArgs: MutableList<String> = mutableListOf("build", "--release", "--target")
-
-    if (operatingSystem == OS.MAC && architecture == Arch.X86_64) {
-        cargoArgs.add("x86_64-apple-darwin")
-    } else if (operatingSystem == OS.MAC && architecture == Arch.AARCH64) {
-        cargoArgs.add("aarch64-apple-darwin")
-    } else if (operatingSystem == OS.LINUX) {
-        cargoArgs.add("x86_64-unknown-linux-gnu")
-    }
-
-    executable("cargo")
-    args(cargoArgs)
-
-    doLast {
-        println("Native library for bdk-jvm on ${cargoArgs.last()} successfully built")
+val buildJvmBinaries by tasks.register<DefaultTask>("buildJvmBinaries") {
+    if (operatingSystem == OS.MAC) {
+        exec {
+            workingDir("${project.projectDir}/../bdk-ffi")
+            executable("cargo")
+            val cargoArgs: List<String> = listOf("build", "--release", "--target", "x86_64-apple-darwin")
+            args(cargoArgs)
+        }
+        exec {
+            workingDir("${project.projectDir}/../bdk-ffi")
+            executable("cargo")
+            val cargoArgs: List<String> = listOf("build", "--release", "--target", "aarch64-apple-darwin")
+            args(cargoArgs)
+        }
+    } else if(operatingSystem == OS.LINUX) {
+        exec {
+            workingDir("${project.projectDir}/../bdk-ffi")
+            executable("cargo")
+            val cargoArgs: List<String> = listOf("build", "--release", "--target", "x86_64-unknown-linux-gnu")
+            args(cargoArgs)
+        }
     }
 }
-
 // move the native libs build by cargo from bdk-ffi/target/.../release/
 // to their place in the bdk-jvm library
-val moveNativeJvmLib by tasks.register<Copy>("moveNativeJvmLib") {
+val moveNativeJvmLibs by tasks.register<DefaultTask>("moveNativeJvmLibs") {
 
-    dependsOn(buildJvmBinary)
+    // dependsOn(buildJvmBinaryX86_64MacOS, buildJvmBinaryAarch64MacOS, buildJvmBinaryLinux)
+    dependsOn(buildJvmBinaries)
 
-    var targetDir = ""
-    var resDir = ""
-    var ext = ""
-    if (operatingSystem == OS.MAC && architecture == Arch.X86_64) {
-        targetDir = "x86_64-apple-darwin"
-        resDir = "darwin-x86-64"
-        ext = "dylib"
-    } else if (operatingSystem == OS.MAC && architecture == Arch.AARCH64) {
-        targetDir = "aarch64-apple-darwin"
-        resDir = "darwin-aarch64"
-        ext = "dylib"
+    data class CopyMetadata(val targetDir: String, val resDir: String, val ext: String)
+    val libsToCopy: MutableList<CopyMetadata> = mutableListOf()
+
+    if (operatingSystem == OS.MAC) {
+        libsToCopy.add(
+            CopyMetadata(
+                targetDir = "aarch64-apple-darwin",
+                resDir = "darwin-aarch64",
+                ext = "dylib"
+            )
+        )
+        libsToCopy.add(
+            CopyMetadata(
+                targetDir = "x86_64-apple-darwin",
+                resDir = "darwin-x86-64",
+                ext = "dylib"
+            )
+        )
     } else if (operatingSystem == OS.LINUX) {
-        targetDir = "x86_64-unknown-linux-gnu"
-        resDir = "linux-x86-64"
-        ext = "so"
+        libsToCopy.add(
+            CopyMetadata(
+                targetDir = "x86_64-unknown-linux-gnu",
+                resDir = "linux-x86-64",
+                ext = "so"
+            )
+        )
     }
 
-    from("${project.projectDir}/../bdk-ffi/target/$targetDir/release/libbdkffi.$ext")
-    into("${project.projectDir}/../jvm/src/main/resources/$resDir/")
-
-    doLast {
-        println("$targetDir native binaries for JVM moved to ./jvm/src/main/resources/$resDir/")
+    libsToCopy.forEach {
+        doFirst {
+            copy {
+                with(it) {
+                    from("${project.projectDir}/../bdk-ffi/target/${this.targetDir}/release/libbdkffi.${this.ext}")
+                    into("${project.projectDir}/../jvm/src/main/resources/${this.resDir}/")
+                }
+            }
+        }
     }
 }
 
-// generate the bindings using the bdk-ffi-bindgen tool
-// created in the bdk-ffi submodule
+// generate the bindings using the bdk-ffi-bindgen tool created in the bdk-ffi submodule
 val generateJvmBindings by tasks.register<Exec>("generateJvmBindings") {
 
-    dependsOn(moveNativeJvmLib)
+    dependsOn(moveNativeJvmLibs)
 
     workingDir("${project.projectDir}/../bdk-ffi")
     executable("cargo")
@@ -70,15 +86,15 @@ val generateJvmBindings by tasks.register<Exec>("generateJvmBindings") {
     }
 }
 
-// create an aggregate task which will run the 3 required tasks to build the JVM libs in order
-// the task will also appear in the printout of the ./gradlew tasks task with group and description
+// we need an aggregate task which will run the 3 required tasks to build the JVM libs in order
+// the task will also appear in the printout of the ./gradlew tasks task with a group and description
 tasks.register("buildJvmLib") {
     group = "Bitcoindevkit"
     description = "Aggregate task to build JVM library"
 
     dependsOn(
-        buildJvmBinary,
-        moveNativeJvmLib,
+        buildJvmBinaries,
+        moveNativeJvmLibs,
         generateJvmBindings
     )
 }
