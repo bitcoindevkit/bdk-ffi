@@ -172,6 +172,57 @@ struct Wallet {
     wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
 }
 
+pub struct OutPoint {
+    txid: String,
+    vout: u32,
+}
+
+pub struct TxOut {
+    value: u64,
+    address: String,
+}
+
+pub enum KeychainKind {
+    External = 0,
+    Internal = 1,
+}
+
+impl From<bdk::KeychainKind> for KeychainKind {
+    fn from(x: bdk::KeychainKind) -> KeychainKind {
+        match x {
+            bdk::KeychainKind::External => KeychainKind::External,
+            bdk::KeychainKind::Internal => KeychainKind::Internal,
+        }
+    }
+}
+
+pub struct LocalUtxo {
+    outpoint: OutPoint,
+    txout: TxOut,
+    keychain: KeychainKind,
+}
+
+trait NetworkLocalUtxo: {
+    fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo;
+}
+
+impl NetworkLocalUtxo for LocalUtxo {
+    fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo {
+        LocalUtxo {
+            outpoint: OutPoint {
+                txid: x.outpoint.txid.to_string(),
+                vout: x.outpoint.vout,
+            },
+            txout: TxOut {
+                value: x.txout.value,
+                address: bdk::bitcoin::util::address::Address::from_script(
+                    &x.txout.script_pubkey, network).unwrap().to_string(),
+            },
+            keychain: KeychainKind::from(x.keychain),
+        }
+    }
+}
+
 pub trait Progress: Send + Sync + 'static {
     fn update(&self, progress: f32, message: Option<String>);
 }
@@ -282,6 +333,11 @@ impl Wallet {
     fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
         Ok(transactions.iter().map(Transaction::from).collect())
+    }
+
+    fn list_unspent(&self) -> Result<Vec<LocalUtxo>, Error> {
+        let unspents = self.get_wallet().list_unspent()?;
+        Ok(unspents.iter().map(|u| LocalUtxo::from_utxo(u, self.get_network())).collect())
     }
 }
 
