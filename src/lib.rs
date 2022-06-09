@@ -1,7 +1,7 @@
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
-use bdk::bitcoin::{Address, Network, Script, Txid};
+use bdk::bitcoin::{Address, Network, OutPoint as BdkOutPoint, Script, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig, ConfigurableBlockchain,
@@ -12,13 +12,15 @@ use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
 use bdk::miniscript::BareCtx;
+use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{
     BlockTime, Error, FeeRate, KeychainKind, SignOptions, SyncOptions as BdkSyncOptions,
     Wallet as BdkWallet,
 };
-use std::convert::{From, TryFrom};
+use std::collections::HashSet;
+use std::convert::{From, TryFrom, TryInto};
 use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -173,9 +175,19 @@ struct Wallet {
     wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct OutPoint {
     txid: String,
     vout: u32,
+}
+
+impl From<&OutPoint> for BdkOutPoint {
+    fn from(x: &OutPoint) -> BdkOutPoint {
+        BdkOutPoint {
+            txid: Txid::from_str(&x.txid).unwrap(),
+            vout: x.vout,
+        }
+    }
 }
 
 pub struct TxOut {
@@ -394,7 +406,12 @@ enum RbfValue {
 #[derive(Clone, Debug)]
 struct TxBuilder {
     recipients: Vec<(String, u64)>,
+    utxos: Vec<OutPoint>,
+    unspendable: HashSet<OutPoint>,
+    change_policy: ChangeSpendPolicy,
+    manually_selected_only: bool,
     fee_rate: Option<f32>,
+    fee_absolute: Option<u64>,
     drain_wallet: bool,
     drain_to: Option<String>,
     rbf: Option<RbfValue>,
@@ -405,7 +422,12 @@ impl TxBuilder {
     fn new() -> Self {
         TxBuilder {
             recipients: Vec::new(),
+            utxos: Vec::new(),
+            unspendable: HashSet::new(),
+            change_policy: ChangeSpendPolicy::ChangeAllowed,
+            manually_selected_only: false,
             fee_rate: None,
+            fee_absolute: None,
             drain_wallet: false,
             drain_to: None,
             rbf: None,
@@ -422,9 +444,66 @@ impl TxBuilder {
         })
     }
 
+    fn add_unspendable(&self, unspendable: OutPoint) -> Arc<Self> {
+        let mut unspendable_hash_set = self.unspendable.clone();
+        unspendable_hash_set.insert(unspendable);
+        Arc::new(TxBuilder {
+            unspendable: unspendable_hash_set,
+            ..self.clone()
+        })
+    }
+
+    fn add_utxo(&self, outpoint: OutPoint) -> Arc<Self> {
+        self.add_utxos(vec![outpoint])
+    }
+
+    fn add_utxos(&self, mut outpoints: Vec<OutPoint>) -> Arc<Self> {
+        let mut utxos = self.utxos.to_vec();
+        utxos.append(&mut outpoints);
+        Arc::new(TxBuilder {
+            utxos,
+            ..self.clone()
+        })
+    }
+
+    fn do_not_spend_change(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            change_policy: ChangeSpendPolicy::ChangeForbidden,
+            ..self.clone()
+        })
+    }
+
+    fn manually_selected_only(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            manually_selected_only: true,
+            ..self.clone()
+        })
+    }
+
+    fn only_spend_change(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            change_policy: ChangeSpendPolicy::OnlyChange,
+            ..self.clone()
+        })
+    }
+
+    fn unspendable(&self, unspendable: Vec<OutPoint>) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            unspendable: unspendable.into_iter().collect(),
+            ..self.clone()
+        })
+    }
+
     fn fee_rate(&self, sat_per_vb: f32) -> Arc<Self> {
         Arc::new(TxBuilder {
             fee_rate: Some(sat_per_vb),
+            ..self.clone()
+        })
+    }
+
+    fn fee_absolute(&self, fee_amount: u64) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            fee_absolute: Some(fee_amount),
             ..self.clone()
         })
     }
@@ -470,8 +549,25 @@ impl TxBuilder {
         for (address, amount) in &self.recipients {
             tx_builder.add_recipient(to_script_pubkey(address)?, *amount);
         }
+        tx_builder.change_policy(self.change_policy);
+        if !self.utxos.is_empty() {
+            let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
+            let utxos: &[BdkOutPoint] = bdk_utxos[..].try_into().unwrap();
+            tx_builder.add_utxos(utxos)?;
+        }
+        if !self.unspendable.is_empty() {
+            let bdk_unspendable: Vec<BdkOutPoint> =
+                self.unspendable.iter().map(BdkOutPoint::from).collect();
+            tx_builder.unspendable(bdk_unspendable);
+        }
+        if self.manually_selected_only {
+            tx_builder.manually_selected_only();
+        }
         if let Some(sat_per_vb) = self.fee_rate {
             tx_builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
+        }
+        if let Some(fee_amount) = self.fee_absolute {
+            tx_builder.fee_absolute(fee_amount);
         }
         if self.drain_wallet {
             tx_builder.drain_wallet();
