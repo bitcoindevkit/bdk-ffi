@@ -160,7 +160,7 @@ interface Wallet {
   u64 get_balance();
 
   [Throws=BdkError]
-  void sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+  boolean sign([ByRef] PartiallySignedBitcoinTransaction psbt);
 
   [Throws=BdkError]
   sequence<Transaction> get_transactions();
