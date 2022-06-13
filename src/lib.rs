@@ -11,13 +11,13 @@ use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
 use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
-use bdk::wallet::AddressInfo as BdkAddressInfo;
-use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::miniscript::BareCtx;
-use std::convert::{TryFrom, From};
+use bdk::wallet::AddressIndex as BdkAddressIndex;
+use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{
     BlockTime, Error, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
+use std::convert::{From, TryFrom};
 use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -36,7 +36,7 @@ impl From<BdkAddressInfo> for AddressInfo {
     fn from(x: bdk::wallet::AddressInfo) -> AddressInfo {
         AddressInfo {
             index: x.index,
-            address: x.address.to_string()
+            address: x.address.to_string(),
         }
     }
 }
@@ -50,7 +50,7 @@ impl From<AddressIndex> for BdkAddressIndex {
     fn from(x: AddressIndex) -> BdkAddressIndex {
         match x {
             AddressIndex::New => BdkAddressIndex::New,
-            AddressIndex::LastUnused => BdkAddressIndex::LastUnused
+            AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
         }
     }
 }
@@ -274,16 +274,9 @@ impl Wallet {
         self.get_wallet().get_balance()
     }
 
-    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), Error> {
+    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<bool, Error> {
         let mut psbt = psbt.internal.lock().unwrap();
-        let finalized = self.get_wallet().sign(&mut psbt, SignOptions::default())?;
-        match finalized {
-            true => Ok(()),
-            false => Err(BdkError::Generic(format!(
-                "transaction signing not finalized {:?}",
-                psbt
-            ))),
-        }
+        self.get_wallet().sign(&mut psbt, SignOptions::default())
     }
 
     fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
