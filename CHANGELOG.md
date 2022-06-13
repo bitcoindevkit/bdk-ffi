@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Update BDK to version 0.19.0
+  - fixes sqlite-db issue causing wrong balance
+  - adds experimental taproot descriptor and PSBT support
+
 ## [v0.6.0]
 
 - Update BDK to version 0.18.0
