@@ -6,9 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.7.0]
+
 - Update BDK to version 0.19.0
   - fixes sqlite-db issue causing wrong balance
   - adds experimental taproot descriptor and PSBT support
+- APIs Removed 
+  - `Wallet.get_new_address()`, returned String, [#137] 
+  - `Wallet.get_last_unused_address()`, returned String [#137]
+- APIs Added
+  - `Wallet.get_address(AddressIndex)`, returns `AddressInfo` [#137]
+- APIs Changed
+  - `Wallet.sign(PartiallySignedBitcoinTransaction)` now returns a bool, true if finalized [#161]
+
+[#137]: https://github.com/bitcoindevkit/bdk-ffi/pull/137
+[#161]: https://github.com/bitcoindevkit/bdk-ffi/pull/161
 
 ## [v0.6.0]
 
@@ -47,7 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.2.0]
 
-[unreleased]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.6.0...HEAD
+[unreleased]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.7.0...HEAD
+[v0.7.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.3.1...v0.4.0
