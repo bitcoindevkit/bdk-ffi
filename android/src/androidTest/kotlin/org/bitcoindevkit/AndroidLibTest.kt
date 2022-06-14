@@ -47,7 +47,7 @@ class AndroidLibTest {
     @Test
     fun memoryWalletNewAddress() {
         val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val address = wallet.getNewAddress()
+        val address = wallet.getAddress(AddressIndex.NEW).address
         assertNotNull(address)
         assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
     }
@@ -62,7 +62,7 @@ class AndroidLibTest {
         val testDataDir = getTestDataDir()
         val databaseConfig = DatabaseConfig.Sled(SledDbConfiguration(testDataDir, "testdb"))
         val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val address = wallet.getNewAddress()
+        val address = wallet.getAddress(AddressIndex.NEW).address
         assertNotNull(address)
         assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
         cleanupTestDataDir(testDataDir)
@@ -73,7 +73,7 @@ class AndroidLibTest {
         val testDataDir = getTestDataDir()+"/bdk-wallet.sqlite"
         val databaseConfig = DatabaseConfig.Sqlite(SqliteDbConfiguration(testDataDir))
         val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val blockchain = Blockchain(blockchainConfig);
+        val blockchain = Blockchain(blockchainConfig)
         wallet.sync(blockchain, LogProgress())
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
@@ -108,7 +108,7 @@ class AndroidLibTest {
     @Test
     fun onlineWalletSyncGetBalance() {
         val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val blockchain = Blockchain(blockchainConfig);
+        val blockchain = Blockchain(blockchainConfig)
         wallet.sync(blockchain, LogProgress())
         val balance = wallet.getBalance()
         assertTrue(balance > 0u)
