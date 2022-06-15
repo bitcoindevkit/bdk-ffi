@@ -33,7 +33,7 @@ jobs:
           java-version: 11
 
       - name: Install rust android targets
-        run: rustup target add x86_64-linux-android aarch64-linux-android
+        run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
 
       - name: Install uniffi-bindgen
         run: cargo install uniffi_bindgen --version 0.16.0
