@@ -68,6 +68,36 @@ val buildAndroidX86_64Binary by tasks.register<Exec>("buildAndroidX86_64Binary")
     }
 }
 
+// armeabi-v7a version of the library for older 32-bit Android hardware
+val buildAndroidArmv7Binary by tasks.register<Exec>("buildAndroidArmv7Binary") {
+
+  workingDir("${project.projectDir}/../bdk-ffi")
+  val cargoArgs: MutableList<String> = mutableListOf("build", "--release", "--target", "armv7-linux-androideabi")
+
+  executable("cargo")
+  args(cargoArgs)
+
+  // if ANDROID_NDK_ROOT is not set then set it to github actions default
+  if (System.getenv("ANDROID_NDK_ROOT") == null) {
+    environment(
+      Pair("ANDROID_NDK_ROOT", "${System.getenv("ANDROID_SDK_ROOT")}/ndk-bundle")
+    )
+  }
+
+  environment(
+    // add build toolchain to PATH
+    Pair("PATH", "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
+
+    Pair("CFLAGS", "-D__ANDROID_API__=21"),
+    Pair("CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER", "armv7a-linux-androideabi21-clang"),
+    Pair("CC", "armv7a-linux-androideabi21-clang")
+  )
+
+  doLast {
+    println("Native library for bdk-android on armv7 built successfully")
+  }
+}
+
 // move the native libs build by cargo from bdk-ffi/target/<architecture>/release/
 // to their place in the bdk-android library
 // the task only copies the available binaries built using the buildAndroid<architecture>Binary tasks
@@ -83,6 +113,10 @@ val moveNativeAndroidLibs by tasks.register<Copy>("moveNativeAndroidLibs") {
 
     into("x86_64") {
         from("${project.projectDir}/../bdk-ffi/target/x86_64-linux-android/release/libbdkffi.so")
+    }
+
+    into("armeabi-v7a") {
+      from("${project.projectDir}/../bdk-ffi/target/armv7-linux-androideabi/release/libbdkffi.so")
     }
 
     doLast {
@@ -112,6 +146,7 @@ tasks.register("buildAndroidLib") {
     dependsOn(
         buildAndroidAarch64Binary,
         buildAndroidX86_64Binary,
+        buildAndroidArmv7Binary,
         moveNativeAndroidLibs,
         generateAndroidBindings
     )
