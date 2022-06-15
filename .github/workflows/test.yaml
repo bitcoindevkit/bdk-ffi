@@ -2,6 +2,9 @@ name: Tests
 
 on: [push, pull_request]
 
+env:
+  ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/21.4.7075529
+
 jobs:
   build:
     runs-on: ubuntu-latest
