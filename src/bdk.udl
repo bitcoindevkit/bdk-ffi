@@ -168,6 +168,7 @@ dictionary LocalUtxo {
   OutPoint outpoint;
   TxOut txout;
   KeychainKind keychain;
+  boolean is_spent;
 };
 
 interface Wallet {

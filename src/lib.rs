@@ -15,7 +15,8 @@ use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{
-    BlockTime, Error, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
+    BlockTime, Error, FeeRate, KeychainKind, SignOptions, SyncOptions as BdkSyncOptions,
+    Wallet as BdkWallet,
 };
 use std::convert::{From, TryFrom};
 use std::fmt;
@@ -182,27 +183,15 @@ pub struct TxOut {
     address: String,
 }
 
-pub enum KeychainKind {
-    External = 0,
-    Internal = 1,
-}
-
-impl From<bdk::KeychainKind> for KeychainKind {
-    fn from(x: bdk::KeychainKind) -> KeychainKind {
-        match x {
-            bdk::KeychainKind::External => KeychainKind::External,
-            bdk::KeychainKind::Internal => KeychainKind::Internal,
-        }
-    }
-}
-
 pub struct LocalUtxo {
     outpoint: OutPoint,
     txout: TxOut,
     keychain: KeychainKind,
+    is_spent: bool,
 }
 
-trait NetworkLocalUtxo: {
+/// Trait used to convert a script to an address using the wallet network
+trait NetworkLocalUtxo {
     fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo;
 }
 
@@ -216,9 +205,14 @@ impl NetworkLocalUtxo for LocalUtxo {
             txout: TxOut {
                 value: x.txout.value,
                 address: bdk::bitcoin::util::address::Address::from_script(
-                    &x.txout.script_pubkey, network).unwrap().to_string(),
+                    &x.txout.script_pubkey,
+                    network,
+                )
+                .unwrap()
+                .to_string(),
             },
-            keychain: KeychainKind::from(x.keychain),
+            keychain: x.keychain,
+            is_spent: x.is_spent,
         }
     }
 }
@@ -337,7 +331,10 @@ impl Wallet {
 
     fn list_unspent(&self) -> Result<Vec<LocalUtxo>, Error> {
         let unspents = self.get_wallet().list_unspent()?;
-        Ok(unspents.iter().map(|u| LocalUtxo::from_utxo(u, self.get_network())).collect())
+        Ok(unspents
+            .iter()
+            .map(|u| LocalUtxo::from_utxo(u, self.get_network()))
+            .collect())
     }
 }
 
