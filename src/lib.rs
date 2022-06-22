@@ -190,7 +190,8 @@ pub struct LocalUtxo {
     is_spent: bool,
 }
 
-/// Trait used to convert a script to an address using the wallet network
+// This trait is used to convert the bdk TxOut type with field `script_pubkey: Script`
+// into the bdk-ffi TxOut type which has a field `address: String` instead
 trait NetworkLocalUtxo {
     fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo;
 }
