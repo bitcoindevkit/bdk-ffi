@@ -1,5 +1,6 @@
 namespace bdk {
-  
+  [Throws=BdkError]
+  string generate_mnemonic(WordCount word_count);
 };
 
 [Error]
@@ -95,12 +96,6 @@ dictionary BlockTime {
 interface Transaction {
   Unconfirmed(TransactionDetails details);
   Confirmed(TransactionDetails details, BlockTime confirmation);
-};
-
-dictionary ExtendedKeyInfo {
-  string mnemonic;
-  string xprv;
-  string fingerprint;
 };
 
 enum WordCount {

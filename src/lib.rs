@@ -1,5 +1,4 @@
 use bdk::bitcoin::hashes::hex::ToHex;
-use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::{Address, Network, Script, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
@@ -10,7 +9,7 @@ use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
-use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
+use bdk::keys::{GeneratableKey, GeneratedKey};
 use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
@@ -337,6 +336,11 @@ impl Wallet {
             .map(|u| LocalUtxo::from_utxo(u, self.get_network()))
             .collect())
     }
+}
+
+fn generate_mnemonic(word_count: WordCount) -> Result<String, BdkError> {
+    let mnemonic: GeneratedKey<_, BareCtx> = Mnemonic::generate((word_count, Language::English)).unwrap();
+    Ok(mnemonic.to_string())
 }
 
 fn to_script_pubkey(address: &str) -> Result<Script, BdkError> {
