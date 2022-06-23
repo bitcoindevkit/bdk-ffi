@@ -6,7 +6,7 @@ from setuptools import setup
 from setuptools_rust import Binding, RustExtension
 
 LONG_DESCRIPTION = """# bdkpython
-The Python language bindings for the [bitcoindevkit](https://github.com/bitcoindevkit).
+The Python language bindings for the [Bitcoin Dev Kit](https://github.com/bitcoindevkit).
 
 ## Install the package
 ```shell
@@ -39,8 +39,10 @@ wallet = bdk.Wallet(
          )
 
 # print new receive address
-address = wallet.get_new_address()
-print(f"New BIP84 testnet address: {address}")
+address_info = wallet.get_address(bdk.AddressIndex.LAST_UNUSED)
+address = address_info.address
+index = address_info.index
+print(f"New BIP84 testnet address: {address} at index {index}")
 
 
 # print wallet balance
@@ -57,8 +59,8 @@ rust_ext = RustExtension(
 
 setup(
     name='bdkpython',
-    version = '0.1.0.dev',
-    description="The Python language bindings for the bitcoindevkit",
+    version='0.1.0.dev',
+    description="The Python language bindings for the Bitcoin Dev Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
     rust_extensions=[rust_ext],

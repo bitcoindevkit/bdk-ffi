@@ -10,16 +10,14 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - Community related files (bug report, feature request, and pull request templates)
 - Changelog
 - MIT and Apache 2.0 licenses
-- Update BDK to version 0.18.0
-- Add BumpFeeTxBuilder to bump the fee on an unconfirmed tx created by the Wallet 
-- Change TxBuilder.build() to TxBuilder.finish() to align with bdk function name 
-- Fix Wallet.broadcast function, now returns a tx id as a hex string 
-- Remove creating a new spending Transaction via the PartiallySignedBitcoinTransaction constructor 
-- Add TxBuilder for creating new spending PartiallySignedBitcoinTransaction 
-- Add TxBuilder .add_recipient, .fee_rate, and .build functions 
-- Add TxBuilder .drain_wallet and .drain_to functions 
+- Update BDK to version `0.19.0`
+- Add `BumpFeeTxBuilder` to bump the fee on an unconfirmed tx created by the Wallet
+- Add `Blockchain.broadcast` function (does not return anything)
+- Add TxBuilder for creating new spending `PartiallySignedBitcoinTransaction` 
+- Add TxBuilder `add_recipient`, `fee_rate`, and `finish` functions 
+- Add TxBuilder `drain_wallet` and `drain_to` functions 
 - Update generate cli tool to generate all binding languages and rename to bdk-ffi-bindgen 
-- Add sqlite database support 
+- Add sqlite database support
 - Fix memory database configuration enum, remove junk field 
 - Remove hard coded sync progress value (was always returning 21.0)
 
