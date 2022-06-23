@@ -19,13 +19,13 @@ fileprivate extension RustBuffer {
     }
 
     static func from(_ ptr: UnsafeBufferPointer<UInt8>) -> RustBuffer {
-        try! rustCall { ffi_bdk_360_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
+        try! rustCall { ffi_bdk_1c1_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
     }
 
     // Frees the buffer in place.
     // The buffer must not be used after this is called.
     func deallocate() {
-        try! rustCall { ffi_bdk_360_rustbuffer_free(self, $0) }
+        try! rustCall { ffi_bdk_1c1_rustbuffer_free(self, $0) }
     }
 }
 
@@ -475,6 +475,45 @@ fileprivate class FfiConverterCallbackInterface<CallbackInterface> {
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
+public enum AddressIndex {
+    
+    case new
+    case lastUnused
+}
+
+extension AddressIndex: ViaFfiUsingByteBuffer, ViaFfi {
+    fileprivate static func read(from buf: Reader) throws -> AddressIndex {
+        let variant: Int32 = try buf.readInt()
+        switch variant {
+        
+        case 1: return .new
+        case 2: return .lastUnused
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    fileprivate func write(into buf: Writer) {
+        switch self {
+        
+        
+        case .new:
+            buf.writeInt(Int32(1))
+        
+        
+        case .lastUnused:
+            buf.writeInt(Int32(2))
+        
+        }
+    }
+}
+
+
+extension AddressIndex: Equatable, Hashable {}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
 public enum Network {
     
     case bitcoin
@@ -628,53 +667,6 @@ extension Transaction: Equatable, Hashable {}
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
 
-public enum BlockchainConfig {
-    
-    case electrum(config: ElectrumConfig )
-    case esplora(config: EsploraConfig )
-}
-
-extension BlockchainConfig: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> BlockchainConfig {
-        let variant: Int32 = try buf.readInt()
-        switch variant {
-        
-        case 1: return .electrum(
-            config: try ElectrumConfig.read(from: buf)
-            )
-        case 2: return .esplora(
-            config: try EsploraConfig.read(from: buf)
-            )
-        default: throw UniffiInternalError.unexpectedEnumCase
-        }
-    }
-
-    fileprivate func write(into buf: Writer) {
-        switch self {
-        
-        
-        case let .electrum(config):
-            buf.writeInt(Int32(1))
-            config.write(into: buf)
-            
-        
-        
-        case let .esplora(config):
-            buf.writeInt(Int32(2))
-            config.write(into: buf)
-            
-        
-        }
-    }
-}
-
-
-extension BlockchainConfig: Equatable, Hashable {}
-
-
-// Note that we don't yet support `indirect` for enums.
-// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
-
 public enum WordCount {
     
     case words12
@@ -729,6 +721,53 @@ extension WordCount: ViaFfiUsingByteBuffer, ViaFfi {
 extension WordCount: Equatable, Hashable {}
 
 
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+
+public enum BlockchainConfig {
+    
+    case electrum(config: ElectrumConfig )
+    case esplora(config: EsploraConfig )
+}
+
+extension BlockchainConfig: ViaFfiUsingByteBuffer, ViaFfi {
+    fileprivate static func read(from buf: Reader) throws -> BlockchainConfig {
+        let variant: Int32 = try buf.readInt()
+        switch variant {
+        
+        case 1: return .electrum(
+            config: try ElectrumConfig.read(from: buf)
+            )
+        case 2: return .esplora(
+            config: try EsploraConfig.read(from: buf)
+            )
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    fileprivate func write(into buf: Writer) {
+        switch self {
+        
+        
+        case let .electrum(config):
+            buf.writeInt(Int32(1))
+            config.write(into: buf)
+            
+        
+        
+        case let .esplora(config):
+            buf.writeInt(Int32(2))
+            config.write(into: buf)
+            
+        
+        }
+    }
+}
+
+
+extension BlockchainConfig: Equatable, Hashable {}
+
+
 
 public func generateExtendedKey( network: Network,  wordCount: WordCount,  password: String? ) throws -> ExtendedKeyInfo {
     let _retval = try
@@ -736,7 +775,7 @@ public func generateExtendedKey( network: Network,  wordCount: WordCount,  passw
     
     rustCallWithError(BdkError.self) {
     
-    bdk_360_generate_extended_key(network.lower(), wordCount.lower(), FfiConverterOptionString.lower(password) , $0)
+    bdk_1c1_generate_extended_key(network.lower(), wordCount.lower(), FfiConverterOptionString.lower(password) , $0)
 }
     return try ExtendedKeyInfo.lift(_retval)
 }
@@ -749,7 +788,7 @@ public func restoreExtendedKey( network: Network,  mnemonic: String,  password: 
     
     rustCallWithError(BdkError.self) {
     
-    bdk_360_restore_extended_key(network.lower(), mnemonic.lower(), FfiConverterOptionString.lower(password) , $0)
+    bdk_1c1_restore_extended_key(network.lower(), mnemonic.lower(), FfiConverterOptionString.lower(password) , $0)
 }
     return try ExtendedKeyInfo.lift(_retval)
 }
@@ -776,12 +815,12 @@ public class Blockchain: BlockchainProtocol {
     
     rustCallWithError(BdkError.self) {
     
-    bdk_360_Blockchain_new(config.lower() , $0)
+    bdk_1c1_Blockchain_new(config.lower() , $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_360_Blockchain_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_1c1_Blockchain_object_free(pointer, $0) }
     }
 
     
@@ -791,7 +830,7 @@ public class Blockchain: BlockchainProtocol {
         try
     rustCallWithError(BdkError.self) {
     
-    bdk_360_Blockchain_broadcast(self.pointer, psbt.lower() , $0
+    bdk_1c1_Blockchain_broadcast(self.pointer, psbt.lower() , $0
     )
 }
     }
@@ -836,10 +875,9 @@ extension Blockchain : ViaFfi, Serializable {}
 
 
 public protocol WalletProtocol {
-    func getNewAddress()  -> String
-    func getLastUnusedAddress()  -> String
+    func getAddress( addressIndex: AddressIndex ) throws -> AddressInfo
     func getBalance() throws -> UInt64
-    func sign( psbt: PartiallySignedBitcoinTransaction ) throws
+    func sign( psbt: PartiallySignedBitcoinTransaction ) throws -> Bool
     func getTransactions() throws -> [Transaction]
     func getNetwork()  -> Network
     func sync( blockchain: Blockchain,  progress: Progress? ) throws
@@ -861,57 +899,49 @@ public class Wallet: WalletProtocol {
     
     rustCallWithError(BdkError.self) {
     
-    bdk_360_Wallet_new(descriptor.lower(), FfiConverterOptionString.lower(changeDescriptor), network.lower(), databaseConfig.lower() , $0)
+    bdk_1c1_Wallet_new(descriptor.lower(), FfiConverterOptionString.lower(changeDescriptor), network.lower(), databaseConfig.lower() , $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_360_Wallet_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_1c1_Wallet_object_free(pointer, $0) }
     }
 
     
 
     
-    public func getNewAddress()  -> String {
-        let _retval = try!
-    rustCall() {
+    public func getAddress( addressIndex: AddressIndex ) throws -> AddressInfo {
+        let _retval = try
+    rustCallWithError(BdkError.self) {
     
-    bdk_360_Wallet_get_new_address(self.pointer,  $0
+    bdk_1c1_Wallet_get_address(self.pointer, addressIndex.lower() , $0
     )
 }
-        return try! String.lift(_retval)
-    }
-    public func getLastUnusedAddress()  -> String {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_360_Wallet_get_last_unused_address(self.pointer,  $0
-    )
-}
-        return try! String.lift(_retval)
+        return try AddressInfo.lift(_retval)
     }
     public func getBalance() throws -> UInt64 {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_360_Wallet_get_balance(self.pointer,  $0
+    bdk_1c1_Wallet_get_balance(self.pointer,  $0
     )
 }
         return try UInt64.lift(_retval)
     }
-    public func sign( psbt: PartiallySignedBitcoinTransaction ) throws {
-        try
+    public func sign( psbt: PartiallySignedBitcoinTransaction ) throws -> Bool {
+        let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_360_Wallet_sign(self.pointer, psbt.lower() , $0
+    bdk_1c1_Wallet_sign(self.pointer, psbt.lower() , $0
     )
 }
+        return try Bool.lift(_retval)
     }
     public func getTransactions() throws -> [Transaction] {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_360_Wallet_get_transactions(self.pointer,  $0
+    bdk_1c1_Wallet_get_transactions(self.pointer,  $0
     )
 }
         return try FfiConverterSequenceEnumTransaction.lift(_retval)
@@ -920,7 +950,7 @@ public class Wallet: WalletProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_Wallet_get_network(self.pointer,  $0
+    bdk_1c1_Wallet_get_network(self.pointer,  $0
     )
 }
         return try! Network.lift(_retval)
@@ -929,7 +959,7 @@ public class Wallet: WalletProtocol {
         try
     rustCallWithError(BdkError.self) {
     
-    bdk_360_Wallet_sync(self.pointer, blockchain.lower(), FfiConverterOptionCallbackInterfaceProgress.lower(progress) , $0
+    bdk_1c1_Wallet_sync(self.pointer, blockchain.lower(), FfiConverterOptionCallbackInterfaceProgress.lower(progress) , $0
     )
 }
     }
@@ -994,12 +1024,12 @@ public class PartiallySignedBitcoinTransaction: PartiallySignedBitcoinTransactio
     
     rustCallWithError(BdkError.self) {
     
-    bdk_360_PartiallySignedBitcoinTransaction_new(psbtBase64.lower() , $0)
+    bdk_1c1_PartiallySignedBitcoinTransaction_new(psbtBase64.lower() , $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_360_PartiallySignedBitcoinTransaction_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_1c1_PartiallySignedBitcoinTransaction_object_free(pointer, $0) }
     }
 
     
@@ -1009,7 +1039,7 @@ public class PartiallySignedBitcoinTransaction: PartiallySignedBitcoinTransactio
         let _retval = try!
     rustCall() {
     
-    bdk_360_PartiallySignedBitcoinTransaction_serialize(self.pointer,  $0
+    bdk_1c1_PartiallySignedBitcoinTransaction_serialize(self.pointer,  $0
     )
 }
         return try! String.lift(_retval)
@@ -1018,7 +1048,7 @@ public class PartiallySignedBitcoinTransaction: PartiallySignedBitcoinTransactio
         let _retval = try!
     rustCall() {
     
-    bdk_360_PartiallySignedBitcoinTransaction_txid(self.pointer,  $0
+    bdk_1c1_PartiallySignedBitcoinTransaction_txid(self.pointer,  $0
     )
 }
         return try! String.lift(_retval)
@@ -1089,12 +1119,12 @@ public class TxBuilder: TxBuilderProtocol {
     
     rustCall() {
     
-    bdk_360_TxBuilder_new( $0)
+    bdk_1c1_TxBuilder_new( $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_360_TxBuilder_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_1c1_TxBuilder_object_free(pointer, $0) }
     }
 
     
@@ -1104,7 +1134,7 @@ public class TxBuilder: TxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_TxBuilder_add_recipient(self.pointer, address.lower(), amount.lower() , $0
+    bdk_1c1_TxBuilder_add_recipient(self.pointer, address.lower(), amount.lower() , $0
     )
 }
         return try! TxBuilder.lift(_retval)
@@ -1113,7 +1143,7 @@ public class TxBuilder: TxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_TxBuilder_fee_rate(self.pointer, satPerVbyte.lower() , $0
+    bdk_1c1_TxBuilder_fee_rate(self.pointer, satPerVbyte.lower() , $0
     )
 }
         return try! TxBuilder.lift(_retval)
@@ -1122,7 +1152,7 @@ public class TxBuilder: TxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_TxBuilder_drain_wallet(self.pointer,  $0
+    bdk_1c1_TxBuilder_drain_wallet(self.pointer,  $0
     )
 }
         return try! TxBuilder.lift(_retval)
@@ -1131,7 +1161,7 @@ public class TxBuilder: TxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_TxBuilder_drain_to(self.pointer, address.lower() , $0
+    bdk_1c1_TxBuilder_drain_to(self.pointer, address.lower() , $0
     )
 }
         return try! TxBuilder.lift(_retval)
@@ -1140,7 +1170,7 @@ public class TxBuilder: TxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_TxBuilder_enable_rbf(self.pointer,  $0
+    bdk_1c1_TxBuilder_enable_rbf(self.pointer,  $0
     )
 }
         return try! TxBuilder.lift(_retval)
@@ -1149,7 +1179,7 @@ public class TxBuilder: TxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_TxBuilder_enable_rbf_with_sequence(self.pointer, nsequence.lower() , $0
+    bdk_1c1_TxBuilder_enable_rbf_with_sequence(self.pointer, nsequence.lower() , $0
     )
 }
         return try! TxBuilder.lift(_retval)
@@ -1158,7 +1188,7 @@ public class TxBuilder: TxBuilderProtocol {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_360_TxBuilder_finish(self.pointer, wallet.lower() , $0
+    bdk_1c1_TxBuilder_finish(self.pointer, wallet.lower() , $0
     )
 }
         return try PartiallySignedBitcoinTransaction.lift(_retval)
@@ -1226,12 +1256,12 @@ public class BumpFeeTxBuilder: BumpFeeTxBuilderProtocol {
     
     rustCall() {
     
-    bdk_360_BumpFeeTxBuilder_new(txid.lower(), newFeeRate.lower() , $0)
+    bdk_1c1_BumpFeeTxBuilder_new(txid.lower(), newFeeRate.lower() , $0)
 })
     }
 
     deinit {
-        try! rustCall { ffi_bdk_360_BumpFeeTxBuilder_object_free(pointer, $0) }
+        try! rustCall { ffi_bdk_1c1_BumpFeeTxBuilder_object_free(pointer, $0) }
     }
 
     
@@ -1241,7 +1271,7 @@ public class BumpFeeTxBuilder: BumpFeeTxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_BumpFeeTxBuilder_allow_shrinking(self.pointer, address.lower() , $0
+    bdk_1c1_BumpFeeTxBuilder_allow_shrinking(self.pointer, address.lower() , $0
     )
 }
         return try! BumpFeeTxBuilder.lift(_retval)
@@ -1250,7 +1280,7 @@ public class BumpFeeTxBuilder: BumpFeeTxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_BumpFeeTxBuilder_enable_rbf(self.pointer,  $0
+    bdk_1c1_BumpFeeTxBuilder_enable_rbf(self.pointer,  $0
     )
 }
         return try! BumpFeeTxBuilder.lift(_retval)
@@ -1259,7 +1289,7 @@ public class BumpFeeTxBuilder: BumpFeeTxBuilderProtocol {
         let _retval = try!
     rustCall() {
     
-    bdk_360_BumpFeeTxBuilder_enable_rbf_with_sequence(self.pointer, nsequence.lower() , $0
+    bdk_1c1_BumpFeeTxBuilder_enable_rbf_with_sequence(self.pointer, nsequence.lower() , $0
     )
 }
         return try! BumpFeeTxBuilder.lift(_retval)
@@ -1268,7 +1298,7 @@ public class BumpFeeTxBuilder: BumpFeeTxBuilderProtocol {
         let _retval = try
     rustCallWithError(BdkError.self) {
     
-    bdk_360_BumpFeeTxBuilder_finish(self.pointer, wallet.lower() , $0
+    bdk_1c1_BumpFeeTxBuilder_finish(self.pointer, wallet.lower() , $0
     )
 }
         return try PartiallySignedBitcoinTransaction.lift(_retval)
@@ -1311,6 +1341,53 @@ fileprivate extension BumpFeeTxBuilder {
 // 'private' modifier cannot be used with extensions that declare protocol conformances
 // """
 extension BumpFeeTxBuilder : ViaFfi, Serializable {}
+
+public struct AddressInfo {
+    public var index: UInt32
+    public var address: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(index: UInt32, address: String ) {
+        self.index = index
+        self.address = address
+    }
+}
+
+
+extension AddressInfo: Equatable, Hashable {
+    public static func ==(lhs: AddressInfo, rhs: AddressInfo) -> Bool {
+        if lhs.index != rhs.index {
+            return false
+        }
+        if lhs.address != rhs.address {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(index)
+        hasher.combine(address)
+    }
+}
+
+
+fileprivate extension AddressInfo {
+    static func read(from buf: Reader) throws -> AddressInfo {
+        return try AddressInfo(
+            index: UInt32.read(from: buf),
+            address: String.read(from: buf)
+        )
+    }
+
+    func write(into buf: Writer) {
+        self.index.write(into: buf)
+        self.address.write(into: buf)
+    }
+}
+
+extension AddressInfo: ViaFfiUsingByteBuffer, ViaFfi {}
 
 public struct SledDbConfiguration {
     public var path: String
@@ -1508,6 +1585,61 @@ fileprivate extension BlockTime {
 
 extension BlockTime: ViaFfiUsingByteBuffer, ViaFfi {}
 
+public struct ExtendedKeyInfo {
+    public var mnemonic: String
+    public var xprv: String
+    public var fingerprint: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(mnemonic: String, xprv: String, fingerprint: String ) {
+        self.mnemonic = mnemonic
+        self.xprv = xprv
+        self.fingerprint = fingerprint
+    }
+}
+
+
+extension ExtendedKeyInfo: Equatable, Hashable {
+    public static func ==(lhs: ExtendedKeyInfo, rhs: ExtendedKeyInfo) -> Bool {
+        if lhs.mnemonic != rhs.mnemonic {
+            return false
+        }
+        if lhs.xprv != rhs.xprv {
+            return false
+        }
+        if lhs.fingerprint != rhs.fingerprint {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(mnemonic)
+        hasher.combine(xprv)
+        hasher.combine(fingerprint)
+    }
+}
+
+
+fileprivate extension ExtendedKeyInfo {
+    static func read(from buf: Reader) throws -> ExtendedKeyInfo {
+        return try ExtendedKeyInfo(
+            mnemonic: String.read(from: buf),
+            xprv: String.read(from: buf),
+            fingerprint: String.read(from: buf)
+        )
+    }
+
+    func write(into buf: Writer) {
+        self.mnemonic.write(into: buf)
+        self.xprv.write(into: buf)
+        self.fingerprint.write(into: buf)
+    }
+}
+
+extension ExtendedKeyInfo: ViaFfiUsingByteBuffer, ViaFfi {}
+
 public struct ElectrumConfig {
     public var url: String
     public var socks5: String?
@@ -1649,61 +1781,6 @@ fileprivate extension EsploraConfig {
 }
 
 extension EsploraConfig: ViaFfiUsingByteBuffer, ViaFfi {}
-
-public struct ExtendedKeyInfo {
-    public var mnemonic: String
-    public var xprv: String
-    public var fingerprint: String
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(mnemonic: String, xprv: String, fingerprint: String ) {
-        self.mnemonic = mnemonic
-        self.xprv = xprv
-        self.fingerprint = fingerprint
-    }
-}
-
-
-extension ExtendedKeyInfo: Equatable, Hashable {
-    public static func ==(lhs: ExtendedKeyInfo, rhs: ExtendedKeyInfo) -> Bool {
-        if lhs.mnemonic != rhs.mnemonic {
-            return false
-        }
-        if lhs.xprv != rhs.xprv {
-            return false
-        }
-        if lhs.fingerprint != rhs.fingerprint {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(mnemonic)
-        hasher.combine(xprv)
-        hasher.combine(fingerprint)
-    }
-}
-
-
-fileprivate extension ExtendedKeyInfo {
-    static func read(from buf: Reader) throws -> ExtendedKeyInfo {
-        return try ExtendedKeyInfo(
-            mnemonic: String.read(from: buf),
-            xprv: String.read(from: buf),
-            fingerprint: String.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        self.mnemonic.write(into: buf)
-        self.xprv.write(into: buf)
-        self.fingerprint.write(into: buf)
-    }
-}
-
-extension ExtendedKeyInfo: ViaFfiUsingByteBuffer, ViaFfi {}
 
 public enum BdkError {
 
@@ -2192,7 +2269,7 @@ fileprivate let foreignCallbackCallbackInterfaceProgress : ForeignCallback =
 // The ffiConverter which transforms the Callbacks in to Handles to pass to Rust.
 private let ffiConverterCallbackInterfaceProgress: FfiConverterCallbackInterface<Progress> = {
     try! rustCall { (err: UnsafeMutablePointer<RustCallStatus>) in
-            ffi_bdk_360_Progress_init_callback(foreignCallbackCallbackInterfaceProgress, err)
+            ffi_bdk_1c1_Progress_init_callback(foreignCallbackCallbackInterfaceProgress, err)
     }
     return FfiConverterCallbackInterface<Progress>()
 }()
@@ -2230,6 +2307,25 @@ extension Float: Primitive, ViaFfi {
 
     fileprivate func write(into buf: Writer) {
         buf.writeFloat(self.lower())
+    }
+}
+extension Bool: ViaFfi {
+    fileprivate typealias FfiType = Int8
+
+    fileprivate static func read(from buf: Reader) throws -> Self {
+        return try self.lift(buf.readInt())
+    }
+
+    fileprivate func write(into buf: Writer) {
+        buf.writeInt(self.lower())
+    }
+
+    fileprivate static func lift(_ v: FfiType) throws -> Self {
+        return v != 0
+    }
+
+    fileprivate func lower() -> FfiType {
+        return self ? 1 : 0
     }
 }
 extension String: ViaFfi {
@@ -2273,6 +2369,7 @@ extension String: ViaFfi {
 // Helper code for PartiallySignedBitcoinTransaction class is found in ObjectTemplate.swift
 // Helper code for TxBuilder class is found in ObjectTemplate.swift
 // Helper code for Wallet class is found in ObjectTemplate.swift
+// Helper code for AddressInfo record is found in RecordTemplate.swift
 // Helper code for BlockTime record is found in RecordTemplate.swift
 // Helper code for ElectrumConfig record is found in RecordTemplate.swift
 // Helper code for EsploraConfig record is found in RecordTemplate.swift
@@ -2280,6 +2377,7 @@ extension String: ViaFfi {
 // Helper code for SledDbConfiguration record is found in RecordTemplate.swift
 // Helper code for SqliteDbConfiguration record is found in RecordTemplate.swift
 // Helper code for TransactionDetails record is found in RecordTemplate.swift
+// Helper code for AddressIndex enum is found in EnumTemplate.swift
 // Helper code for BlockchainConfig enum is found in EnumTemplate.swift
 // Helper code for DatabaseConfig enum is found in EnumTemplate.swift
 // Helper code for Network enum is found in EnumTemplate.swift

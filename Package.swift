@@ -22,11 +22,11 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
-        .binaryTarget(
-            name: "bdkFFI",
-            url: "https://github.com/bitcoindevkit/bdk-swift/releases/download/0.3.0/bdkFFI.xcframework.zip",
-            checksum: "7d4a2fdeb03fb3eff107e45ee3148dd9b67966406c82d6e3c19f653c27180cfd"),
-//        .binaryTarget(name: "bdkFFI", path: "./bdkFFI.xcframework"),
+//        .binaryTarget(
+//            name: "bdkFFI",
+//            url: "https://github.com/bitcoindevkit/bdk-swift/releases/download/0.3.0/bdkFFI.xcframework.zip",
+//            checksum: "7d4a2fdeb03fb3eff107e45ee3148dd9b67966406c82d6e3c19f653c27180cfd"),
+        .binaryTarget(name: "bdkFFI", path: "./bdkFFI.xcframework"),
         .target(
             name: "BitcoinDevKit",
             dependencies: ["bdkFFI"]),
