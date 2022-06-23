@@ -46,8 +46,8 @@ own Github repository use the following steps:
 1. Install required targets.
    ```shell
    rustup target add aarch64-apple-ios x86_64-apple-ios
-   rustup target add aarch64-apple-ios-sim --toolchain nightly 
-   rustup component add rust-src --toolchain nightly-aarch64-apple-darwin
+   rustup target add aarch64-apple-ios-sim --toolchain nightly
+   rustup target add aarch64-apple-darwin x86_64-apple-darwin
    ```
     
 1. Build [`bdk-ffi`] Swift bindings and `bdkFFI.xcframework.zip`.
