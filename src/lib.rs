@@ -344,6 +344,7 @@ struct TxBuilder {
     drain_wallet: bool,
     drain_to: Option<String>,
     rbf: Option<RbfValue>,
+    data: Vec<u8>,
 }
 
 impl TxBuilder {
@@ -354,6 +355,7 @@ impl TxBuilder {
             drain_wallet: false,
             drain_to: None,
             rbf: None,
+            data: Vec::new(),
         }
     }
 
@@ -401,6 +403,13 @@ impl TxBuilder {
         })
     }
 
+    fn add_data(&self, data: Vec<u8>) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            data,
+            ..self.clone()
+        })
+    }
+
     fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
@@ -426,6 +435,10 @@ impl TxBuilder {
                 }
             }
         }
+        if !&self.data.is_empty() {
+            tx_builder.add_data(&self.data.as_slice());
+        }
+
         tx_builder
             .finish()
             .map(|(psbt, _)| PartiallySignedBitcoinTransaction {
