@@ -11,3 +11,5 @@ libbdkffi.dylib
 src/bdkpython/bdk.py
 *.whl
 build/
+
+testing-setup-py-simple-example.py
