@@ -34,6 +34,15 @@ python3 setup.py --verbose bdist_wheel
 ```
 <br/>
 
+## Run tox to build and test
+```shell
+# install dev requirements
+pip install --requirement requirements-dev.txt
+
+# build and test
+tox
+```
+
 ## Install locally
 ```shell
 pip install ./dist/bdkpython-<yourversion>-py3-none-any.whl
