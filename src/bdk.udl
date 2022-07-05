@@ -3,6 +3,22 @@ namespace bdk {
   string generate_mnemonic(WordCount word_count);
 };
 
+interface DerivationPath {
+  [Throws=BdkError]
+  constructor(string path);
+};
+
+interface DescriptorKey {
+  [Throws=BdkError]
+  constructor(Network network, string mnemonic, string? password);
+
+  DescriptorKey derive(DerivationPath origin_path, DerivationPath? derivation_path);
+
+  DescriptorKey as_public();
+
+  string as_string();
+};
+
 [Error]
 enum BdkError {
   "InvalidU32Bytes",
