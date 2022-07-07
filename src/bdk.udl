@@ -12,7 +12,8 @@ interface DescriptorKey {
   [Throws=BdkError]
   constructor(Network network, string mnemonic, string? password);
 
-  DescriptorKey derive(DerivationPath origin_path, DerivationPath? derivation_path);
+  [Throws=BdkError]
+  DescriptorKey derive(DerivationPath? origin_path, DerivationPath? descriptor_path);
 
   DescriptorKey as_public();
 

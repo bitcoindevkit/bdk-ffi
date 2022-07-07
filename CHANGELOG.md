@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add api to generate child keys from master key [#154]
+  - Removed generate & restore extended key functions
+  - Added generate_mnemonic function
+  - Added interface DerivationPath & DescriptorKey
+
+[#154]: https://github.com/bitcoindevkit/bdk-ffi/pull/154
+
 - APIs Added
   - `TxBuilder.add_data(data: Vec<u8>)`
   - `Wallet.list_unspent()` returns `Vec<LocalUtxo>`
