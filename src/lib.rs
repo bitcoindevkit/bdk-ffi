@@ -15,7 +15,8 @@ use bdk::miniscript::BareCtx;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{
-    BlockTime, Error, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
+    BlockTime, Error, FeeRate, KeychainKind, SignOptions, SyncOptions as BdkSyncOptions,
+    Wallet as BdkWallet,
 };
 use std::convert::{From, TryFrom};
 use std::fmt;
@@ -172,6 +173,51 @@ struct Wallet {
     wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
 }
 
+pub struct OutPoint {
+    txid: String,
+    vout: u32,
+}
+
+pub struct TxOut {
+    value: u64,
+    address: String,
+}
+
+pub struct LocalUtxo {
+    outpoint: OutPoint,
+    txout: TxOut,
+    keychain: KeychainKind,
+    is_spent: bool,
+}
+
+// This trait is used to convert the bdk TxOut type with field `script_pubkey: Script`
+// into the bdk-ffi TxOut type which has a field `address: String` instead
+trait NetworkLocalUtxo {
+    fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo;
+}
+
+impl NetworkLocalUtxo for LocalUtxo {
+    fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo {
+        LocalUtxo {
+            outpoint: OutPoint {
+                txid: x.outpoint.txid.to_string(),
+                vout: x.outpoint.vout,
+            },
+            txout: TxOut {
+                value: x.txout.value,
+                address: bdk::bitcoin::util::address::Address::from_script(
+                    &x.txout.script_pubkey,
+                    network,
+                )
+                .unwrap()
+                .to_string(),
+            },
+            keychain: x.keychain,
+            is_spent: x.is_spent,
+        }
+    }
+}
+
 pub trait Progress: Send + Sync + 'static {
     fn update(&self, progress: f32, message: Option<String>);
 }
@@ -282,6 +328,14 @@ impl Wallet {
     fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
         Ok(transactions.iter().map(Transaction::from).collect())
+    }
+
+    fn list_unspent(&self) -> Result<Vec<LocalUtxo>, Error> {
+        let unspents = self.get_wallet().list_unspent()?;
+        Ok(unspents
+            .iter()
+            .map(|u| LocalUtxo::from_utxo(u, self.get_network()))
+            .collect())
     }
 }
 
