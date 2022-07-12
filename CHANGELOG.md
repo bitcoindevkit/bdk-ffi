@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- APIs Added
+  - `TxBuilder.add_data(data: Vec<u8>)`
+  - `Wallet.list_unspent()` returns `Vec<LocalUtxo>`
+
 ## [v0.7.0]
 
 - Update BDK to version 0.19.0
