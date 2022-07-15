@@ -42,8 +42,11 @@ pub struct AddressAmount {
     pub amount: u64,
 }
 
+/// A derived address and the index it was found at.
 pub struct AddressInfo {
+    /// Child index of this address
     pub index: u32,
+    /// Address
     pub address: String,
 }
 
@@ -56,8 +59,18 @@ impl From<BdkAddressInfo> for AddressInfo {
     }
 }
 
+/// The address index selection strategy to use to derived an address from the wallet's external
+/// descriptor.
 pub enum AddressIndex {
+    /// Return a new address after incrementing the current descriptor index.
     New,
+    /// Return the address for the current descriptor index if it has not been used in a received
+    /// transaction. Otherwise return a new address as with AddressIndex::New.
+    ///
+    /// Use with caution, if the wallet has not yet detected an address has been used it could
+    /// return an already used address. This function is primarily meant for situations where the
+    /// caller is untrusted; for example when deriving donation addresses on-demand for a public
+    /// web page.
     LastUnused,
 }
 
