@@ -5,13 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- Update BDK to version 0.20.0
 
 - APIs Added
   - `TxBuilder.add_data(data: Vec<u8>)`
   - `Wallet.list_unspent()` returns `Vec<LocalUtxo>`
 
 ## [v0.7.0]
-
 - Update BDK to version 0.19.0
   - fixes sqlite-db issue causing wrong balance
   - adds experimental taproot descriptor and PSBT support
@@ -27,13 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#161]: https://github.com/bitcoindevkit/bdk-ffi/pull/161
 
 ## [v0.6.0]
-
 - Update BDK to version 0.18.0
 - Add BumpFeeTxBuilder to bump the fee on an unconfirmed tx created by the Wallet
 - Change TxBuilder.build() to TxBuilder.finish() to align with bdk function name 
 
 ## [v0.5.0]
-
 - Fix Wallet.broadcast function, now returns a tx id as a hex string
 - Remove creating a new spending Transaction via the PartiallySignedBitcoinTransaction constructor
 - Add TxBuilder for creating new spending PartiallySignedBitcoinTransaction
@@ -42,17 +40,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update generate cli tool to generate all binding languages and rename to bdk-ffi-bindgen
 
 ## [v0.4.0]
-
 - Add dual license MIT and Apache 2.0
 - Add sqlite database support
 - Fix memory database configuration enum, remove junk field
 
 ## [v0.3.1]
-
 - Remove hard coded sync progress value (was always returning 21.0)
 
 ## [v0.3.0]
-
 - Move bdk-kotlin bindings and ios example to separate repos
 - Add bin to generate Python bindings
 - Add `PartiallySignedBitcoinTransaction::deserialize` function as named constructor to decode from a string per [BIP 0174]
