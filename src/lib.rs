@@ -66,7 +66,6 @@ pub enum AddressIndex {
     New,
     /// Return the address for the current descriptor index if it has not been used in a received
     /// transaction. Otherwise return a new address as with AddressIndex::New.
-    ///
     /// Use with caution, if the wallet has not yet detected an address has been used it could
     /// return an already used address. This function is primarily meant for situations where the
     /// caller is untrusted; for example when deriving donation addresses on-demand for a public
@@ -83,17 +82,31 @@ impl From<AddressIndex> for BdkAddressIndex {
     }
 }
 
+/// Type that can contain any of the database configurations defined by the library
+/// This allows storing a single configuration that can be loaded into an AnyDatabaseConfig
+/// instance. Wallets that plan to offer users the ability to switch blockchain backend at runtime
+/// will find this particularly useful.
 pub enum DatabaseConfig {
+    /// Memory database has no config
     Memory,
+    /// Simple key-value embedded database based on sled
     Sled { config: SledDbConfiguration },
+    /// Sqlite embedded database using rusqlite
     Sqlite { config: SqliteDbConfiguration },
 }
 
+/// Configuration for an ElectrumBlockchain
 pub struct ElectrumConfig {
+    /// URL of the Electrum server (such as ElectrumX, Esplora, BWT) may start with ssl:// or tcp:// and include a port
+    /// e.g. ssl://electrum.blockstream.info:60002
     pub url: String,
+    /// URL of the socks5 proxy server or a Tor service
     pub socks5: Option<String>,
+    /// Request retry count
     pub retry: u8,
+    /// Request timeout (seconds)
     pub timeout: Option<u8>,
+    /// Stop searching addresses for transactions after finding an unused gap of this length
     pub stop_gap: u64,
 }
 
