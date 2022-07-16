@@ -230,8 +230,11 @@ pub struct OutPoint {
     vout: u32,
 }
 
+/// A transaction output, which defines new coins to be created from old ones.
 pub struct TxOut {
+    /// The value of the output, in satoshis.
     value: u64,
+    /// The address of the output.
     address: String,
 }
 
