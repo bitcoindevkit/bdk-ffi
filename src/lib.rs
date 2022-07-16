@@ -222,8 +222,11 @@ struct Wallet {
     wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
 }
 
+/// A reference to a transaction output.
 pub struct OutPoint {
+    /// The referenced transaction's txid.
     txid: String,
+    /// The index of the referenced output in its transaction's vout.
     vout: u32,
 }
 
