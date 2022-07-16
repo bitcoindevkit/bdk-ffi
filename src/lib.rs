@@ -139,19 +139,19 @@ pub enum BlockchainConfig {
 /// A wallet transaction
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TransactionDetails {
-    /// Fee value (sats) if available.
-    /// The availability of the fee depends on the backend. It's never None with an Electrum
-    /// Server backend, but it could be None with a Bitcoin RPC node without txindex that receive
-    /// funds while offline.
-    pub fee: Option<u64>,
+    /// Transaction id.
+    pub txid: String,
     /// Received value (sats)
     /// Sum of owned outputs of this transaction.
     pub received: u64,
     /// Sent value (sats)
     /// Sum of owned inputs of this transaction.
     pub sent: u64,
-    /// Transaction id.
-    pub txid: String,
+    /// Fee value (sats) if available.
+    /// The availability of the fee depends on the backend. It's never None with an Electrum
+    /// Server backend, but it could be None with a Bitcoin RPC node without txindex that receive
+    /// funds while offline.
+    pub fee: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
