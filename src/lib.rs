@@ -110,11 +110,24 @@ pub struct ElectrumConfig {
     pub stop_gap: u64,
 }
 
+/// Configuration for an EsploraBlockchain
 pub struct EsploraConfig {
+    /// Base URL of the esplora service
+    /// e.g. https://blockstream.info/api/
     pub base_url: String,
+    /// Optional URL of the proxy to use to make requests to the Esplora server
+    /// The string should be formatted as: <protocol>://<user>:<password>@host:<port>.
+    /// Note that the format of this value and the supported protocols change slightly between the
+    /// sync version of esplora (using ureq) and the async version (using reqwest). For more
+    /// details check with the documentation of the two crates. Both of them are compiled with
+    /// the socks feature enabled.
+    /// The proxy is ignored when targeting wasm32.
     pub proxy: Option<String>,
+    /// Number of parallel requests sent to the esplora service (default: 4)
     pub concurrency: Option<u8>,
+    /// Stop searching addresses for transactions after finding an unused gap of this length.
     pub stop_gap: u64,
+    /// Socket timeout.
     pub timeout: Option<u64>,
 }
 
