@@ -28,8 +28,11 @@ uniffi_macros::include_scaffolding!("bdk");
 
 type BdkError = Error;
 
+/// A derived address and the index it was found at.
 pub struct AddressInfo {
+    /// Child index of this address
     pub index: u32,
+    /// Address
     pub address: String,
 }
 
@@ -42,8 +45,17 @@ impl From<BdkAddressInfo> for AddressInfo {
     }
 }
 
+/// The address index selection strategy to use to derived an address from the wallet's external
+/// descriptor.
 pub enum AddressIndex {
+    /// Return a new address after incrementing the current descriptor index.
     New,
+    /// Return the address for the current descriptor index if it has not been used in a received
+    /// transaction. Otherwise return a new address as with AddressIndex::New.
+    /// Use with caution, if the wallet has not yet detected an address has been used it could
+    /// return an already used address. This function is primarily meant for situations where the
+    /// caller is untrusted; for example when deriving donation addresses on-demand for a public
+    /// web page.
     LastUnused,
 }
 
@@ -56,25 +68,52 @@ impl From<AddressIndex> for BdkAddressIndex {
     }
 }
 
+/// Type that can contain any of the database configurations defined by the library
+/// This allows storing a single configuration that can be loaded into an AnyDatabaseConfig
+/// instance. Wallets that plan to offer users the ability to switch blockchain backend at runtime
+/// will find this particularly useful.
 pub enum DatabaseConfig {
+    /// Memory database has no config
     Memory,
+    /// Simple key-value embedded database based on sled
     Sled { config: SledDbConfiguration },
+    /// Sqlite embedded database using rusqlite
     Sqlite { config: SqliteDbConfiguration },
 }
 
+/// Configuration for an ElectrumBlockchain
 pub struct ElectrumConfig {
+    /// URL of the Electrum server (such as ElectrumX, Esplora, BWT) may start with ssl:// or tcp:// and include a port
+    /// e.g. ssl://electrum.blockstream.info:60002
     pub url: String,
+    /// URL of the socks5 proxy server or a Tor service
     pub socks5: Option<String>,
+    /// Request retry count
     pub retry: u8,
+    /// Request timeout (seconds)
     pub timeout: Option<u8>,
+    /// Stop searching addresses for transactions after finding an unused gap of this length
     pub stop_gap: u64,
 }
 
+/// Configuration for an EsploraBlockchain
 pub struct EsploraConfig {
+    /// Base URL of the esplora service
+    /// e.g. https://blockstream.info/api/
     pub base_url: String,
+    /// Optional URL of the proxy to use to make requests to the Esplora server
+    /// The string should be formatted as: <protocol>://<user>:<password>@host:<port>.
+    /// Note that the format of this value and the supported protocols change slightly between the
+    /// sync version of esplora (using ureq) and the async version (using reqwest). For more
+    /// details check with the documentation of the two crates. Both of them are compiled with
+    /// the socks feature enabled.
+    /// The proxy is ignored when targeting wasm32.
     pub proxy: Option<String>,
+    /// Number of parallel requests sent to the esplora service (default: 4)
     pub concurrency: Option<u8>,
+    /// Stop searching addresses for transactions after finding an unused gap of this length.
     pub stop_gap: u64,
+    /// Socket timeout.
     pub timeout: Option<u64>,
 }
 
@@ -83,12 +122,22 @@ pub enum BlockchainConfig {
     Esplora { config: EsploraConfig },
 }
 
+/// A wallet transaction
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TransactionDetails {
-    pub fee: Option<u64>,
-    pub received: u64,
-    pub sent: u64,
+    /// Transaction id.
     pub txid: String,
+    /// Received value (sats)
+    /// Sum of owned outputs of this transaction.
+    pub received: u64,
+    /// Sent value (sats)
+    /// Sum of owned inputs of this transaction.
+    pub sent: u64,
+    /// Fee value (sats) if available.
+    /// The availability of the fee depends on the backend. It's never None with an Electrum
+    /// Server backend, but it could be None with a Bitcoin RPC node without txindex that receive
+    /// funds while offline.
+    pub fee: Option<u64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -173,13 +222,19 @@ struct Wallet {
     wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
 }
 
+/// A reference to a transaction output.
 pub struct OutPoint {
+    /// The referenced transaction's txid.
     txid: String,
+    /// The index of the referenced output in its transaction's vout.
     vout: u32,
 }
 
+/// A transaction output, which defines new coins to be created from old ones.
 pub struct TxOut {
+    /// The value of the output, in satoshis.
     value: u64,
+    /// The address of the output.
     address: String,
 }
 
