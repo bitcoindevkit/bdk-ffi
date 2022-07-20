@@ -14,7 +14,7 @@ crate-type = ["staticlib", "cdylib"]
 name = "bdkffi"
 
 [dependencies]
-bdk = { version = "0.19", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled"] }
+bdk = { version = "0.20", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled"] }
 
 uniffi_macros = { version = "0.16.0", features = ["builtin-bindgen"] }
 uniffi = { version = "0.16.0", features = ["builtin-bindgen"] }
