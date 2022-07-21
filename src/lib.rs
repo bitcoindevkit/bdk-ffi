@@ -20,7 +20,7 @@ use bdk::{
     Wallet as BdkWallet,
 };
 use std::collections::HashSet;
-use std::convert::{From, TryFrom, TryInto};
+use std::convert::{From, TryFrom};
 use std::fmt;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -552,7 +552,7 @@ impl TxBuilder {
         tx_builder.change_policy(self.change_policy);
         if !self.utxos.is_empty() {
             let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
-            let utxos: &[BdkOutPoint] = bdk_utxos[..].try_into().unwrap();
+            let utxos: &[BdkOutPoint] = &bdk_utxos;
             tx_builder.add_utxos(utxos)?;
         }
         if !self.unspendable.is_empty() {
