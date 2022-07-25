@@ -3,9 +3,8 @@ name = "bdk-ffi-bindgen"
 version = "0.2.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 anyhow = "=1.0.45" # remove after upgrading to next version of uniffi
 structopt = "0.3"
-uniffi_bindgen = "0.16.0"
+uniffi_bindgen = "0.19.3"
+camino = "1.0.9"
