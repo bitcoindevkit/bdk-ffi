@@ -586,7 +586,7 @@ impl TxBuilder {
             }
         }
         if !&self.data.is_empty() {
-            tx_builder.add_data(&self.data.as_slice());
+            tx_builder.add_data(self.data.as_slice());
         }
 
         tx_builder
@@ -693,7 +693,7 @@ mod test {
             .drain_wallet()
             .drain_to(drain_to_address.clone());
         //dbg!(&tx_builder);
-        assert_eq!(tx_builder.drain_wallet, true);
+        assert!(tx_builder.drain_wallet);
         assert_eq!(tx_builder.drain_to, Some(drain_to_address));
 
         let psbt = tx_builder.finish(&test_wallet).unwrap();
@@ -712,7 +712,7 @@ mod test {
             .get(0)
             .unwrap()
             .value;
-        assert_eq!(input_value, 50_000 as u64);
+        assert_eq!(input_value, 50_000_u64);
 
         // confirm one output to correct address with all sats - fee
         assert_eq!(psbt.outputs.len(), 1);
@@ -732,6 +732,6 @@ mod test {
             Address::from_str("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt").unwrap()
         );
         let output_value = psbt.unsigned_tx.output.get(0).cloned().unwrap().value;
-        assert_eq!(output_value, 49_890 as u64); // input - fee
+        assert_eq!(output_value, 49_890_u64); // input - fee
     }
 }
