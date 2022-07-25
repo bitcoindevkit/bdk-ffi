@@ -2,6 +2,7 @@ use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use structopt::StructOpt;
+use camino::Utf8Path;
 
 #[derive(Debug, PartialEq)]
 pub enum Language {
@@ -44,11 +45,13 @@ impl FromStr for Language {
 }
 
 fn generate_bindings(opt: &Opt) -> anyhow::Result<(), anyhow::Error> {
+    let path: &Utf8Path = Utf8Path::from_path(&opt.udl_file).unwrap();
+    let out_dir: &Utf8Path = Utf8Path::from_path(&opt.out_dir).unwrap();
     uniffi_bindgen::generate_bindings(
-        &opt.udl_file,
+        path,
         None,
         vec![opt.language.to_string().as_str()],
-        Some(&opt.out_dir),
+        Some(out_dir),
         false,
     )?;
 
