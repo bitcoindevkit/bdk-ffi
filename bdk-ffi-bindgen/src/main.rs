@@ -1,8 +1,8 @@
+use camino::Utf8Path;
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use structopt::StructOpt;
-use camino::Utf8Path;
 
 #[derive(Debug, PartialEq)]
 pub enum Language {
