@@ -12,7 +12,7 @@ jobs:
         rust:
           - version: 1.60.0 # STABLE
             clippy: true
-          - version: 1.56.1 # MSRV
+          - version: 1.57.0 # MSRV
     steps:
       - name: checkout
         uses: actions/checkout@v2
