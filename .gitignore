@@ -9,6 +9,7 @@ libbdkffi.dylib
 *.swp
 
 src/bdkpython/bdk.py
+src/bdkpython/*.so
 *.whl
 build/
 

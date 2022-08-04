@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 - Add sqlite database support
 - Fix memory database configuration enum, remove junk field 
 - Remove hard coded sync progress value (was always returning 21.0)
+- Fix tests and tox build workflow
 
 ## [0.0.1-0.0.5]
 ### Added
