@@ -35,7 +35,7 @@ cargo run -p bdk-ffi-bindgen -- --help
 
 [bdk-kotlin]: https://github.com/bitcoindevkit/bdk-kotlin
 [bdk-swift]: https://github.com/bitcoindevkit/bdk-swift
-[bdk-python]: https://github.com/thunderbiscuit/bdk-python
+[bdk-python]: https://github.com/bitcoindevkit/bdk-python
 
 ## Contributing
 
