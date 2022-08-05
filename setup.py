@@ -52,7 +52,7 @@ print(f"Wallet balance is: {balance}")
 """
 
 rust_ext = RustExtension(
-    "bdkpython.bdkffi",
+    target="bdkpython.bdkffi",
     path="./bdk-ffi/Cargo.toml",
     binding=Binding.NoBinding,
 )
@@ -60,7 +60,7 @@ rust_ext = RustExtension(
 setup(
     name='bdkpython',
     version='0.2.0.dev0',
-    description="The Python language bindings for the Bitcoin Dev Kit",
+    description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
     rust_extensions=[rust_ext],
