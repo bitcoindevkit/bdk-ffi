@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 ## [Unreleased]
 
+## [0.1.0-0.2.0]
+### Added
+- Update BDK to version `0.20.0`
+- APIs Added
+    - TxBuilder.add_data(data)
+    - Wallet.list_unspent() returns a list of local UTXOs
+    - Add coin control methods on TxBuilder
+
+### Fixed
+- Tox tests
+
 ## [0.0.5-0.1.0]
 ### Added
 - Community related files (bug report, feature request, and pull request templates)
@@ -33,6 +44,7 @@ The format is based on [Keep a Changelog], and this project adheres to [Semantic
 
 [Keep a Changelog]: https://keepachangelog.com/en/1.0.0/  
 [Semantic Versioning]: https://semver.org/spec/v2.0.0.html  
-[unreleased]: https://github.com/bitcoindevkit/bdk-python/compare/v0.0.5...HEAD  
+[unreleased]: https://github.com/bitcoindevkit/bdk-python/compare/v0.2.0...HEAD  
 [0.0.1-0.0.5]: https://github.com/bitcoindevkit/bdk-python/compare/58f189f987cc644a1d86e965623c8f50904588ad...v0.0.5  
 [0.0.5-0.1.0]: https://github.com/bitcoindevkit/bdk-python/compare/v0.0.5...v0.1.0
+[0.1.0-0.2.0]: https://github.com/bitcoindevkit/bdk-python/compare/v0.1.0...v0.2.0
