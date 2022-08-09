@@ -627,6 +627,12 @@ impl BumpFeeTxBuilder {
     }
 }
 
+fn generate_mnemonic(word_count: WordCount) -> Result<String, BdkError> {
+    let mnemonic: GeneratedKey<_, BareCtx> =
+        Mnemonic::generate((word_count, Language::English)).unwrap();
+    Ok(mnemonic.to_string())
+}
+
 uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
 
 // The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.

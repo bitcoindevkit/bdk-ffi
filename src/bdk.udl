@@ -1,4 +1,7 @@
-namespace bdk {};
+namespace bdk {
+  [Throws=BdkError]
+  string generate_mnemonic(WordCount word_count);
+};
 
 [Error]
 enum BdkError {
