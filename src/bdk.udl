@@ -245,3 +245,8 @@ interface BumpFeeTxBuilder {
   [Throws=BdkError]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
 };
+
+interface DerivationPath {
+  [Throws=BdkError]
+  constructor(string path);
+};

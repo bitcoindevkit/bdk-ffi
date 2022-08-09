@@ -1,6 +1,7 @@
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
+use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::{Address, Network, OutPoint as BdkOutPoint, Script, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::{
@@ -631,6 +632,20 @@ fn generate_mnemonic(word_count: WordCount) -> Result<String, BdkError> {
     let mnemonic: GeneratedKey<_, BareCtx> =
         Mnemonic::generate((word_count, Language::English)).unwrap();
     Ok(mnemonic.to_string())
+}
+
+struct DerivationPath {
+    derivation_path_mutex: Mutex<BdkDerivationPath>,
+}
+
+impl DerivationPath {
+    fn new(path: String) -> Result<Self, BdkError> {
+        BdkDerivationPath::from_str(&path)
+            .map(|x| DerivationPath {
+                derivation_path_mutex: Mutex::new(x),
+            })
+            .map_err(|e| BdkError::Generic(e.to_string()))
+    }
 }
 
 uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
