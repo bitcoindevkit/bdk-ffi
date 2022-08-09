@@ -1,7 +1,7 @@
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
-use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;
+use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::{Address, Network, OutPoint as BdkOutPoint, Script, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::{
@@ -10,8 +10,12 @@ use bdk::blockchain::{
 use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
+use bdk::descriptor::DescriptorXKey;
 use bdk::keys::bip39::{Language, Mnemonic, WordCount};
-use bdk::keys::{DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey};
+use bdk::keys::{
+    DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
+    DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
+};
 use bdk::miniscript::BareCtx;
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
@@ -645,6 +649,144 @@ impl DerivationPath {
                 derivation_path_mutex: Mutex::new(x),
             })
             .map_err(|e| BdkError::Generic(e.to_string()))
+    }
+}
+
+struct DescriptorSecretKey {
+    descriptor_secret_key_mutex: Mutex<BdkDescriptorSecretKey>,
+}
+
+impl DescriptorSecretKey {
+    fn new(network: Network, mnemonic: String, password: Option<String>) -> Result<Self, BdkError> {
+        let mnemonic = Mnemonic::parse_in(Language::English, mnemonic)
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
+        let xkey: ExtendedKey = (mnemonic, password).into_extended_key()?;
+        let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
+            origin: None,
+            xkey: xkey.into_xprv(network).unwrap(),
+            derivation_path: BdkDerivationPath::master(),
+            wildcard: bdk::descriptor::Wildcard::Unhardened,
+        });
+        Ok(Self {
+            descriptor_secret_key_mutex: Mutex::new(descriptor_secret_key),
+        })
+    }
+
+    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
+        let secp = Secp256k1::new();
+        let descriptor_secret_key = self.descriptor_secret_key_mutex.lock().unwrap();
+        let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
+        let descriptor_x_key = match descriptor_secret_key.deref() {
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => Some(descriptor_x_key),
+            _ => None,
+        }
+        .unwrap();
+        let derived_xprv = descriptor_x_key.xkey.derive_priv(&secp, &path)?;
+        let key_source = match descriptor_x_key.origin.clone() {
+            Some((fingerprint, origin_path)) => (fingerprint, origin_path.extend(path)),
+            None => (descriptor_x_key.xkey.fingerprint(&secp), path),
+        };
+        let derived_descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
+            origin: Some(key_source),
+            xkey: derived_xprv,
+            derivation_path: BdkDerivationPath::default(),
+            wildcard: descriptor_x_key.wildcard,
+        });
+        Ok(Arc::new(Self {
+            descriptor_secret_key_mutex: Mutex::new(derived_descriptor_secret_key),
+        }))
+    }
+
+    fn extend(&self, path: Arc<DerivationPath>) -> Arc<Self> {
+        let descriptor_secret_key = self.descriptor_secret_key_mutex.lock().unwrap();
+        let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
+        let descriptor_x_key = match descriptor_secret_key.deref() {
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => Some(descriptor_x_key),
+            _ => None,
+        }
+        .unwrap();
+        let extended_path = descriptor_x_key.derivation_path.extend(path);
+        let extended_descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
+            origin: descriptor_x_key.origin.clone(),
+            xkey: descriptor_x_key.xkey,
+            derivation_path: extended_path,
+            wildcard: descriptor_x_key.wildcard,
+        });
+        Arc::new(Self {
+            descriptor_secret_key_mutex: Mutex::new(extended_descriptor_secret_key),
+        })
+    }
+
+    fn as_public(&self) -> Arc<DescriptorPublicKey> {
+        let secp = Secp256k1::new();
+        let descriptor_public_key = self
+            .descriptor_secret_key_mutex
+            .lock()
+            .unwrap()
+            .as_public(&secp)
+            .unwrap();
+        Arc::new(DescriptorPublicKey {
+            descriptor_public_key_mutex: Mutex::new(descriptor_public_key),
+        })
+    }
+
+    fn as_string(&self) -> String {
+        self.descriptor_secret_key_mutex.lock().unwrap().to_string()
+    }
+}
+
+struct DescriptorPublicKey {
+    descriptor_public_key_mutex: Mutex<BdkDescriptorPublicKey>,
+}
+
+impl DescriptorPublicKey {
+    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
+        let secp = Secp256k1::new();
+        let descriptor_public_key = self.descriptor_public_key_mutex.lock().unwrap();
+        let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
+        let descriptor_x_key = match descriptor_public_key.deref() {
+            BdkDescriptorPublicKey::XPub(descriptor_x_key) => Some(descriptor_x_key),
+            _ => None,
+        }
+        .unwrap();
+        let derived_xpub = descriptor_x_key.xkey.derive_pub(&secp, &path)?;
+        let key_source = match descriptor_x_key.origin.clone() {
+            Some((fingerprint, origin_path)) => (fingerprint, origin_path.extend(path)),
+            None => (descriptor_x_key.xkey.fingerprint(), path),
+        };
+        let derived_descriptor_public_key = BdkDescriptorPublicKey::XPub(DescriptorXKey {
+            origin: Some(key_source),
+            xkey: derived_xpub,
+            derivation_path: BdkDerivationPath::default(),
+            wildcard: descriptor_x_key.wildcard,
+        });
+        Ok(Arc::new(Self {
+            descriptor_public_key_mutex: Mutex::new(derived_descriptor_public_key),
+        }))
+    }
+
+    fn extend(&self, path: Arc<DerivationPath>) -> Arc<Self> {
+        let descriptor_secret_key = self.descriptor_public_key_mutex.lock().unwrap();
+        let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
+        let descriptor_x_key = match descriptor_secret_key.deref() {
+            BdkDescriptorPublicKey::XPub(descriptor_x_key) => Some(descriptor_x_key),
+            _ => None,
+        }
+        .unwrap();
+        let extended_path = descriptor_x_key.derivation_path.extend(path);
+        let extended_descriptor_public_key = BdkDescriptorPublicKey::XPub(DescriptorXKey {
+            origin: descriptor_x_key.origin.clone(),
+            xkey: descriptor_x_key.xkey,
+            derivation_path: extended_path,
+            wildcard: descriptor_x_key.wildcard,
+        });
+        Arc::new(Self {
+            descriptor_public_key_mutex: Mutex::new(extended_descriptor_public_key),
+        })
+    }
+
+    fn as_string(&self) -> String {
+        self.descriptor_public_key_mutex.lock().unwrap().to_string()
     }
 }
 
