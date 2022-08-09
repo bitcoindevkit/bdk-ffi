@@ -351,46 +351,6 @@ impl Wallet {
     }
 }
 
-pub struct ExtendedKeyInfo {
-    mnemonic: String,
-    xprv: String,
-    fingerprint: String,
-}
-
-fn generate_extended_key(
-    network: Network,
-    word_count: WordCount,
-    password: Option<String>,
-) -> Result<ExtendedKeyInfo, Error> {
-    let mnemonic: GeneratedKey<_, BareCtx> =
-        Mnemonic::generate((word_count, Language::English)).unwrap();
-    let mnemonic = mnemonic.into_key();
-    let xkey: ExtendedKey = (mnemonic.clone(), password).into_extended_key()?;
-    let xprv = xkey.into_xprv(network).unwrap();
-    let fingerprint = xprv.fingerprint(&Secp256k1::new());
-    Ok(ExtendedKeyInfo {
-        mnemonic: mnemonic.to_string(),
-        xprv: xprv.to_string(),
-        fingerprint: fingerprint.to_string(),
-    })
-}
-
-fn restore_extended_key(
-    network: Network,
-    mnemonic: String,
-    password: Option<String>,
-) -> Result<ExtendedKeyInfo, Error> {
-    let mnemonic = Mnemonic::parse_in(Language::English, mnemonic).unwrap();
-    let xkey: ExtendedKey = (mnemonic.clone(), password).into_extended_key()?;
-    let xprv = xkey.into_xprv(network).unwrap();
-    let fingerprint = xprv.fingerprint(&Secp256k1::new());
-    Ok(ExtendedKeyInfo {
-        mnemonic: mnemonic.to_string(),
-        xprv: xprv.to_string(),
-        fingerprint: fingerprint.to_string(),
-    })
-}
-
 fn to_script_pubkey(address: &str) -> Result<Script, BdkError> {
     Address::from_str(address)
         .map(|x| x.script_pubkey())

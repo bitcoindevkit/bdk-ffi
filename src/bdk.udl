@@ -1,10 +1,4 @@
-namespace bdk {
-  [Throws=BdkError]
-  ExtendedKeyInfo generate_extended_key(Network network, WordCount word_count, string? password);
-
-  [Throws=BdkError]
-  ExtendedKeyInfo restore_extended_key(Network network, string mnemonic, string? password);
-};
+namespace bdk {};
 
 [Error]
 enum BdkError {
@@ -99,12 +93,6 @@ dictionary BlockTime {
 interface Transaction {
   Unconfirmed(TransactionDetails details);
   Confirmed(TransactionDetails details, BlockTime confirmation);
-};
-
-dictionary ExtendedKeyInfo {
-  string mnemonic;
-  string xprv;
-  string fingerprint;
 };
 
 enum WordCount {
