@@ -143,6 +143,12 @@ interface Blockchain {
 
   [Throws=BdkError]
   void broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
+
+  [Throws=BdkError]
+  u32 get_height();
+
+  [Throws=BdkError]
+  string get_block_hash(u32 height);
 };
 
 callback interface Progress {

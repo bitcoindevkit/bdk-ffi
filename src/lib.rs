@@ -3,6 +3,8 @@ use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
 use bdk::bitcoin::{Address, Network, OutPoint as BdkOutPoint, Script, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
+use bdk::blockchain::GetBlockHash;
+use bdk::blockchain::GetHeight;
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig, ConfigurableBlockchain,
 };
@@ -168,6 +170,16 @@ impl Blockchain {
     fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), Error> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
         self.get_blockchain().broadcast(&tx)
+    }
+
+    fn get_height(&self) -> Result<u32, Error> {
+        self.get_blockchain().get_height()
+    }
+
+    fn get_block_hash(&self, height: u32) -> Result<String, Error> {
+        self.get_blockchain()
+            .get_block_hash(u64::from(height))
+            .map(|hash| hash.to_string())
     }
 }
 
