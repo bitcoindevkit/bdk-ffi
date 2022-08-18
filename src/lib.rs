@@ -319,7 +319,7 @@ impl Wallet {
         self.wallet_mutex.lock().expect("wallet")
     }
 
-    fn get_network(&self) -> Network {
+    fn network(&self) -> Network {
         self.get_wallet().network()
     }
 
@@ -354,7 +354,7 @@ impl Wallet {
         self.get_wallet().sign(&mut psbt, SignOptions::default())
     }
 
-    fn get_transactions(&self) -> Result<Vec<Transaction>, Error> {
+    fn list_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
         Ok(transactions.iter().map(Transaction::from).collect())
     }
@@ -363,7 +363,7 @@ impl Wallet {
         let unspents = self.get_wallet().list_unspent()?;
         Ok(unspents
             .iter()
-            .map(|u| LocalUtxo::from_utxo(u, self.get_network()))
+            .map(|u| LocalUtxo::from_utxo(u, self.network()))
             .collect())
     }
 }

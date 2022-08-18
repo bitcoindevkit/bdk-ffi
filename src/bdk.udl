@@ -182,9 +182,9 @@ interface Wallet {
   boolean sign([ByRef] PartiallySignedBitcoinTransaction psbt);
 
   [Throws=BdkError]
-  sequence<Transaction> get_transactions();
+  sequence<Transaction> list_transactions();
 
-  Network get_network();
+  Network network();
 
   [Throws=BdkError]
   void sync([ByRef] Blockchain blockchain, Progress? progress);
