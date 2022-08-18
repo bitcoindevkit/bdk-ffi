@@ -5,9 +5,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
-- Add `get_height()` and `get_block_hash()` methods on blockchain [#184]
+- APIs Added [#154]
+  - `generate_mnemonic()`, returns string mnemonic
+  - `interface DescriptorSecretKey`
+    - `new(Network, string_mnenoinc, password)`, contructs DescriptorSecretKey
+    - `derive(DerivationPath)`, derives and returns child DescriptorSecretKey
+    - `extend(DerivationPath)`, extends and returns DescriptorSecretKey
+    - `as_public()`, returns DescriptorSecretKey as DescriptorPublicKey
+    - `as_string()`, returns DescriptorSecretKey as String
+  - `interface DescriptorPublicKey`
+    - `derive(DerivationPath)` derives and returns child DescriptorPublicKey
+    - `extend(DerivationPath)` extends and returns DescriptorPublicKey
+    - `as_string()` returns DescriptorPublicKey as String
+    - Add `get_height()` and `get_block_hash()` methods on blockchain [#184]
+- Interfaces Added [#154]
+  - `DescriptorSecretKey`
+  - `DescriptorPublicKey`
+  - `DerivationPath`
+- Dictionary Removed [#154]
+  - `ExtendedKeyInfo {mnenonic, xprv, fingerprint}` 
+- APIs Removed [#154]
+  - `generate_extended_key`, returned ExtendedKeyInfo
+  - `restore_extended_key`, returned ExtendedKeyInfo
 
+[#154]: https://github.com/bitcoindevkit/bdk-ffi/pull/154
 [#184]: https://github.com/bitcoindevkit/bdk-ffi/pull/184
 
 ## [v0.8.0]
