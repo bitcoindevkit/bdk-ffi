@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `derive(DerivationPath)` derives and returns child DescriptorPublicKey
     - `extend(DerivationPath)` extends and returns DescriptorPublicKey
     - `as_string()` returns DescriptorPublicKey as String
-    - Add `get_height()` and `get_block_hash()` methods on blockchain [#184]
+  - Add to `interface Blockchain` the `get_height()` and `get_block_hash()` methods [#184]
 - Interfaces Added [#154]
   - `DescriptorSecretKey`
   - `DescriptorPublicKey`
