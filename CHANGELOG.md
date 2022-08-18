@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `derive(DerivationPath)` derives and returns child DescriptorPublicKey
     - `extend(DerivationPath)` extends and returns DescriptorPublicKey
     - `as_string()` returns DescriptorPublicKey as String
+  - Add to `interface Blockchain` the `get_height()` and `get_block_hash()` methods [#184]
 - Interfaces Added [#154]
   - `DescriptorSecretKey`
   - `DescriptorPublicKey`
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `restore_extended_key`, returned ExtendedKeyInfo
 
 [#154]: https://github.com/bitcoindevkit/bdk-ffi/pull/154
+[#184]: https://github.com/bitcoindevkit/bdk-ffi/pull/184
 
 ## [v0.8.0]
 - Update BDK to version 0.20.0 [#169]
