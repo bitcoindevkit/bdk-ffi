@@ -1,9 +1,6 @@
 namespace bdk {
   [Throws=BdkError]
-  ExtendedKeyInfo generate_extended_key(Network network, WordCount word_count, string? password);
-
-  [Throws=BdkError]
-  ExtendedKeyInfo restore_extended_key(Network network, string mnemonic, string? password);
+  string generate_mnemonic(WordCount word_count);
 };
 
 [Error]
@@ -99,12 +96,6 @@ dictionary BlockTime {
 interface Transaction {
   Unconfirmed(TransactionDetails details);
   Confirmed(TransactionDetails details, BlockTime confirmation);
-};
-
-dictionary ExtendedKeyInfo {
-  string mnemonic;
-  string xprv;
-  string fingerprint;
 };
 
 enum WordCount {
@@ -253,4 +244,32 @@ interface BumpFeeTxBuilder {
 
   [Throws=BdkError]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
+};
+
+interface DerivationPath {
+  [Throws=BdkError]
+  constructor(string path);
+};
+
+interface DescriptorSecretKey {
+  [Throws=BdkError]
+  constructor(Network network, string mnemonic, string? password);
+
+  [Throws=BdkError]
+  DescriptorSecretKey derive(DerivationPath path);
+
+  DescriptorSecretKey extend(DerivationPath path);
+
+  DescriptorPublicKey as_public();
+
+  string as_string();
+};
+
+interface DescriptorPublicKey {
+  [Throws=BdkError]
+  DescriptorPublicKey derive(DerivationPath path);
+
+  DescriptorPublicKey extend(DerivationPath path);
+
+  string as_string();
 };
