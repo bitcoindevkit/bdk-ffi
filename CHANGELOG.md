@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 - Breaking Changes
   - Rename `get_network()` method on `Wallet` interface to `network()` [#185]
   - Rename `get_transactions()` method on `Wallet` interface to `list_transactions()` [#185]
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `extend(DerivationPath)` extends and returns DescriptorPublicKey
     - `as_string()` returns DescriptorPublicKey as String
   - Add to `interface Blockchain` the `get_height()` and `get_block_hash()` methods [#184]
+  - Add to `interface TxBuilder`  the `set_recipients(recipient: Vec<AddressAmount>)` method [#186] 
 - Interfaces Added [#154]
   - `DescriptorSecretKey`
   - `DescriptorPublicKey`

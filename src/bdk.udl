@@ -168,6 +168,11 @@ dictionary LocalUtxo {
   boolean is_spent;
 };
 
+dictionary AddressAmount {
+  string address;
+  u64 amount;
+};
+
 interface Wallet {
   [Throws=BdkError]
   constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
@@ -234,6 +239,8 @@ interface TxBuilder {
   TxBuilder enable_rbf_with_sequence(u32 nsequence);
 
   TxBuilder add_data(sequence<u8> data);
+  
+  TxBuilder set_recipients(sequence<AddressAmount> recipients);
   
   [Throws=BdkError]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);

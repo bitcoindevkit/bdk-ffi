@@ -37,6 +37,11 @@ uniffi_macros::include_scaffolding!("bdk");
 
 type BdkError = Error;
 
+pub struct AddressAmount {
+    pub address: String,
+    pub amount: u64,
+}
+
 pub struct AddressInfo {
     pub index: u32,
     pub address: String,
@@ -415,6 +420,17 @@ impl TxBuilder {
     fn add_recipient(&self, recipient: String, amount: u64) -> Arc<Self> {
         let mut recipients = self.recipients.to_vec();
         recipients.append(&mut vec![(recipient, amount)]);
+        Arc::new(TxBuilder {
+            recipients,
+            ..self.clone()
+        })
+    }
+
+    fn set_recipients(&self, recipients: Vec<AddressAmount>) -> Arc<Self> {
+        let recipients = recipients
+            .iter()
+            .map(|address_amount| (address_amount.address.clone(), address_amount.amount))
+            .collect();
         Arc::new(TxBuilder {
             recipients,
             ..self.clone()
