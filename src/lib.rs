@@ -42,8 +42,11 @@ pub struct AddressAmount {
     pub amount: u64,
 }
 
+/// A derived address and the index it was found at.
 pub struct AddressInfo {
+    /// Child index of this address
     pub index: u32,
+    /// Address
     pub address: String,
 }
 
@@ -56,8 +59,17 @@ impl From<BdkAddressInfo> for AddressInfo {
     }
 }
 
+/// The address index selection strategy to use to derived an address from the wallet's external
+/// descriptor.
 pub enum AddressIndex {
+    /// Return a new address after incrementing the current descriptor index.
     New,
+    /// Return the address for the current descriptor index if it has not been used in a received
+    /// transaction. Otherwise return a new address as with AddressIndex::New.
+    /// Use with caution, if the wallet has not yet detected an address has been used it could
+    /// return an already used address. This function is primarily meant for situations where the
+    /// caller is untrusted; for example when deriving donation addresses on-demand for a public
+    /// web page.
     LastUnused,
 }
 
@@ -70,48 +82,94 @@ impl From<AddressIndex> for BdkAddressIndex {
     }
 }
 
+/// Type that can contain any of the database configurations defined by the library
+/// This allows storing a single configuration that can be loaded into an AnyDatabaseConfig
+/// instance. Wallets that plan to offer users the ability to switch blockchain backend at runtime
+/// will find this particularly useful.
 pub enum DatabaseConfig {
+    /// Memory database has no config
     Memory,
+    /// Simple key-value embedded database based on sled
     Sled { config: SledDbConfiguration },
+    /// Sqlite embedded database using rusqlite
     Sqlite { config: SqliteDbConfiguration },
 }
 
+/// Configuration for an ElectrumBlockchain
 pub struct ElectrumConfig {
+    /// URL of the Electrum server (such as ElectrumX, Esplora, BWT) may start with ssl:// or tcp:// and include a port
+    /// e.g. ssl://electrum.blockstream.info:60002
     pub url: String,
+    /// URL of the socks5 proxy server or a Tor service
     pub socks5: Option<String>,
+    /// Request retry count
     pub retry: u8,
+    /// Request timeout (seconds)
     pub timeout: Option<u8>,
+    /// Stop searching addresses for transactions after finding an unused gap of this length
     pub stop_gap: u64,
 }
 
+/// Configuration for an EsploraBlockchain
 pub struct EsploraConfig {
+    /// Base URL of the esplora service
+    /// e.g. https://blockstream.info/api/
     pub base_url: String,
+    /// Optional URL of the proxy to use to make requests to the Esplora server
+    /// The string should be formatted as: <protocol>://<user>:<password>@host:<port>.
+    /// Note that the format of this value and the supported protocols change slightly between the
+    /// sync version of esplora (using ureq) and the async version (using reqwest). For more
+    /// details check with the documentation of the two crates. Both of them are compiled with
+    /// the socks feature enabled.
+    /// The proxy is ignored when targeting wasm32.
     pub proxy: Option<String>,
+    /// Number of parallel requests sent to the esplora service (default: 4)
     pub concurrency: Option<u8>,
+    /// Stop searching addresses for transactions after finding an unused gap of this length.
     pub stop_gap: u64,
+    /// Socket timeout.
     pub timeout: Option<u64>,
 }
 
+/// Type that can contain any of the blockchain configurations defined by the library.
 pub enum BlockchainConfig {
+    /// Electrum client
     Electrum { config: ElectrumConfig },
+    /// Esplora client
     Esplora { config: EsploraConfig },
 }
 
+/// A wallet transaction
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TransactionDetails {
-    pub fee: Option<u64>,
-    pub received: u64,
-    pub sent: u64,
+    /// Transaction id.
     pub txid: String,
+    /// Received value (sats)
+    /// Sum of owned outputs of this transaction.
+    pub received: u64,
+    /// Sent value (sats)
+    /// Sum of owned inputs of this transaction.
+    pub sent: u64,
+    /// Fee value (sats) if available.
+    /// The availability of the fee depends on the backend. It's never None with an Electrum
+    /// Server backend, but it could be None with a Bitcoin RPC node without txindex that receive
+    /// funds while offline.
+    pub fee: Option<u64>,
 }
 
+/// A transaction, either of type Confirmed or Unconfirmed
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Transaction {
+    /// A transaction that has yet to be included in a block
     Unconfirmed {
+        /// The details of wallet transaction.
         details: TransactionDetails,
     },
+    /// A transaction that has been mined and is part of a block
     Confirmed {
+        /// The details of wallet transaction
         details: TransactionDetails,
+        /// Timestamp and block height of the block in which this transaction was mined
         confirmation: BlockTime,
     },
 }
@@ -197,9 +255,12 @@ struct Wallet {
     wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
 }
 
+/// A reference to a transaction output.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct OutPoint {
+    /// The referenced transaction's txid.
     txid: String,
+    /// The index of the referenced output in its transaction's vout.
     vout: u32,
 }
 
@@ -212,8 +273,11 @@ impl From<&OutPoint> for BdkOutPoint {
     }
 }
 
+/// A transaction output, which defines new coins to be created from old ones.
 pub struct TxOut {
+    /// The value of the output, in satoshis.
     value: u64,
+    /// The address of the output.
     address: String,
 }
 
@@ -252,7 +316,10 @@ impl NetworkLocalUtxo for LocalUtxo {
     }
 }
 
+/// Trait that logs at level INFO every update received (if any).
 pub trait Progress: Send + Sync + 'static {
+    /// Send a new progress update. The progress value should be in the range 0.0 - 100.0, and the message value is an
+    /// optional text message that can be displayed to the user.
     fn update(&self, progress: f32, message: Option<String>);
 }
 
@@ -298,6 +365,11 @@ impl PartiallySignedBitcoinTransaction {
     }
 }
 
+/// A Bitcoin wallet.
+/// The Wallet acts as a way of coherently interfacing with output descriptors and related transactions. Its main components are:
+///     1. Output descriptors from which it can derive addresses.
+///     2. A Database where it tracks transactions and utxos related to the descriptors.
+///     3. Signers that can contribute signatures to addresses instantiated from the descriptors.
 impl Wallet {
     fn new(
         descriptor: String,
@@ -324,10 +396,12 @@ impl Wallet {
         self.wallet_mutex.lock().expect("wallet")
     }
 
+    /// Get the Bitcoin network the wallet is using.
     fn network(&self) -> Network {
         self.get_wallet().network()
     }
 
+    /// Sync the internal database with the blockchain.
     fn sync(
         &self,
         blockchain: &Blockchain,
@@ -344,26 +418,35 @@ impl Wallet {
         self.get_wallet().sync(blockchain.deref(), bdk_sync_opts)
     }
 
+    /// Return a derived address using the external descriptor, see AddressIndex for available address index selection
+    /// strategies. If none of the keys in the descriptor are derivable (i.e. the descriptor does not end with a * character)
+    /// then the same address will always be returned for any AddressIndex.
     fn get_address(&self, address_index: AddressIndex) -> Result<AddressInfo, BdkError> {
         self.get_wallet()
             .get_address(address_index.into())
             .map(AddressInfo::from)
     }
 
+    /// Return the balance, meaning the sum of this wallet’s unspent outputs’ values. Note that this method only operates
+    /// on the internal database, which first needs to be Wallet.sync manually.
     fn get_balance(&self) -> Result<u64, Error> {
         self.get_wallet().get_balance()
     }
 
+    /// Sign a transaction with all the wallet’s signers.
     fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<bool, Error> {
         let mut psbt = psbt.internal.lock().unwrap();
         self.get_wallet().sign(&mut psbt, SignOptions::default())
     }
 
+    /// Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually.
     fn list_transactions(&self) -> Result<Vec<Transaction>, Error> {
         let transactions = self.get_wallet().list_transactions(true)?;
         Ok(transactions.iter().map(Transaction::from).collect())
     }
 
+    /// Return the list of unspent outputs of this wallet. Note that this method only operates on the internal database,
+    /// which first needs to be Wallet.sync manually.
     fn list_unspent(&self) -> Result<Vec<LocalUtxo>, Error> {
         let unspents = self.get_wallet().list_unspent()?;
         Ok(unspents
@@ -385,6 +468,9 @@ enum RbfValue {
     Value(u32),
 }
 
+/// A transaction builder.
+/// After creating the TxBuilder, you set options on it until finally calling finish to consume the builder and generate the transaction.
+/// Each method on the TxBuilder returns an instance of a new TxBuilder with the option set/added.
 #[derive(Clone, Debug)]
 struct TxBuilder {
     recipients: Vec<(String, u64)>,
@@ -417,6 +503,7 @@ impl TxBuilder {
         }
     }
 
+    /// Add a recipient to the internal list.
     fn add_recipient(&self, recipient: String, amount: u64) -> Arc<Self> {
         let mut recipients = self.recipients.to_vec();
         recipients.append(&mut vec![(recipient, amount)]);
@@ -437,6 +524,8 @@ impl TxBuilder {
         })
     }
 
+    /// Add a utxo to the internal list of unspendable utxos. It’s important to note that the "must-be-spent"
+    /// utxos added with [TxBuilder.addUtxo] have priority over this. See the Rust docs of the two linked methods for more details.
     fn add_unspendable(&self, unspendable: OutPoint) -> Arc<Self> {
         let mut unspendable_hash_set = self.unspendable.clone();
         unspendable_hash_set.insert(unspendable);
@@ -446,10 +535,15 @@ impl TxBuilder {
         })
     }
 
+    /// Add an outpoint to the internal list of UTXOs that must be spent. These have priority over the "unspendable"
+    /// utxos, meaning that if a utxo is present both in the "utxos" and the "unspendable" list, it will be spent.
     fn add_utxo(&self, outpoint: OutPoint) -> Arc<Self> {
         self.add_utxos(vec![outpoint])
     }
 
+    /// Add the list of outpoints to the internal list of UTXOs that must be spent. If an error occurs while adding
+    /// any of the UTXOs then none of them are added and the error is returned. These have priority over the "unspendable"
+    /// utxos, meaning that if a utxo is present both in the "utxos" and the "unspendable" list, it will be spent.
     fn add_utxos(&self, mut outpoints: Vec<OutPoint>) -> Arc<Self> {
         let mut utxos = self.utxos.to_vec();
         utxos.append(&mut outpoints);
@@ -459,6 +553,7 @@ impl TxBuilder {
         })
     }
 
+    /// Do not spend change outputs. This effectively adds all the change outputs to the "unspendable" list. See TxBuilder.unspendable.
     fn do_not_spend_change(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             change_policy: ChangeSpendPolicy::ChangeForbidden,
@@ -466,6 +561,8 @@ impl TxBuilder {
         })
     }
 
+    /// Only spend utxos added by [add_utxo]. The wallet will not add additional utxos to the transaction even if they are
+    /// needed to make the transaction valid.
     fn manually_selected_only(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             manually_selected_only: true,
@@ -473,6 +570,7 @@ impl TxBuilder {
         })
     }
 
+    /// Only spend change outputs. This effectively adds all the non-change outputs to the "unspendable" list. See TxBuilder.unspendable.
     fn only_spend_change(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             change_policy: ChangeSpendPolicy::OnlyChange,
@@ -480,6 +578,8 @@ impl TxBuilder {
         })
     }
 
+    /// Replace the internal list of unspendable utxos with a new list. It’s important to note that the "must-be-spent" utxos added with
+    /// TxBuilder.addUtxo have priority over these. See the Rust docs of the two linked methods for more details.
     fn unspendable(&self, unspendable: Vec<OutPoint>) -> Arc<Self> {
         Arc::new(TxBuilder {
             unspendable: unspendable.into_iter().collect(),
@@ -487,6 +587,7 @@ impl TxBuilder {
         })
     }
 
+    /// Set a custom fee rate.
     fn fee_rate(&self, sat_per_vb: f32) -> Arc<Self> {
         Arc::new(TxBuilder {
             fee_rate: Some(sat_per_vb),
@@ -494,6 +595,7 @@ impl TxBuilder {
         })
     }
 
+    /// Set an absolute fee.
     fn fee_absolute(&self, fee_amount: u64) -> Arc<Self> {
         Arc::new(TxBuilder {
             fee_absolute: Some(fee_amount),
@@ -501,6 +603,7 @@ impl TxBuilder {
         })
     }
 
+    /// Spend all the available inputs. This respects filters like TxBuilder.unspendable and the change policy.
     fn drain_wallet(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             drain_wallet: true,
@@ -508,6 +611,14 @@ impl TxBuilder {
         })
     }
 
+    /// Sets the address to drain excess coins to. Usually, when there are excess coins they are sent to a change address
+    /// generated by the wallet. This option replaces the usual change address with an arbitrary ScriptPubKey of your choosing.
+    /// Just as with a change output, if the drain output is not needed (the excess coins are too small) it will not be included
+    /// in the resulting transaction. The only difference is that it is valid to use drain_to without setting any ordinary recipients
+    /// with add_recipient (but it is perfectly fine to add recipients as well). If you choose not to set any recipients, you should
+    /// either provide the utxos that the transaction should spend via add_utxos, or set drain_wallet to spend all of them.
+    /// When bumping the fees of a transaction made with this option, you probably want to use BumpFeeTxBuilder.allow_shrinking
+    /// to allow this output to be reduced to pay for the extra fees.
     fn drain_to(&self, address: String) -> Arc<Self> {
         Arc::new(TxBuilder {
             drain_to: Some(address),
@@ -515,6 +626,7 @@ impl TxBuilder {
         })
     }
 
+    /// Enable signaling RBF. This will use the default `nsequence` value of `0xFFFFFFFD`.
     fn enable_rbf(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             rbf: Some(RbfValue::Default),
@@ -522,6 +634,9 @@ impl TxBuilder {
         })
     }
 
+    /// Enable signaling RBF with a specific nSequence value. This can cause conflicts if the wallet's descriptors contain an
+    /// "older" (OP_CSV) operator and the given `nsequence` is lower than the CSV value. If the `nsequence` is higher than `0xFFFFFFFD`
+    /// an error will be thrown, since it would not be a valid nSequence to signal RBF.
     fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(TxBuilder {
             rbf: Some(RbfValue::Value(nsequence)),
@@ -529,6 +644,7 @@ impl TxBuilder {
         })
     }
 
+    /// Add data as an output using OP_RETURN.
     fn add_data(&self, data: Vec<u8>) -> Arc<Self> {
         Arc::new(TxBuilder {
             data,
@@ -536,6 +652,7 @@ impl TxBuilder {
         })
     }
 
+    /// Finish building the transaction. Returns the BIP174 PSBT.
     fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
@@ -591,6 +708,7 @@ impl TxBuilder {
     }
 }
 
+/// The BumpFeeTxBuilder is used to bump the fee on a transaction that has been broadcast and has its RBF flag set to true.
 #[derive(Clone)]
 struct BumpFeeTxBuilder {
     txid: String,
@@ -609,6 +727,11 @@ impl BumpFeeTxBuilder {
         }
     }
 
+    /// Explicitly tells the wallet that it is allowed to reduce the amount of the output matching this script_pubkey
+    /// in order to bump the transaction fee. Without specifying this the wallet will attempt to find a change output to
+    /// shrink instead. Note that the output may shrink to below the dust limit and therefore be removed. If it is preserved
+    /// then it is currently not guaranteed to be in the same position as it was originally. Returns an error if script_pubkey
+    /// can’t be found among the recipients of the transaction we are bumping.
     fn allow_shrinking(&self, address: String) -> Arc<Self> {
         Arc::new(Self {
             allow_shrinking: Some(address),
@@ -616,6 +739,7 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Enable signaling RBF. This will use the default `nsequence` value of `0xFFFFFFFD`.
     fn enable_rbf(&self) -> Arc<Self> {
         Arc::new(Self {
             rbf: Some(RbfValue::Default),
@@ -623,6 +747,9 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Enable signaling RBF with a specific nSequence value. This can cause conflicts if the wallet's descriptors contain an
+    /// "older" (OP_CSV) operator and the given `nsequence` is lower than the CSV value. If the `nsequence` is higher than `0xFFFFFFFD`
+    /// an error will be thrown, since it would not be a valid nSequence to signal RBF.
     fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(Self {
             rbf: Some(RbfValue::Value(nsequence)),
@@ -630,6 +757,7 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Finish building the transaction. Returns the BIP174 PSBT.
     fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
         let wallet = wallet.get_wallet();
         let txid = Txid::from_str(self.txid.as_str())?;
