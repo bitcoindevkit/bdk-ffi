@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 anyhow = "=1.0.45" # remove after upgrading to next version of uniffi
 structopt = "0.3"
-uniffi_bindgen = "0.19.3"
+uniffi_bindgen = "=0.19.3"
 camino = "1.0.9"
