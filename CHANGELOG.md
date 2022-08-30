@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Remove `generate_extended_key`, returned ExtendedKeyInfo [#154]
   - Remove `restore_extended_key`, returned ExtendedKeyInfo [#154]
   - Remove dictionary `ExtendedKeyInfo {mnenonic, xprv, fingerprint}` [#154]
+  - Remove interface `Transaction` [#190]
+  - Changed `Wallet` interface `list_transaction()` to return array of `TransactionDetails` [#190]
 - APIs Added [#154]
   - `generate_mnemonic()`, returns string mnemonic
   - `interface DescriptorSecretKey`
@@ -25,7 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `extend(DerivationPath)` extends and returns DescriptorPublicKey
     - `as_string()` returns DescriptorPublicKey as String
   - Add to `interface Blockchain` the `get_height()` and `get_block_hash()` methods [#184]
-  - Add to `interface TxBuilder`  the `set_recipients(recipient: Vec<AddressAmount>)` method [#186] 
+  - Add to `interface TxBuilder`  the `set_recipients(recipient: Vec<AddressAmount>)` method [#186]
+  - Add to `dictionary TransactionDetails` the `confirmation_time` field [#190]
 - Interfaces Added [#154]
   - `DescriptorSecretKey`
   - `DescriptorPublicKey`
@@ -46,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#158]: https://github.com/bitcoindevkit/bdk-ffi/pull/158
 [#164]: https://github.com/bitcoindevkit/bdk-ffi/pull/164
 [#169]: https://github.com/bitcoindevkit/bdk-ffi/pull/169
+[#190]: https://github.com/bitcoindevkit/bdk-ffi/pull/190
 
 ## [v0.7.0]
 - Update BDK to version 0.19.0

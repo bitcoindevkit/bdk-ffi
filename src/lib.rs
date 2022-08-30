@@ -155,23 +155,9 @@ pub struct TransactionDetails {
     /// Server backend, but it could be None with a Bitcoin RPC node without txindex that receive
     /// funds while offline.
     pub fee: Option<u64>,
-}
-
-/// A transaction, either of type Confirmed or Unconfirmed
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Transaction {
-    /// A transaction that has yet to be included in a block
-    Unconfirmed {
-        /// The details of wallet transaction.
-        details: TransactionDetails,
-    },
-    /// A transaction that has been mined and is part of a block
-    Confirmed {
-        /// The details of wallet transaction
-        details: TransactionDetails,
-        /// Timestamp and block height of the block in which this transaction was mined
-        confirmation: BlockTime,
-    },
+    /// If the transaction is confirmed, contains height and timestamp of the block containing the
+    /// transaction, unconfirmed transaction contains `None`.
+    pub confirmation_time: Option<BlockTime>,
 }
 
 impl From<&bdk::TransactionDetails> for TransactionDetails {
@@ -181,20 +167,7 @@ impl From<&bdk::TransactionDetails> for TransactionDetails {
             txid: x.txid.to_string(),
             received: x.received,
             sent: x.sent,
-        }
-    }
-}
-
-impl From<&bdk::TransactionDetails> for Transaction {
-    fn from(x: &bdk::TransactionDetails) -> Transaction {
-        match x.confirmation_time.clone() {
-            Some(block_time) => Transaction::Confirmed {
-                details: TransactionDetails::from(x),
-                confirmation: block_time,
-            },
-            None => Transaction::Unconfirmed {
-                details: TransactionDetails::from(x),
-            },
+            confirmation_time: x.confirmation_time.clone(),
         }
     }
 }
@@ -440,9 +413,12 @@ impl Wallet {
     }
 
     /// Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually.
-    fn list_transactions(&self) -> Result<Vec<Transaction>, Error> {
-        let transactions = self.get_wallet().list_transactions(true)?;
-        Ok(transactions.iter().map(Transaction::from).collect())
+    fn list_transactions(&self) -> Result<Vec<TransactionDetails>, Error> {
+        let transaction_details = self.get_wallet().list_transactions(true)?;
+        Ok(transaction_details
+            .iter()
+            .map(TransactionDetails::from)
+            .collect())
     }
 
     /// Return the list of unspent outputs of this wallet. Note that this method only operates on the internal database,
