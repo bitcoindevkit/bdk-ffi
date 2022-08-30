@@ -1,23 +1,10 @@
-name: Tests
-
+name: Test JVM
 on: [push, pull_request]
-
-env:
-  ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/21.4.7075529
-  # By default the new ubuntu-20.04 images use the following ANDROID_NDK_ROOT
-  # ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/25.0.8775105
 
 jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-      - name: Install Android NDK 21.4.7075529
-        run: |
-          ANDROID_ROOT=/usr/local/lib/android
-          ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-          SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
-          echo "y" | $SDKMANAGER "ndk;21.4.7075529"
-
       - name: Check out PR branch
         uses: actions/checkout@v2
 
@@ -40,15 +27,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-
-      - name: Install rust android targets
-        run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
-
-      - name: Build bdk-android library
-        run: ./gradlew :android:buildAndroidLib
-
-      - name: Run Android tests
-        run: ./gradlew :android:test --console=rich
 
       - name: Build bdk-jvm library
         run: ./gradlew :jvm:buildJvmLib
