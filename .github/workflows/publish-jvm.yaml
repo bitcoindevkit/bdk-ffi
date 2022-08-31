@@ -90,7 +90,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.PGP_KEY_ID }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.PGP_SECRET_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.PGP_PASSPHRASE }}
-        run: ./gradlew :jvm:publishToMavenLocal
+        run: ./gradlew :jvm:publishToMavenLocal :jvm:publishToSonatype
 
       # Copy/paste this artifact in your local Maven repository at ~/.m2/repository/
       - name: Upload library from MavenLocal
