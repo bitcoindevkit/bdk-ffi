@@ -85,7 +85,7 @@ jobs:
           name: artifact
           path: ./jvm/src/main/resources/
 
-      - name: Publish to MavenLocal
+      - name: Publish to Maven Local and Maven Central
         env:
           ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.PGP_KEY_ID }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.PGP_SECRET_KEY }}
