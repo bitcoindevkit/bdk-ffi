@@ -7,9 +7,6 @@ plugins {
     id("maven-publish")
     id("signing")
 
-    // API docs
-    id("org.jetbrains.dokka")
-
     // Custom plugin to generate the native libs and bindings file
     id("org.bitcoindevkit.plugins.generate-jvm-bindings")
 }
@@ -99,13 +96,3 @@ signing {
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     sign(publishing.publications)
 }
-
-// tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
-//     dokkaSourceSets {
-//         named("main") {
-//             moduleName.set("bdk-jvm")
-//             moduleVersion.set("0.8.0-SNAPSHOT")
-//             includes.from("Module.md")
-//         }
-//     }
-// }
