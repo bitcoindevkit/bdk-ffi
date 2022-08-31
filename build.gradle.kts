@@ -16,12 +16,13 @@ plugins {
     id("org.jetbrains.dokka") version "1.6.10"
 }
 
-signing {
-    val signingKey: String? by project
-    val signingPassword: String? by project
-    useInMemoryPgpKeys(signingKey, signingPassword)
-    sign(publishing.publications)
-}
+// signing {
+//     val signingKeyId: String? by project
+//     val signingKey: String? by project
+//     val signingPassword: String? by project
+//     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+//     sign(publishing.publications)
+// }
 
 // does this need to be defined here? Not sure
 // it used to be defined in the nexusPublishing block but is not required

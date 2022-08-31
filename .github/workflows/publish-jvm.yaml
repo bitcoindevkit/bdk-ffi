@@ -85,14 +85,12 @@ jobs:
           name: artifact
           path: ./jvm/src/main/resources/
 
-      - name: Upload everything in jvm/src/
-        uses: actions/upload-artifact@v3
-        with:
-          name: final-src-directory
-          path: /home/runner/work/bdk-kotlin/bdk-kotlin/jvm/
-
       - name: Publish to MavenLocal
-        run: ./gradlew :jvm:publishToMavenLocal --exclude-task signMavenPublication
+        env:
+          ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.PGP_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.PGP_SECRET_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.PGP_PASSPHRASE }}
+        run: ./gradlew :jvm:publishToMavenLocal
 
       # Copy/paste this artifact in your local Maven repository at ~/.m2/repository/
       - name: Upload library from MavenLocal
