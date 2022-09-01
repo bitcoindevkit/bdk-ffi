@@ -173,8 +173,8 @@ dictionary LocalUtxo {
   boolean is_spent;
 };
 
-dictionary AddressAmount {
-  string address;
+dictionary ScriptAmount {
+  Script script;
   u64 amount;
 };
 
@@ -211,6 +211,8 @@ interface PartiallySignedBitcoinTransaction {
 
   string txid();
 
+  sequence<u8> extract_tx();
+
   [Throws=Error]
   PartiallySignedBitcoinTransaction combine(PartiallySignedBitcoinTransaction other);
 };
@@ -218,7 +220,7 @@ interface PartiallySignedBitcoinTransaction {
 interface TxBuilder {
   constructor();
 
-  TxBuilder add_recipient(string address, u64 amount);
+  TxBuilder add_recipient(Script script, u64 amount);
 
   TxBuilder add_unspendable(OutPoint unspendable);
 
@@ -248,7 +250,7 @@ interface TxBuilder {
 
   TxBuilder add_data(sequence<u8> data);
 
-  TxBuilder set_recipients(sequence<AddressAmount> recipients);
+  TxBuilder set_recipients(sequence<ScriptAmount> recipients);
 
   [Throws=Error]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
@@ -295,4 +297,15 @@ interface DescriptorPublicKey {
   DescriptorPublicKey extend(DerivationPath path);
 
   string as_string();
+};
+
+interface Address {
+  [Throws=Error]
+  constructor(string address);
+
+  Script script_pubkey();
+};
+
+interface Script {
+  constructor(sequence<u8> raw_output_script);
 };

@@ -1,8 +1,10 @@
+use bdk::bitcoin::blockdata::script::Script as BdkScript;
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;
+use bdk::bitcoin::util::psbt::serialize::Serialize;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
-use bdk::bitcoin::{Address, Network, OutPoint as BdkOutPoint, Script, Txid};
+use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::GetBlockHash;
 use bdk::blockchain::GetHeight;
@@ -35,8 +37,9 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 uniffi_macros::include_scaffolding!("bdk");
 
-pub struct AddressAmount {
-    pub address: String,
+/// A output script and an amount of satoshis.
+pub struct ScriptAmount {
+    pub script: Arc<Script>,
     pub amount: u64,
 }
 
@@ -302,7 +305,7 @@ impl NetworkLocalUtxo for LocalUtxo {
             },
             txout: TxOut {
                 value: x.txout.value,
-                address: Address::from_script(&x.txout.script_pubkey, network)
+                address: BdkAddress::from_script(&x.txout.script_pubkey, network)
                     .unwrap()
                     .to_string(),
             },
@@ -358,6 +361,16 @@ impl PartiallySignedBitcoinTransaction {
         let tx = self.internal.lock().unwrap().clone().extract_tx();
         let txid = tx.txid();
         txid.to_hex()
+    }
+
+    /// Return the transaction as bytes.
+    fn extract_tx(&self) -> Vec<u8> {
+        self.internal
+            .lock()
+            .unwrap()
+            .clone()
+            .extract_tx()
+            .serialize()
     }
 
     /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.
@@ -471,10 +484,42 @@ impl Wallet {
     }
 }
 
-fn to_script_pubkey(address: &str) -> Result<Script, Error> {
-    Address::from_str(address)
+fn to_script_pubkey(address: &str) -> Result<BdkScript, Error> {
+    BdkAddress::from_str(address)
         .map(|x| x.script_pubkey())
         .map_err(|e| Error::Generic(e.to_string()))
+}
+
+/// A Bitcoin address.
+struct Address {
+    address: BdkAddress,
+}
+
+impl Address {
+    fn new(address: String) -> Result<Self, Error> {
+        BdkAddress::from_str(address.as_str())
+            .map(|a| Address { address: a })
+            .map_err(|e| Error::Generic(e.to_string()))
+    }
+
+    fn script_pubkey(&self) -> Arc<Script> {
+        Arc::new(Script {
+            script: self.address.script_pubkey(),
+        })
+    }
+}
+
+/// A Bitcoin script.
+#[derive(Clone)]
+pub struct Script {
+    script: BdkScript,
+}
+
+impl Script {
+    fn new(raw_output_script: Vec<u8>) -> Self {
+        let script: BdkScript = BdkScript::from(raw_output_script);
+        Script { script }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -488,7 +533,7 @@ enum RbfValue {
 /// Each method on the TxBuilder returns an instance of a new TxBuilder with the option set/added.
 #[derive(Clone, Debug)]
 struct TxBuilder {
-    recipients: Vec<(String, u64)>,
+    recipients: Vec<(BdkScript, u64)>,
     utxos: Vec<OutPoint>,
     unspendable: HashSet<OutPoint>,
     change_policy: ChangeSpendPolicy,
@@ -519,19 +564,19 @@ impl TxBuilder {
     }
 
     /// Add a recipient to the internal list.
-    fn add_recipient(&self, recipient: String, amount: u64) -> Arc<Self> {
-        let mut recipients = self.recipients.to_vec();
-        recipients.append(&mut vec![(recipient, amount)]);
+    fn add_recipient(&self, script: Arc<Script>, amount: u64) -> Arc<Self> {
+        let mut recipients: Vec<(BdkScript, u64)> = self.recipients.clone();
+        recipients.append(&mut vec![(script.script.clone(), amount)]);
         Arc::new(TxBuilder {
             recipients,
             ..self.clone()
         })
     }
 
-    fn set_recipients(&self, recipients: Vec<AddressAmount>) -> Arc<Self> {
+    fn set_recipients(&self, recipients: Vec<ScriptAmount>) -> Arc<Self> {
         let recipients = recipients
             .iter()
-            .map(|address_amount| (address_amount.address.clone(), address_amount.amount))
+            .map(|script_amount| (script_amount.script.script.clone(), script_amount.amount))
             .collect();
         Arc::new(TxBuilder {
             recipients,
@@ -671,8 +716,8 @@ impl TxBuilder {
     fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
-        for (address, amount) in &self.recipients {
-            tx_builder.add_recipient(to_script_pubkey(address)?, *amount);
+        for (script, amount) in &self.recipients {
+            tx_builder.add_recipient(script.clone(), *amount);
         }
         tx_builder.change_policy(self.change_policy);
         if !self.utxos.is_empty() {
@@ -780,7 +825,7 @@ impl BumpFeeTxBuilder {
         tx_builder.fee_rate(FeeRate::from_sat_per_vb(self.fee_rate));
         if let Some(allow_shrinking) = &self.allow_shrinking {
             let address =
-                Address::from_str(allow_shrinking).map_err(|e| Error::Generic(e.to_string()))?;
+                BdkAddress::from_str(allow_shrinking).map_err(|e| Error::Generic(e.to_string()))?;
             let script = address.script_pubkey();
             tx_builder.allow_shrinking(script)?;
         }
@@ -1010,7 +1055,6 @@ mod test {
         let tx_builder = TxBuilder::new()
             .drain_wallet()
             .drain_to(drain_to_address.clone());
-        //dbg!(&tx_builder);
         assert!(tx_builder.drain_wallet);
         assert_eq!(tx_builder.drain_to, Some(drain_to_address));
 
@@ -1128,7 +1172,6 @@ mod test {
     #[test]
     fn test_derive_and_extend_descriptor_secret_key() {
         let master_dsk = get_descriptor_secret_key();
-
         // derive DescriptorSecretKey with path "m/0" from master
         let derived_dsk: &DescriptorSecretKey = &derive_dsk(&master_dsk, "m/0").unwrap();
         assert_eq!(derived_dsk.as_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/*");
