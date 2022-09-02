@@ -52,6 +52,7 @@ fn generate_bindings(opt: &Opt) -> anyhow::Result<(), anyhow::Error> {
         None,
         vec![opt.language.to_string().as_str()],
         Some(out_dir),
+        None,
         false,
     )?;
 
