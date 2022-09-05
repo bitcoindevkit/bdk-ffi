@@ -85,17 +85,12 @@ dictionary TransactionDetails {
   u64 received;
   u64 sent;
   string txid;
+  BlockTime? confirmation_time;
 };
 
 dictionary BlockTime {
   u32 height;
   u64 timestamp;
-};
-
-[Enum]
-interface Transaction {
-  Unconfirmed(TransactionDetails details);
-  Confirmed(TransactionDetails details, BlockTime confirmation);
 };
 
 enum WordCount {
@@ -187,7 +182,7 @@ interface Wallet {
   boolean sign([ByRef] PartiallySignedBitcoinTransaction psbt);
 
   [Throws=BdkError]
-  sequence<Transaction> list_transactions();
+  sequence<TransactionDetails> list_transactions();
 
   Network network();
 
@@ -239,9 +234,9 @@ interface TxBuilder {
   TxBuilder enable_rbf_with_sequence(u32 nsequence);
 
   TxBuilder add_data(sequence<u8> data);
-  
+
   TxBuilder set_recipients(sequence<AddressAmount> recipients);
-  
+
   [Throws=BdkError]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
 };
