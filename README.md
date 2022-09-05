@@ -1,5 +1,12 @@
 # Native language bindings for BDK
 
+<p>
+    <a href="https://github.com/bitcoindevkit/bdk-ffi/blob/master/LICENSE"><img alt="MIT or Apache-2.0 Licensed" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg"/></a>
+    <a href="https://github.com/bitcoindevkit/bdk-ffi/actions?query=workflow%3ACI"><img alt="CI Status" src="https://github.com/bitcoindevkit/bdk-ffi/workflows/CI/badge.svg"></a>
+    <a href="https://blog.rust-lang.org/2022/05/19/Rust-1.61.0.html"><img alt="Rustc Version 1.61.0+" src="https://img.shields.io/badge/rustc-1.61.0%2B-lightgrey.svg"/></a>
+    <a href="https://discord.gg/d7NkDKm"><img alt="Chat on Discord" src="https://img.shields.io/discord/753336465005608961?logo=discord"></a>
+  </p>
+
 The workspace in this repository creates the `libbdkffi` multi-language library for the rust based 
 [bdk] library from the [Bitcoin Dev Kit] project. The `bdk-ffi-bindgen` package builds a tool for 
 generating the actual language binding code used to access the `libbdkffi` library.
