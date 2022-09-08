@@ -85,18 +85,11 @@ jobs:
           name: artifact
           path: ./jvm/src/main/resources/
 
-      - name: Publish to Maven Local and Maven Central
+      - name: Publish to Maven Central
         env:
           ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.PGP_KEY_ID }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.PGP_SECRET_KEY }}
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.PGP_PASSPHRASE }}
           ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.NEXUS_PASSWORD }}
-        run: ./gradlew :jvm:publishToMavenLocal :jvm:publishToSonatype
-
-      # Copy/paste this artifact in your local Maven repository at ~/.m2/repository/
-      - name: Upload library from MavenLocal
-        uses: actions/upload-artifact@v3
-        with:
-          name: mavenlocal-bdk-jvm-artifact
-          path: ~/.m2/repository/
+        run: ./gradlew :jvm:publishToSonatype closeAndReleaseSonatypeStagingRepository

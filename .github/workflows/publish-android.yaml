@@ -53,11 +53,4 @@ jobs:
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.PGP_PASSPHRASE }}
           ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.NEXUS_PASSWORD }}
-        run: ./gradlew :android:publishToMavenLocal :android:publishToSonatype
-
-      # Copy/paste this artifact in your local Maven repository at ~/.m2/repository/
-      - name: Upload library from MavenLocal
-        uses: actions/upload-artifact@v3
-        with:
-          name: mavenlocal-bdk-android-artifact
-          path: ~/.m2/repository/
+        run: ./gradlew :android:publishToSonatype closeAndReleaseSonatypeStagingRepository
