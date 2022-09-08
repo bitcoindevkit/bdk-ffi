@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Remove dictionary `ExtendedKeyInfo {mnenonic, xprv, fingerprint}` [#154]
   - Remove interface `Transaction` [#190]
   - Changed `Wallet` interface `list_transaction()` to return array of `TransactionDetails` [#190]
+  - Update `bdk` dependency version to 0.22 [#193]
 - APIs Added [#154]
   - `generate_mnemonic()`, returns string mnemonic
   - `interface DescriptorSecretKey`
@@ -37,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#154]: https://github.com/bitcoindevkit/bdk-ffi/pull/154
 [#184]: https://github.com/bitcoindevkit/bdk-ffi/pull/184
 [#185]: https://github.com/bitcoindevkit/bdk-ffi/pull/185
+[#193]: https://github.com/bitcoindevkit/bdk-ffi/pull/193
 
 ## [v0.8.0]
 - Update BDK to version 0.20.0 [#169]

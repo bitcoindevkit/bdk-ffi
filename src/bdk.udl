@@ -7,6 +7,7 @@ namespace bdk {
 enum BdkError {
   "InvalidU32Bytes",
   "Generic",
+  "MissingCachedScripts",
   "ScriptDoesntHaveAddressForm",
   "NoRecipients",
   "NoUtxosSelected",
@@ -71,6 +72,15 @@ dictionary SledDbConfiguration {
 
 dictionary SqliteDbConfiguration {
   string path;
+};
+
+dictionary Balance {
+  u64 immature;
+  u64 trusted_pending;
+  u64 untrusted_pending;
+  u64 confirmed;
+  u64 spendable;
+  u64 total;
 };
 
 [Enum]
@@ -176,7 +186,7 @@ interface Wallet {
   AddressInfo get_address(AddressIndex address_index);
 
   [Throws=BdkError]
-  u64 get_balance();
+  Balance get_balance();
 
   [Throws=BdkError]
   boolean sign([ByRef] PartiallySignedBitcoinTransaction psbt);
