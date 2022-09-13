@@ -15,4 +15,5 @@ xcuserdata
 .lsp
 .clj-kondo
 .idea
-bdk.kt
+android/src/main/kotlin/org/bitcoindevkit/bdk.kt
+jvm/src/main/kotlin/org/bitcoindevkit/bdk.kt

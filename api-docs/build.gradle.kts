@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.7.0"
+    kotlin("jvm") version "1.7.10"
 
     // API docs
     id("org.jetbrains.dokka") version "1.7.10"
@@ -27,7 +27,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
     dokkaSourceSets {
         named("main") {
             moduleName.set("bdk-android")
-            moduleVersion.set("0.8.2")
+            moduleVersion.set("0.9.0")
             includes.from("Module.md")
             samples.from("src/main/kotlin/org/bitcoindevkit/Samples.kt")
         }
