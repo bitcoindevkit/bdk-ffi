@@ -1,61 +1,63 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat.*
+import org.gradle.api.tasks.testing.logging.TestLogEvent.*
+
 plugins {
-    id("com.android.library")
-    id("kotlin-android")
+    id("org.jetbrains.kotlin.jvm") version "1.6.10"
+    id("java-library")
     id("maven-publish")
     id("signing")
 
     // Custom plugin to generate the native libs and bindings file
-    id("org.bitcoindevkit.plugins.generate-android-bindings")
+    id("org.bitcoindevkit.plugins.generate-jvm-bindings")
 }
 
-android {
-    compileSdk = 31
+repositories {
+    mavenCentral()
+}
 
-    defaultConfig {
-        minSdk = 21
-        targetSdk = 31
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
-    }
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+    withJavadocJar()
+}
 
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(file("proguard-android-optimize.txt"), file("proguard-rules.pro"))
-        }
-    }
+tasks.withType<Test> {
+    useJUnitPlatform()
 
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-            withJavadocJar()
-        }
+    testLogging {
+        events(PASSED, SKIPPED, FAILED, STANDARD_OUT, STANDARD_ERROR)
+        exceptionFormat = FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
     }
 }
 
 dependencies {
-    implementation("net.java.dev.jna:jna:5.8.0@aar")
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
-    implementation("androidx.appcompat:appcompat:1.4.0")
-    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("net.java.dev.jna:jna:5.8.0")
     api("org.slf4j:slf4j-api:1.7.30")
-
-    androidTestImplementation("com.github.tony19:logback-android:2.0.0")
-    androidTestImplementation("androidx.test.ext:junit:1.1.3")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
-    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")
+    testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
+    testImplementation("ch.qos.logback:logback-classic:1.2.3")
+    testImplementation("ch.qos.logback:logback-core:1.2.3")
 }
 
 afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("maven") {
+
                 groupId = "org.bitcoindevkit"
-                artifactId = "bdk-android"
+                artifactId = "bdk-jvm"
                 version = "0.10.0-SNAPSHOT"
-                from(components["release"])
+
+                from(components["java"])
+
                 pom {
-                    name.set("bdk-android")
+                    name.set("bdk-jvm")
                     description.set("Bitcoin Dev Kit Kotlin language bindings.")
                     url.set("https://bitcoindevkit.org")
                     licenses {
@@ -92,8 +94,6 @@ afterEvaluate {
 }
 
 signing {
-    // useGpgCmd()
-    // sign(publishing.publications)
     val signingKeyId: String? by project
     val signingKey: String? by project
     val signingPassword: String? by project

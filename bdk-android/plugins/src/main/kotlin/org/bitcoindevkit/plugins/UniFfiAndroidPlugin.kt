@@ -20,7 +20,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         // arm64-v8a is the most popular hardware architecture for Android
         val buildAndroidAarch64Binary by tasks.register<Exec>("buildAndroidAarch64Binary") {
 
-            workingDir("${projectDir}/../bdk-ffi")
+            workingDir("${projectDir}/../../bdk-ffi")
             val cargoArgs: MutableList<String> =
                 mutableListOf("build", "--release", "--target", "aarch64-linux-android")
 
@@ -52,7 +52,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         // the x86_64 version of the library is mostly used by emulators
         val buildAndroidX86_64Binary by tasks.register<Exec>("buildAndroidX86_64Binary") {
 
-            workingDir("${project.projectDir}/../bdk-ffi")
+            workingDir("${project.projectDir}/../../bdk-ffi")
             val cargoArgs: MutableList<String> =
                 mutableListOf("build", "--release", "--target", "x86_64-linux-android")
 
@@ -84,7 +84,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         // armeabi-v7a version of the library for older 32-bit Android hardware
         val buildAndroidArmv7Binary by tasks.register<Exec>("buildAndroidArmv7Binary") {
 
-            workingDir("${project.projectDir}/../bdk-ffi")
+            workingDir("${project.projectDir}/../../bdk-ffi")
             val cargoArgs: MutableList<String> =
                 mutableListOf("build", "--release", "--target", "armv7-linux-androideabi")
 
@@ -121,22 +121,22 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             dependsOn(buildAndroidAarch64Binary)
 
-            into("${project.projectDir}/../android/src/main/jniLibs/")
+            into("${project.projectDir}/../lib/src/main/jniLibs/")
 
             into("arm64-v8a") {
-                from("${project.projectDir}/../bdk-ffi/target/aarch64-linux-android/release/libbdkffi.so")
+                from("${project.projectDir}/../../bdk-ffi/target/aarch64-linux-android/release/libbdkffi.so")
             }
 
             into("x86_64") {
-                from("${project.projectDir}/../bdk-ffi/target/x86_64-linux-android/release/libbdkffi.so")
+                from("${project.projectDir}/../../bdk-ffi/target/x86_64-linux-android/release/libbdkffi.so")
             }
 
             into("armeabi-v7a") {
-                from("${project.projectDir}/../bdk-ffi/target/armv7-linux-androideabi/release/libbdkffi.so")
+                from("${project.projectDir}/../../bdk-ffi/target/armv7-linux-androideabi/release/libbdkffi.so")
             }
 
             doLast {
-                println("Native binaries for Android moved to ./android/src/main/jniLibs/")
+                println("Native binaries for Android moved to ./lib/src/main/jniLibs/")
             }
         }
 
@@ -144,16 +144,18 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val generateAndroidBindings by tasks.register<Exec>("generateAndroidBindings") {
             dependsOn(moveNativeAndroidLibs)
 
-            workingDir("${project.projectDir}/../bdk-ffi")
+            workingDir("${project.projectDir}/../../bdk-ffi")
             executable("cargo")
-            args("run",
+            args(
+                "run",
                 "--package",
                 "bdk-ffi-bindgen",
                 "--",
                 "--language",
                 "kotlin",
                 "--out-dir",
-                "../android/src/main/kotlin")
+                "../bdk-android/lib/src/main/kotlin"
+            )
 
             doLast {
                 println("Android bindings file successfully created")

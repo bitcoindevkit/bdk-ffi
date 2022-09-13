@@ -79,10 +79,12 @@ rustup target add x86_64-apple-darwin aarch64-apple-darwin
 7. Build kotlin bindings
  ```sh
  # build JVM library
- ./gradlew :jvm:buildJvmLib
+ cd bdk-jvm
+ ./gradlew buildJvmLib
  
  # build Android library
- ./gradlew :android:buildAndroidLib
+ cd bdk-android
+ ./gradlew buildAndroidLib
  ```
 8. Start android emulator (must be x86_64) and run tests
 ```sh
@@ -92,38 +94,25 @@ rustup target add x86_64-apple-darwin aarch64-apple-darwin
 ## How to publish
 
 ### Publish to your local maven repo
+```shell
+# bdk-jvm
+cd bdk-jvm
+./gradlew publishToMavenLocal --exclude-task signMavenPublication
 
-1. Set your `~/.gradle/gradle.properties` signing key values
+# bdk-android
+cd bdk-android
+./gradlew publishToMavenLocal --exclude-task signMavenPublication
+```
+
+Note that the commands assume you don't need the local libraries to be signed. If you do wish to sign them, simply set your `~/.gradle/gradle.properties` signing key values like so:
 ```properties
 signing.gnupg.keyName=<YOUR_GNUPG_ID>
 signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
 ```
-2. Publish   
+
+and use the `publishToMavenLocal` task without excluding the signing task:
 ```shell
-./gradlew :jvm:publishToMavenLocal
-./gradlew :android:publishToMavenLocal
-```
-
-Note that if you do not have gpg keys set up to sign the publication, the task will fail. If you wish to publish to your local Maven repository for local testing without signing the release, you can do so by excluding the `signMavenPublication` subtask like so:
-```shell
-./gradlew :jvm:publishToMavenLocal --exclude-task signMavenPublication
-./gradlew :android:publishToMavenLocal --exclude-task signMavenPublication
-```
-
-### Publish to maven central with [Gradle Nexus Publish Plugin] (project maintainers only)
-
-1. Set your `~/.gradle/gradle.properties` signing key values and SONATYPE login
-```properties
-signing.gnupg.keyName=<YOUR_GNUPG_ID>
-signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
-
-ossrhUserName=<YOUR_SONATYPE_USERNAME>
-ossrhPassword=<YOUR_SONATYPE_PASSWORD>
-```
-2. Publish
-```shell
-./gradlew :jvm:publishToSonatype closeAndReleaseSonatypeStagingRepository
-./gradlew :android:publishToSonatype closeAndReleaseSonatypeStagingRepository
+./gradlew publishToMavenLocal
 ```
 
 [Kotlin]: https://kotlinlang.org/

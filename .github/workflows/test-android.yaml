@@ -44,7 +44,11 @@ jobs:
         run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
 
       - name: Build bdk-android library
-        run: ./gradlew :android:buildAndroidLib
+        run: |
+          cd bdk-android
+          ./gradlew buildAndroidLib
 
       - name: Run Android tests
-        run: ./gradlew :android:test --console=rich
+        run: |
+          cd bdk-android
+          ./gradlew test --console=rich

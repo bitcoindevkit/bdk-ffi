@@ -29,7 +29,11 @@ jobs:
           java-version: 11
 
       - name: Build bdk-jvm library
-        run: ./gradlew :jvm:buildJvmLib
+        run: |
+          cd bdk-jvm
+          ./gradlew buildJvmLib
 
       - name: Run JVM tests
-        run: ./gradlew :jvm:test --console=rich
+        run: |
+          cd bdk-jvm
+          ./gradlew test --console=rich
