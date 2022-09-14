@@ -44,7 +44,9 @@ jobs:
         run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
 
       - name: Build bdk-android library
-        run: ./gradlew :android:buildAndroidLib
+        run: |
+          cd bdk-android
+          ./gradlew buildAndroidLib
 
       - name: Publish to Maven Local and Maven Central
         env:
@@ -53,4 +55,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.PGP_PASSPHRASE }}
           ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.NEXUS_PASSWORD }}
-        run: ./gradlew :android:publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: |
+          cd bdk-android
+          ./gradlew publishToSonatype
+#          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository

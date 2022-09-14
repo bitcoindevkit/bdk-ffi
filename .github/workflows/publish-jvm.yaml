@@ -36,7 +36,9 @@ jobs:
         run: rustup target add aarch64-apple-darwin
 
       - name: Build bdk-jvm library
-        run: ./gradlew :jvm:buildJvmLib
+        run: |
+          cd bdk-jvm
+          ./gradlew buildJvmLib
 
       # build aarch64 + x86_64 native libraries and upload
       - name: Upload macOS native libraries for reuse in publishing job
@@ -44,7 +46,7 @@ jobs:
         with:
           # name: no name is required because we upload the entire directory
           # the default name "artifact" will be used
-          path: /Users/runner/work/bdk-kotlin/bdk-kotlin/jvm/src/main/resources/
+          path: /Users/runner/work/bdk-kotlin/bdk-kotlin/bdk-jvm/lib/src/main/resources/
 
   build-jvm-full-library:
     name: Create full bdk-jvm library
@@ -75,7 +77,9 @@ jobs:
           java-version: 11
 
       - name: Build bdk-jvm library
-        run: ./gradlew :jvm:buildJvmLib
+        run: |
+          cd bdk-jvm
+          ./gradlew buildJvmLib
 
       - name: Download macOS native libraries from previous job
         uses: actions/download-artifact@v3
@@ -83,7 +87,7 @@ jobs:
         with:
           # download the artifact created in the prior job (named "artifact")
           name: artifact
-          path: ./jvm/src/main/resources/
+          path: ./bdk-jvm/lib/src/main/resources/
 
       - name: Publish to Maven Central
         env:
@@ -92,4 +96,7 @@ jobs:
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.PGP_PASSPHRASE }}
           ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.NEXUS_PASSWORD }}
-        run: ./gradlew :jvm:publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: |
+          cd bdk-jvm
+          ./gradlew publishToSonatype
+#          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository

@@ -1,5 +1,5 @@
 # Readme
-The purpose of this directory is to host the Gradle plugin that add tasks for building the native binaries required by bdk-jvm, and building the language bindings files.
+The purpose of this directory is to host the Gradle plugin that adds tasks for building the native binaries required by bdk-jvm, and building the language bindings files.
 
 The plugin is applied to the `build.gradle.kts` file through the `plugins` block:
 ```kotlin
