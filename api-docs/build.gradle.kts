@@ -29,7 +29,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
             moduleName.set("bdk-android")
             moduleVersion.set("0.9.0")
             includes.from("Module.md")
-            samples.from("src/main/kotlin/org/bitcoindevkit/Samples.kt")
+            samples.from("src/test/kotlin/org/bitcoindevkit/Samples.kt")
         }
     }
 }
