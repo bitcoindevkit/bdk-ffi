@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v0.10.0]
+
+- Breaking Changes
+  - Rename `KeychainKind` variants to `ExternalKeys` and `InternalKeys` so as not to conflict with
+    the swift reserved word `internal`.
+
 ## [v0.9.0]
 - Breaking Changes
   - Rename `get_network()` method on `Wallet` interface to `network()` [#185]
@@ -101,7 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.2.0]
 
-[unreleased]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.9.0...HEAD
+[unreleased]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.10.0...HEAD
+[v0.10.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.6.0...v0.7.0

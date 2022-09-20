@@ -162,8 +162,8 @@ dictionary TxOut {
 };
 
 enum KeychainKind {
-  "External",
-  "Internal",
+  "ExternalKeys",
+  "InternalKeys",
 };
 
 dictionary LocalUtxo {

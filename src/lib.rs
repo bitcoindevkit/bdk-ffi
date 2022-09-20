@@ -23,7 +23,7 @@ use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{
-    Balance as BdkBalance, BlockTime, Error, FeeRate, KeychainKind, SignOptions,
+    Balance as BdkBalance, BlockTime, Error, FeeRate, KeychainKind as BdkKeychainKind, SignOptions,
     SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
 use std::collections::HashSet;
@@ -282,6 +282,14 @@ pub struct TxOut {
     address: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum KeychainKind {
+    /// External keys.
+    ExternalKeys = 0,
+    /// Internal keys, usually used for change outputs.
+    InternalKeys = 1,
+}
+
 pub struct LocalUtxo {
     outpoint: OutPoint,
     txout: TxOut,
@@ -297,6 +305,10 @@ trait NetworkLocalUtxo {
 
 impl NetworkLocalUtxo for LocalUtxo {
     fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo {
+        let keychain_kind = match x.keychain {
+            BdkKeychainKind::External => KeychainKind::ExternalKeys,
+            BdkKeychainKind::Internal => KeychainKind::InternalKeys,
+        };
         LocalUtxo {
             outpoint: OutPoint {
                 txid: x.outpoint.txid.to_string(),
@@ -311,7 +323,7 @@ impl NetworkLocalUtxo for LocalUtxo {
                 .unwrap()
                 .to_string(),
             },
-            keychain: x.keychain,
+            keychain: keychain_kind,
             is_spent: x.is_spent,
         }
     }
