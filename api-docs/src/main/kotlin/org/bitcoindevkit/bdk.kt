@@ -22,6 +22,8 @@ enum class Network {
  *
  * @property index Child index of this address.
  * @property address Address.
+ *
+ * @sample org.bitcoindevkit.addressInfoSample
  */
 data class AddressInfo (
     var index: UInt,
@@ -32,6 +34,8 @@ data class AddressInfo (
  * The address index selection strategy to use to derive an address from the wallet’s external descriptor.
  *
  * If you’re unsure which one to use, use `AddressIndex.NEW`.
+ *
+ * @sample org.bitcoindevkit.addressIndexSample
  */
 enum class AddressIndex {
     /** Return a new address after incrementing the current descriptor index. */
@@ -70,8 +74,8 @@ data class Balance (
 /**
  * Type that can contain any of the database configurations defined by the library.
  *
- * @sample org.bitcoindevkit.memoryDatabaseConfigExample
- * @sample org.bitcoindevkit.sqliteDatabaseConfigExample
+ * @sample org.bitcoindevkit.memoryDatabaseConfigSample
+ * @sample org.bitcoindevkit.sqliteDatabaseConfigSample
  */
 sealed class DatabaseConfig {
     /** Configuration for an in-memory database. */
@@ -113,7 +117,7 @@ data class SledDbConfiguration(
  * @property timeout Request timeout (seconds).
  * @property stopGap Stop searching addresses for transactions after finding an unused gap of this length.
  *
- * @sample org.bitcoindevkit.electrumBlockchainConfigExample
+ * @sample org.bitcoindevkit.electrumBlockchainConfigSample
  */
 data class ElectrumConfig (
     var url: String,

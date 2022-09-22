@@ -23,7 +23,7 @@ fun balanceSample() {
     println("Total wallet balance is ${balance.total}")
 }
 
-fun electrumBlockchainConfigExample() {
+fun electrumBlockchainConfigSample() {
     val blockchainConfig = BlockchainConfig.Electrum(
         ElectrumConfig(
             "ssl://electrum.blockstream.info:60002",
@@ -35,10 +35,40 @@ fun electrumBlockchainConfigExample() {
     )
 }
 
-fun memoryDatabaseConfigExample() {
+fun memoryDatabaseConfigSample() {
     val memoryDatabaseConfig = DatabaseConfig.Memory
 }
 
-fun sqliteDatabaseConfigExample() {
+fun sqliteDatabaseConfigSample() {
     val databaseConfig = DatabaseConfig.Sqlite(SqliteDbConfiguration("bdk-sqlite"))
+}
+
+fun addressIndexSample() {
+    val wallet: Wallet = Wallet(
+        descriptor = descriptor,
+        changeDescriptor = changeDescriptor,
+        network = Network.TESTNET,
+        databaseConfig = DatabaseConfig.Memory
+    )
+
+    fun getLastUnusedAddress(): AddressInfo {
+        return wallet.getAddress(AddressIndex.LAST_UNUSED)
+    }
+}
+
+fun addressInfoSample() {
+    val wallet: Wallet = Wallet(
+        descriptor = descriptor,
+        changeDescriptor = changeDescriptor,
+        network = Network.TESTNET,
+        databaseConfig = DatabaseConfig.Memory
+    )
+
+    fun getLastUnusedAddress(): AddressInfo {
+        return wallet.getAddress(AddressIndex.NEW)
+    }
+
+    val newAddress: AddressInfo = getLastUnusedAddress()
+
+    println("New address at index ${newAddress.index} is ${newAddress.address}")
 }
