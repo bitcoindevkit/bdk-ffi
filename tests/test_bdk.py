@@ -38,8 +38,8 @@ class TestSimpleBip84Wallet(unittest.TestCase):
         )
         wallet.sync(blockchain, None)
         balance = wallet.get_balance()
-        # print(f"Balance is {balance} sat")
-        assert balance > 0, "Balance is 0, send testnet coins to tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e"
+        # print(f"Balance is {balance.total} sat")
+        assert balance.total > 0, "Balance is 0, send testnet coins to tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e"
 
 
 if __name__ == '__main__':
