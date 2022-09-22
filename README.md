@@ -34,14 +34,18 @@ python3 setup.py --verbose bdist_wheel
 ```
 <br/>
 
-## Run tox to build and test
+## Run tox to build and test locally
 ```shell
 # install dev requirements
 pip install --requirement requirements-dev.txt
 
+# build bindings glue code (located at ./src/bdkpython/bdk.py)
+source ./generate.sh
+
 # build and test
-tox
+tox -vv
 ```
+<br/>
 
 ## Install locally
 ```shell
