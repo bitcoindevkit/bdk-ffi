@@ -1,5 +1,14 @@
 package org.bitcoindevkit
 
+fun networkSample() {
+    val wallet = Wallet(
+        descriptor = descriptor,
+        changeDescriptor = changeDescriptor,
+        network = Network.TESTNET,
+        databaseConfig = DatabaseConfig.Memory
+    )
+}
+
 fun balanceSample() {
     object LogProgress : Progress {
         override fun update(progress: Float, message: String?) {}
@@ -26,11 +35,11 @@ fun balanceSample() {
 fun electrumBlockchainConfigSample() {
     val blockchainConfig = BlockchainConfig.Electrum(
         ElectrumConfig(
-            "ssl://electrum.blockstream.info:60002",
-            null,
-            5u,
-            null,
-            200u
+            url = "ssl://electrum.blockstream.info:60002",
+            socks5 = null,
+            retry = 5u,
+            timeout = null,
+            stopGap = 200u
         )
     )
 }
@@ -72,3 +81,20 @@ fun addressInfoSample() {
 
     println("New address at index ${newAddress.index} is ${newAddress.address}")
 }
+
+fun blockchainSample() {
+    val blockchainConfig: BlockchainConfig = BlockchainConfig.Electrum(
+        ElectrumConfig(
+            electrumURL,
+            null,
+            5u,
+            null,
+            10u
+        )
+    )
+
+    val blockchain: Blockchain = Blockchain(blockchainConfig)
+
+    blockchain.broadcast(signedPsbt)
+}
+

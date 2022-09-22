@@ -2,6 +2,8 @@ package org.bitcoindevkit
 
 /**
  * The cryptocurrency to act on.
+ *
+ * @sample org.bitcoindevkit.networkSample
  */
 enum class Network {
     /** Bitcoin's mainnet. */
@@ -146,6 +148,8 @@ data class EsploraConfig (
 
 /**
  * Type that can contain any of the blockchain configurations defined by the library.
+ *
+ * @sample org.bitcoindevkit.electrumBlockchainConfigSample
  */
 sealed class BlockchainConfig {
     /** Electrum client. */
@@ -178,6 +182,8 @@ data class TransactionDetails (
  * @constructor Create the new blockchain client.
  *
  * @param config The blockchain configuration required.
+ *
+ * @sample org.bitcoindevkit.blockchainSample
  */
 class Blockchain(
     config: BlockchainConfig
