@@ -48,7 +48,7 @@ print(f"New BIP84 testnet address: {address} at index {index}")
 # print wallet balance
 wallet.sync(blockchain, None)
 balance = wallet.get_balance()
-print(f"Wallet balance is: {balance}")
+print(f"Wallet balance is: {balance.total}")
 """
 
 rust_ext = RustExtension(
