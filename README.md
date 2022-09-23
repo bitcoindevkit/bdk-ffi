@@ -115,9 +115,48 @@ and use the `publishToMavenLocal` task without excluding the signing task:
 ./gradlew publishToMavenLocal
 ```
 
+## Verifying Signatures
+Both libraries and all their corresponding artifacts are signed with a PGP key you can find in the root of this repository. To verify the hashes and signatures, go through the following steps:
+
+1. Import the PGP key in your keyring
+2. Download the artifact and its corresponding hash and signature files ([bdk-jvm] and [bdk-android])
+3. Verify the hashes
+4. Verify the signature
+
+```shell
+# 1. Navigate to the root of the repository and import the ./PGP-BDK-BINDINGS.asc public key
+gpg --import ./PGP-BDK-BINDINGS.asc
+# Alternatively, you can import it directly from a public key server
+gpg --keyserver keyserver.ubuntu.com --receive-key 2768C43E8803C6A3
+# Verify that the correct key was imported
+gpg --list-keys
+# ------------------------------
+# pub   ed25519 2022-08-31 [SC]
+#       88AD93AC4589FD090FF3B8D12768C43E8803C6A3
+# uid           [ unknown] bitcoindevkit-bindings <bindings@bitcoindevkit.org>
+# sub   cv25519 2022-08-31 [E]
+
+# 2. Add files and their corresponding signature and hash files in the same directory
+# e.g. bdk-jvm-0.9.0.jar, bdk-jvm-0.9.0.jar.asc, bdk-jvm-0.9.0.jar.sha256
+
+# 3. Verify that the hashes are the same
+shasum --algorithm 256 bdk-android-0.9.0.aar && cat bdk-android-0.9.0.aar.sha256
+
+# 4. Verify the signature
+gpg --verify bdk-android-0.9.0.module.asc
+```
+
+### PGP Metadata
+Full key ID: `88AD 93AC 4589 FD09 0FF3 B8D1 2768 C43E 8803 C6A3`  
+Fingerprint: `2768C43E8803C6A3`  
+Name: `bitcoindevkit-bindings`  
+Email: `bindings@bitcoindevkit.org`  
+
 [Kotlin]: https://kotlinlang.org/
 [Android Studio]: https://developer.android.com/studio/
 [`bdk`]: https://github.com/bitcoindevkit/bdk
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
 ["Getting Started (Developer)"]: https://github.com/bitcoindevkit/bdk-ffi#getting-started-developer
 [Gradle Nexus Publish Plugin]: https://github.com/gradle-nexus/publish-plugin
+[bdk-jvm]: https://search.maven.org/artifact/org.bitcoindevkit/bdk-jvm/0.9.0/jar
+[bdk-android]: https://search.maven.org/artifact/org.bitcoindevkit/bdk-android/0.9.0/aar
