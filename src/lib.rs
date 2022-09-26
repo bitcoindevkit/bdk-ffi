@@ -907,6 +907,22 @@ impl DescriptorSecretKey {
         })
     }
 
+    /// Get the private key as bytes.
+    fn secret_key_bytes(&self) -> Vec<u8> {
+        let descriptor_secret_key = self.descriptor_secret_key_mutex.lock().unwrap();
+        let secret_key_bytes: Vec<u8> = match descriptor_secret_key.deref() {
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
+                descriptor_x_key.xkey.private_key.secret_bytes().to_vec()
+            }
+            BdkDescriptorSecretKey::SinglePriv(descriptor_x_key) => {
+                // unreachable!()
+                descriptor_x_key.key.inner.secret_bytes().to_vec()
+            }
+        };
+
+        secret_key_bytes
+    }
+
     fn as_string(&self) -> String {
         self.descriptor_secret_key_mutex.lock().unwrap().to_string()
     }

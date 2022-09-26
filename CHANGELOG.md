@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- APIs Added
+  - Add ability to retrieve any private key inside a descriptor as bytes [#199]
+
+[#199]: https://github.com/bitcoindevkit/bdk-ffi/pull/199
 
 ## [v0.9.0]
 - Breaking Changes
