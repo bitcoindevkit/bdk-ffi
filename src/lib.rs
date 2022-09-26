@@ -914,9 +914,8 @@ impl DescriptorSecretKey {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 descriptor_x_key.xkey.private_key.secret_bytes().to_vec()
             }
-            BdkDescriptorSecretKey::SinglePriv(descriptor_x_key) => {
-                // unreachable!()
-                descriptor_x_key.key.inner.secret_bytes().to_vec()
+            BdkDescriptorSecretKey::SinglePriv(_) => {
+                unreachable!()
             }
         };
 
@@ -1146,5 +1145,15 @@ mod test {
         let master_dpk = get_descriptor_secret_key().as_public();
         let derived_dpk = &derive_dpk(&master_dpk, "m/84h/1h/0h");
         assert!(derived_dpk.is_err());
+    }
+
+    #[test]
+    fn test_retrieve_master_secret_key() {
+        let master_dpk = get_descriptor_secret_key();
+        let master_private_key = master_dpk.secret_key_bytes().to_hex();
+        assert_eq!(
+            master_private_key,
+            "e93315d6ce401eb4db803a56232f0ed3e69b053774e6047df54f1bd00e5ea936"
+        )
     }
 }
