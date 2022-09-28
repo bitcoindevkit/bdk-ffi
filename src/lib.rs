@@ -364,6 +364,22 @@ impl PartiallySignedBitcoinTransaction {
         let txid = tx.txid();
         txid.to_hex()
     }
+
+    /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.
+    ///
+    /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
+    fn combine(
+        &self,
+        other: Arc<PartiallySignedBitcoinTransaction>,
+    ) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+        let other_psbt = other.internal.lock().unwrap().clone();
+        let mut original_psbt = self.internal.lock().unwrap().clone();
+
+        original_psbt.combine(other_psbt)?;
+        Ok(Arc::new(PartiallySignedBitcoinTransaction {
+            internal: Mutex::new(original_psbt),
+        }))
+    }
 }
 
 /// A Bitcoin wallet.
