@@ -304,12 +304,9 @@ impl NetworkLocalUtxo for LocalUtxo {
             },
             txout: TxOut {
                 value: x.txout.value,
-                address: bdk::bitcoin::util::address::Address::from_script(
-                    &x.txout.script_pubkey,
-                    network,
-                )
-                .unwrap()
-                .to_string(),
+                address: Address::from_script(&x.txout.script_pubkey, network)
+                    .unwrap()
+                    .to_string(),
             },
             keychain: x.keychain,
             is_spent: x.is_spent,
@@ -1046,7 +1043,7 @@ mod test {
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
         let mnemonic =
         "chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string();
-        DescriptorSecretKey::new(Network::Testnet, mnemonic, None).unwrap()
+        DescriptorSecretKey::new(Testnet, mnemonic, None).unwrap()
     }
 
     fn derive_dsk(
