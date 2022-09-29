@@ -35,8 +35,6 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 uniffi_macros::include_scaffolding!("bdk");
 
-type BdkError = Error;
-
 pub struct AddressAmount {
     pub address: String,
     pub amount: u64,
@@ -177,7 +175,7 @@ struct Blockchain {
 }
 
 impl Blockchain {
-    fn new(blockchain_config: BlockchainConfig) -> Result<Self, BdkError> {
+    fn new(blockchain_config: BlockchainConfig) -> Result<Self, Error> {
         let any_blockchain_config = match blockchain_config {
             BlockchainConfig::Electrum { config } => {
                 AnyBlockchainConfig::Electrum(ElectrumBlockchainConfig {
@@ -390,7 +388,7 @@ impl Wallet {
         change_descriptor: Option<String>,
         network: Network,
         database_config: DatabaseConfig,
-    ) -> Result<Self, BdkError> {
+    ) -> Result<Self, Error> {
         let any_database_config = match database_config {
             DatabaseConfig::Memory => AnyDatabaseConfig::Memory(()),
             DatabaseConfig::Sled { config } => AnyDatabaseConfig::Sled(config),
@@ -420,7 +418,7 @@ impl Wallet {
         &self,
         blockchain: &Blockchain,
         progress: Option<Box<dyn Progress>>,
-    ) -> Result<(), BdkError> {
+    ) -> Result<(), Error> {
         let bdk_sync_opts = BdkSyncOptions {
             progress: progress.map(|p| {
                 Box::new(ProgressHolder { progress: p })
@@ -435,7 +433,7 @@ impl Wallet {
     /// Return a derived address using the external descriptor, see AddressIndex for available address index selection
     /// strategies. If none of the keys in the descriptor are derivable (i.e. the descriptor does not end with a * character)
     /// then the same address will always be returned for any AddressIndex.
-    fn get_address(&self, address_index: AddressIndex) -> Result<AddressInfo, BdkError> {
+    fn get_address(&self, address_index: AddressIndex) -> Result<AddressInfo, Error> {
         self.get_wallet()
             .get_address(address_index.into())
             .map(AddressInfo::from)
@@ -473,10 +471,10 @@ impl Wallet {
     }
 }
 
-fn to_script_pubkey(address: &str) -> Result<Script, BdkError> {
+fn to_script_pubkey(address: &str) -> Result<Script, Error> {
     Address::from_str(address)
         .map(|x| x.script_pubkey())
-        .map_err(|e| BdkError::Generic(e.to_string()))
+        .map_err(|e| Error::Generic(e.to_string()))
 }
 
 #[derive(Clone, Debug)]
@@ -805,7 +803,7 @@ impl BumpFeeTxBuilder {
     }
 }
 
-fn generate_mnemonic(word_count: WordCount) -> Result<String, BdkError> {
+fn generate_mnemonic(word_count: WordCount) -> Result<String, Error> {
     let mnemonic: GeneratedKey<_, BareCtx> =
         Mnemonic::generate((word_count, Language::English)).unwrap();
     Ok(mnemonic.to_string())
@@ -816,12 +814,12 @@ struct DerivationPath {
 }
 
 impl DerivationPath {
-    fn new(path: String) -> Result<Self, BdkError> {
+    fn new(path: String) -> Result<Self, Error> {
         BdkDerivationPath::from_str(&path)
             .map(|x| DerivationPath {
                 derivation_path_mutex: Mutex::new(x),
             })
-            .map_err(|e| BdkError::Generic(e.to_string()))
+            .map_err(|e| Error::Generic(e.to_string()))
     }
 }
 
@@ -830,9 +828,9 @@ struct DescriptorSecretKey {
 }
 
 impl DescriptorSecretKey {
-    fn new(network: Network, mnemonic: String, password: Option<String>) -> Result<Self, BdkError> {
+    fn new(network: Network, mnemonic: String, password: Option<String>) -> Result<Self, Error> {
         let mnemonic = Mnemonic::parse_in(Language::English, mnemonic)
-            .map_err(|e| BdkError::Generic(e.to_string()))?;
+            .map_err(|e| Error::Generic(e.to_string()))?;
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key()?;
         let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
             origin: None,
@@ -845,7 +843,7 @@ impl DescriptorSecretKey {
         })
     }
 
-    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
+    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, Error> {
         let secp = Secp256k1::new();
         let descriptor_secret_key = self.descriptor_secret_key_mutex.lock().unwrap();
         let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
@@ -932,7 +930,7 @@ struct DescriptorPublicKey {
 }
 
 impl DescriptorPublicKey {
-    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
+    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, Error> {
         let secp = Secp256k1::new();
         let descriptor_public_key = self.descriptor_public_key_mutex.lock().unwrap();
         let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
@@ -1064,7 +1062,7 @@ mod test {
     fn derive_dsk(
         key: &DescriptorSecretKey,
         path: &str,
-    ) -> Result<Arc<DescriptorSecretKey>, BdkError> {
+    ) -> Result<Arc<DescriptorSecretKey>, Error> {
         let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
         key.derive(path)
     }
@@ -1077,7 +1075,7 @@ mod test {
     fn derive_dpk(
         key: &DescriptorPublicKey,
         path: &str,
-    ) -> Result<Arc<DescriptorPublicKey>, BdkError> {
+    ) -> Result<Arc<DescriptorPublicKey>, Error> {
         let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
         key.derive(path)
     }

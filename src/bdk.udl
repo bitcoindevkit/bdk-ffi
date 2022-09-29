@@ -1,10 +1,10 @@
 namespace bdk {
-  [Throws=BdkError]
+  [Throws=Error]
   string generate_mnemonic(WordCount word_count);
 };
 
 [Error]
-enum BdkError {
+enum Error {
   "InvalidU32Bytes",
   "Generic",
   "MissingCachedScripts",
@@ -134,16 +134,16 @@ interface BlockchainConfig {
 };
 
 interface Blockchain {
-  [Throws=BdkError]
+  [Throws=Error]
   constructor(BlockchainConfig config);
 
-  [Throws=BdkError]
+  [Throws=Error]
   void broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 
-  [Throws=BdkError]
+  [Throws=Error]
   u32 get_height();
 
-  [Throws=BdkError]
+  [Throws=Error]
   string get_block_hash(u32 height);
 };
 
@@ -179,39 +179,39 @@ dictionary AddressAmount {
 };
 
 interface Wallet {
-  [Throws=BdkError]
+  [Throws=Error]
   constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
 
-  [Throws=BdkError]
+  [Throws=Error]
   AddressInfo get_address(AddressIndex address_index);
 
-  [Throws=BdkError]
+  [Throws=Error]
   Balance get_balance();
 
-  [Throws=BdkError]
+  [Throws=Error]
   boolean sign([ByRef] PartiallySignedBitcoinTransaction psbt);
 
-  [Throws=BdkError]
+  [Throws=Error]
   sequence<TransactionDetails> list_transactions();
 
   Network network();
 
-  [Throws=BdkError]
+  [Throws=Error]
   void sync([ByRef] Blockchain blockchain, Progress? progress);
 
-  [Throws=BdkError]
+  [Throws=Error]
   sequence<LocalUtxo> list_unspent();
 };
 
 interface PartiallySignedBitcoinTransaction {
-  [Throws=BdkError]
+  [Throws=Error]
   constructor(string psbt_base64);
 
   string serialize();
 
   string txid();
 
-  [Throws=BdkError]
+  [Throws=Error]
   PartiallySignedBitcoinTransaction combine(PartiallySignedBitcoinTransaction other);
 };
 
@@ -250,7 +250,7 @@ interface TxBuilder {
 
   TxBuilder set_recipients(sequence<AddressAmount> recipients);
 
-  [Throws=BdkError]
+  [Throws=Error]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
 };
 
@@ -263,20 +263,20 @@ interface BumpFeeTxBuilder {
 
   BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
 
-  [Throws=BdkError]
+  [Throws=Error]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
 };
 
 interface DerivationPath {
-  [Throws=BdkError]
+  [Throws=Error]
   constructor(string path);
 };
 
 interface DescriptorSecretKey {
-  [Throws=BdkError]
+  [Throws=Error]
   constructor(Network network, string mnemonic, string? password);
 
-  [Throws=BdkError]
+  [Throws=Error]
   DescriptorSecretKey derive(DerivationPath path);
 
   DescriptorSecretKey extend(DerivationPath path);
@@ -289,7 +289,7 @@ interface DescriptorSecretKey {
 };
 
 interface DescriptorPublicKey {
-  [Throws=BdkError]
+  [Throws=Error]
   DescriptorPublicKey derive(DerivationPath path);
 
   DescriptorPublicKey extend(DerivationPath path);
