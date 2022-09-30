@@ -908,9 +908,9 @@ impl DescriptorSecretKey {
     }
 
     /// Get the private key as bytes.
-    fn secret_key_bytes(&self) -> Vec<u8> {
+    fn secret_bytes(&self) -> Vec<u8> {
         let descriptor_secret_key = self.descriptor_secret_key_mutex.lock().unwrap();
-        let secret_key_bytes: Vec<u8> = match descriptor_secret_key.deref() {
+        let secret_bytes: Vec<u8> = match descriptor_secret_key.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 descriptor_x_key.xkey.private_key.secret_bytes().to_vec()
             }
@@ -919,7 +919,7 @@ impl DescriptorSecretKey {
             }
         };
 
-        secret_key_bytes
+        secret_bytes
     }
 
     fn as_string(&self) -> String {
@@ -1150,7 +1150,7 @@ mod test {
     #[test]
     fn test_retrieve_master_secret_key() {
         let master_dpk = get_descriptor_secret_key();
-        let master_private_key = master_dpk.secret_key_bytes().to_hex();
+        let master_private_key = master_dpk.secret_bytes().to_hex();
         assert_eq!(
             master_private_key,
             "e93315d6ce401eb4db803a56232f0ed3e69b053774e6047df54f1bd00e5ea936"

@@ -283,7 +283,7 @@ interface DescriptorSecretKey {
 
   DescriptorPublicKey as_public();
 
-  sequence<u8> secret_key_bytes();
+  sequence<u8> secret_bytes();
 
   string as_string();
 };
