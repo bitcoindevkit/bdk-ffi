@@ -16,8 +16,8 @@ name = "bdkffi"
 [dependencies]
 bdk = { version = "0.22", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled"] }
 
-uniffi_macros = { version = "0.19.3", features = ["builtin-bindgen"] }
-uniffi = { version = "0.19.3", features = ["builtin-bindgen"] }
+uniffi_macros = { version = "0.20.0", features = ["builtin-bindgen"] }
+uniffi = { version = "0.20.0", features = ["builtin-bindgen"] }
 
 [build-dependencies]
-uniffi_build = { version = "0.19.3", features = ["builtin-bindgen"] }
+uniffi_build = { version = "0.20.0", features = ["builtin-bindgen"] }
