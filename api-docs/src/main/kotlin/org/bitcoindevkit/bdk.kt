@@ -172,7 +172,7 @@ data class TransactionDetails (
     var fee: ULong?,
     var received: ULong,
     var sent: ULong,
-    var txid: String
+    var txid: String,
     var confirmationTime: BlockTime?
 )
 
