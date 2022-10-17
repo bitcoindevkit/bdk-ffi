@@ -137,7 +137,7 @@ interface Blockchain {
   constructor(BlockchainConfig config);
 
   [Throws=BdkError]
-  void broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
+  void broadcast([ByRef] PartiallySignedTransaction psbt);
 
   [Throws=BdkError]
   u32 get_height();
@@ -188,7 +188,7 @@ interface Wallet {
   Balance get_balance();
 
   [Throws=BdkError]
-  boolean sign([ByRef] PartiallySignedBitcoinTransaction psbt);
+  boolean sign([ByRef] PartiallySignedTransaction psbt);
 
   [Throws=BdkError]
   sequence<TransactionDetails> list_transactions();
@@ -202,7 +202,7 @@ interface Wallet {
   sequence<LocalUtxo> list_unspent();
 };
 
-interface PartiallySignedBitcoinTransaction {
+interface PartiallySignedTransaction {
   [Throws=BdkError]
   constructor(string psbt_base64);
 
@@ -213,11 +213,11 @@ interface PartiallySignedBitcoinTransaction {
   sequence<u8> extract_tx();
 
   [Throws=BdkError]
-  PartiallySignedBitcoinTransaction combine(PartiallySignedBitcoinTransaction other);
+  PartiallySignedTransaction combine(PartiallySignedTransaction other);
 };
 
 dictionary TxBuilderResult {
-  PartiallySignedBitcoinTransaction psbt;
+  PartiallySignedTransaction psbt;
   TransactionDetails transaction_details;
 };
 
@@ -270,7 +270,7 @@ interface BumpFeeTxBuilder {
   BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
 
   [Throws=BdkError]
-  PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
+  PartiallySignedTransaction finish([ByRef] Wallet wallet);
 };
 
 interface Mnemonic {

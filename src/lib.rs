@@ -210,7 +210,7 @@ impl Blockchain {
         self.blockchain_mutex.lock().expect("blockchain")
     }
 
-    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), BdkError> {
+    fn broadcast(&self, psbt: &PartiallySignedTransaction) -> Result<(), BdkError> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
         self.get_blockchain().broadcast(&tx)
     }
@@ -341,14 +341,14 @@ impl fmt::Debug for ProgressHolder {
 }
 
 #[derive(Debug)]
-pub struct PartiallySignedBitcoinTransaction {
-    internal: Mutex<PartiallySignedTransaction>,
+pub struct PartiallySignedTransaction {
+    internal: Mutex<BdkPartiallySignedTransaction>,
 }
 
-impl PartiallySignedBitcoinTransaction {
+impl PartiallySignedTransaction {
     fn new(psbt_base64: String) -> Result<Self, BdkError> {
-        let psbt: PartiallySignedTransaction = PartiallySignedTransaction::from_str(&psbt_base64)?;
-        Ok(PartiallySignedBitcoinTransaction {
+        let psbt: BdkPartiallySignedTransaction = BdkPartiallySignedTransaction::from_str(&psbt_base64)?;
+        Ok(PartiallySignedTransaction {
             internal: Mutex::new(psbt),
         })
     }
@@ -379,13 +379,13 @@ impl PartiallySignedBitcoinTransaction {
     /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
     fn combine(
         &self,
-        other: Arc<PartiallySignedBitcoinTransaction>,
-    ) -> Result<Arc<PartiallySignedBitcoinTransaction>, BdkError> {
+        other: Arc<PartiallySignedTransaction>,
+    ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
         let other_psbt = other.internal.lock().unwrap().clone();
         let mut original_psbt = self.internal.lock().unwrap().clone();
 
         original_psbt.combine(other_psbt)?;
-        Ok(Arc::new(PartiallySignedBitcoinTransaction {
+        Ok(Arc::new(PartiallySignedTransaction {
             internal: Mutex::new(original_psbt),
         }))
     }
@@ -460,7 +460,7 @@ impl Wallet {
     }
 
     /// Sign a transaction with all the wallet’s signers.
-    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<bool, BdkError> {
+    fn sign(&self, psbt: &PartiallySignedTransaction) -> Result<bool, BdkError> {
         let mut psbt = psbt.internal.lock().unwrap();
         self.get_wallet().sign(&mut psbt, SignOptions::default())
     }
@@ -532,7 +532,7 @@ enum RbfValue {
 /// The result after calling the TxBuilder finish() function. Contains unsigned PSBT and
 /// transaction details.
 pub struct TxBuilderResult {
-    pub psbt: Arc<PartiallySignedBitcoinTransaction>,
+    pub psbt: Arc<PartiallySignedTransaction>,
     pub transaction_details: TransactionDetails,
 }
 
@@ -770,7 +770,7 @@ impl TxBuilder {
         tx_builder
             .finish()
             .map(|(psbt, tx_details)| TxBuilderResult {
-                psbt: Arc::new(PartiallySignedBitcoinTransaction {
+                psbt: Arc::new(PartiallySignedTransaction {
                     internal: Mutex::new(psbt),
                 }),
                 transaction_details: TransactionDetails::from(&tx_details),
@@ -828,7 +828,7 @@ impl BumpFeeTxBuilder {
     }
 
     /// Finish building the transaction. Returns the BIP174 PSBT.
-    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, BdkError> {
+    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
         let wallet = wallet.get_wallet();
         let txid = Txid::from_str(self.txid.as_str())?;
         let mut tx_builder = wallet.build_fee_bump(txid)?;
@@ -851,7 +851,7 @@ impl BumpFeeTxBuilder {
         }
         tx_builder
             .finish()
-            .map(|(psbt, _)| PartiallySignedBitcoinTransaction {
+            .map(|(psbt, _)| PartiallySignedTransaction {
                 internal: Mutex::new(psbt),
             })
             .map(Arc::new)
