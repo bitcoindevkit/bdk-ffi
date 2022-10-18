@@ -202,6 +202,13 @@ interface Wallet {
   sequence<LocalUtxo> list_unspent();
 };
 
+interface FeeRate {
+  [Name=from_sat_per_vb]
+  constructor(float sat_per_vb);
+
+  float as_sat_per_vb();
+};
+
 interface PartiallySignedTransaction {
   [Throws=BdkError]
   constructor(string psbt_base64);
@@ -214,6 +221,10 @@ interface PartiallySignedTransaction {
 
   [Throws=BdkError]
   PartiallySignedTransaction combine(PartiallySignedTransaction other);
+
+  u64? fee_amount();
+
+  FeeRate? fee_rate();
 };
 
 dictionary TxBuilderResult {
