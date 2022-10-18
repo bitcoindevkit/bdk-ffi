@@ -217,6 +217,11 @@ interface PartiallySignedBitcoinTransaction {
   PartiallySignedBitcoinTransaction combine(PartiallySignedBitcoinTransaction other);
 };
 
+dictionary TxBuilderResult {
+  PartiallySignedBitcoinTransaction psbt;
+  TransactionDetails transaction_details;
+};
+
 interface TxBuilder {
   constructor();
 
@@ -253,7 +258,7 @@ interface TxBuilder {
   TxBuilder set_recipients(sequence<ScriptAmount> recipients);
 
   [Throws=Error]
-  PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
+  TxBuilderResult finish([ByRef] Wallet wallet);
 };
 
 interface BumpFeeTxBuilder {
