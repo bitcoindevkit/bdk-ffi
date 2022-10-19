@@ -340,7 +340,7 @@ impl fmt::Debug for ProgressHolder {
 }
 
 #[derive(Debug)]
-struct PartiallySignedBitcoinTransaction {
+pub struct PartiallySignedBitcoinTransaction {
     internal: Mutex<PartiallySignedTransaction>,
 }
 
@@ -528,6 +528,13 @@ enum RbfValue {
     Value(u32),
 }
 
+/// The result after calling the TxBuilder finish() function. Contains unsigned PSBT and
+/// transaction details.
+pub struct TxBuilderResult {
+    pub psbt: Arc<PartiallySignedBitcoinTransaction>,
+    pub transaction_details: TransactionDetails,
+}
+
 /// A transaction builder.
 /// After creating the TxBuilder, you set options on it until finally calling finish to consume the builder and generate the transaction.
 /// Each method on the TxBuilder returns an instance of a new TxBuilder with the option set/added.
@@ -713,7 +720,7 @@ impl TxBuilder {
     }
 
     /// Finish building the transaction. Returns the BIP174 PSBT.
-    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+    fn finish(&self, wallet: &Wallet) -> Result<TxBuilderResult, Error> {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
         for (script, amount) in &self.recipients {
@@ -761,10 +768,12 @@ impl TxBuilder {
 
         tx_builder
             .finish()
-            .map(|(psbt, _)| PartiallySignedBitcoinTransaction {
-                internal: Mutex::new(psbt),
+            .map(|(psbt, tx_details)| TxBuilderResult {
+                psbt: Arc::new(PartiallySignedBitcoinTransaction {
+                    internal: Mutex::new(psbt),
+                }),
+                transaction_details: TransactionDetails::from(&tx_details),
             })
-            .map(Arc::new)
     }
 }
 
@@ -1058,8 +1067,9 @@ mod test {
         assert!(tx_builder.drain_wallet);
         assert_eq!(tx_builder.drain_to, Some(drain_to_address));
 
-        let psbt = tx_builder.finish(&test_wallet).unwrap();
-        let psbt = psbt.internal.lock().unwrap().clone();
+        let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
+        let psbt = tx_builder_result.psbt.internal.lock().unwrap().clone();
+        let tx_details = tx_builder_result.transaction_details;
 
         // confirm one input with 50,000 sats
         assert_eq!(psbt.inputs.len(), 1);
@@ -1095,6 +1105,16 @@ mod test {
         );
         let output_value = psbt.unsigned_tx.output.get(0).cloned().unwrap().value;
         assert_eq!(output_value, 49_890_u64); // input - fee
+
+        assert_eq!(
+            tx_details.txid,
+            "312f1733badab22dc26b8dcbc83ba5629fb7b493af802e8abe07d865e49629c5"
+        );
+        assert_eq!(tx_details.received, 0);
+        assert_eq!(tx_details.sent, 50000);
+        assert!(tx_details.fee.is_some());
+        assert_eq!(tx_details.fee.unwrap(), 110);
+        assert!(tx_details.confirmation_time.is_none());
     }
 
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
