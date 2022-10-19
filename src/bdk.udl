@@ -1,6 +1,5 @@
 namespace bdk {
-  [Throws=Error]
-  string generate_mnemonic(WordCount word_count);
+
 };
 
 [Error]
@@ -46,6 +45,12 @@ enum Error {
   "Esplora",
   "Sled",
   "Rusqlite",
+};
+
+interface Mnemonic {
+  constructor(WordCount word_count)
+
+  string as_string();
 };
 
 dictionary AddressInfo {
@@ -280,8 +285,12 @@ interface DerivationPath {
 };
 
 interface DescriptorSecretKey {
+
   [Throws=Error]
-  constructor(Network network, string mnemonic, string? password);
+  constructor(Network network, string key);
+
+  [Name=from_mnemonic]
+  constructor(Network network, Mnemonic mnemonic, string? password);
 
   [Throws=Error]
   DescriptorSecretKey derive(DerivationPath path);
@@ -296,6 +305,9 @@ interface DescriptorSecretKey {
 };
 
 interface DescriptorPublicKey {
+  [Throws=Error]
+  constructor(Network network, string key);
+
   [Throws=Error]
   DescriptorPublicKey derive(DerivationPath path);
 
