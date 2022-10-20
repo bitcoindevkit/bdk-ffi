@@ -1,1 +1,1 @@
-rootProject.name = "bdk-kotlin-docs"
+rootProject.name = "BDK Android and BDK JVM API Docs"

@@ -211,6 +211,15 @@ class PartiallySignedBitcoinTransaction(psbtBase64: String) {
 
     /** Get the txid of the PSBT. */
     fun txid(): String {}
+
+    /** Return the transaction as bytes. */
+    fun `extractTx`(): List<UByte>
+
+    /**
+     * Combines this PartiallySignedTransaction with another PSBT as described by BIP 174.
+     * In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
+     */
+    fun combine(other: PartiallySignedBitcoinTransaction): PartiallySignedBitcoinTransaction
 }
 
 /**
@@ -273,10 +282,6 @@ data class BlockTime (
 )
 
 /**
-
- */
-
-/**
  * A Bitcoin wallet.
  * The Wallet acts as a way of coherently interfacing with output descriptors and related transactions. Its main components are:
  * 1. Output descriptors from which it can derive addresses.
@@ -289,6 +294,8 @@ data class BlockTime (
  * @param changeDescriptor The change (or "internal") descriptor.
  * @param network The network to act on.
  * @param databaseConfig The database configuration.
+ *
+ * @sample org.bitcoindevkit.walletSample
  */
 class Wallet(
     descriptor: String,
@@ -333,7 +340,7 @@ class Progress {
 /**
  * A transaction builder.
  *
- * After creating the TxBuilder, you set options on it until finally calling finish to consume the builder and generate the transaction.
+ * After creating the TxBuilder, you set options on it until finally calling `.finish` to consume the builder and generate the transaction.
  *
  * Each method on the TxBuilder returns an instance of a new TxBuilder with the option set/added.
  */
@@ -342,10 +349,10 @@ class TxBuilder() {
     fun addData(data: List<UByte>): TxBuilder {}
 
     /** Add a recipient to the internal list. */
-    fun addRecipient(address: String, amount: ULong): TxBuilder {}
+    fun addRecipient(script: Script, amount: ULong): TxBuilder {}
 
     /** Set the list of recipients by providing a list of [AddressAmount]. */
-    fun setRecipients(recipients: List<AddressAmount>): TxBuilder {}
+    fun setRecipients(recipients: List<ScriptAmount>): TxBuilder {}
 
     /** Add a utxo to the internal list of unspendable utxos. It’s important to note that the "must-be-spent" utxos added with [TxBuilder.addUtxo] have priority over this. See the Rust docs of the two linked methods for more details. */
     fun addUnspendable(unspendable: OutPoint): TxBuilder {}
@@ -408,18 +415,18 @@ class TxBuilder() {
      */
     fun enableRbfWithSequence(nsequence: UInt): TxBuilder {}
 
-    /** Finish building the transaction. Returns the BIP174 PSBT. */
-    fun finish(wallet: Wallet): PartiallySignedBitcoinTransaction {}
+    /** Finish building the transaction. Returns a [TxBuilderResult]. */
+    fun finish(wallet: Wallet): TxBuilderResult {}
 }
 
 /**
- * A object holding an address and an amount.
+ * A object holding an ScriptPubKey and an amount.
  *
- * @property address The address.
+ * @property script The ScriptPubKey.
  * @property amount The amount.
  */
 data class AddressAmount (
-    var address: String,
+    var script: Script,
     var amount: ULong
 )
 
@@ -446,8 +453,8 @@ class BumpFeeTxBuilder() {
      */
     fun enableRbfWithSequence(nsequence: UInt): BumpFeeTxBuilder {}
 
-    /** Finish building the transaction. Returns the BIP174 PSBT. */
-    fun finish(wallet: Wallet): PartiallySignedBitcoinTransaction {}
+    /** Finish building the transaction. Returns a [TxBuilderResult]. */
+    fun finish(wallet: Wallet): TxBuilderResult {}
 }
 
 /**
@@ -455,17 +462,28 @@ class BumpFeeTxBuilder() {
  *
  * @param wordCount The number of words to use for the mnemonic (also determines the amount of entropy that is used).
  * @return The mnemonic words separated by a space in a String
+ *
+ * @sample org.bitcoindevkit.generateMnemonicSample
  */
 fun generateMnemonic(wordCount: WordCount): String
 
 /**
- * TODO
+ * A BIP-32 derivation path.
  *
- * @constructor TODO
+ * @param path The derivation path. Must start with `m`. Use this type to derive or extend a [DescriptorSecretKey]
+ * or [DescriptorPublicKey].
+ */
+class DerivationPath(path: String) {}
+
+/**
+ * An extended secret key.
  *
  * @param network The network this DescriptorSecretKey is to be used on.
  * @param mnemonic The mnemonic.
  * @param password The optional passphrase that can be provided as per BIP-39.
+ *
+ * @sample org.bitcoindevkit.descriptorSecretKeyDeriveSample
+ * @sample org.bitcoindevkit.descriptorSecretKeyExtendSample
  */
 class DescriptorSecretKey(network: Network, mnemonic: String, password: String?) {
     /** Derive a private descriptor at a given path. */
@@ -477,14 +495,15 @@ class DescriptorSecretKey(network: Network, mnemonic: String, password: String?)
     /** Return the public version of the descriptor. */
     fun asPublic(): DescriptorPublicKey {}
 
+    /* Return the raw private key as bytes. */
+    fun secretBytes(): List<UByte>
+
     /** Return the private descriptor as a string. */
     fun asString(): String {}
 }
 
 /**
- * TODO
- *
- * @constructor TODO
+ * An extended public key.
  *
  * @param network The network this DescriptorPublicKey is to be used on.
  * @param mnemonic The mnemonic.
@@ -492,13 +511,13 @@ class DescriptorSecretKey(network: Network, mnemonic: String, password: String?)
  */
 class DescriptorPublicKey(network: Network, mnemonic: String, password: String?) {
     /** Derive a public descriptor at a given path. */
-    fun derive(path: DerivationPath): DescriptorSecretKey {}
+    fun derive(path: DerivationPath): DescriptorSecretKey
 
     /** Extend the public descriptor with a custom path. */
-    fun extend(path: DerivationPath): DescriptorSecretKey {}
+    fun extend(path: DerivationPath): DescriptorSecretKey
 
     /** Return the public descriptor as a string. */
-    fun asString(): String {}
+    fun asString(): String
 }
 
 /**
@@ -519,4 +538,33 @@ enum class WordCount {
 
     /** 24 words mnemonic (256 bits entropy). */
     WORDS24,
+}
+
+/**
+ * The value returned from calling the `.finish()` method on the [TxBuilder] or [BumpFeeTxBuilder].
+ *
+ * @property psbt The PSBT
+ * @property transactionDetails The transaction details.
+ *
+ * @sample org.bitcoindevkit.txBuilderResultSample1
+ * @sample org.bitcoindevkit.txBuilderResultSample2
+ */
+data class TxBuilderResult (
+    var psbt: PartiallySignedBitcoinTransaction,
+    var transactionDetails: TransactionDetails
+)
+
+/**
+ * A bitcoin script.
+ */
+class Script(rawOutputScript: List<UByte>)
+
+/**
+ * A bitcoin address.
+ *
+ * @param address The address in string format.
+ */
+class Address(address: String) {
+    /* Return the ScriptPubKey. */
+    fun scriptPubkey(): Script
 }
