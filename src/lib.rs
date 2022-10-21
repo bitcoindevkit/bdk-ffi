@@ -25,7 +25,7 @@ use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{
-    Balance as BdkBalance, BlockTime, Error, FeeRate, KeychainKind, SignOptions,
+    Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind, SignOptions,
     SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
 use std::collections::HashSet;
@@ -178,7 +178,7 @@ struct Blockchain {
 }
 
 impl Blockchain {
-    fn new(blockchain_config: BlockchainConfig) -> Result<Self, Error> {
+    fn new(blockchain_config: BlockchainConfig) -> Result<Self, BdkError> {
         let any_blockchain_config = match blockchain_config {
             BlockchainConfig::Electrum { config } => {
                 AnyBlockchainConfig::Electrum(ElectrumBlockchainConfig {
@@ -209,16 +209,16 @@ impl Blockchain {
         self.blockchain_mutex.lock().expect("blockchain")
     }
 
-    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), Error> {
+    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), BdkError> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
         self.get_blockchain().broadcast(&tx)
     }
 
-    fn get_height(&self) -> Result<u32, Error> {
+    fn get_height(&self) -> Result<u32, BdkError> {
         self.get_blockchain().get_height()
     }
 
-    fn get_block_hash(&self, height: u32) -> Result<String, Error> {
+    fn get_block_hash(&self, height: u32) -> Result<String, BdkError> {
         self.get_blockchain()
             .get_block_hash(u64::from(height))
             .map(|hash| hash.to_string())
@@ -327,7 +327,7 @@ struct ProgressHolder {
 }
 
 impl BdkProgress for ProgressHolder {
-    fn update(&self, progress: f32, message: Option<String>) -> Result<(), Error> {
+    fn update(&self, progress: f32, message: Option<String>) -> Result<(), BdkError> {
         self.progress.update(progress, message);
         Ok(())
     }
@@ -345,7 +345,7 @@ pub struct PartiallySignedBitcoinTransaction {
 }
 
 impl PartiallySignedBitcoinTransaction {
-    fn new(psbt_base64: String) -> Result<Self, Error> {
+    fn new(psbt_base64: String) -> Result<Self, BdkError> {
         let psbt: PartiallySignedTransaction = PartiallySignedTransaction::from_str(&psbt_base64)?;
         Ok(PartiallySignedBitcoinTransaction {
             internal: Mutex::new(psbt),
@@ -379,7 +379,7 @@ impl PartiallySignedBitcoinTransaction {
     fn combine(
         &self,
         other: Arc<PartiallySignedBitcoinTransaction>,
-    ) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+    ) -> Result<Arc<PartiallySignedBitcoinTransaction>, BdkError> {
         let other_psbt = other.internal.lock().unwrap().clone();
         let mut original_psbt = self.internal.lock().unwrap().clone();
 
@@ -401,7 +401,7 @@ impl Wallet {
         change_descriptor: Option<String>,
         network: Network,
         database_config: DatabaseConfig,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self, BdkError> {
         let any_database_config = match database_config {
             DatabaseConfig::Memory => AnyDatabaseConfig::Memory(()),
             DatabaseConfig::Sled { config } => AnyDatabaseConfig::Sled(config),
@@ -431,7 +431,7 @@ impl Wallet {
         &self,
         blockchain: &Blockchain,
         progress: Option<Box<dyn Progress>>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), BdkError> {
         let bdk_sync_opts = BdkSyncOptions {
             progress: progress.map(|p| {
                 Box::new(ProgressHolder { progress: p })
@@ -446,7 +446,7 @@ impl Wallet {
     /// Return a derived address using the external descriptor, see AddressIndex for available address index selection
     /// strategies. If none of the keys in the descriptor are derivable (i.e. the descriptor does not end with a * character)
     /// then the same address will always be returned for any AddressIndex.
-    fn get_address(&self, address_index: AddressIndex) -> Result<AddressInfo, Error> {
+    fn get_address(&self, address_index: AddressIndex) -> Result<AddressInfo, BdkError> {
         self.get_wallet()
             .get_address(address_index.into())
             .map(AddressInfo::from)
@@ -454,18 +454,18 @@ impl Wallet {
 
     /// Return the balance, meaning the sum of this wallet’s unspent outputs’ values. Note that this method only operates
     /// on the internal database, which first needs to be Wallet.sync manually.
-    fn get_balance(&self) -> Result<Balance, Error> {
+    fn get_balance(&self) -> Result<Balance, BdkError> {
         self.get_wallet().get_balance().map(|b| b.into())
     }
 
     /// Sign a transaction with all the wallet’s signers.
-    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<bool, Error> {
+    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<bool, BdkError> {
         let mut psbt = psbt.internal.lock().unwrap();
         self.get_wallet().sign(&mut psbt, SignOptions::default())
     }
 
     /// Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually.
-    fn list_transactions(&self) -> Result<Vec<TransactionDetails>, Error> {
+    fn list_transactions(&self) -> Result<Vec<TransactionDetails>, BdkError> {
         let transaction_details = self.get_wallet().list_transactions(true)?;
         Ok(transaction_details
             .iter()
@@ -475,7 +475,7 @@ impl Wallet {
 
     /// Return the list of unspent outputs of this wallet. Note that this method only operates on the internal database,
     /// which first needs to be Wallet.sync manually.
-    fn list_unspent(&self) -> Result<Vec<LocalUtxo>, Error> {
+    fn list_unspent(&self) -> Result<Vec<LocalUtxo>, BdkError> {
         let unspents = self.get_wallet().list_unspent()?;
         Ok(unspents
             .iter()
@@ -484,10 +484,10 @@ impl Wallet {
     }
 }
 
-fn to_script_pubkey(address: &str) -> Result<BdkScript, Error> {
+fn to_script_pubkey(address: &str) -> Result<BdkScript, BdkError> {
     BdkAddress::from_str(address)
         .map(|x| x.script_pubkey())
-        .map_err(|e| Error::Generic(e.to_string()))
+        .map_err(|e| BdkError::Generic(e.to_string()))
 }
 
 /// A Bitcoin address.
@@ -496,10 +496,10 @@ struct Address {
 }
 
 impl Address {
-    fn new(address: String) -> Result<Self, Error> {
+    fn new(address: String) -> Result<Self, BdkError> {
         BdkAddress::from_str(address.as_str())
             .map(|a| Address { address: a })
-            .map_err(|e| Error::Generic(e.to_string()))
+            .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
     fn script_pubkey(&self) -> Arc<Script> {
@@ -720,7 +720,7 @@ impl TxBuilder {
     }
 
     /// Finish building the transaction. Returns the BIP174 PSBT.
-    fn finish(&self, wallet: &Wallet) -> Result<TxBuilderResult, Error> {
+    fn finish(&self, wallet: &Wallet) -> Result<TxBuilderResult, BdkError> {
         let wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
         for (script, amount) in &self.recipients {
@@ -827,14 +827,14 @@ impl BumpFeeTxBuilder {
     }
 
     /// Finish building the transaction. Returns the BIP174 PSBT.
-    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, Error> {
+    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, BdkError> {
         let wallet = wallet.get_wallet();
         let txid = Txid::from_str(self.txid.as_str())?;
         let mut tx_builder = wallet.build_fee_bump(txid)?;
         tx_builder.fee_rate(FeeRate::from_sat_per_vb(self.fee_rate));
         if let Some(allow_shrinking) = &self.allow_shrinking {
-            let address =
-                BdkAddress::from_str(allow_shrinking).map_err(|e| Error::Generic(e.to_string()))?;
+            let address = BdkAddress::from_str(allow_shrinking)
+                .map_err(|e| BdkError::Generic(e.to_string()))?;
             let script = address.script_pubkey();
             tx_builder.allow_shrinking(script)?;
         }
@@ -857,7 +857,7 @@ impl BumpFeeTxBuilder {
     }
 }
 
-fn generate_mnemonic(word_count: WordCount) -> Result<String, Error> {
+fn generate_mnemonic(word_count: WordCount) -> Result<String, BdkError> {
     let mnemonic: GeneratedKey<_, BareCtx> =
         Mnemonic::generate((word_count, Language::English)).unwrap();
     Ok(mnemonic.to_string())
@@ -868,12 +868,12 @@ struct DerivationPath {
 }
 
 impl DerivationPath {
-    fn new(path: String) -> Result<Self, Error> {
+    fn new(path: String) -> Result<Self, BdkError> {
         BdkDerivationPath::from_str(&path)
             .map(|x| DerivationPath {
                 derivation_path_mutex: Mutex::new(x),
             })
-            .map_err(|e| Error::Generic(e.to_string()))
+            .map_err(|e| BdkError::Generic(e.to_string()))
     }
 }
 
@@ -882,9 +882,9 @@ struct DescriptorSecretKey {
 }
 
 impl DescriptorSecretKey {
-    fn new(network: Network, mnemonic: String, password: Option<String>) -> Result<Self, Error> {
+    fn new(network: Network, mnemonic: String, password: Option<String>) -> Result<Self, BdkError> {
         let mnemonic = Mnemonic::parse_in(Language::English, mnemonic)
-            .map_err(|e| Error::Generic(e.to_string()))?;
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key()?;
         let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
             origin: None,
@@ -897,7 +897,7 @@ impl DescriptorSecretKey {
         })
     }
 
-    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, Error> {
+    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let secp = Secp256k1::new();
         let descriptor_secret_key = self.descriptor_secret_key_mutex.lock().unwrap();
         let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
@@ -984,7 +984,7 @@ struct DescriptorPublicKey {
 }
 
 impl DescriptorPublicKey {
-    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, Error> {
+    fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let secp = Secp256k1::new();
         let descriptor_public_key = self.descriptor_public_key_mutex.lock().unwrap();
         let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
@@ -1126,7 +1126,7 @@ mod test {
     fn derive_dsk(
         key: &DescriptorSecretKey,
         path: &str,
-    ) -> Result<Arc<DescriptorSecretKey>, Error> {
+    ) -> Result<Arc<DescriptorSecretKey>, BdkError> {
         let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
         key.derive(path)
     }
@@ -1139,7 +1139,7 @@ mod test {
     fn derive_dpk(
         key: &DescriptorPublicKey,
         path: &str,
-    ) -> Result<Arc<DescriptorPublicKey>, Error> {
+    ) -> Result<Arc<DescriptorPublicKey>, BdkError> {
         let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
         key.derive(path)
     }

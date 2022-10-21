@@ -1,10 +1,10 @@
 namespace bdk {
-  [Throws=Error]
+  [Throws=BdkError]
   string generate_mnemonic(WordCount word_count);
 };
 
 [Error]
-enum Error {
+enum BdkError {
   "InvalidU32Bytes",
   "Generic",
   "MissingCachedScripts",
@@ -134,16 +134,16 @@ interface BlockchainConfig {
 };
 
 interface Blockchain {
-  [Throws=Error]
+  [Throws=BdkError]
   constructor(BlockchainConfig config);
 
-  [Throws=Error]
+  [Throws=BdkError]
   void broadcast([ByRef] PartiallySignedBitcoinTransaction psbt);
 
-  [Throws=Error]
+  [Throws=BdkError]
   u32 get_height();
 
-  [Throws=Error]
+  [Throws=BdkError]
   string get_block_hash(u32 height);
 };
 
@@ -179,32 +179,32 @@ dictionary ScriptAmount {
 };
 
 interface Wallet {
-  [Throws=Error]
+  [Throws=BdkError]
   constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
 
-  [Throws=Error]
+  [Throws=BdkError]
   AddressInfo get_address(AddressIndex address_index);
 
-  [Throws=Error]
+  [Throws=BdkError]
   Balance get_balance();
 
-  [Throws=Error]
+  [Throws=BdkError]
   boolean sign([ByRef] PartiallySignedBitcoinTransaction psbt);
 
-  [Throws=Error]
+  [Throws=BdkError]
   sequence<TransactionDetails> list_transactions();
 
   Network network();
 
-  [Throws=Error]
+  [Throws=BdkError]
   void sync([ByRef] Blockchain blockchain, Progress? progress);
 
-  [Throws=Error]
+  [Throws=BdkError]
   sequence<LocalUtxo> list_unspent();
 };
 
 interface PartiallySignedBitcoinTransaction {
-  [Throws=Error]
+  [Throws=BdkError]
   constructor(string psbt_base64);
 
   string serialize();
@@ -213,7 +213,7 @@ interface PartiallySignedBitcoinTransaction {
 
   sequence<u8> extract_tx();
 
-  [Throws=Error]
+  [Throws=BdkError]
   PartiallySignedBitcoinTransaction combine(PartiallySignedBitcoinTransaction other);
 };
 
@@ -257,7 +257,7 @@ interface TxBuilder {
 
   TxBuilder set_recipients(sequence<ScriptAmount> recipients);
 
-  [Throws=Error]
+  [Throws=BdkError]
   TxBuilderResult finish([ByRef] Wallet wallet);
 };
 
@@ -270,20 +270,20 @@ interface BumpFeeTxBuilder {
 
   BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
 
-  [Throws=Error]
+  [Throws=BdkError]
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
 };
 
 interface DerivationPath {
-  [Throws=Error]
+  [Throws=BdkError]
   constructor(string path);
 };
 
 interface DescriptorSecretKey {
-  [Throws=Error]
+  [Throws=BdkError]
   constructor(Network network, string mnemonic, string? password);
 
-  [Throws=Error]
+  [Throws=BdkError]
   DescriptorSecretKey derive(DerivationPath path);
 
   DescriptorSecretKey extend(DerivationPath path);
@@ -296,7 +296,7 @@ interface DescriptorSecretKey {
 };
 
 interface DescriptorPublicKey {
-  [Throws=Error]
+  [Throws=BdkError]
   DescriptorPublicKey derive(DerivationPath path);
 
   DescriptorPublicKey extend(DerivationPath path);
@@ -305,7 +305,7 @@ interface DescriptorPublicKey {
 };
 
 interface Address {
-  [Throws=Error]
+  [Throws=BdkError]
   constructor(string address);
 
   Script script_pubkey();
