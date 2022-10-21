@@ -19,13 +19,13 @@ fileprivate extension RustBuffer {
     }
 
     static func from(_ ptr: UnsafeBufferPointer<UInt8>) -> RustBuffer {
-        try! rustCall { ffi_bdk_1c1_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
+        try! rustCall { ffi_bdk_1724_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
     }
 
     // Frees the buffer in place.
     // The buffer must not be used after this is called.
     func deallocate() {
-        try! rustCall { ffi_bdk_1c1_rustbuffer_free(self, $0) }
+        try! rustCall { ffi_bdk_1724_rustbuffer_free(self, $0) }
     }
 }
 
@@ -147,57 +147,50 @@ fileprivate class Writer {
     }
 }
 
-
-// Types conforming to `Serializable` can be read and written in a bytebuffer.
-fileprivate protocol Serializable {
-    func write(into: Writer)
-    static func read(from: Reader) throws -> Self
-}
-
-// Types confirming to `ViaFfi` can be transferred back-and-for over the FFI.
-// This is analogous to the Rust trait of the same name.
-fileprivate protocol ViaFfi: Serializable {
+// Protocol for types that transfer other types across the FFI. This is
+// analogous go the Rust trait of the same name.
+fileprivate protocol FfiConverter {
     associatedtype FfiType
-    static func lift(_ v: FfiType) throws -> Self
-    func lower() -> FfiType
+    associatedtype SwiftType
+
+    static func lift(_ value: FfiType) throws -> SwiftType
+    static func lower(_ value: SwiftType) -> FfiType
+    static func read(from buf: Reader) throws -> SwiftType
+    static func write(_ value: SwiftType, into buf: Writer)
 }
 
 // Types conforming to `Primitive` pass themselves directly over the FFI.
-fileprivate protocol Primitive {}
+fileprivate protocol FfiConverterPrimitive: FfiConverter where FfiType == SwiftType { }
 
-extension Primitive {
-    fileprivate typealias FfiType = Self
-
-    fileprivate static func lift(_ v: Self) throws -> Self {
-        return v
+extension FfiConverterPrimitive {
+    static func lift(_ value: FfiType) throws -> SwiftType {
+        return value
     }
 
-    fileprivate func lower() -> Self {
-        return self
+    static func lower(_ value: SwiftType) -> FfiType {
+        return value
     }
 }
 
-// Types conforming to `ViaFfiUsingByteBuffer` lift and lower into a bytebuffer.
-// Use this for complex types where it's hard to write a custom lift/lower.
-fileprivate protocol ViaFfiUsingByteBuffer: Serializable {}
+// Types conforming to `FfiConverterRustBuffer` lift and lower into a `RustBuffer`.
+// Used for complex types where it's hard to write a custom lift/lower.
+fileprivate protocol FfiConverterRustBuffer: FfiConverter where FfiType == RustBuffer {}
 
-extension ViaFfiUsingByteBuffer {
-    fileprivate typealias FfiType = RustBuffer
-
-    fileprivate static func lift(_ buf: FfiType) throws -> Self {
-      let reader = Reader(data: Data(rustBuffer: buf))
-      let value = try Self.read(from: reader)
-      if reader.hasRemaining() {
-          throw UniffiInternalError.incompleteData
-      }
-      buf.deallocate()
-      return value
+extension FfiConverterRustBuffer {
+    static func lift(_ buf: RustBuffer) throws -> SwiftType {
+        let reader = Reader(data: Data(rustBuffer: buf))
+        let value = try read(from: reader)
+        if reader.hasRemaining() {
+            throw UniffiInternalError.incompleteData
+        }
+        buf.deallocate()
+        return value
     }
 
-    fileprivate func lower() -> FfiType {
-      let writer = Writer()
-      self.write(into: writer)
-      return RustBuffer(bytes: writer.bytes)
+    static func lower(_ value: SwiftType) -> RustBuffer {
+          let writer = Writer()
+          write(value, into: writer)
+          return RustBuffer(bytes: writer.bytes)
     }
 }
 // An error type for FFI errors. These errors occur at the UniFFI level, not
@@ -252,8 +245,11 @@ private func rustCall<T>(_ callback: (UnsafeMutablePointer<RustCallStatus>) -> T
     })
 }
 
-private func rustCallWithError<T, E: ViaFfiUsingByteBuffer & Error>(_ errorClass: E.Type, _ callback: (UnsafeMutablePointer<RustCallStatus>) -> T) throws -> T {
-    try makeRustCall(callback, errorHandler: { return try E.lift($0) })
+private func rustCallWithError<T, F: FfiConverter>
+    (_ errorFfiConverter: F.Type, _ callback: (UnsafeMutablePointer<RustCallStatus>) -> T) throws -> T
+    where F.SwiftType: Error, F.FfiType == RustBuffer
+    {
+    try makeRustCall(callback, errorHandler: { return try errorFfiConverter.lift($0) })
 }
 
 private func makeRustCall<T>(_ callback: (UnsafeMutablePointer<RustCallStatus>) -> T, errorHandler: (RustBuffer) throws -> Error) throws -> T {
@@ -271,7 +267,7 @@ private func makeRustCall<T>(_ callback: (UnsafeMutablePointer<RustCallStatus>) 
             // with the message.  But if that code panics, then it just sends back
             // an empty buffer.
             if callStatus.errorBuf.len > 0 {
-                throw UniffiInternalError.rustPanic(try String.lift(callStatus.errorBuf))
+                throw UniffiInternalError.rustPanic(try FfiConverterString.lift(callStatus.errorBuf))
             } else {
                 callStatus.errorBuf.deallocate()
                 throw UniffiInternalError.rustPanic("Rust panic")
@@ -281,226 +277,1968 @@ private func makeRustCall<T>(_ callback: (UnsafeMutablePointer<RustCallStatus>) 
             throw UniffiInternalError.unexpectedRustCallStatusCode
     }
 }
-// Protocols for converters we'll implement in templates
-
-fileprivate protocol FfiConverter {
-    associatedtype SwiftType
-    associatedtype FfiType
-
-    static func lift(_ ffiValue: FfiType) throws -> SwiftType
-    static func lower(_ value: SwiftType) -> FfiType
-
-    static func read(from: Reader) throws -> SwiftType
-    static func write(_ value: SwiftType, into: Writer)
-}
-
-fileprivate protocol FfiConverterUsingByteBuffer: FfiConverter where FfiType == RustBuffer {
-    // Empty, because we want to declare some helper methods in the extension below.
-}
-
-extension FfiConverterUsingByteBuffer {
-    static func lower(_ value: SwiftType) -> FfiType {
-        let writer = Writer()
-        Self.write(value, into: writer)
-        return RustBuffer(bytes: writer.bytes)
-    }
-
-    static func lift(_ buf: FfiType) throws -> SwiftType {
-        let reader = Reader(data: Data(rustBuffer: buf))
-        let value = try Self.read(from: reader)
-        if reader.hasRemaining() {
-          throw UniffiInternalError.incompleteData
-        }
-        buf.deallocate()
-        return value
-    }
-}
-
-// Helpers for structural types. Note that because of canonical_names, it /should/ be impossible
-// to make another `FfiConverterSequence` etc just using the UDL.
-fileprivate enum FfiConverterSequence {
-    static func write<T>(_ value: [T], into buf: Writer, writeItem: (T, Writer) -> Void) {
-        let len = Int32(value.count)
-        buf.writeInt(len)
-        for item in value {
-            writeItem(item, buf)
-        }
-    }
-
-    static func read<T>(from buf: Reader, readItem: (Reader) throws -> T) throws -> [T] {
-        let len: Int32 = try buf.readInt()
-        var seq = [T]()
-        seq.reserveCapacity(Int(len))
-        for _ in 0 ..< len {
-            seq.append(try readItem(buf))
-        }
-        return seq
-    }
-}
-
-fileprivate enum FfiConverterOptional {
-    static func write<T>(_ value: T?, into buf: Writer, writeItem: (T, Writer) -> Void) {
-        guard let value = value else {
-            buf.writeInt(Int8(0))
-            return
-        }
-        buf.writeInt(Int8(1))
-        writeItem(value, buf)
-    }
-
-    static func read<T>(from buf: Reader, readItem: (Reader) throws -> T) throws -> T? {
-        switch try buf.readInt() as Int8 {
-        case 0: return nil
-        case 1: return try readItem(buf)
-        default: throw UniffiInternalError.unexpectedOptionalTag
-        }
-    }
-}
-
-fileprivate enum FfiConverterDictionary {
-    static func write<T>(_ value: [String: T], into buf: Writer, writeItem: (String, T, Writer) -> Void) {
-        let len = Int32(value.count)
-        buf.writeInt(len)
-        for (key, value) in value {
-            writeItem(key, value, buf)
-        }
-    }
-
-    static func read<T>(from buf: Reader, readItem: (Reader) throws -> (String, T)) throws -> [String: T] {
-        let len: Int32 = try buf.readInt()
-        var dict = [String: T]()
-        dict.reserveCapacity(Int(len))
-        for _ in 0..<len {
-            let (key, value) = try readItem(buf)
-            dict[key] = value
-        }
-        return dict
-    }
-}
 
 // Public interface members begin here.
 
 
-fileprivate extension NSLock {
-    func withLock<T>(f: () throws -> T) rethrows -> T {
-        self.lock()
-        defer { self.unlock() }
-        return try f()
+fileprivate struct FfiConverterUInt8: FfiConverterPrimitive {
+    typealias FfiType = UInt8
+    typealias SwiftType = UInt8
+
+    static func read(from buf: Reader) throws -> UInt8 {
+        return try lift(buf.readInt())
+    }
+
+    static func write(_ value: UInt8, into buf: Writer) {
+        buf.writeInt(lower(value))
     }
 }
 
-fileprivate typealias Handle = UInt64
-fileprivate class ConcurrentHandleMap<T> {
-    private var leftMap: [Handle: T] = [:]
-    private var counter: [Handle: UInt64] = [:]
-    private var rightMap: [ObjectIdentifier: Handle] = [:]
+fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
+    typealias FfiType = UInt32
+    typealias SwiftType = UInt32
 
-    private let lock = NSLock()
-    private var currentHandle: Handle = 0
-    private let stride: Handle = 1
+    static func read(from buf: Reader) throws -> UInt32 {
+        return try lift(buf.readInt())
+    }
 
-    func insert(obj: T) -> Handle {
-        lock.withLock {
-            let id = ObjectIdentifier(obj as AnyObject)
-            let handle = rightMap[id] ?? {
-                currentHandle += stride
-                let handle = currentHandle
-                leftMap[handle] = obj
-                rightMap[id] = handle
-                return handle
-            }()
-            counter[handle] = (counter[handle] ?? 0) + 1
-            return handle
+    static func write(_ value: SwiftType, into buf: Writer) {
+        buf.writeInt(lower(value))
+    }
+}
+
+fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
+    typealias FfiType = UInt64
+    typealias SwiftType = UInt64
+
+    static func read(from buf: Reader) throws -> UInt64 {
+        return try lift(buf.readInt())
+    }
+
+    static func write(_ value: SwiftType, into buf: Writer) {
+        buf.writeInt(lower(value))
+    }
+}
+
+fileprivate struct FfiConverterFloat: FfiConverterPrimitive {
+    typealias FfiType = Float
+    typealias SwiftType = Float
+
+    static func read(from buf: Reader) throws -> Float {
+        return try lift(buf.readFloat())
+    }
+
+    static func write(_ value: Float, into buf: Writer) {
+        buf.writeFloat(lower(value))
+    }
+}
+
+fileprivate struct FfiConverterBool : FfiConverter {
+    typealias FfiType = Int8
+    typealias SwiftType = Bool
+
+    static func lift(_ value: Int8) throws -> Bool {
+        return value != 0
+    }
+
+    static func lower(_ value: Bool) -> Int8 {
+        return value ? 1 : 0
+    }
+
+    static func read(from buf: Reader) throws -> Bool {
+        return try lift(buf.readInt())
+    }
+
+    static func write(_ value: Bool, into buf: Writer) {
+        buf.writeInt(lower(value))
+    }
+}
+
+fileprivate struct FfiConverterString: FfiConverter {
+    typealias SwiftType = String
+    typealias FfiType = RustBuffer
+
+    static func lift(_ value: RustBuffer) throws -> String {
+        defer {
+            value.deallocate()
         }
-    }
-
-    func get(handle: Handle) -> T? {
-        lock.withLock {
-            leftMap[handle]
+        if value.data == nil {
+            return String()
         }
+        let bytes = UnsafeBufferPointer<UInt8>(start: value.data!, count: Int(value.len))
+        return String(bytes: bytes, encoding: String.Encoding.utf8)!
     }
 
-    func delete(handle: Handle) {
-        remove(handle: handle)
-    }
-
-    @discardableResult
-    func remove(handle: Handle) -> T? {
-        lock.withLock {
-            defer { counter[handle] = (counter[handle] ?? 1) - 1 }
-            guard counter[handle] == 1 else { return leftMap[handle] }
-            let obj = leftMap.removeValue(forKey: handle)
-            if let obj = obj {
-                rightMap.removeValue(forKey: ObjectIdentifier(obj as AnyObject))
+    static func lower(_ value: String) -> RustBuffer {
+        return value.utf8CString.withUnsafeBufferPointer { ptr in
+            // The swift string gives us int8_t, we want uint8_t.
+            ptr.withMemoryRebound(to: UInt8.self) { ptr in
+                // The swift string gives us a trailing null byte, we don't want it.
+                let buf = UnsafeBufferPointer(rebasing: ptr.prefix(upTo: ptr.count - 1))
+                return RustBuffer.from(buf)
             }
-            return obj
         }
+    }
+
+    static func read(from buf: Reader) throws -> String {
+        let len: Int32 = try buf.readInt()
+        return String(bytes: try buf.readBytes(count: Int(len)), encoding: String.Encoding.utf8)!
+    }
+
+    static func write(_ value: String, into buf: Writer) {
+        let len = Int32(value.utf8.count)
+        buf.writeInt(len)
+        buf.writeBytes(value.utf8)
     }
 }
 
-// Magic number for the Rust proxy to call using the same mechanism as every other method,
-// to free the callback once it's dropped by Rust.
-private let IDX_CALLBACK_FREE: Int32 = 0
 
-fileprivate class FfiConverterCallbackInterface<CallbackInterface> {
-    fileprivate let handleMap = ConcurrentHandleMap<CallbackInterface>()
+public protocol AddressProtocol {
+    func `scriptPubkey`()  -> Script
+    
+}
 
-    func drop(handle: Handle) {
-        handleMap.remove(handle: handle)
+public class Address: AddressProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init(`address`: String) throws {
+        self.init(unsafeFromRawPointer: try
+    
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    
+    bdk_1724_Address_new(
+        FfiConverterString.lower(`address`), $0)
+})
     }
 
-    func lift(_ handle: Handle) throws -> CallbackInterface {
-        guard let callback = handleMap.get(handle: handle) else {
-            throw UniffiInternalError.unexpectedStaleHandle
+    deinit {
+        try! rustCall { ffi_bdk_1724_Address_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func `scriptPubkey`()  -> Script {
+        return try! FfiConverterTypeScript.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_Address_script_pubkey(self.pointer, $0
+    )
+}
+        )
+    }
+    
+}
+
+
+fileprivate struct FfiConverterTypeAddress: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = Address
+
+    static func read(from buf: Reader) throws -> Address {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
         }
-        return callback
+        return try lift(ptr!)
     }
 
-    func read(from buf: Reader) throws -> CallbackInterface {
-        let handle: Handle = try buf.readInt()
-        return try lift(handle)
+    static func write(_ value: Address, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
     }
 
-    func lower(_ v: CallbackInterface) -> Handle {
-        let handle = handleMap.insert(obj: v)
-        return handle
-        // assert(handleMap.get(handle: obj) == v, "Handle map is not returning the object we just placed there. This is a bug in the HandleMap.")
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Address {
+        return Address(unsafeFromRawPointer: pointer)
     }
 
-    func write(_ v: CallbackInterface, into buf: Writer) {
-        buf.writeInt(lower(v))
+    static func lower(_ value: Address) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol BlockchainProtocol {
+    func `broadcast`(`psbt`: PartiallySignedBitcoinTransaction) throws
+    func `getHeight`() throws -> UInt32
+    func `getBlockHash`(`height`: UInt32) throws -> String
+    
+}
+
+public class Blockchain: BlockchainProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init(`config`: BlockchainConfig) throws {
+        self.init(unsafeFromRawPointer: try
+    
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    
+    bdk_1724_Blockchain_new(
+        FfiConverterTypeBlockchainConfig.lower(`config`), $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_Blockchain_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func `broadcast`(`psbt`: PartiallySignedBitcoinTransaction) throws {
+        try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Blockchain_broadcast(self.pointer, 
+        FfiConverterTypePartiallySignedBitcoinTransaction.lower(`psbt`), $0
+    )
+}
+    }
+    public func `getHeight`() throws -> UInt32 {
+        return try FfiConverterUInt32.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Blockchain_get_height(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `getBlockHash`(`height`: UInt32) throws -> String {
+        return try FfiConverterString.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Blockchain_get_block_hash(self.pointer, 
+        FfiConverterUInt32.lower(`height`), $0
+    )
+}
+        )
+    }
+    
+}
+
+
+fileprivate struct FfiConverterTypeBlockchain: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = Blockchain
+
+    static func read(from buf: Reader) throws -> Blockchain {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: Blockchain, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Blockchain {
+        return Blockchain(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: Blockchain) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol BumpFeeTxBuilderProtocol {
+    func `allowShrinking`(`address`: String)  -> BumpFeeTxBuilder
+    func `enableRbf`()  -> BumpFeeTxBuilder
+    func `enableRbfWithSequence`(`nsequence`: UInt32)  -> BumpFeeTxBuilder
+    func `finish`(`wallet`: Wallet) throws -> PartiallySignedBitcoinTransaction
+    
+}
+
+public class BumpFeeTxBuilder: BumpFeeTxBuilderProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init(`txid`: String, `newFeeRate`: Float)  {
+        self.init(unsafeFromRawPointer: try!
+    
+    rustCall() {
+    
+    bdk_1724_BumpFeeTxBuilder_new(
+        FfiConverterString.lower(`txid`), 
+        FfiConverterFloat.lower(`newFeeRate`), $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_BumpFeeTxBuilder_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func `allowShrinking`(`address`: String)  -> BumpFeeTxBuilder {
+        return try! FfiConverterTypeBumpFeeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_BumpFeeTxBuilder_allow_shrinking(self.pointer, 
+        FfiConverterString.lower(`address`), $0
+    )
+}
+        )
+    }
+    public func `enableRbf`()  -> BumpFeeTxBuilder {
+        return try! FfiConverterTypeBumpFeeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_BumpFeeTxBuilder_enable_rbf(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `enableRbfWithSequence`(`nsequence`: UInt32)  -> BumpFeeTxBuilder {
+        return try! FfiConverterTypeBumpFeeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_BumpFeeTxBuilder_enable_rbf_with_sequence(self.pointer, 
+        FfiConverterUInt32.lower(`nsequence`), $0
+    )
+}
+        )
+    }
+    public func `finish`(`wallet`: Wallet) throws -> PartiallySignedBitcoinTransaction {
+        return try FfiConverterTypePartiallySignedBitcoinTransaction.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_BumpFeeTxBuilder_finish(self.pointer, 
+        FfiConverterTypeWallet.lower(`wallet`), $0
+    )
+}
+        )
+    }
+    
+}
+
+
+fileprivate struct FfiConverterTypeBumpFeeTxBuilder: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = BumpFeeTxBuilder
+
+    static func read(from buf: Reader) throws -> BumpFeeTxBuilder {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: BumpFeeTxBuilder, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> BumpFeeTxBuilder {
+        return BumpFeeTxBuilder(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: BumpFeeTxBuilder) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol DerivationPathProtocol {
+    
+}
+
+public class DerivationPath: DerivationPathProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init(`path`: String) throws {
+        self.init(unsafeFromRawPointer: try
+    
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    
+    bdk_1724_DerivationPath_new(
+        FfiConverterString.lower(`path`), $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_DerivationPath_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    
+}
+
+
+fileprivate struct FfiConverterTypeDerivationPath: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = DerivationPath
+
+    static func read(from buf: Reader) throws -> DerivationPath {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: DerivationPath, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> DerivationPath {
+        return DerivationPath(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: DerivationPath) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol DescriptorPublicKeyProtocol {
+    func `derive`(`path`: DerivationPath) throws -> DescriptorPublicKey
+    func `extend`(`path`: DerivationPath)  -> DescriptorPublicKey
+    func `asString`()  -> String
+    
+}
+
+public class DescriptorPublicKey: DescriptorPublicKeyProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_DescriptorPublicKey_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func `derive`(`path`: DerivationPath) throws -> DescriptorPublicKey {
+        return try FfiConverterTypeDescriptorPublicKey.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_DescriptorPublicKey_derive(self.pointer, 
+        FfiConverterTypeDerivationPath.lower(`path`), $0
+    )
+}
+        )
+    }
+    public func `extend`(`path`: DerivationPath)  -> DescriptorPublicKey {
+        return try! FfiConverterTypeDescriptorPublicKey.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_DescriptorPublicKey_extend(self.pointer, 
+        FfiConverterTypeDerivationPath.lower(`path`), $0
+    )
+}
+        )
+    }
+    public func `asString`()  -> String {
+        return try! FfiConverterString.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_DescriptorPublicKey_as_string(self.pointer, $0
+    )
+}
+        )
+    }
+    
+}
+
+
+fileprivate struct FfiConverterTypeDescriptorPublicKey: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = DescriptorPublicKey
+
+    static func read(from buf: Reader) throws -> DescriptorPublicKey {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: DescriptorPublicKey, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> DescriptorPublicKey {
+        return DescriptorPublicKey(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: DescriptorPublicKey) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol DescriptorSecretKeyProtocol {
+    func `derive`(`path`: DerivationPath) throws -> DescriptorSecretKey
+    func `extend`(`path`: DerivationPath)  -> DescriptorSecretKey
+    func `asPublic`()  -> DescriptorPublicKey
+    func `secretBytes`()  -> [UInt8]
+    func `asString`()  -> String
+    
+}
+
+public class DescriptorSecretKey: DescriptorSecretKeyProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init(`network`: Network, `mnemonic`: String, `password`: String?) throws {
+        self.init(unsafeFromRawPointer: try
+    
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    
+    bdk_1724_DescriptorSecretKey_new(
+        FfiConverterTypeNetwork.lower(`network`), 
+        FfiConverterString.lower(`mnemonic`), 
+        FfiConverterOptionString.lower(`password`), $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_DescriptorSecretKey_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func `derive`(`path`: DerivationPath) throws -> DescriptorSecretKey {
+        return try FfiConverterTypeDescriptorSecretKey.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_DescriptorSecretKey_derive(self.pointer, 
+        FfiConverterTypeDerivationPath.lower(`path`), $0
+    )
+}
+        )
+    }
+    public func `extend`(`path`: DerivationPath)  -> DescriptorSecretKey {
+        return try! FfiConverterTypeDescriptorSecretKey.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_DescriptorSecretKey_extend(self.pointer, 
+        FfiConverterTypeDerivationPath.lower(`path`), $0
+    )
+}
+        )
+    }
+    public func `asPublic`()  -> DescriptorPublicKey {
+        return try! FfiConverterTypeDescriptorPublicKey.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_DescriptorSecretKey_as_public(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `secretBytes`()  -> [UInt8] {
+        return try! FfiConverterSequenceUInt8.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_DescriptorSecretKey_secret_bytes(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `asString`()  -> String {
+        return try! FfiConverterString.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_DescriptorSecretKey_as_string(self.pointer, $0
+    )
+}
+        )
+    }
+    
+}
+
+
+fileprivate struct FfiConverterTypeDescriptorSecretKey: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = DescriptorSecretKey
+
+    static func read(from buf: Reader) throws -> DescriptorSecretKey {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: DescriptorSecretKey, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> DescriptorSecretKey {
+        return DescriptorSecretKey(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: DescriptorSecretKey) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol PartiallySignedBitcoinTransactionProtocol {
+    func `serialize`()  -> String
+    func `txid`()  -> String
+    func `extractTx`()  -> [UInt8]
+    func `combine`(`other`: PartiallySignedBitcoinTransaction) throws -> PartiallySignedBitcoinTransaction
+    
+}
+
+public class PartiallySignedBitcoinTransaction: PartiallySignedBitcoinTransactionProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init(`psbtBase64`: String) throws {
+        self.init(unsafeFromRawPointer: try
+    
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    
+    bdk_1724_PartiallySignedBitcoinTransaction_new(
+        FfiConverterString.lower(`psbtBase64`), $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_PartiallySignedBitcoinTransaction_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func `serialize`()  -> String {
+        return try! FfiConverterString.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_PartiallySignedBitcoinTransaction_serialize(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `txid`()  -> String {
+        return try! FfiConverterString.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_PartiallySignedBitcoinTransaction_txid(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `extractTx`()  -> [UInt8] {
+        return try! FfiConverterSequenceUInt8.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_PartiallySignedBitcoinTransaction_extract_tx(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `combine`(`other`: PartiallySignedBitcoinTransaction) throws -> PartiallySignedBitcoinTransaction {
+        return try FfiConverterTypePartiallySignedBitcoinTransaction.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_PartiallySignedBitcoinTransaction_combine(self.pointer, 
+        FfiConverterTypePartiallySignedBitcoinTransaction.lower(`other`), $0
+    )
+}
+        )
+    }
+    
+}
+
+
+fileprivate struct FfiConverterTypePartiallySignedBitcoinTransaction: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = PartiallySignedBitcoinTransaction
+
+    static func read(from buf: Reader) throws -> PartiallySignedBitcoinTransaction {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: PartiallySignedBitcoinTransaction, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> PartiallySignedBitcoinTransaction {
+        return PartiallySignedBitcoinTransaction(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: PartiallySignedBitcoinTransaction) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol ScriptProtocol {
+    
+}
+
+public class Script: ScriptProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init(`rawOutputScript`: [UInt8])  {
+        self.init(unsafeFromRawPointer: try!
+    
+    rustCall() {
+    
+    bdk_1724_Script_new(
+        FfiConverterSequenceUInt8.lower(`rawOutputScript`), $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_Script_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    
+}
+
+
+fileprivate struct FfiConverterTypeScript: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = Script
+
+    static func read(from buf: Reader) throws -> Script {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: Script, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Script {
+        return Script(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: Script) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol TxBuilderProtocol {
+    func `addRecipient`(`script`: Script, `amount`: UInt64)  -> TxBuilder
+    func `addUnspendable`(`unspendable`: OutPoint)  -> TxBuilder
+    func `addUtxo`(`outpoint`: OutPoint)  -> TxBuilder
+    func `addUtxos`(`outpoints`: [OutPoint])  -> TxBuilder
+    func `doNotSpendChange`()  -> TxBuilder
+    func `manuallySelectedOnly`()  -> TxBuilder
+    func `onlySpendChange`()  -> TxBuilder
+    func `unspendable`(`unspendable`: [OutPoint])  -> TxBuilder
+    func `feeRate`(`satPerVbyte`: Float)  -> TxBuilder
+    func `feeAbsolute`(`feeAmount`: UInt64)  -> TxBuilder
+    func `drainWallet`()  -> TxBuilder
+    func `drainTo`(`address`: String)  -> TxBuilder
+    func `enableRbf`()  -> TxBuilder
+    func `enableRbfWithSequence`(`nsequence`: UInt32)  -> TxBuilder
+    func `addData`(`data`: [UInt8])  -> TxBuilder
+    func `setRecipients`(`recipients`: [ScriptAmount])  -> TxBuilder
+    func `finish`(`wallet`: Wallet) throws -> TxBuilderResult
+    
+}
+
+public class TxBuilder: TxBuilderProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init()  {
+        self.init(unsafeFromRawPointer: try!
+    
+    rustCall() {
+    
+    bdk_1724_TxBuilder_new($0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_TxBuilder_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func `addRecipient`(`script`: Script, `amount`: UInt64)  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_add_recipient(self.pointer, 
+        FfiConverterTypeScript.lower(`script`), 
+        FfiConverterUInt64.lower(`amount`), $0
+    )
+}
+        )
+    }
+    public func `addUnspendable`(`unspendable`: OutPoint)  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_add_unspendable(self.pointer, 
+        FfiConverterTypeOutPoint.lower(`unspendable`), $0
+    )
+}
+        )
+    }
+    public func `addUtxo`(`outpoint`: OutPoint)  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_add_utxo(self.pointer, 
+        FfiConverterTypeOutPoint.lower(`outpoint`), $0
+    )
+}
+        )
+    }
+    public func `addUtxos`(`outpoints`: [OutPoint])  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_add_utxos(self.pointer, 
+        FfiConverterSequenceTypeOutPoint.lower(`outpoints`), $0
+    )
+}
+        )
+    }
+    public func `doNotSpendChange`()  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_do_not_spend_change(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `manuallySelectedOnly`()  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_manually_selected_only(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `onlySpendChange`()  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_only_spend_change(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `unspendable`(`unspendable`: [OutPoint])  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_unspendable(self.pointer, 
+        FfiConverterSequenceTypeOutPoint.lower(`unspendable`), $0
+    )
+}
+        )
+    }
+    public func `feeRate`(`satPerVbyte`: Float)  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_fee_rate(self.pointer, 
+        FfiConverterFloat.lower(`satPerVbyte`), $0
+    )
+}
+        )
+    }
+    public func `feeAbsolute`(`feeAmount`: UInt64)  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_fee_absolute(self.pointer, 
+        FfiConverterUInt64.lower(`feeAmount`), $0
+    )
+}
+        )
+    }
+    public func `drainWallet`()  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_drain_wallet(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `drainTo`(`address`: String)  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_drain_to(self.pointer, 
+        FfiConverterString.lower(`address`), $0
+    )
+}
+        )
+    }
+    public func `enableRbf`()  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_enable_rbf(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `enableRbfWithSequence`(`nsequence`: UInt32)  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_enable_rbf_with_sequence(self.pointer, 
+        FfiConverterUInt32.lower(`nsequence`), $0
+    )
+}
+        )
+    }
+    public func `addData`(`data`: [UInt8])  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_add_data(self.pointer, 
+        FfiConverterSequenceUInt8.lower(`data`), $0
+    )
+}
+        )
+    }
+    public func `setRecipients`(`recipients`: [ScriptAmount])  -> TxBuilder {
+        return try! FfiConverterTypeTxBuilder.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_TxBuilder_set_recipients(self.pointer, 
+        FfiConverterSequenceTypeScriptAmount.lower(`recipients`), $0
+    )
+}
+        )
+    }
+    public func `finish`(`wallet`: Wallet) throws -> TxBuilderResult {
+        return try FfiConverterTypeTxBuilderResult.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_TxBuilder_finish(self.pointer, 
+        FfiConverterTypeWallet.lower(`wallet`), $0
+    )
+}
+        )
+    }
+    
+}
+
+
+fileprivate struct FfiConverterTypeTxBuilder: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = TxBuilder
+
+    static func read(from buf: Reader) throws -> TxBuilder {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: TxBuilder, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> TxBuilder {
+        return TxBuilder(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: TxBuilder) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public protocol WalletProtocol {
+    func `getAddress`(`addressIndex`: AddressIndex) throws -> AddressInfo
+    func `getBalance`() throws -> Balance
+    func `sign`(`psbt`: PartiallySignedBitcoinTransaction) throws -> Bool
+    func `listTransactions`() throws -> [TransactionDetails]
+    func `network`()  -> Network
+    func `sync`(`blockchain`: Blockchain, `progress`: Progress?) throws
+    func `listUnspent`() throws -> [LocalUtxo]
+    
+}
+
+public class Wallet: WalletProtocol {
+    fileprivate let pointer: UnsafeMutableRawPointer
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
+        self.pointer = pointer
+    }
+    public convenience init(`descriptor`: String, `changeDescriptor`: String?, `network`: Network, `databaseConfig`: DatabaseConfig) throws {
+        self.init(unsafeFromRawPointer: try
+    
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    
+    bdk_1724_Wallet_new(
+        FfiConverterString.lower(`descriptor`), 
+        FfiConverterOptionString.lower(`changeDescriptor`), 
+        FfiConverterTypeNetwork.lower(`network`), 
+        FfiConverterTypeDatabaseConfig.lower(`databaseConfig`), $0)
+})
+    }
+
+    deinit {
+        try! rustCall { ffi_bdk_1724_Wallet_object_free(pointer, $0) }
+    }
+
+    
+
+    
+    public func `getAddress`(`addressIndex`: AddressIndex) throws -> AddressInfo {
+        return try FfiConverterTypeAddressInfo.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Wallet_get_address(self.pointer, 
+        FfiConverterTypeAddressIndex.lower(`addressIndex`), $0
+    )
+}
+        )
+    }
+    public func `getBalance`() throws -> Balance {
+        return try FfiConverterTypeBalance.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Wallet_get_balance(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `sign`(`psbt`: PartiallySignedBitcoinTransaction) throws -> Bool {
+        return try FfiConverterBool.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Wallet_sign(self.pointer, 
+        FfiConverterTypePartiallySignedBitcoinTransaction.lower(`psbt`), $0
+    )
+}
+        )
+    }
+    public func `listTransactions`() throws -> [TransactionDetails] {
+        return try FfiConverterSequenceTypeTransactionDetails.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Wallet_list_transactions(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `network`()  -> Network {
+        return try! FfiConverterTypeNetwork.lift(
+            try!
+    rustCall() {
+    
+    bdk_1724_Wallet_network(self.pointer, $0
+    )
+}
+        )
+    }
+    public func `sync`(`blockchain`: Blockchain, `progress`: Progress?) throws {
+        try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Wallet_sync(self.pointer, 
+        FfiConverterTypeBlockchain.lower(`blockchain`), 
+        FfiConverterOptionCallbackInterfaceProgress.lower(`progress`), $0
+    )
+}
+    }
+    public func `listUnspent`() throws -> [LocalUtxo] {
+        return try FfiConverterSequenceTypeLocalUtxo.lift(
+            try
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    bdk_1724_Wallet_list_unspent(self.pointer, $0
+    )
+}
+        )
+    }
+    
+}
+
+
+fileprivate struct FfiConverterTypeWallet: FfiConverter {
+    typealias FfiType = UnsafeMutableRawPointer
+    typealias SwiftType = Wallet
+
+    static func read(from buf: Reader) throws -> Wallet {
+        let v: UInt64 = try buf.readInt()
+        // The Rust code won't compile if a pointer won't fit in a UInt64.
+        // We have to go via `UInt` because that's the thing that's the size of a pointer.
+        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
+        if (ptr == nil) {
+            throw UniffiInternalError.unexpectedNullPointer
+        }
+        return try lift(ptr!)
+    }
+
+    static func write(_ value: Wallet, into buf: Writer) {
+        // This fiddling is because `Int` is the thing that's the same size as a pointer.
+        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
+        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: lower(value)))))
+    }
+
+    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Wallet {
+        return Wallet(unsafeFromRawPointer: pointer)
+    }
+
+    static func lower(_ value: Wallet) -> UnsafeMutableRawPointer {
+        return value.pointer
+    }
+}
+
+
+public struct AddressInfo {
+    public var `index`: UInt32
+    public var `address`: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`index`: UInt32, `address`: String) {
+        self.`index` = `index`
+        self.`address` = `address`
+    }
+}
+
+
+extension AddressInfo: Equatable, Hashable {
+    public static func ==(lhs: AddressInfo, rhs: AddressInfo) -> Bool {
+        if lhs.`index` != rhs.`index` {
+            return false
+        }
+        if lhs.`address` != rhs.`address` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`index`)
+        hasher.combine(`address`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeAddressInfo: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> AddressInfo {
+        return try AddressInfo(
+            `index`: FfiConverterUInt32.read(from: buf), 
+            `address`: FfiConverterString.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: AddressInfo, into buf: Writer) {
+        FfiConverterUInt32.write(value.`index`, into: buf)
+        FfiConverterString.write(value.`address`, into: buf)
+    }
+}
+
+
+public struct Balance {
+    public var `immature`: UInt64
+    public var `trustedPending`: UInt64
+    public var `untrustedPending`: UInt64
+    public var `confirmed`: UInt64
+    public var `spendable`: UInt64
+    public var `total`: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`immature`: UInt64, `trustedPending`: UInt64, `untrustedPending`: UInt64, `confirmed`: UInt64, `spendable`: UInt64, `total`: UInt64) {
+        self.`immature` = `immature`
+        self.`trustedPending` = `trustedPending`
+        self.`untrustedPending` = `untrustedPending`
+        self.`confirmed` = `confirmed`
+        self.`spendable` = `spendable`
+        self.`total` = `total`
+    }
+}
+
+
+extension Balance: Equatable, Hashable {
+    public static func ==(lhs: Balance, rhs: Balance) -> Bool {
+        if lhs.`immature` != rhs.`immature` {
+            return false
+        }
+        if lhs.`trustedPending` != rhs.`trustedPending` {
+            return false
+        }
+        if lhs.`untrustedPending` != rhs.`untrustedPending` {
+            return false
+        }
+        if lhs.`confirmed` != rhs.`confirmed` {
+            return false
+        }
+        if lhs.`spendable` != rhs.`spendable` {
+            return false
+        }
+        if lhs.`total` != rhs.`total` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`immature`)
+        hasher.combine(`trustedPending`)
+        hasher.combine(`untrustedPending`)
+        hasher.combine(`confirmed`)
+        hasher.combine(`spendable`)
+        hasher.combine(`total`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeBalance: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> Balance {
+        return try Balance(
+            `immature`: FfiConverterUInt64.read(from: buf), 
+            `trustedPending`: FfiConverterUInt64.read(from: buf), 
+            `untrustedPending`: FfiConverterUInt64.read(from: buf), 
+            `confirmed`: FfiConverterUInt64.read(from: buf), 
+            `spendable`: FfiConverterUInt64.read(from: buf), 
+            `total`: FfiConverterUInt64.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: Balance, into buf: Writer) {
+        FfiConverterUInt64.write(value.`immature`, into: buf)
+        FfiConverterUInt64.write(value.`trustedPending`, into: buf)
+        FfiConverterUInt64.write(value.`untrustedPending`, into: buf)
+        FfiConverterUInt64.write(value.`confirmed`, into: buf)
+        FfiConverterUInt64.write(value.`spendable`, into: buf)
+        FfiConverterUInt64.write(value.`total`, into: buf)
+    }
+}
+
+
+public struct BlockTime {
+    public var `height`: UInt32
+    public var `timestamp`: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`height`: UInt32, `timestamp`: UInt64) {
+        self.`height` = `height`
+        self.`timestamp` = `timestamp`
+    }
+}
+
+
+extension BlockTime: Equatable, Hashable {
+    public static func ==(lhs: BlockTime, rhs: BlockTime) -> Bool {
+        if lhs.`height` != rhs.`height` {
+            return false
+        }
+        if lhs.`timestamp` != rhs.`timestamp` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`height`)
+        hasher.combine(`timestamp`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeBlockTime: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> BlockTime {
+        return try BlockTime(
+            `height`: FfiConverterUInt32.read(from: buf), 
+            `timestamp`: FfiConverterUInt64.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: BlockTime, into buf: Writer) {
+        FfiConverterUInt32.write(value.`height`, into: buf)
+        FfiConverterUInt64.write(value.`timestamp`, into: buf)
+    }
+}
+
+
+public struct ElectrumConfig {
+    public var `url`: String
+    public var `socks5`: String?
+    public var `retry`: UInt8
+    public var `timeout`: UInt8?
+    public var `stopGap`: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`url`: String, `socks5`: String?, `retry`: UInt8, `timeout`: UInt8?, `stopGap`: UInt64) {
+        self.`url` = `url`
+        self.`socks5` = `socks5`
+        self.`retry` = `retry`
+        self.`timeout` = `timeout`
+        self.`stopGap` = `stopGap`
+    }
+}
+
+
+extension ElectrumConfig: Equatable, Hashable {
+    public static func ==(lhs: ElectrumConfig, rhs: ElectrumConfig) -> Bool {
+        if lhs.`url` != rhs.`url` {
+            return false
+        }
+        if lhs.`socks5` != rhs.`socks5` {
+            return false
+        }
+        if lhs.`retry` != rhs.`retry` {
+            return false
+        }
+        if lhs.`timeout` != rhs.`timeout` {
+            return false
+        }
+        if lhs.`stopGap` != rhs.`stopGap` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`url`)
+        hasher.combine(`socks5`)
+        hasher.combine(`retry`)
+        hasher.combine(`timeout`)
+        hasher.combine(`stopGap`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeElectrumConfig: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> ElectrumConfig {
+        return try ElectrumConfig(
+            `url`: FfiConverterString.read(from: buf), 
+            `socks5`: FfiConverterOptionString.read(from: buf), 
+            `retry`: FfiConverterUInt8.read(from: buf), 
+            `timeout`: FfiConverterOptionUInt8.read(from: buf), 
+            `stopGap`: FfiConverterUInt64.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: ElectrumConfig, into buf: Writer) {
+        FfiConverterString.write(value.`url`, into: buf)
+        FfiConverterOptionString.write(value.`socks5`, into: buf)
+        FfiConverterUInt8.write(value.`retry`, into: buf)
+        FfiConverterOptionUInt8.write(value.`timeout`, into: buf)
+        FfiConverterUInt64.write(value.`stopGap`, into: buf)
+    }
+}
+
+
+public struct EsploraConfig {
+    public var `baseUrl`: String
+    public var `proxy`: String?
+    public var `concurrency`: UInt8?
+    public var `stopGap`: UInt64
+    public var `timeout`: UInt64?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`baseUrl`: String, `proxy`: String?, `concurrency`: UInt8?, `stopGap`: UInt64, `timeout`: UInt64?) {
+        self.`baseUrl` = `baseUrl`
+        self.`proxy` = `proxy`
+        self.`concurrency` = `concurrency`
+        self.`stopGap` = `stopGap`
+        self.`timeout` = `timeout`
+    }
+}
+
+
+extension EsploraConfig: Equatable, Hashable {
+    public static func ==(lhs: EsploraConfig, rhs: EsploraConfig) -> Bool {
+        if lhs.`baseUrl` != rhs.`baseUrl` {
+            return false
+        }
+        if lhs.`proxy` != rhs.`proxy` {
+            return false
+        }
+        if lhs.`concurrency` != rhs.`concurrency` {
+            return false
+        }
+        if lhs.`stopGap` != rhs.`stopGap` {
+            return false
+        }
+        if lhs.`timeout` != rhs.`timeout` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`baseUrl`)
+        hasher.combine(`proxy`)
+        hasher.combine(`concurrency`)
+        hasher.combine(`stopGap`)
+        hasher.combine(`timeout`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeEsploraConfig: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> EsploraConfig {
+        return try EsploraConfig(
+            `baseUrl`: FfiConverterString.read(from: buf), 
+            `proxy`: FfiConverterOptionString.read(from: buf), 
+            `concurrency`: FfiConverterOptionUInt8.read(from: buf), 
+            `stopGap`: FfiConverterUInt64.read(from: buf), 
+            `timeout`: FfiConverterOptionUInt64.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: EsploraConfig, into buf: Writer) {
+        FfiConverterString.write(value.`baseUrl`, into: buf)
+        FfiConverterOptionString.write(value.`proxy`, into: buf)
+        FfiConverterOptionUInt8.write(value.`concurrency`, into: buf)
+        FfiConverterUInt64.write(value.`stopGap`, into: buf)
+        FfiConverterOptionUInt64.write(value.`timeout`, into: buf)
+    }
+}
+
+
+public struct LocalUtxo {
+    public var `outpoint`: OutPoint
+    public var `txout`: TxOut
+    public var `keychain`: KeychainKind
+    public var `isSpent`: Bool
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`outpoint`: OutPoint, `txout`: TxOut, `keychain`: KeychainKind, `isSpent`: Bool) {
+        self.`outpoint` = `outpoint`
+        self.`txout` = `txout`
+        self.`keychain` = `keychain`
+        self.`isSpent` = `isSpent`
+    }
+}
+
+
+extension LocalUtxo: Equatable, Hashable {
+    public static func ==(lhs: LocalUtxo, rhs: LocalUtxo) -> Bool {
+        if lhs.`outpoint` != rhs.`outpoint` {
+            return false
+        }
+        if lhs.`txout` != rhs.`txout` {
+            return false
+        }
+        if lhs.`keychain` != rhs.`keychain` {
+            return false
+        }
+        if lhs.`isSpent` != rhs.`isSpent` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`outpoint`)
+        hasher.combine(`txout`)
+        hasher.combine(`keychain`)
+        hasher.combine(`isSpent`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeLocalUtxo: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> LocalUtxo {
+        return try LocalUtxo(
+            `outpoint`: FfiConverterTypeOutPoint.read(from: buf), 
+            `txout`: FfiConverterTypeTxOut.read(from: buf), 
+            `keychain`: FfiConverterTypeKeychainKind.read(from: buf), 
+            `isSpent`: FfiConverterBool.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: LocalUtxo, into buf: Writer) {
+        FfiConverterTypeOutPoint.write(value.`outpoint`, into: buf)
+        FfiConverterTypeTxOut.write(value.`txout`, into: buf)
+        FfiConverterTypeKeychainKind.write(value.`keychain`, into: buf)
+        FfiConverterBool.write(value.`isSpent`, into: buf)
+    }
+}
+
+
+public struct OutPoint {
+    public var `txid`: String
+    public var `vout`: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`txid`: String, `vout`: UInt32) {
+        self.`txid` = `txid`
+        self.`vout` = `vout`
+    }
+}
+
+
+extension OutPoint: Equatable, Hashable {
+    public static func ==(lhs: OutPoint, rhs: OutPoint) -> Bool {
+        if lhs.`txid` != rhs.`txid` {
+            return false
+        }
+        if lhs.`vout` != rhs.`vout` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`txid`)
+        hasher.combine(`vout`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeOutPoint: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> OutPoint {
+        return try OutPoint(
+            `txid`: FfiConverterString.read(from: buf), 
+            `vout`: FfiConverterUInt32.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: OutPoint, into buf: Writer) {
+        FfiConverterString.write(value.`txid`, into: buf)
+        FfiConverterUInt32.write(value.`vout`, into: buf)
+    }
+}
+
+
+public struct ScriptAmount {
+    public var `script`: Script
+    public var `amount`: UInt64
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`script`: Script, `amount`: UInt64) {
+        self.`script` = `script`
+        self.`amount` = `amount`
+    }
+}
+
+
+
+fileprivate struct FfiConverterTypeScriptAmount: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> ScriptAmount {
+        return try ScriptAmount(
+            `script`: FfiConverterTypeScript.read(from: buf), 
+            `amount`: FfiConverterUInt64.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: ScriptAmount, into buf: Writer) {
+        FfiConverterTypeScript.write(value.`script`, into: buf)
+        FfiConverterUInt64.write(value.`amount`, into: buf)
+    }
+}
+
+
+public struct SledDbConfiguration {
+    public var `path`: String
+    public var `treeName`: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`path`: String, `treeName`: String) {
+        self.`path` = `path`
+        self.`treeName` = `treeName`
+    }
+}
+
+
+extension SledDbConfiguration: Equatable, Hashable {
+    public static func ==(lhs: SledDbConfiguration, rhs: SledDbConfiguration) -> Bool {
+        if lhs.`path` != rhs.`path` {
+            return false
+        }
+        if lhs.`treeName` != rhs.`treeName` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`path`)
+        hasher.combine(`treeName`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeSledDbConfiguration: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> SledDbConfiguration {
+        return try SledDbConfiguration(
+            `path`: FfiConverterString.read(from: buf), 
+            `treeName`: FfiConverterString.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: SledDbConfiguration, into buf: Writer) {
+        FfiConverterString.write(value.`path`, into: buf)
+        FfiConverterString.write(value.`treeName`, into: buf)
+    }
+}
+
+
+public struct SqliteDbConfiguration {
+    public var `path`: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`path`: String) {
+        self.`path` = `path`
+    }
+}
+
+
+extension SqliteDbConfiguration: Equatable, Hashable {
+    public static func ==(lhs: SqliteDbConfiguration, rhs: SqliteDbConfiguration) -> Bool {
+        if lhs.`path` != rhs.`path` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`path`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeSqliteDbConfiguration: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> SqliteDbConfiguration {
+        return try SqliteDbConfiguration(
+            `path`: FfiConverterString.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: SqliteDbConfiguration, into buf: Writer) {
+        FfiConverterString.write(value.`path`, into: buf)
+    }
+}
+
+
+public struct TransactionDetails {
+    public var `fee`: UInt64?
+    public var `received`: UInt64
+    public var `sent`: UInt64
+    public var `txid`: String
+    public var `confirmationTime`: BlockTime?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`fee`: UInt64?, `received`: UInt64, `sent`: UInt64, `txid`: String, `confirmationTime`: BlockTime?) {
+        self.`fee` = `fee`
+        self.`received` = `received`
+        self.`sent` = `sent`
+        self.`txid` = `txid`
+        self.`confirmationTime` = `confirmationTime`
+    }
+}
+
+
+extension TransactionDetails: Equatable, Hashable {
+    public static func ==(lhs: TransactionDetails, rhs: TransactionDetails) -> Bool {
+        if lhs.`fee` != rhs.`fee` {
+            return false
+        }
+        if lhs.`received` != rhs.`received` {
+            return false
+        }
+        if lhs.`sent` != rhs.`sent` {
+            return false
+        }
+        if lhs.`txid` != rhs.`txid` {
+            return false
+        }
+        if lhs.`confirmationTime` != rhs.`confirmationTime` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`fee`)
+        hasher.combine(`received`)
+        hasher.combine(`sent`)
+        hasher.combine(`txid`)
+        hasher.combine(`confirmationTime`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeTransactionDetails: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> TransactionDetails {
+        return try TransactionDetails(
+            `fee`: FfiConverterOptionUInt64.read(from: buf), 
+            `received`: FfiConverterUInt64.read(from: buf), 
+            `sent`: FfiConverterUInt64.read(from: buf), 
+            `txid`: FfiConverterString.read(from: buf), 
+            `confirmationTime`: FfiConverterOptionTypeBlockTime.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: TransactionDetails, into buf: Writer) {
+        FfiConverterOptionUInt64.write(value.`fee`, into: buf)
+        FfiConverterUInt64.write(value.`received`, into: buf)
+        FfiConverterUInt64.write(value.`sent`, into: buf)
+        FfiConverterString.write(value.`txid`, into: buf)
+        FfiConverterOptionTypeBlockTime.write(value.`confirmationTime`, into: buf)
+    }
+}
+
+
+public struct TxBuilderResult {
+    public var `psbt`: PartiallySignedBitcoinTransaction
+    public var `transactionDetails`: TransactionDetails
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`psbt`: PartiallySignedBitcoinTransaction, `transactionDetails`: TransactionDetails) {
+        self.`psbt` = `psbt`
+        self.`transactionDetails` = `transactionDetails`
+    }
+}
+
+
+
+fileprivate struct FfiConverterTypeTxBuilderResult: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> TxBuilderResult {
+        return try TxBuilderResult(
+            `psbt`: FfiConverterTypePartiallySignedBitcoinTransaction.read(from: buf), 
+            `transactionDetails`: FfiConverterTypeTransactionDetails.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: TxBuilderResult, into buf: Writer) {
+        FfiConverterTypePartiallySignedBitcoinTransaction.write(value.`psbt`, into: buf)
+        FfiConverterTypeTransactionDetails.write(value.`transactionDetails`, into: buf)
+    }
+}
+
+
+public struct TxOut {
+    public var `value`: UInt64
+    public var `address`: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(`value`: UInt64, `address`: String) {
+        self.`value` = `value`
+        self.`address` = `address`
+    }
+}
+
+
+extension TxOut: Equatable, Hashable {
+    public static func ==(lhs: TxOut, rhs: TxOut) -> Bool {
+        if lhs.`value` != rhs.`value` {
+            return false
+        }
+        if lhs.`address` != rhs.`address` {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(`value`)
+        hasher.combine(`address`)
+    }
+}
+
+
+fileprivate struct FfiConverterTypeTxOut: FfiConverterRustBuffer {
+    fileprivate static func read(from buf: Reader) throws -> TxOut {
+        return try TxOut(
+            `value`: FfiConverterUInt64.read(from: buf), 
+            `address`: FfiConverterString.read(from: buf)
+        )
+    }
+
+    fileprivate static func write(_ value: TxOut, into buf: Writer) {
+        FfiConverterUInt64.write(value.`value`, into: buf)
+        FfiConverterString.write(value.`address`, into: buf)
     }
 }
 
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
-
 public enum AddressIndex {
     
-    case new
-    case lastUnused
+    case `new`
+    case `lastUnused`
 }
 
-extension AddressIndex: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> AddressIndex {
+fileprivate struct FfiConverterTypeAddressIndex: FfiConverterRustBuffer {
+    typealias SwiftType = AddressIndex
+
+    static func read(from buf: Reader) throws -> AddressIndex {
         let variant: Int32 = try buf.readInt()
         switch variant {
         
-        case 1: return .new
-        case 2: return .lastUnused
+        case 1: return .`new`
+        
+        case 2: return .`lastUnused`
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
 
-    fileprivate func write(into buf: Writer) {
-        switch self {
+    static func write(_ value: AddressIndex, into buf: Writer) {
+        switch value {
         
         
-        case .new:
+        case .`new`:
             buf.writeInt(Int32(1))
         
         
-        case .lastUnused:
+        case .`lastUnused`:
             buf.writeInt(Int32(2))
         
         }
@@ -513,45 +2251,195 @@ extension AddressIndex: Equatable, Hashable {}
 
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
-
-public enum Network {
+public enum BlockchainConfig {
     
-    case bitcoin
-    case testnet
-    case signet
-    case regtest
+    case `electrum`(`config`: ElectrumConfig)
+    case `esplora`(`config`: EsploraConfig)
 }
 
-extension Network: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> Network {
+fileprivate struct FfiConverterTypeBlockchainConfig: FfiConverterRustBuffer {
+    typealias SwiftType = BlockchainConfig
+
+    static func read(from buf: Reader) throws -> BlockchainConfig {
         let variant: Int32 = try buf.readInt()
         switch variant {
         
-        case 1: return .bitcoin
-        case 2: return .testnet
-        case 3: return .signet
-        case 4: return .regtest
+        case 1: return .`electrum`(
+            `config`: try FfiConverterTypeElectrumConfig.read(from: buf)
+        )
+        
+        case 2: return .`esplora`(
+            `config`: try FfiConverterTypeEsploraConfig.read(from: buf)
+        )
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
 
-    fileprivate func write(into buf: Writer) {
-        switch self {
+    static func write(_ value: BlockchainConfig, into buf: Writer) {
+        switch value {
         
         
-        case .bitcoin:
+        case let .`electrum`(`config`):
+            buf.writeInt(Int32(1))
+            FfiConverterTypeElectrumConfig.write(`config`, into: buf)
+            
+        
+        case let .`esplora`(`config`):
+            buf.writeInt(Int32(2))
+            FfiConverterTypeEsploraConfig.write(`config`, into: buf)
+            
+        }
+    }
+}
+
+
+extension BlockchainConfig: Equatable, Hashable {}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+public enum DatabaseConfig {
+    
+    case `memory`
+    case `sled`(`config`: SledDbConfiguration)
+    case `sqlite`(`config`: SqliteDbConfiguration)
+}
+
+fileprivate struct FfiConverterTypeDatabaseConfig: FfiConverterRustBuffer {
+    typealias SwiftType = DatabaseConfig
+
+    static func read(from buf: Reader) throws -> DatabaseConfig {
+        let variant: Int32 = try buf.readInt()
+        switch variant {
+        
+        case 1: return .`memory`
+        
+        case 2: return .`sled`(
+            `config`: try FfiConverterTypeSledDbConfiguration.read(from: buf)
+        )
+        
+        case 3: return .`sqlite`(
+            `config`: try FfiConverterTypeSqliteDbConfiguration.read(from: buf)
+        )
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    static func write(_ value: DatabaseConfig, into buf: Writer) {
+        switch value {
+        
+        
+        case .`memory`:
             buf.writeInt(Int32(1))
         
         
-        case .testnet:
+        case let .`sled`(`config`):
+            buf.writeInt(Int32(2))
+            FfiConverterTypeSledDbConfiguration.write(`config`, into: buf)
+            
+        
+        case let .`sqlite`(`config`):
+            buf.writeInt(Int32(3))
+            FfiConverterTypeSqliteDbConfiguration.write(`config`, into: buf)
+            
+        }
+    }
+}
+
+
+extension DatabaseConfig: Equatable, Hashable {}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+public enum KeychainKind {
+    
+    case `external`
+    case `internal`
+}
+
+fileprivate struct FfiConverterTypeKeychainKind: FfiConverterRustBuffer {
+    typealias SwiftType = KeychainKind
+
+    static func read(from buf: Reader) throws -> KeychainKind {
+        let variant: Int32 = try buf.readInt()
+        switch variant {
+        
+        case 1: return .`external`
+        
+        case 2: return .`internal`
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    static func write(_ value: KeychainKind, into buf: Writer) {
+        switch value {
+        
+        
+        case .`external`:
+            buf.writeInt(Int32(1))
+        
+        
+        case .`internal`:
+            buf.writeInt(Int32(2))
+        
+        }
+    }
+}
+
+
+extension KeychainKind: Equatable, Hashable {}
+
+
+// Note that we don't yet support `indirect` for enums.
+// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
+public enum Network {
+    
+    case `bitcoin`
+    case `testnet`
+    case `signet`
+    case `regtest`
+}
+
+fileprivate struct FfiConverterTypeNetwork: FfiConverterRustBuffer {
+    typealias SwiftType = Network
+
+    static func read(from buf: Reader) throws -> Network {
+        let variant: Int32 = try buf.readInt()
+        switch variant {
+        
+        case 1: return .`bitcoin`
+        
+        case 2: return .`testnet`
+        
+        case 3: return .`signet`
+        
+        case 4: return .`regtest`
+        
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    static func write(_ value: Network, into buf: Writer) {
+        switch value {
+        
+        
+        case .`bitcoin`:
+            buf.writeInt(Int32(1))
+        
+        
+        case .`testnet`:
             buf.writeInt(Int32(2))
         
         
-        case .signet:
+        case .`signet`:
             buf.writeInt(Int32(3))
         
         
-        case .regtest:
+        case .`regtest`:
             buf.writeInt(Int32(4))
         
         }
@@ -564,153 +2452,57 @@ extension Network: Equatable, Hashable {}
 
 // Note that we don't yet support `indirect` for enums.
 // See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
-
-public enum DatabaseConfig {
-    
-    case memory
-    case sled(config: SledDbConfiguration )
-    case sqlite(config: SqliteDbConfiguration )
-}
-
-extension DatabaseConfig: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> DatabaseConfig {
-        let variant: Int32 = try buf.readInt()
-        switch variant {
-        
-        case 1: return .memory
-        case 2: return .sled(
-            config: try SledDbConfiguration.read(from: buf)
-            )
-        case 3: return .sqlite(
-            config: try SqliteDbConfiguration.read(from: buf)
-            )
-        default: throw UniffiInternalError.unexpectedEnumCase
-        }
-    }
-
-    fileprivate func write(into buf: Writer) {
-        switch self {
-        
-        
-        case .memory:
-            buf.writeInt(Int32(1))
-        
-        
-        case let .sled(config):
-            buf.writeInt(Int32(2))
-            config.write(into: buf)
-            
-        
-        
-        case let .sqlite(config):
-            buf.writeInt(Int32(3))
-            config.write(into: buf)
-            
-        
-        }
-    }
-}
-
-
-extension DatabaseConfig: Equatable, Hashable {}
-
-
-// Note that we don't yet support `indirect` for enums.
-// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
-
-public enum Transaction {
-    
-    case unconfirmed(details: TransactionDetails )
-    case confirmed(details: TransactionDetails, confirmation: BlockTime )
-}
-
-extension Transaction: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> Transaction {
-        let variant: Int32 = try buf.readInt()
-        switch variant {
-        
-        case 1: return .unconfirmed(
-            details: try TransactionDetails.read(from: buf)
-            )
-        case 2: return .confirmed(
-            details: try TransactionDetails.read(from: buf),
-            confirmation: try BlockTime.read(from: buf)
-            )
-        default: throw UniffiInternalError.unexpectedEnumCase
-        }
-    }
-
-    fileprivate func write(into buf: Writer) {
-        switch self {
-        
-        
-        case let .unconfirmed(details):
-            buf.writeInt(Int32(1))
-            details.write(into: buf)
-            
-        
-        
-        case let .confirmed(details,confirmation):
-            buf.writeInt(Int32(2))
-            details.write(into: buf)
-            confirmation.write(into: buf)
-            
-        
-        }
-    }
-}
-
-
-extension Transaction: Equatable, Hashable {}
-
-
-// Note that we don't yet support `indirect` for enums.
-// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
-
 public enum WordCount {
     
-    case words12
-    case words15
-    case words18
-    case words21
-    case words24
+    case `words12`
+    case `words15`
+    case `words18`
+    case `words21`
+    case `words24`
 }
 
-extension WordCount: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> WordCount {
+fileprivate struct FfiConverterTypeWordCount: FfiConverterRustBuffer {
+    typealias SwiftType = WordCount
+
+    static func read(from buf: Reader) throws -> WordCount {
         let variant: Int32 = try buf.readInt()
         switch variant {
         
-        case 1: return .words12
-        case 2: return .words15
-        case 3: return .words18
-        case 4: return .words21
-        case 5: return .words24
+        case 1: return .`words12`
+        
+        case 2: return .`words15`
+        
+        case 3: return .`words18`
+        
+        case 4: return .`words21`
+        
+        case 5: return .`words24`
+        
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
 
-    fileprivate func write(into buf: Writer) {
-        switch self {
+    static func write(_ value: WordCount, into buf: Writer) {
+        switch value {
         
         
-        case .words12:
+        case .`words12`:
             buf.writeInt(Int32(1))
         
         
-        case .words15:
+        case .`words15`:
             buf.writeInt(Int32(2))
         
         
-        case .words18:
+        case .`words18`:
             buf.writeInt(Int32(3))
         
         
-        case .words21:
+        case .`words21`:
             buf.writeInt(Int32(4))
         
         
-        case .words24:
+        case .`words24`:
             buf.writeInt(Int32(5))
         
         }
@@ -721,1066 +2513,6 @@ extension WordCount: ViaFfiUsingByteBuffer, ViaFfi {
 extension WordCount: Equatable, Hashable {}
 
 
-// Note that we don't yet support `indirect` for enums.
-// See https://github.com/mozilla/uniffi-rs/issues/396 for further discussion.
-
-public enum BlockchainConfig {
-    
-    case electrum(config: ElectrumConfig )
-    case esplora(config: EsploraConfig )
-}
-
-extension BlockchainConfig: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> BlockchainConfig {
-        let variant: Int32 = try buf.readInt()
-        switch variant {
-        
-        case 1: return .electrum(
-            config: try ElectrumConfig.read(from: buf)
-            )
-        case 2: return .esplora(
-            config: try EsploraConfig.read(from: buf)
-            )
-        default: throw UniffiInternalError.unexpectedEnumCase
-        }
-    }
-
-    fileprivate func write(into buf: Writer) {
-        switch self {
-        
-        
-        case let .electrum(config):
-            buf.writeInt(Int32(1))
-            config.write(into: buf)
-            
-        
-        
-        case let .esplora(config):
-            buf.writeInt(Int32(2))
-            config.write(into: buf)
-            
-        
-        }
-    }
-}
-
-
-extension BlockchainConfig: Equatable, Hashable {}
-
-
-
-public func generateExtendedKey( network: Network,  wordCount: WordCount,  password: String? ) throws -> ExtendedKeyInfo {
-    let _retval = try
-    
-    
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_generate_extended_key(network.lower(), wordCount.lower(), FfiConverterOptionString.lower(password) , $0)
-}
-    return try ExtendedKeyInfo.lift(_retval)
-}
-
-
-
-public func restoreExtendedKey( network: Network,  mnemonic: String,  password: String? ) throws -> ExtendedKeyInfo {
-    let _retval = try
-    
-    
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_restore_extended_key(network.lower(), mnemonic.lower(), FfiConverterOptionString.lower(password) , $0)
-}
-    return try ExtendedKeyInfo.lift(_retval)
-}
-
-
-
-public protocol BlockchainProtocol {
-    func broadcast( psbt: PartiallySignedBitcoinTransaction ) throws
-    
-}
-
-public class Blockchain: BlockchainProtocol {
-    fileprivate let pointer: UnsafeMutableRawPointer
-
-    // TODO: We'd like this to be `private` but for Swifty reasons,
-    // we can't implement `ViaFfi` without making this `required` and we can't
-    // make it `required` without making it `public`.
-    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
-        self.pointer = pointer
-    }
-    public convenience init( config: BlockchainConfig ) throws {
-        self.init(unsafeFromRawPointer: try
-    
-    
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_Blockchain_new(config.lower() , $0)
-})
-    }
-
-    deinit {
-        try! rustCall { ffi_bdk_1c1_Blockchain_object_free(pointer, $0) }
-    }
-
-    
-
-    
-    public func broadcast( psbt: PartiallySignedBitcoinTransaction ) throws {
-        try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_Blockchain_broadcast(self.pointer, psbt.lower() , $0
-    )
-}
-    }
-    
-}
-
-
-fileprivate extension Blockchain {
-    typealias FfiType = UnsafeMutableRawPointer
-
-    static func read(from buf: Reader) throws -> Self {
-        let v: UInt64 = try buf.readInt()
-        // The Rust code won't compile if a pointer won't fit in a UInt64.
-        // We have to go via `UInt` because that's the thing that's the size of a pointer.
-        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
-        if (ptr == nil) {
-            throw UniffiInternalError.unexpectedNullPointer
-        }
-        return try self.lift(ptr!)
-    }
-
-    func write(into buf: Writer) {
-        // This fiddling is because `Int` is the thing that's the same size as a pointer.
-        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
-        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
-    }
-
-    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
-        return Self(unsafeFromRawPointer: pointer)
-    }
-
-    func lower() -> UnsafeMutableRawPointer {
-        return self.pointer
-    }
-}
-
-// Ideally this would be `fileprivate`, but Swift says:
-// """
-// 'private' modifier cannot be used with extensions that declare protocol conformances
-// """
-extension Blockchain : ViaFfi, Serializable {}
-
-
-public protocol WalletProtocol {
-    func getAddress( addressIndex: AddressIndex ) throws -> AddressInfo
-    func getBalance() throws -> UInt64
-    func sign( psbt: PartiallySignedBitcoinTransaction ) throws -> Bool
-    func getTransactions() throws -> [Transaction]
-    func getNetwork()  -> Network
-    func sync( blockchain: Blockchain,  progress: Progress? ) throws
-    
-}
-
-public class Wallet: WalletProtocol {
-    fileprivate let pointer: UnsafeMutableRawPointer
-
-    // TODO: We'd like this to be `private` but for Swifty reasons,
-    // we can't implement `ViaFfi` without making this `required` and we can't
-    // make it `required` without making it `public`.
-    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
-        self.pointer = pointer
-    }
-    public convenience init( descriptor: String,  changeDescriptor: String?,  network: Network,  databaseConfig: DatabaseConfig ) throws {
-        self.init(unsafeFromRawPointer: try
-    
-    
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_Wallet_new(descriptor.lower(), FfiConverterOptionString.lower(changeDescriptor), network.lower(), databaseConfig.lower() , $0)
-})
-    }
-
-    deinit {
-        try! rustCall { ffi_bdk_1c1_Wallet_object_free(pointer, $0) }
-    }
-
-    
-
-    
-    public func getAddress( addressIndex: AddressIndex ) throws -> AddressInfo {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_Wallet_get_address(self.pointer, addressIndex.lower() , $0
-    )
-}
-        return try AddressInfo.lift(_retval)
-    }
-    public func getBalance() throws -> UInt64 {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_Wallet_get_balance(self.pointer,  $0
-    )
-}
-        return try UInt64.lift(_retval)
-    }
-    public func sign( psbt: PartiallySignedBitcoinTransaction ) throws -> Bool {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_Wallet_sign(self.pointer, psbt.lower() , $0
-    )
-}
-        return try Bool.lift(_retval)
-    }
-    public func getTransactions() throws -> [Transaction] {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_Wallet_get_transactions(self.pointer,  $0
-    )
-}
-        return try FfiConverterSequenceEnumTransaction.lift(_retval)
-    }
-    public func getNetwork()  -> Network {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_Wallet_get_network(self.pointer,  $0
-    )
-}
-        return try! Network.lift(_retval)
-    }
-    public func sync( blockchain: Blockchain,  progress: Progress? ) throws {
-        try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_Wallet_sync(self.pointer, blockchain.lower(), FfiConverterOptionCallbackInterfaceProgress.lower(progress) , $0
-    )
-}
-    }
-    
-}
-
-
-fileprivate extension Wallet {
-    typealias FfiType = UnsafeMutableRawPointer
-
-    static func read(from buf: Reader) throws -> Self {
-        let v: UInt64 = try buf.readInt()
-        // The Rust code won't compile if a pointer won't fit in a UInt64.
-        // We have to go via `UInt` because that's the thing that's the size of a pointer.
-        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
-        if (ptr == nil) {
-            throw UniffiInternalError.unexpectedNullPointer
-        }
-        return try self.lift(ptr!)
-    }
-
-    func write(into buf: Writer) {
-        // This fiddling is because `Int` is the thing that's the same size as a pointer.
-        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
-        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
-    }
-
-    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
-        return Self(unsafeFromRawPointer: pointer)
-    }
-
-    func lower() -> UnsafeMutableRawPointer {
-        return self.pointer
-    }
-}
-
-// Ideally this would be `fileprivate`, but Swift says:
-// """
-// 'private' modifier cannot be used with extensions that declare protocol conformances
-// """
-extension Wallet : ViaFfi, Serializable {}
-
-
-public protocol PartiallySignedBitcoinTransactionProtocol {
-    func serialize()  -> String
-    func txid()  -> String
-    
-}
-
-public class PartiallySignedBitcoinTransaction: PartiallySignedBitcoinTransactionProtocol {
-    fileprivate let pointer: UnsafeMutableRawPointer
-
-    // TODO: We'd like this to be `private` but for Swifty reasons,
-    // we can't implement `ViaFfi` without making this `required` and we can't
-    // make it `required` without making it `public`.
-    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
-        self.pointer = pointer
-    }
-    public convenience init( psbtBase64: String ) throws {
-        self.init(unsafeFromRawPointer: try
-    
-    
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_PartiallySignedBitcoinTransaction_new(psbtBase64.lower() , $0)
-})
-    }
-
-    deinit {
-        try! rustCall { ffi_bdk_1c1_PartiallySignedBitcoinTransaction_object_free(pointer, $0) }
-    }
-
-    
-
-    
-    public func serialize()  -> String {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_PartiallySignedBitcoinTransaction_serialize(self.pointer,  $0
-    )
-}
-        return try! String.lift(_retval)
-    }
-    public func txid()  -> String {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_PartiallySignedBitcoinTransaction_txid(self.pointer,  $0
-    )
-}
-        return try! String.lift(_retval)
-    }
-    
-}
-
-
-fileprivate extension PartiallySignedBitcoinTransaction {
-    typealias FfiType = UnsafeMutableRawPointer
-
-    static func read(from buf: Reader) throws -> Self {
-        let v: UInt64 = try buf.readInt()
-        // The Rust code won't compile if a pointer won't fit in a UInt64.
-        // We have to go via `UInt` because that's the thing that's the size of a pointer.
-        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
-        if (ptr == nil) {
-            throw UniffiInternalError.unexpectedNullPointer
-        }
-        return try self.lift(ptr!)
-    }
-
-    func write(into buf: Writer) {
-        // This fiddling is because `Int` is the thing that's the same size as a pointer.
-        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
-        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
-    }
-
-    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
-        return Self(unsafeFromRawPointer: pointer)
-    }
-
-    func lower() -> UnsafeMutableRawPointer {
-        return self.pointer
-    }
-}
-
-// Ideally this would be `fileprivate`, but Swift says:
-// """
-// 'private' modifier cannot be used with extensions that declare protocol conformances
-// """
-extension PartiallySignedBitcoinTransaction : ViaFfi, Serializable {}
-
-
-public protocol TxBuilderProtocol {
-    func addRecipient( address: String,  amount: UInt64 )  -> TxBuilder
-    func feeRate( satPerVbyte: Float )  -> TxBuilder
-    func drainWallet()  -> TxBuilder
-    func drainTo( address: String )  -> TxBuilder
-    func enableRbf()  -> TxBuilder
-    func enableRbfWithSequence( nsequence: UInt32 )  -> TxBuilder
-    func finish( wallet: Wallet ) throws -> PartiallySignedBitcoinTransaction
-    
-}
-
-public class TxBuilder: TxBuilderProtocol {
-    fileprivate let pointer: UnsafeMutableRawPointer
-
-    // TODO: We'd like this to be `private` but for Swifty reasons,
-    // we can't implement `ViaFfi` without making this `required` and we can't
-    // make it `required` without making it `public`.
-    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
-        self.pointer = pointer
-    }
-    public convenience init()  {
-        self.init(unsafeFromRawPointer: try!
-    
-    
-    rustCall() {
-    
-    bdk_1c1_TxBuilder_new( $0)
-})
-    }
-
-    deinit {
-        try! rustCall { ffi_bdk_1c1_TxBuilder_object_free(pointer, $0) }
-    }
-
-    
-
-    
-    public func addRecipient( address: String,  amount: UInt64 )  -> TxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_TxBuilder_add_recipient(self.pointer, address.lower(), amount.lower() , $0
-    )
-}
-        return try! TxBuilder.lift(_retval)
-    }
-    public func feeRate( satPerVbyte: Float )  -> TxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_TxBuilder_fee_rate(self.pointer, satPerVbyte.lower() , $0
-    )
-}
-        return try! TxBuilder.lift(_retval)
-    }
-    public func drainWallet()  -> TxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_TxBuilder_drain_wallet(self.pointer,  $0
-    )
-}
-        return try! TxBuilder.lift(_retval)
-    }
-    public func drainTo( address: String )  -> TxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_TxBuilder_drain_to(self.pointer, address.lower() , $0
-    )
-}
-        return try! TxBuilder.lift(_retval)
-    }
-    public func enableRbf()  -> TxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_TxBuilder_enable_rbf(self.pointer,  $0
-    )
-}
-        return try! TxBuilder.lift(_retval)
-    }
-    public func enableRbfWithSequence( nsequence: UInt32 )  -> TxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_TxBuilder_enable_rbf_with_sequence(self.pointer, nsequence.lower() , $0
-    )
-}
-        return try! TxBuilder.lift(_retval)
-    }
-    public func finish( wallet: Wallet ) throws -> PartiallySignedBitcoinTransaction {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_TxBuilder_finish(self.pointer, wallet.lower() , $0
-    )
-}
-        return try PartiallySignedBitcoinTransaction.lift(_retval)
-    }
-    
-}
-
-
-fileprivate extension TxBuilder {
-    typealias FfiType = UnsafeMutableRawPointer
-
-    static func read(from buf: Reader) throws -> Self {
-        let v: UInt64 = try buf.readInt()
-        // The Rust code won't compile if a pointer won't fit in a UInt64.
-        // We have to go via `UInt` because that's the thing that's the size of a pointer.
-        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
-        if (ptr == nil) {
-            throw UniffiInternalError.unexpectedNullPointer
-        }
-        return try self.lift(ptr!)
-    }
-
-    func write(into buf: Writer) {
-        // This fiddling is because `Int` is the thing that's the same size as a pointer.
-        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
-        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
-    }
-
-    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
-        return Self(unsafeFromRawPointer: pointer)
-    }
-
-    func lower() -> UnsafeMutableRawPointer {
-        return self.pointer
-    }
-}
-
-// Ideally this would be `fileprivate`, but Swift says:
-// """
-// 'private' modifier cannot be used with extensions that declare protocol conformances
-// """
-extension TxBuilder : ViaFfi, Serializable {}
-
-
-public protocol BumpFeeTxBuilderProtocol {
-    func allowShrinking( address: String )  -> BumpFeeTxBuilder
-    func enableRbf()  -> BumpFeeTxBuilder
-    func enableRbfWithSequence( nsequence: UInt32 )  -> BumpFeeTxBuilder
-    func finish( wallet: Wallet ) throws -> PartiallySignedBitcoinTransaction
-    
-}
-
-public class BumpFeeTxBuilder: BumpFeeTxBuilderProtocol {
-    fileprivate let pointer: UnsafeMutableRawPointer
-
-    // TODO: We'd like this to be `private` but for Swifty reasons,
-    // we can't implement `ViaFfi` without making this `required` and we can't
-    // make it `required` without making it `public`.
-    required init(unsafeFromRawPointer pointer: UnsafeMutableRawPointer) {
-        self.pointer = pointer
-    }
-    public convenience init( txid: String,  newFeeRate: Float )  {
-        self.init(unsafeFromRawPointer: try!
-    
-    
-    rustCall() {
-    
-    bdk_1c1_BumpFeeTxBuilder_new(txid.lower(), newFeeRate.lower() , $0)
-})
-    }
-
-    deinit {
-        try! rustCall { ffi_bdk_1c1_BumpFeeTxBuilder_object_free(pointer, $0) }
-    }
-
-    
-
-    
-    public func allowShrinking( address: String )  -> BumpFeeTxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_BumpFeeTxBuilder_allow_shrinking(self.pointer, address.lower() , $0
-    )
-}
-        return try! BumpFeeTxBuilder.lift(_retval)
-    }
-    public func enableRbf()  -> BumpFeeTxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_BumpFeeTxBuilder_enable_rbf(self.pointer,  $0
-    )
-}
-        return try! BumpFeeTxBuilder.lift(_retval)
-    }
-    public func enableRbfWithSequence( nsequence: UInt32 )  -> BumpFeeTxBuilder {
-        let _retval = try!
-    rustCall() {
-    
-    bdk_1c1_BumpFeeTxBuilder_enable_rbf_with_sequence(self.pointer, nsequence.lower() , $0
-    )
-}
-        return try! BumpFeeTxBuilder.lift(_retval)
-    }
-    public func finish( wallet: Wallet ) throws -> PartiallySignedBitcoinTransaction {
-        let _retval = try
-    rustCallWithError(BdkError.self) {
-    
-    bdk_1c1_BumpFeeTxBuilder_finish(self.pointer, wallet.lower() , $0
-    )
-}
-        return try PartiallySignedBitcoinTransaction.lift(_retval)
-    }
-    
-}
-
-
-fileprivate extension BumpFeeTxBuilder {
-    typealias FfiType = UnsafeMutableRawPointer
-
-    static func read(from buf: Reader) throws -> Self {
-        let v: UInt64 = try buf.readInt()
-        // The Rust code won't compile if a pointer won't fit in a UInt64.
-        // We have to go via `UInt` because that's the thing that's the size of a pointer.
-        let ptr = UnsafeMutableRawPointer(bitPattern: UInt(truncatingIfNeeded: v))
-        if (ptr == nil) {
-            throw UniffiInternalError.unexpectedNullPointer
-        }
-        return try self.lift(ptr!)
-    }
-
-    func write(into buf: Writer) {
-        // This fiddling is because `Int` is the thing that's the same size as a pointer.
-        // The Rust code won't compile if a pointer won't fit in a `UInt64`.
-        buf.writeInt(UInt64(bitPattern: Int64(Int(bitPattern: self.lower()))))
-    }
-
-    static func lift(_ pointer: UnsafeMutableRawPointer) throws -> Self {
-        return Self(unsafeFromRawPointer: pointer)
-    }
-
-    func lower() -> UnsafeMutableRawPointer {
-        return self.pointer
-    }
-}
-
-// Ideally this would be `fileprivate`, but Swift says:
-// """
-// 'private' modifier cannot be used with extensions that declare protocol conformances
-// """
-extension BumpFeeTxBuilder : ViaFfi, Serializable {}
-
-public struct AddressInfo {
-    public var index: UInt32
-    public var address: String
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(index: UInt32, address: String ) {
-        self.index = index
-        self.address = address
-    }
-}
-
-
-extension AddressInfo: Equatable, Hashable {
-    public static func ==(lhs: AddressInfo, rhs: AddressInfo) -> Bool {
-        if lhs.index != rhs.index {
-            return false
-        }
-        if lhs.address != rhs.address {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(index)
-        hasher.combine(address)
-    }
-}
-
-
-fileprivate extension AddressInfo {
-    static func read(from buf: Reader) throws -> AddressInfo {
-        return try AddressInfo(
-            index: UInt32.read(from: buf),
-            address: String.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        self.index.write(into: buf)
-        self.address.write(into: buf)
-    }
-}
-
-extension AddressInfo: ViaFfiUsingByteBuffer, ViaFfi {}
-
-public struct SledDbConfiguration {
-    public var path: String
-    public var treeName: String
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(path: String, treeName: String ) {
-        self.path = path
-        self.treeName = treeName
-    }
-}
-
-
-extension SledDbConfiguration: Equatable, Hashable {
-    public static func ==(lhs: SledDbConfiguration, rhs: SledDbConfiguration) -> Bool {
-        if lhs.path != rhs.path {
-            return false
-        }
-        if lhs.treeName != rhs.treeName {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(path)
-        hasher.combine(treeName)
-    }
-}
-
-
-fileprivate extension SledDbConfiguration {
-    static func read(from buf: Reader) throws -> SledDbConfiguration {
-        return try SledDbConfiguration(
-            path: String.read(from: buf),
-            treeName: String.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        self.path.write(into: buf)
-        self.treeName.write(into: buf)
-    }
-}
-
-extension SledDbConfiguration: ViaFfiUsingByteBuffer, ViaFfi {}
-
-public struct SqliteDbConfiguration {
-    public var path: String
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(path: String ) {
-        self.path = path
-    }
-}
-
-
-extension SqliteDbConfiguration: Equatable, Hashable {
-    public static func ==(lhs: SqliteDbConfiguration, rhs: SqliteDbConfiguration) -> Bool {
-        if lhs.path != rhs.path {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(path)
-    }
-}
-
-
-fileprivate extension SqliteDbConfiguration {
-    static func read(from buf: Reader) throws -> SqliteDbConfiguration {
-        return try SqliteDbConfiguration(
-            path: String.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        self.path.write(into: buf)
-    }
-}
-
-extension SqliteDbConfiguration: ViaFfiUsingByteBuffer, ViaFfi {}
-
-public struct TransactionDetails {
-    public var fee: UInt64?
-    public var received: UInt64
-    public var sent: UInt64
-    public var txid: String
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(fee: UInt64?, received: UInt64, sent: UInt64, txid: String ) {
-        self.fee = fee
-        self.received = received
-        self.sent = sent
-        self.txid = txid
-    }
-}
-
-
-extension TransactionDetails: Equatable, Hashable {
-    public static func ==(lhs: TransactionDetails, rhs: TransactionDetails) -> Bool {
-        if lhs.fee != rhs.fee {
-            return false
-        }
-        if lhs.received != rhs.received {
-            return false
-        }
-        if lhs.sent != rhs.sent {
-            return false
-        }
-        if lhs.txid != rhs.txid {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(fee)
-        hasher.combine(received)
-        hasher.combine(sent)
-        hasher.combine(txid)
-    }
-}
-
-
-fileprivate extension TransactionDetails {
-    static func read(from buf: Reader) throws -> TransactionDetails {
-        return try TransactionDetails(
-            fee: FfiConverterOptionUInt64.read(from: buf),
-            received: UInt64.read(from: buf),
-            sent: UInt64.read(from: buf),
-            txid: String.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        FfiConverterOptionUInt64.write(self.fee, into: buf)
-        self.received.write(into: buf)
-        self.sent.write(into: buf)
-        self.txid.write(into: buf)
-    }
-}
-
-extension TransactionDetails: ViaFfiUsingByteBuffer, ViaFfi {}
-
-public struct BlockTime {
-    public var height: UInt32
-    public var timestamp: UInt64
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(height: UInt32, timestamp: UInt64 ) {
-        self.height = height
-        self.timestamp = timestamp
-    }
-}
-
-
-extension BlockTime: Equatable, Hashable {
-    public static func ==(lhs: BlockTime, rhs: BlockTime) -> Bool {
-        if lhs.height != rhs.height {
-            return false
-        }
-        if lhs.timestamp != rhs.timestamp {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(height)
-        hasher.combine(timestamp)
-    }
-}
-
-
-fileprivate extension BlockTime {
-    static func read(from buf: Reader) throws -> BlockTime {
-        return try BlockTime(
-            height: UInt32.read(from: buf),
-            timestamp: UInt64.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        self.height.write(into: buf)
-        self.timestamp.write(into: buf)
-    }
-}
-
-extension BlockTime: ViaFfiUsingByteBuffer, ViaFfi {}
-
-public struct ExtendedKeyInfo {
-    public var mnemonic: String
-    public var xprv: String
-    public var fingerprint: String
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(mnemonic: String, xprv: String, fingerprint: String ) {
-        self.mnemonic = mnemonic
-        self.xprv = xprv
-        self.fingerprint = fingerprint
-    }
-}
-
-
-extension ExtendedKeyInfo: Equatable, Hashable {
-    public static func ==(lhs: ExtendedKeyInfo, rhs: ExtendedKeyInfo) -> Bool {
-        if lhs.mnemonic != rhs.mnemonic {
-            return false
-        }
-        if lhs.xprv != rhs.xprv {
-            return false
-        }
-        if lhs.fingerprint != rhs.fingerprint {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(mnemonic)
-        hasher.combine(xprv)
-        hasher.combine(fingerprint)
-    }
-}
-
-
-fileprivate extension ExtendedKeyInfo {
-    static func read(from buf: Reader) throws -> ExtendedKeyInfo {
-        return try ExtendedKeyInfo(
-            mnemonic: String.read(from: buf),
-            xprv: String.read(from: buf),
-            fingerprint: String.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        self.mnemonic.write(into: buf)
-        self.xprv.write(into: buf)
-        self.fingerprint.write(into: buf)
-    }
-}
-
-extension ExtendedKeyInfo: ViaFfiUsingByteBuffer, ViaFfi {}
-
-public struct ElectrumConfig {
-    public var url: String
-    public var socks5: String?
-    public var retry: UInt8
-    public var timeout: UInt8?
-    public var stopGap: UInt64
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(url: String, socks5: String?, retry: UInt8, timeout: UInt8?, stopGap: UInt64 ) {
-        self.url = url
-        self.socks5 = socks5
-        self.retry = retry
-        self.timeout = timeout
-        self.stopGap = stopGap
-    }
-}
-
-
-extension ElectrumConfig: Equatable, Hashable {
-    public static func ==(lhs: ElectrumConfig, rhs: ElectrumConfig) -> Bool {
-        if lhs.url != rhs.url {
-            return false
-        }
-        if lhs.socks5 != rhs.socks5 {
-            return false
-        }
-        if lhs.retry != rhs.retry {
-            return false
-        }
-        if lhs.timeout != rhs.timeout {
-            return false
-        }
-        if lhs.stopGap != rhs.stopGap {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(url)
-        hasher.combine(socks5)
-        hasher.combine(retry)
-        hasher.combine(timeout)
-        hasher.combine(stopGap)
-    }
-}
-
-
-fileprivate extension ElectrumConfig {
-    static func read(from buf: Reader) throws -> ElectrumConfig {
-        return try ElectrumConfig(
-            url: String.read(from: buf),
-            socks5: FfiConverterOptionString.read(from: buf),
-            retry: UInt8.read(from: buf),
-            timeout: FfiConverterOptionUInt8.read(from: buf),
-            stopGap: UInt64.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        self.url.write(into: buf)
-        FfiConverterOptionString.write(self.socks5, into: buf)
-        self.retry.write(into: buf)
-        FfiConverterOptionUInt8.write(self.timeout, into: buf)
-        self.stopGap.write(into: buf)
-    }
-}
-
-extension ElectrumConfig: ViaFfiUsingByteBuffer, ViaFfi {}
-
-public struct EsploraConfig {
-    public var baseUrl: String
-    public var proxy: String?
-    public var concurrency: UInt8?
-    public var stopGap: UInt64
-    public var timeout: UInt64?
-
-    // Default memberwise initializers are never public by default, so we
-    // declare one manually.
-    public init(baseUrl: String, proxy: String?, concurrency: UInt8?, stopGap: UInt64, timeout: UInt64? ) {
-        self.baseUrl = baseUrl
-        self.proxy = proxy
-        self.concurrency = concurrency
-        self.stopGap = stopGap
-        self.timeout = timeout
-    }
-}
-
-
-extension EsploraConfig: Equatable, Hashable {
-    public static func ==(lhs: EsploraConfig, rhs: EsploraConfig) -> Bool {
-        if lhs.baseUrl != rhs.baseUrl {
-            return false
-        }
-        if lhs.proxy != rhs.proxy {
-            return false
-        }
-        if lhs.concurrency != rhs.concurrency {
-            return false
-        }
-        if lhs.stopGap != rhs.stopGap {
-            return false
-        }
-        if lhs.timeout != rhs.timeout {
-            return false
-        }
-        return true
-    }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(baseUrl)
-        hasher.combine(proxy)
-        hasher.combine(concurrency)
-        hasher.combine(stopGap)
-        hasher.combine(timeout)
-    }
-}
-
-
-fileprivate extension EsploraConfig {
-    static func read(from buf: Reader) throws -> EsploraConfig {
-        return try EsploraConfig(
-            baseUrl: String.read(from: buf),
-            proxy: FfiConverterOptionString.read(from: buf),
-            concurrency: FfiConverterOptionUInt8.read(from: buf),
-            stopGap: UInt64.read(from: buf),
-            timeout: FfiConverterOptionUInt64.read(from: buf)
-        )
-    }
-
-    func write(into buf: Writer) {
-        self.baseUrl.write(into: buf)
-        FfiConverterOptionString.write(self.proxy, into: buf)
-        FfiConverterOptionUInt8.write(self.concurrency, into: buf)
-        self.stopGap.write(into: buf)
-        FfiConverterOptionUInt64.write(self.timeout, into: buf)
-    }
-}
-
-extension EsploraConfig: ViaFfiUsingByteBuffer, ViaFfi {}
 
 public enum BdkError {
 
@@ -1791,6 +2523,9 @@ public enum BdkError {
     
     // Simple error enums only carry a message
     case Generic(message: String)
+    
+    // Simple error enums only carry a message
+    case MissingCachedScripts(message: String)
     
     // Simple error enums only carry a message
     case ScriptDoesntHaveAddressForm(message: String)
@@ -1908,8 +2643,10 @@ public enum BdkError {
     
 }
 
-extension BdkError: ViaFfiUsingByteBuffer, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> BdkError {
+fileprivate struct FfiConverterTypeBdkError: FfiConverterRustBuffer {
+    typealias SwiftType = BdkError
+
+    static func read(from buf: Reader) throws -> BdkError {
         let variant: Int32 = try buf.readInt()
         switch variant {
 
@@ -1917,296 +2654,305 @@ extension BdkError: ViaFfiUsingByteBuffer, ViaFfi {
 
         
         case 1: return .InvalidU32Bytes(
-            message: try String.read(from: buf)
+            message: try FfiConverterString.read(from: buf)
         )
         
         case 2: return .Generic(
-            message: try String.read(from: buf)
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 3: return .ScriptDoesntHaveAddressForm(
-            message: try String.read(from: buf)
+        case 3: return .MissingCachedScripts(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 4: return .NoRecipients(
-            message: try String.read(from: buf)
+        case 4: return .ScriptDoesntHaveAddressForm(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 5: return .NoUtxosSelected(
-            message: try String.read(from: buf)
+        case 5: return .NoRecipients(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 6: return .OutputBelowDustLimit(
-            message: try String.read(from: buf)
+        case 6: return .NoUtxosSelected(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 7: return .InsufficientFunds(
-            message: try String.read(from: buf)
+        case 7: return .OutputBelowDustLimit(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 8: return .BnBTotalTriesExceeded(
-            message: try String.read(from: buf)
+        case 8: return .InsufficientFunds(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 9: return .BnBNoExactMatch(
-            message: try String.read(from: buf)
+        case 9: return .BnBTotalTriesExceeded(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 10: return .UnknownUtxo(
-            message: try String.read(from: buf)
+        case 10: return .BnBNoExactMatch(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 11: return .TransactionNotFound(
-            message: try String.read(from: buf)
+        case 11: return .UnknownUtxo(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 12: return .TransactionConfirmed(
-            message: try String.read(from: buf)
+        case 12: return .TransactionNotFound(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 13: return .IrreplaceableTransaction(
-            message: try String.read(from: buf)
+        case 13: return .TransactionConfirmed(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 14: return .FeeRateTooLow(
-            message: try String.read(from: buf)
+        case 14: return .IrreplaceableTransaction(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 15: return .FeeTooLow(
-            message: try String.read(from: buf)
+        case 15: return .FeeRateTooLow(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 16: return .FeeRateUnavailable(
-            message: try String.read(from: buf)
+        case 16: return .FeeTooLow(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 17: return .MissingKeyOrigin(
-            message: try String.read(from: buf)
+        case 17: return .FeeRateUnavailable(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 18: return .Key(
-            message: try String.read(from: buf)
+        case 18: return .MissingKeyOrigin(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 19: return .ChecksumMismatch(
-            message: try String.read(from: buf)
+        case 19: return .Key(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 20: return .SpendingPolicyRequired(
-            message: try String.read(from: buf)
+        case 20: return .ChecksumMismatch(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 21: return .InvalidPolicyPathError(
-            message: try String.read(from: buf)
+        case 21: return .SpendingPolicyRequired(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 22: return .Signer(
-            message: try String.read(from: buf)
+        case 22: return .InvalidPolicyPathError(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 23: return .InvalidNetwork(
-            message: try String.read(from: buf)
+        case 23: return .Signer(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 24: return .InvalidProgressValue(
-            message: try String.read(from: buf)
+        case 24: return .InvalidNetwork(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 25: return .ProgressUpdateError(
-            message: try String.read(from: buf)
+        case 25: return .InvalidProgressValue(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 26: return .InvalidOutpoint(
-            message: try String.read(from: buf)
+        case 26: return .ProgressUpdateError(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 27: return .Descriptor(
-            message: try String.read(from: buf)
+        case 27: return .InvalidOutpoint(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 28: return .AddressValidator(
-            message: try String.read(from: buf)
+        case 28: return .Descriptor(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 29: return .Encode(
-            message: try String.read(from: buf)
+        case 29: return .AddressValidator(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 30: return .Miniscript(
-            message: try String.read(from: buf)
+        case 30: return .Encode(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 31: return .Bip32(
-            message: try String.read(from: buf)
+        case 31: return .Miniscript(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 32: return .Secp256k1(
-            message: try String.read(from: buf)
+        case 32: return .Bip32(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 33: return .Json(
-            message: try String.read(from: buf)
+        case 33: return .Secp256k1(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 34: return .Hex(
-            message: try String.read(from: buf)
+        case 34: return .Json(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 35: return .Psbt(
-            message: try String.read(from: buf)
+        case 35: return .Hex(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 36: return .PsbtParse(
-            message: try String.read(from: buf)
+        case 36: return .Psbt(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 37: return .Electrum(
-            message: try String.read(from: buf)
+        case 37: return .PsbtParse(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 38: return .Esplora(
-            message: try String.read(from: buf)
+        case 38: return .Electrum(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 39: return .Sled(
-            message: try String.read(from: buf)
+        case 39: return .Esplora(
+            message: try FfiConverterString.read(from: buf)
         )
         
-        case 40: return .Rusqlite(
-            message: try String.read(from: buf)
+        case 40: return .Sled(
+            message: try FfiConverterString.read(from: buf)
+        )
+        
+        case 41: return .Rusqlite(
+            message: try FfiConverterString.read(from: buf)
         )
         
 
-         default: throw UniffiInternalError.unexpectedEnumCase
+        default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
 
-    fileprivate func write(into buf: Writer) {
-        switch self {
+    static func write(_ value: BdkError, into buf: Writer) {
+        switch value {
 
         
 
         
         case let .InvalidU32Bytes(message):
             buf.writeInt(Int32(1))
-            message.write(into: buf)
+            FfiConverterString.write(message, into: buf)
         case let .Generic(message):
             buf.writeInt(Int32(2))
-            message.write(into: buf)
-        case let .ScriptDoesntHaveAddressForm(message):
+            FfiConverterString.write(message, into: buf)
+        case let .MissingCachedScripts(message):
             buf.writeInt(Int32(3))
-            message.write(into: buf)
-        case let .NoRecipients(message):
+            FfiConverterString.write(message, into: buf)
+        case let .ScriptDoesntHaveAddressForm(message):
             buf.writeInt(Int32(4))
-            message.write(into: buf)
-        case let .NoUtxosSelected(message):
+            FfiConverterString.write(message, into: buf)
+        case let .NoRecipients(message):
             buf.writeInt(Int32(5))
-            message.write(into: buf)
-        case let .OutputBelowDustLimit(message):
+            FfiConverterString.write(message, into: buf)
+        case let .NoUtxosSelected(message):
             buf.writeInt(Int32(6))
-            message.write(into: buf)
-        case let .InsufficientFunds(message):
+            FfiConverterString.write(message, into: buf)
+        case let .OutputBelowDustLimit(message):
             buf.writeInt(Int32(7))
-            message.write(into: buf)
-        case let .BnBTotalTriesExceeded(message):
+            FfiConverterString.write(message, into: buf)
+        case let .InsufficientFunds(message):
             buf.writeInt(Int32(8))
-            message.write(into: buf)
-        case let .BnBNoExactMatch(message):
+            FfiConverterString.write(message, into: buf)
+        case let .BnBTotalTriesExceeded(message):
             buf.writeInt(Int32(9))
-            message.write(into: buf)
-        case let .UnknownUtxo(message):
+            FfiConverterString.write(message, into: buf)
+        case let .BnBNoExactMatch(message):
             buf.writeInt(Int32(10))
-            message.write(into: buf)
-        case let .TransactionNotFound(message):
+            FfiConverterString.write(message, into: buf)
+        case let .UnknownUtxo(message):
             buf.writeInt(Int32(11))
-            message.write(into: buf)
-        case let .TransactionConfirmed(message):
+            FfiConverterString.write(message, into: buf)
+        case let .TransactionNotFound(message):
             buf.writeInt(Int32(12))
-            message.write(into: buf)
-        case let .IrreplaceableTransaction(message):
+            FfiConverterString.write(message, into: buf)
+        case let .TransactionConfirmed(message):
             buf.writeInt(Int32(13))
-            message.write(into: buf)
-        case let .FeeRateTooLow(message):
+            FfiConverterString.write(message, into: buf)
+        case let .IrreplaceableTransaction(message):
             buf.writeInt(Int32(14))
-            message.write(into: buf)
-        case let .FeeTooLow(message):
+            FfiConverterString.write(message, into: buf)
+        case let .FeeRateTooLow(message):
             buf.writeInt(Int32(15))
-            message.write(into: buf)
-        case let .FeeRateUnavailable(message):
+            FfiConverterString.write(message, into: buf)
+        case let .FeeTooLow(message):
             buf.writeInt(Int32(16))
-            message.write(into: buf)
-        case let .MissingKeyOrigin(message):
+            FfiConverterString.write(message, into: buf)
+        case let .FeeRateUnavailable(message):
             buf.writeInt(Int32(17))
-            message.write(into: buf)
-        case let .Key(message):
+            FfiConverterString.write(message, into: buf)
+        case let .MissingKeyOrigin(message):
             buf.writeInt(Int32(18))
-            message.write(into: buf)
-        case let .ChecksumMismatch(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Key(message):
             buf.writeInt(Int32(19))
-            message.write(into: buf)
-        case let .SpendingPolicyRequired(message):
+            FfiConverterString.write(message, into: buf)
+        case let .ChecksumMismatch(message):
             buf.writeInt(Int32(20))
-            message.write(into: buf)
-        case let .InvalidPolicyPathError(message):
+            FfiConverterString.write(message, into: buf)
+        case let .SpendingPolicyRequired(message):
             buf.writeInt(Int32(21))
-            message.write(into: buf)
-        case let .Signer(message):
+            FfiConverterString.write(message, into: buf)
+        case let .InvalidPolicyPathError(message):
             buf.writeInt(Int32(22))
-            message.write(into: buf)
-        case let .InvalidNetwork(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Signer(message):
             buf.writeInt(Int32(23))
-            message.write(into: buf)
-        case let .InvalidProgressValue(message):
+            FfiConverterString.write(message, into: buf)
+        case let .InvalidNetwork(message):
             buf.writeInt(Int32(24))
-            message.write(into: buf)
-        case let .ProgressUpdateError(message):
+            FfiConverterString.write(message, into: buf)
+        case let .InvalidProgressValue(message):
             buf.writeInt(Int32(25))
-            message.write(into: buf)
-        case let .InvalidOutpoint(message):
+            FfiConverterString.write(message, into: buf)
+        case let .ProgressUpdateError(message):
             buf.writeInt(Int32(26))
-            message.write(into: buf)
-        case let .Descriptor(message):
+            FfiConverterString.write(message, into: buf)
+        case let .InvalidOutpoint(message):
             buf.writeInt(Int32(27))
-            message.write(into: buf)
-        case let .AddressValidator(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Descriptor(message):
             buf.writeInt(Int32(28))
-            message.write(into: buf)
-        case let .Encode(message):
+            FfiConverterString.write(message, into: buf)
+        case let .AddressValidator(message):
             buf.writeInt(Int32(29))
-            message.write(into: buf)
-        case let .Miniscript(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Encode(message):
             buf.writeInt(Int32(30))
-            message.write(into: buf)
-        case let .Bip32(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Miniscript(message):
             buf.writeInt(Int32(31))
-            message.write(into: buf)
-        case let .Secp256k1(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Bip32(message):
             buf.writeInt(Int32(32))
-            message.write(into: buf)
-        case let .Json(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Secp256k1(message):
             buf.writeInt(Int32(33))
-            message.write(into: buf)
-        case let .Hex(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Json(message):
             buf.writeInt(Int32(34))
-            message.write(into: buf)
-        case let .Psbt(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Hex(message):
             buf.writeInt(Int32(35))
-            message.write(into: buf)
-        case let .PsbtParse(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Psbt(message):
             buf.writeInt(Int32(36))
-            message.write(into: buf)
-        case let .Electrum(message):
+            FfiConverterString.write(message, into: buf)
+        case let .PsbtParse(message):
             buf.writeInt(Int32(37))
-            message.write(into: buf)
-        case let .Esplora(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Electrum(message):
             buf.writeInt(Int32(38))
-            message.write(into: buf)
-        case let .Sled(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Esplora(message):
             buf.writeInt(Int32(39))
-            message.write(into: buf)
-        case let .Rusqlite(message):
+            FfiConverterString.write(message, into: buf)
+        case let .Sled(message):
             buf.writeInt(Int32(40))
-            message.write(into: buf)
+            FfiConverterString.write(message, into: buf)
+        case let .Rusqlite(message):
+            buf.writeInt(Int32(41))
+            FfiConverterString.write(message, into: buf)
+
+        
         }
     }
 }
@@ -2216,45 +2962,116 @@ extension BdkError: Equatable, Hashable {}
 
 extension BdkError: Error { }
 
+fileprivate extension NSLock {
+    func withLock<T>(f: () throws -> T) rethrows -> T {
+        self.lock()
+        defer { self.unlock() }
+        return try f()
+    }
+}
+
+fileprivate typealias Handle = UInt64
+fileprivate class ConcurrentHandleMap<T> {
+    private var leftMap: [Handle: T] = [:]
+    private var counter: [Handle: UInt64] = [:]
+    private var rightMap: [ObjectIdentifier: Handle] = [:]
+
+    private let lock = NSLock()
+    private var currentHandle: Handle = 0
+    private let stride: Handle = 1
+
+    func insert(obj: T) -> Handle {
+        lock.withLock {
+            let id = ObjectIdentifier(obj as AnyObject)
+            let handle = rightMap[id] ?? {
+                currentHandle += stride
+                let handle = currentHandle
+                leftMap[handle] = obj
+                rightMap[id] = handle
+                return handle
+            }()
+            counter[handle] = (counter[handle] ?? 0) + 1
+            return handle
+        }
+    }
+
+    func get(handle: Handle) -> T? {
+        lock.withLock {
+            leftMap[handle]
+        }
+    }
+
+    func delete(handle: Handle) {
+        remove(handle: handle)
+    }
+
+    @discardableResult
+    func remove(handle: Handle) -> T? {
+        lock.withLock {
+            defer { counter[handle] = (counter[handle] ?? 1) - 1 }
+            guard counter[handle] == 1 else { return leftMap[handle] }
+            let obj = leftMap.removeValue(forKey: handle)
+            if let obj = obj {
+                rightMap.removeValue(forKey: ObjectIdentifier(obj as AnyObject))
+            }
+            return obj
+        }
+    }
+}
+
+// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+private let IDX_CALLBACK_FREE: Int32 = 0
 
 // Declaration and FfiConverters for Progress Callback Interface
 
 public protocol Progress : AnyObject {
-    func update( progress: Float,  message: String? ) 
+    func `update`(`progress`: Float, `message`: String?) 
     
 }
 
 // The ForeignCallback that is passed to Rust.
 fileprivate let foreignCallbackCallbackInterfaceProgress : ForeignCallback =
     { (handle: Handle, method: Int32, args: RustBuffer, out_buf: UnsafeMutablePointer<RustBuffer>) -> Int32 in
-        func invokeUpdate(_ swiftCallbackInterface: Progress, _ args: RustBuffer) throws -> RustBuffer {
+        func `invokeUpdate`(_ swiftCallbackInterface: Progress, _ args: RustBuffer) throws -> RustBuffer {
         defer { args.deallocate() }
 
             let reader = Reader(data: Data(rustBuffer: args))
-              swiftCallbackInterface.update(
-                    progress: try Float.read(from: reader), 
-                    message: try FfiConverterOptionString.read(from: reader) 
+            swiftCallbackInterface.`update`(
+                    `progress`:  try FfiConverterFloat.read(from: reader), 
+                    `message`:  try FfiConverterOptionString.read(from: reader)
                     )
             return RustBuffer()
                 // TODO catch errors and report them back to Rust.
                 // https://github.com/mozilla/uniffi-rs/issues/351
 
-    }
-    
+        }
+        
 
-        let cb = try! ffiConverterCallbackInterfaceProgress.lift(handle)
+        let cb: Progress
+        do {
+            cb = try FfiConverterCallbackInterfaceProgress.lift(handle)
+        } catch {
+            out_buf.pointee = FfiConverterString.lower("Progress: Invalid handle")
+            return -1
+        }
+
         switch method {
             case IDX_CALLBACK_FREE:
-                ffiConverterCallbackInterfaceProgress.drop(handle: handle)
+                FfiConverterCallbackInterfaceProgress.drop(handle: handle)
                 // No return value.
                 // See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
                 return 0
             case 1:
-                let buffer = try! invokeUpdate(cb, args)
-                out_buf.pointee = buffer
-                // Value written to out buffer.
-                // See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
-                return 1
+                do {
+                    out_buf.pointee = try `invokeUpdate`(cb, args)
+                    // Value written to out buffer.
+                    // See docs of ForeignCallback in `uniffi/src/ffi/foreigncallbacks.rs`
+                    return 1
+                } catch let error {
+                    out_buf.pointee = FfiConverterString.lower(String(describing: error))
+                    return -1
+                }
             
             // This should never happen, because an out of bounds method index won't
             // ever be used. Once we can catch errors, we should return an InternalError.
@@ -2266,204 +3083,286 @@ fileprivate let foreignCallbackCallbackInterfaceProgress : ForeignCallback =
         }
     }
 
-// The ffiConverter which transforms the Callbacks in to Handles to pass to Rust.
-private let ffiConverterCallbackInterfaceProgress: FfiConverterCallbackInterface<Progress> = {
-    try! rustCall { (err: UnsafeMutablePointer<RustCallStatus>) in
-            ffi_bdk_1c1_Progress_init_callback(foreignCallbackCallbackInterfaceProgress, err)
-    }
-    return FfiConverterCallbackInterface<Progress>()
-}()
-extension UInt8: Primitive, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> Self {
-        return try self.lift(buf.readInt())
-    }
-
-    fileprivate func write(into buf: Writer) {
-        buf.writeInt(self.lower())
-    }
-}
-extension UInt32: Primitive, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> Self {
-        return try self.lift(buf.readInt())
-    }
-
-    fileprivate func write(into buf: Writer) {
-        buf.writeInt(self.lower())
-    }
-}
-extension UInt64: Primitive, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> Self {
-        return try self.lift(buf.readInt())
-    }
-
-    fileprivate func write(into buf: Writer) {
-        buf.writeInt(self.lower())
-    }
-}
-extension Float: Primitive, ViaFfi {
-    fileprivate static func read(from buf: Reader) throws -> Self {
-        return try self.lift(buf.readFloat())
-    }
-
-    fileprivate func write(into buf: Writer) {
-        buf.writeFloat(self.lower())
-    }
-}
-extension Bool: ViaFfi {
-    fileprivate typealias FfiType = Int8
-
-    fileprivate static func read(from buf: Reader) throws -> Self {
-        return try self.lift(buf.readInt())
-    }
-
-    fileprivate func write(into buf: Writer) {
-        buf.writeInt(self.lower())
-    }
-
-    fileprivate static func lift(_ v: FfiType) throws -> Self {
-        return v != 0
-    }
-
-    fileprivate func lower() -> FfiType {
-        return self ? 1 : 0
-    }
-}
-extension String: ViaFfi {
-    fileprivate typealias FfiType = RustBuffer
-
-    fileprivate static func lift(_ v: FfiType) throws -> Self {
-        defer {
-            v.deallocate()
+// FFIConverter protocol for callback interfaces
+fileprivate struct FfiConverterCallbackInterfaceProgress {
+    // Initialize our callback method with the scaffolding code
+    private static var callbackInitialized = false
+    private static func initCallback() {
+        try! rustCall { (err: UnsafeMutablePointer<RustCallStatus>) in
+                ffi_bdk_1724_Progress_init_callback(foreignCallbackCallbackInterfaceProgress, err)
         }
-        if v.data == nil {
-            return String()
-        }
-        let bytes = UnsafeBufferPointer<UInt8>(start: v.data!, count: Int(v.len))
-        return String(bytes: bytes, encoding: String.Encoding.utf8)!
     }
-
-    fileprivate func lower() -> FfiType {
-        return self.utf8CString.withUnsafeBufferPointer { ptr in
-            // The swift string gives us int8_t, we want uint8_t.
-            ptr.withMemoryRebound(to: UInt8.self) { ptr in
-                // The swift string gives us a trailing null byte, we don't want it.
-                let buf = UnsafeBufferPointer(rebasing: ptr.prefix(upTo: ptr.count - 1))
-                return RustBuffer.from(buf)
-            }
+    private static func ensureCallbackinitialized() {
+        if !callbackInitialized {
+            initCallback()
+            callbackInitialized = true
         }
     }
 
-    fileprivate static func read(from buf: Reader) throws -> Self {
-        let len: Int32 = try buf.readInt()
-        return String(bytes: try buf.readBytes(count: Int(len)), encoding: String.Encoding.utf8)!
+    static func drop(handle: Handle) {
+        handleMap.remove(handle: handle)
     }
 
-    fileprivate func write(into buf: Writer) {
-        let len = Int32(self.utf8.count)
-        buf.writeInt(len)
-        buf.writeBytes(self.utf8)
+    private static var handleMap = ConcurrentHandleMap<Progress>()
+}
+
+extension FfiConverterCallbackInterfaceProgress : FfiConverter {
+    typealias SwiftType = Progress
+    // We can use Handle as the FFIType because it's a typealias to UInt64
+    typealias FfiType = Handle
+
+    static func lift(_ handle: Handle) throws -> SwiftType {
+        ensureCallbackinitialized();
+        guard let callback = handleMap.get(handle: handle) else {
+            throw UniffiInternalError.unexpectedStaleHandle
+        }
+        return callback
+    }
+
+    static func read(from buf: Reader) throws -> SwiftType {
+        ensureCallbackinitialized();
+        let handle: Handle = try buf.readInt()
+        return try lift(handle)
+    }
+
+    static func lower(_ v: SwiftType) -> Handle {
+        ensureCallbackinitialized();
+        return handleMap.insert(obj: v)
+    }
+
+    static func write(_ v: SwiftType, into buf: Writer) {
+        ensureCallbackinitialized();
+        buf.writeInt(lower(v))
     }
 }
-// Helper code for Blockchain class is found in ObjectTemplate.swift
-// Helper code for BumpFeeTxBuilder class is found in ObjectTemplate.swift
-// Helper code for PartiallySignedBitcoinTransaction class is found in ObjectTemplate.swift
-// Helper code for TxBuilder class is found in ObjectTemplate.swift
-// Helper code for Wallet class is found in ObjectTemplate.swift
-// Helper code for AddressInfo record is found in RecordTemplate.swift
-// Helper code for BlockTime record is found in RecordTemplate.swift
-// Helper code for ElectrumConfig record is found in RecordTemplate.swift
-// Helper code for EsploraConfig record is found in RecordTemplate.swift
-// Helper code for ExtendedKeyInfo record is found in RecordTemplate.swift
-// Helper code for SledDbConfiguration record is found in RecordTemplate.swift
-// Helper code for SqliteDbConfiguration record is found in RecordTemplate.swift
-// Helper code for TransactionDetails record is found in RecordTemplate.swift
-// Helper code for AddressIndex enum is found in EnumTemplate.swift
-// Helper code for BlockchainConfig enum is found in EnumTemplate.swift
-// Helper code for DatabaseConfig enum is found in EnumTemplate.swift
-// Helper code for Network enum is found in EnumTemplate.swift
-// Helper code for Transaction enum is found in EnumTemplate.swift
-// Helper code for WordCount enum is found in EnumTemplate.swift
-// Helper code for BdkError error is found in ErrorTemplate.swift
 
-fileprivate enum FfiConverterOptionUInt8: FfiConverterUsingByteBuffer {
+fileprivate struct FfiConverterOptionUInt8: FfiConverterRustBuffer {
     typealias SwiftType = UInt8?
 
     static func write(_ value: SwiftType, into buf: Writer) {
-        FfiConverterOptional.write(value, into: buf) { item, buf in
-            item.write(into: buf)
+        guard let value = value else {
+            buf.writeInt(Int8(0))
+            return
         }
+        buf.writeInt(Int8(1))
+        FfiConverterUInt8.write(value, into: buf)
     }
 
     static func read(from buf: Reader) throws -> SwiftType {
-        try FfiConverterOptional.read(from: buf) { buf in
-            try UInt8.read(from: buf)
+        switch try buf.readInt() as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt8.read(from: buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
 }
 
-fileprivate enum FfiConverterOptionUInt64: FfiConverterUsingByteBuffer {
+fileprivate struct FfiConverterOptionUInt64: FfiConverterRustBuffer {
     typealias SwiftType = UInt64?
 
     static func write(_ value: SwiftType, into buf: Writer) {
-        FfiConverterOptional.write(value, into: buf) { item, buf in
-            item.write(into: buf)
+        guard let value = value else {
+            buf.writeInt(Int8(0))
+            return
         }
+        buf.writeInt(Int8(1))
+        FfiConverterUInt64.write(value, into: buf)
     }
 
     static func read(from buf: Reader) throws -> SwiftType {
-        try FfiConverterOptional.read(from: buf) { buf in
-            try UInt64.read(from: buf)
+        switch try buf.readInt() as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt64.read(from: buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
 }
 
-fileprivate enum FfiConverterOptionString: FfiConverterUsingByteBuffer {
+fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
     typealias SwiftType = String?
 
     static func write(_ value: SwiftType, into buf: Writer) {
-        FfiConverterOptional.write(value, into: buf) { item, buf in
-            item.write(into: buf)
+        guard let value = value else {
+            buf.writeInt(Int8(0))
+            return
         }
+        buf.writeInt(Int8(1))
+        FfiConverterString.write(value, into: buf)
     }
 
     static func read(from buf: Reader) throws -> SwiftType {
-        try FfiConverterOptional.read(from: buf) { buf in
-            try String.read(from: buf)
+        switch try buf.readInt() as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterString.read(from: buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
 }
 
-fileprivate enum FfiConverterOptionCallbackInterfaceProgress: FfiConverterUsingByteBuffer {
+fileprivate struct FfiConverterOptionTypeBlockTime: FfiConverterRustBuffer {
+    typealias SwiftType = BlockTime?
+
+    static func write(_ value: SwiftType, into buf: Writer) {
+        guard let value = value else {
+            buf.writeInt(Int8(0))
+            return
+        }
+        buf.writeInt(Int8(1))
+        FfiConverterTypeBlockTime.write(value, into: buf)
+    }
+
+    static func read(from buf: Reader) throws -> SwiftType {
+        switch try buf.readInt() as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeBlockTime.read(from: buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+fileprivate struct FfiConverterOptionCallbackInterfaceProgress: FfiConverterRustBuffer {
     typealias SwiftType = Progress?
 
     static func write(_ value: SwiftType, into buf: Writer) {
-        FfiConverterOptional.write(value, into: buf) { item, buf in
-            ffiConverterCallbackInterfaceProgress.write(item, into: buf)
+        guard let value = value else {
+            buf.writeInt(Int8(0))
+            return
         }
+        buf.writeInt(Int8(1))
+        FfiConverterCallbackInterfaceProgress.write(value, into: buf)
     }
 
     static func read(from buf: Reader) throws -> SwiftType {
-        try FfiConverterOptional.read(from: buf) { buf in
-            try ffiConverterCallbackInterfaceProgress.read(from: buf)
+        switch try buf.readInt() as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterCallbackInterfaceProgress.read(from: buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
 }
 
-fileprivate enum FfiConverterSequenceEnumTransaction: FfiConverterUsingByteBuffer {
-    typealias SwiftType = [Transaction]
+fileprivate struct FfiConverterSequenceUInt8: FfiConverterRustBuffer {
+    typealias SwiftType = [UInt8]
 
-    static func write(_ value: SwiftType, into buf: Writer) {
-        FfiConverterSequence.write(value, into: buf) { (item, buf) in
-            item.write(into: buf)
+    static func write(_ value: [UInt8], into buf: Writer) {
+        let len = Int32(value.count)
+        buf.writeInt(len)
+        for item in value {
+            FfiConverterUInt8.write(item, into: buf)
         }
     }
 
-    static func read(from buf: Reader) throws -> SwiftType {
-        try FfiConverterSequence.read(from: buf) { buf in
-            try Transaction.read(from: buf)
+    static func read(from buf: Reader) throws -> [UInt8] {
+        let len: Int32 = try buf.readInt()
+        var seq = [UInt8]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterUInt8.read(from: buf))
         }
+        return seq
     }
 }
+
+fileprivate struct FfiConverterSequenceTypeLocalUtxo: FfiConverterRustBuffer {
+    typealias SwiftType = [LocalUtxo]
+
+    static func write(_ value: [LocalUtxo], into buf: Writer) {
+        let len = Int32(value.count)
+        buf.writeInt(len)
+        for item in value {
+            FfiConverterTypeLocalUtxo.write(item, into: buf)
+        }
+    }
+
+    static func read(from buf: Reader) throws -> [LocalUtxo] {
+        let len: Int32 = try buf.readInt()
+        var seq = [LocalUtxo]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeLocalUtxo.read(from: buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceTypeOutPoint: FfiConverterRustBuffer {
+    typealias SwiftType = [OutPoint]
+
+    static func write(_ value: [OutPoint], into buf: Writer) {
+        let len = Int32(value.count)
+        buf.writeInt(len)
+        for item in value {
+            FfiConverterTypeOutPoint.write(item, into: buf)
+        }
+    }
+
+    static func read(from buf: Reader) throws -> [OutPoint] {
+        let len: Int32 = try buf.readInt()
+        var seq = [OutPoint]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeOutPoint.read(from: buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceTypeScriptAmount: FfiConverterRustBuffer {
+    typealias SwiftType = [ScriptAmount]
+
+    static func write(_ value: [ScriptAmount], into buf: Writer) {
+        let len = Int32(value.count)
+        buf.writeInt(len)
+        for item in value {
+            FfiConverterTypeScriptAmount.write(item, into: buf)
+        }
+    }
+
+    static func read(from buf: Reader) throws -> [ScriptAmount] {
+        let len: Int32 = try buf.readInt()
+        var seq = [ScriptAmount]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeScriptAmount.read(from: buf))
+        }
+        return seq
+    }
+}
+
+fileprivate struct FfiConverterSequenceTypeTransactionDetails: FfiConverterRustBuffer {
+    typealias SwiftType = [TransactionDetails]
+
+    static func write(_ value: [TransactionDetails], into buf: Writer) {
+        let len = Int32(value.count)
+        buf.writeInt(len)
+        for item in value {
+            FfiConverterTypeTransactionDetails.write(item, into: buf)
+        }
+    }
+
+    static func read(from buf: Reader) throws -> [TransactionDetails] {
+        let len: Int32 = try buf.readInt()
+        var seq = [TransactionDetails]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeTransactionDetails.read(from: buf))
+        }
+        return seq
+    }
+}
+
+public func `generateMnemonic`(`wordCount`: WordCount) throws -> String {
+    return try FfiConverterString.lift(
+        try
+    
+    rustCallWithError(FfiConverterTypeBdkError.self) {
+    
+    bdk_1724_generate_mnemonic(
+        FfiConverterTypeWordCount.lower(`wordCount`), $0)
+}
+    )
+}
+
 
 
 /**
@@ -2476,8 +3375,5 @@ public enum BdkLifecycle {
      * Initialize the FFI and Rust library. This should be only called once per application.
      */
     func initialize() {
-        
-        // No initialization code needed
-        
     }
 }

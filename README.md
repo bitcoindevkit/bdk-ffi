@@ -15,11 +15,10 @@ code. For example:
 import BitcoinDevKit
 
 ...
-
 let desc = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
-let config = DatabaseConfig.memory(junk: "")
-let wallet = try OfflineWallet.init(descriptor: desc, network: Network.regtest, databaseConfig: config)
-let address = wallet.getNewAddress()
+let databaseConfig = DatabaseConfig.memory
+let wallet = try Wallet.init(descriptor: desc, changeDescriptor: nil, network: Network.regtest, databaseConfig: databaseConfig)
+let addressInfo = try wallet.getAddress(addressIndex: AddressIndex.new)
 ```
 
 ### Example Projects
@@ -59,10 +58,10 @@ own Github repository use the following steps:
    `bdkFFI.xcframework.zip` file and new hash as shown at the end of the build.sh script.
    For example: 
    ```swift
-           .binaryTarget(
-            name: "bdkFFI",
-            url: "https://github.com/bitcoindevkit/bdk-swift/releases/download/0.1.3/bdkFFI.xcframework.zip",
-            checksum: "c0b1e3ea09376b3f316d7d83575e1cd513fc4ad39ef8cf01120a3a1d7757fb97"),
+       .binaryTarget(
+        name: "bdkFFI",
+        url: "https://github.com/bitcoindevkit/bdk-swift/releases/download/0.1.3/bdkFFI.xcframework.zip",
+        checksum: "c0b1e3ea09376b3f316d7d83575e1cd513fc4ad39ef8cf01120a3a1d7757fb97"),
    ```
 1. Commit the changed `Package.swift` and tag it with the new version number.
    ```shell
