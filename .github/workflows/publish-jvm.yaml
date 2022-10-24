@@ -98,5 +98,4 @@ jobs:
           ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.NEXUS_PASSWORD }}
         run: |
           cd bdk-jvm
-          ./gradlew publishToSonatype
-#          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository

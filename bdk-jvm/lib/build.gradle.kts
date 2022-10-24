@@ -49,13 +49,11 @@ afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("maven") {
-
                 groupId = "org.bitcoindevkit"
                 artifactId = "bdk-jvm"
                 version = "0.10.0-SNAPSHOT"
 
                 from(components["java"])
-
                 pom {
                     name.set("bdk-jvm")
                     description.set("Bitcoin Dev Kit Kotlin language bindings.")
