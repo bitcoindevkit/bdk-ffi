@@ -283,6 +283,12 @@ interface DescriptorSecretKey {
   [Throws=BdkError]
   constructor(Network network, string mnemonic, string? password);
 
+  [Name=generate, Throws=BdkError]
+  constructor(Network network);
+
+  [Name=generate_from_entropy, Throws=BdkError]
+  constructor(Network network, sequence<u8> entropy);
+
   [Throws=BdkError]
   DescriptorSecretKey derive(DerivationPath path);
 
