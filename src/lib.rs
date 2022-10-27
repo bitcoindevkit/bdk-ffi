@@ -28,7 +28,7 @@ use bdk::{
     Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind, SignOptions,
     SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
-use rand::{thread_rng, Rng};
+use bdk::bitcoin::secp256k1::rand::{thread_rng, Rng};
 use std::collections::HashSet;
 use std::convert::{From, TryFrom};
 use std::fmt;
@@ -898,7 +898,7 @@ impl DescriptorSecretKey {
         })
     }
 
-    fn generate(network: Network) -> Result<Self, BdkError> {
+    fn generate(network: Network) -> Self {
         // Attempting to mirror how the Mnemonic::generate() (line 862 above) works using random entropy
         // Mnemonic::generate() defined here: https://docs.rs/bdk/latest/src/bdk/keys/mod.rs.html#631-637
 
@@ -913,12 +913,12 @@ impl DescriptorSecretKey {
             derivation_path: BdkDerivationPath::master(),
             wildcard: bdk::descriptor::Wildcard::Unhardened,
         });
-        Ok(Self {
+        Self {
             descriptor_secret_key_mutex: Mutex::new(descriptor_secret_key),
-        })
+        }
     }
 
-    fn generate_from_entropy(network: Network, entropy: Vec<u8>) -> Result<Self, BdkError> {
+    fn generate_from_entropy(network: Network, entropy: Vec<u8>) -> Self {
         // Attempting to mirror how the Mnemonic::generate() (line 862 above) works using random entropy
         // Mnemonic::generate() defined here: https://docs.rs/bdk/latest/src/bdk/keys/mod.rs.html#631-637
 
@@ -930,9 +930,9 @@ impl DescriptorSecretKey {
             derivation_path: BdkDerivationPath::master(),
             wildcard: bdk::descriptor::Wildcard::Unhardened,
         });
-        Ok(Self {
+        Self {
             descriptor_secret_key_mutex: Mutex::new(descriptor_secret_key),
-        })
+        }
     }
 
     fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
@@ -1085,6 +1085,7 @@ uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
 #[cfg(test)]
 mod test {
     use crate::*;
+    use bdk::bitcoin::hashes::hex::FromHex;
     use bdk::bitcoin::Address;
     use bdk::bitcoin::Network::Testnet;
     use bdk::wallet::get_funded_wallet;
@@ -1258,19 +1259,25 @@ mod test {
 
     #[test]
     fn test_generate_master_descriptor_key() {
-        const TEST_ENTROPY: [u8; 32] = [0xAA; 32];
+        let test_entropy1: [u8; 32] = [0xAA; 32];
+        let test_entropy2 = Vec::from_hex("000102030405060708090a0b0c0d0e0f").unwrap();
+
         // let descriptor_key: DescriptorSecretKey = DescriptorSecretKey::generate_from_entropy(Network::Bitcoin, TEST_ENTROPY.to_vec());
-        let descriptor_key: DescriptorSecretKey =
-            DescriptorSecretKey::generate_from_entropy(
-                Network::Bitcoin,
-                TEST_ENTROPY.to_vec(),
-            )
-            .unwrap();
+        let descriptor_key1: DescriptorSecretKey =
+            DescriptorSecretKey::generate_from_entropy(Network::Bitcoin, test_entropy1.to_vec());
 
         // as per the test here: https://github.com/bitcoindevkit/bdk/blob/ea47d7a35bf3c3a1592b473ae93102e52ddf47f4/src/keys/mod.rs#L952-L959
         assert_eq!(
-            descriptor_key.as_string(),
+            descriptor_key1.as_string(),
             "xprv9s21ZrQH143K4Xr1cJyqTvuL2FWR8eicgY9boWqMBv8MDVUZ65AXHnzBrK1nyomu6wdcabRgmGTaAKawvhAno1V5FowGpTLVx3jxzE5uk3Q/*"
-        )
+        );
+
+        // as per the test here: https://docs.rs/bitcoin/0.28.0/src/bitcoin/util/bip32.rs.html#1010-1018
+        let descriptor_key2: DescriptorSecretKey =
+            DescriptorSecretKey::generate_from_entropy(Network::Bitcoin, test_entropy2);
+        assert_eq!(
+            descriptor_key2.as_string(),
+            "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi/*"
+        );
     }
 }
