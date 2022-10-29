@@ -30,53 +30,9 @@ let addressInfo = try wallet.getAddress(addressIndex: AddressIndex.new)
 If you are a maintainer of this project or want to build and publish this project to your 
 own Github repository use the following steps:
 
-1. Clone this repository and init and update it's [`bdk-ffi`] submodule.
-   ```shell
-   git clone https://github.com/bitcoindevkit/bdk-swift
-   git submodule update --init
-   ```
-
-1. Follow the "General" `bdk-ffi` ["Getting Started (Developer)"] instructions.
-
-1. Install the latest version of [Xcode], download and install the advanced tools.
-
-1. Ensure Swift is installed.
-
-1. Install required targets.
-   ```shell
-   rustup target add aarch64-apple-ios x86_64-apple-ios
-   rustup target add aarch64-apple-ios-sim --toolchain nightly
-   rustup target add aarch64-apple-darwin x86_64-apple-darwin
-   ```
-    
-1. Build [`bdk-ffi`] Swift bindings and `bdkFFI.xcframework.zip`.
-   ```shell
-   ./build.sh
-   ```
-
-1. Update the `Package.swift` file with the new expected URL for the 
-   `bdkFFI.xcframework.zip` file and new hash as shown at the end of the build.sh script.
-   For example: 
-   ```swift
-       .binaryTarget(
-        name: "bdkFFI",
-        url: "https://github.com/bitcoindevkit/bdk-swift/releases/download/0.1.3/bdkFFI.xcframework.zip",
-        checksum: "c0b1e3ea09376b3f316d7d83575e1cd513fc4ad39ef8cf01120a3a1d7757fb97"),
-   ```
-1. Commit the changed `Package.swift` and tag it with the new version number.
-   ```shell
-   git add Package.swift
-   git commit -m "Bump version to 0.1.3"
-   git tag 0.1.3 -m "Release 0.1.3"
-   git push --tags
-   ```
-
-1. Create a github release for your new tag.
-
-1. Upload the newly created zip to the new github release and publish the release.
-
-1. Test the new package in Xcode. If you get an error you might need to reset the Xcode 
-   package caches: File -> Packages -> Reset Package Caches.
+1. If it doesn't already exist, create a new `release/0.MINOR` branch from the `master` branch
+2. Run the `publish-spm` workflow on Github for branch `release/0.MINOR` and version `0.MINOR.0`
+3. Copy the changelog from corresponding `bdk-ffi` release description to this release
 
 [Swift]: https://developer.apple.com/swift/
 [Xcode]: https://developer.apple.com/documentation/Xcode
