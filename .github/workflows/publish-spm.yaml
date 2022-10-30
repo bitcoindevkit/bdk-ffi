@@ -47,22 +47,22 @@ jobs:
       - name: Build bdk-ffi for x86_64-apple-darwin
         working-directory: bdk-ffi
         run: |
-          cargo build --release --target x86_64-apple-darwin
+          cargo build --profile release-smaller --target x86_64-apple-darwin
 
       - name: Build bdk-ffi for aarch64-apple-darwin
         working-directory: bdk-ffi
         run: |
-          cargo build --release --target aarch64-apple-darwin
+          cargo build --profile release-smaller --target aarch64-apple-darwin
 
       - name: Build bdk-ffi for x86_64-apple-ios
         working-directory: bdk-ffi
         run: |
-          cargo build --release --target x86_64-apple-ios
+          cargo build --profile release-smaller --target x86_64-apple-ios
 
       - name: Build bdk-ffi for aarch64-apple-ios
         working-directory: bdk-ffi
         run: |
-          cargo build --release --target aarch64-apple-ios
+          cargo build --profile release-smaller --target aarch64-apple-ios
 
       - name: Build bdk-ffi for aarch64-apple-ios-sim
         working-directory: bdk-ffi
