@@ -22,3 +22,11 @@ uniffi = { version = "0.21.0", features = ["builtin-bindgen"] }
 
 [build-dependencies]
 uniffi_build = { version = "0.21.0", features = ["builtin-bindgen"] }
+
+[profile.release-smaller]
+inherits = "release"
+opt-level = 'z'     # Optimize for size.
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
+panic = 'abort'     # Abort on panic
+strip = true        # Strip symbols from binary*
