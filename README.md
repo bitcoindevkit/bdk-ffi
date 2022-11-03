@@ -23,7 +23,7 @@ python -m unittest --verbose tests/test_bdk.py
 
 ## Build the package
 ```shell
-# Install dependecies
+# Install dependencies
 pip install --requirement requirements.txt
 
 # Generate the bindings first
