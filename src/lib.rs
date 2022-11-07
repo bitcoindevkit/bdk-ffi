@@ -3,7 +3,7 @@ use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::util::psbt::serialize::Serialize;
-use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
+use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::bitcoin::Sequence;
 use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
@@ -22,6 +22,7 @@ use bdk::keys::{
     DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
 };
 use bdk::miniscript::BareCtx;
+use bdk::psbt::PsbtUtils;
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
@@ -210,7 +211,7 @@ impl Blockchain {
         self.blockchain_mutex.lock().expect("blockchain")
     }
 
-    fn broadcast(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<(), BdkError> {
+    fn broadcast(&self, psbt: &PartiallySignedTransaction) -> Result<(), BdkError> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
         self.get_blockchain().broadcast(&tx)
     }
@@ -341,14 +342,15 @@ impl fmt::Debug for ProgressHolder {
 }
 
 #[derive(Debug)]
-pub struct PartiallySignedBitcoinTransaction {
-    internal: Mutex<PartiallySignedTransaction>,
+pub struct PartiallySignedTransaction {
+    internal: Mutex<BdkPartiallySignedTransaction>,
 }
 
-impl PartiallySignedBitcoinTransaction {
+impl PartiallySignedTransaction {
     fn new(psbt_base64: String) -> Result<Self, BdkError> {
-        let psbt: PartiallySignedTransaction = PartiallySignedTransaction::from_str(&psbt_base64)?;
-        Ok(PartiallySignedBitcoinTransaction {
+        let psbt: BdkPartiallySignedTransaction =
+            BdkPartiallySignedTransaction::from_str(&psbt_base64)?;
+        Ok(PartiallySignedTransaction {
             internal: Mutex::new(psbt),
         })
     }
@@ -379,15 +381,29 @@ impl PartiallySignedBitcoinTransaction {
     /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
     fn combine(
         &self,
-        other: Arc<PartiallySignedBitcoinTransaction>,
-    ) -> Result<Arc<PartiallySignedBitcoinTransaction>, BdkError> {
+        other: Arc<PartiallySignedTransaction>,
+    ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
         let other_psbt = other.internal.lock().unwrap().clone();
         let mut original_psbt = self.internal.lock().unwrap().clone();
 
         original_psbt.combine(other_psbt)?;
-        Ok(Arc::new(PartiallySignedBitcoinTransaction {
+        Ok(Arc::new(PartiallySignedTransaction {
             internal: Mutex::new(original_psbt),
         }))
+    }
+
+    /// The total transaction fee amount, sum of input amounts minus sum of output amounts, in Sats.
+    /// If the PSBT is missing a TxOut for an input returns None.
+    fn fee_amount(&self) -> Option<u64> {
+        self.internal.lock().unwrap().fee_amount()
+    }
+
+    /// The transaction's fee rate. This value will only be accurate if calculated AFTER the
+    /// `PartiallySignedTransaction` is finalized and all witness/signature data is added to the
+    /// transaction.
+    /// If the PSBT is missing a TxOut for an input returns None.
+    fn fee_rate(&self) -> Option<Arc<FeeRate>> {
+        self.internal.lock().unwrap().fee_rate().map(Arc::new)
     }
 }
 
@@ -460,7 +476,7 @@ impl Wallet {
     }
 
     /// Sign a transaction with all the wallet’s signers.
-    fn sign(&self, psbt: &PartiallySignedBitcoinTransaction) -> Result<bool, BdkError> {
+    fn sign(&self, psbt: &PartiallySignedTransaction) -> Result<bool, BdkError> {
         let mut psbt = psbt.internal.lock().unwrap();
         self.get_wallet().sign(&mut psbt, SignOptions::default())
     }
@@ -532,7 +548,7 @@ enum RbfValue {
 /// The result after calling the TxBuilder finish() function. Contains unsigned PSBT and
 /// transaction details.
 pub struct TxBuilderResult {
-    pub psbt: Arc<PartiallySignedBitcoinTransaction>,
+    pub psbt: Arc<PartiallySignedTransaction>,
     pub transaction_details: TransactionDetails,
 }
 
@@ -770,7 +786,7 @@ impl TxBuilder {
         tx_builder
             .finish()
             .map(|(psbt, tx_details)| TxBuilderResult {
-                psbt: Arc::new(PartiallySignedBitcoinTransaction {
+                psbt: Arc::new(PartiallySignedTransaction {
                     internal: Mutex::new(psbt),
                 }),
                 transaction_details: TransactionDetails::from(&tx_details),
@@ -828,7 +844,7 @@ impl BumpFeeTxBuilder {
     }
 
     /// Finish building the transaction. Returns the BIP174 PSBT.
-    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedBitcoinTransaction>, BdkError> {
+    fn finish(&self, wallet: &Wallet) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
         let wallet = wallet.get_wallet();
         let txid = Txid::from_str(self.txid.as_str())?;
         let mut tx_builder = wallet.build_fee_bump(txid)?;
@@ -851,7 +867,7 @@ impl BumpFeeTxBuilder {
         }
         tx_builder
             .finish()
-            .map(|(psbt, _)| PartiallySignedBitcoinTransaction {
+            .map(|(psbt, _)| PartiallySignedTransaction {
                 internal: Mutex::new(psbt),
             })
             .map(Arc::new)
@@ -1245,5 +1261,33 @@ mod test {
             master_private_key,
             "e93315d6ce401eb4db803a56232f0ed3e69b053774e6047df54f1bd00e5ea936"
         )
+    }
+
+    #[test]
+    fn test_psbt_fee() {
+        let test_wpkh = "wpkh(cVpPVruEDdmutPzisEsYvtST1usBR3ntr8pXSyt6D2YYqXRyPcFW)";
+        let (funded_wallet, _, _) = get_funded_wallet(test_wpkh);
+        let test_wallet = Wallet {
+            wallet_mutex: Mutex::new(funded_wallet),
+        };
+        let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
+        let tx_builder = TxBuilder::new()
+            .fee_rate(2.0)
+            .drain_wallet()
+            .drain_to(drain_to_address.clone());
+        //dbg!(&tx_builder);
+        assert!(tx_builder.drain_wallet);
+        assert_eq!(tx_builder.drain_to, Some(drain_to_address));
+
+        let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
+
+        assert!(tx_builder_result.psbt.fee_rate().is_some());
+        assert_eq!(
+            tx_builder_result.psbt.fee_rate().unwrap().as_sat_per_vb(),
+            2.682927
+        );
+
+        assert!(tx_builder_result.psbt.fee_amount().is_some());
+        assert_eq!(tx_builder_result.psbt.fee_amount().unwrap(), 220);
     }
 }
