@@ -15,7 +15,7 @@ use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::descriptor::DescriptorXKey;
-use bdk::keys::bip39::{Language, Mnemonic, WordCount};
+use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic, WordCount};
 use bdk::keys::{
     DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
     DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
@@ -857,10 +857,40 @@ impl BumpFeeTxBuilder {
     }
 }
 
-fn generate_mnemonic(word_count: WordCount) -> Result<String, BdkError> {
-    let mnemonic: GeneratedKey<_, BareCtx> =
-        Mnemonic::generate((word_count, Language::English)).unwrap();
-    Ok(mnemonic.to_string())
+/// Mnemonic phrases are a human-readable version of the private keys.
+/// Supported number of words are 12, 15, 18, 21 and 24.
+struct Mnemonic {
+    internal: BdkMnemonic,
+}
+
+impl Mnemonic {
+    /// Generates Mnemonic with a random entropy
+    fn new(word_count: WordCount) -> Self {
+        let generated_key: GeneratedKey<_, BareCtx> =
+            BdkMnemonic::generate((word_count, Language::English)).unwrap();
+        let mnemonic = BdkMnemonic::parse_in(Language::English, generated_key.to_string()).unwrap();
+        Mnemonic { internal: mnemonic }
+    }
+
+    /// Parse a Mnemonic with given string
+    fn from_str(mnemonic: String) -> Result<Self, BdkError> {
+        BdkMnemonic::from_str(&mnemonic)
+            .map(|m| Mnemonic { internal: m })
+            .map_err(|e| BdkError::Generic(e.to_string()))
+    }
+
+    /// Create a new Mnemonic in the specified language from the given entropy.
+    /// Entropy must be a multiple of 32 bits (4 bytes) and 128-256 bits in length.
+    fn from_entropy(entropy: Vec<u8>) -> Result<Self, BdkError> {
+        BdkMnemonic::from_entropy(entropy.as_slice())
+            .map(|m| Mnemonic { internal: m })
+            .map_err(|e| BdkError::Generic(e.to_string()))
+    }
+
+    /// Returns Mnemonic as string
+    fn as_string(&self) -> String {
+        self.internal.to_string()
+    }
 }
 
 struct DerivationPath {
@@ -882,19 +912,18 @@ struct DescriptorSecretKey {
 }
 
 impl DescriptorSecretKey {
-    fn new(network: Network, mnemonic: String, password: Option<String>) -> Result<Self, BdkError> {
-        let mnemonic = Mnemonic::parse_in(Language::English, mnemonic)
-            .map_err(|e| BdkError::Generic(e.to_string()))?;
-        let xkey: ExtendedKey = (mnemonic, password).into_extended_key()?;
+    fn new(network: Network, mnemonic: Arc<Mnemonic>, password: Option<String>) -> Self {
+        let mnemonic = mnemonic.internal.clone();
+        let xkey: ExtendedKey = (mnemonic, password).into_extended_key().unwrap();
         let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
             origin: None,
             xkey: xkey.into_xprv(network).unwrap(),
             derivation_path: BdkDerivationPath::master(),
             wildcard: bdk::descriptor::Wildcard::Unhardened,
         });
-        Ok(Self {
+        Self {
             descriptor_secret_key_mutex: Mutex::new(descriptor_secret_key),
-        })
+        }
     }
 
     fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
@@ -1118,9 +1147,8 @@ mod test {
     }
 
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
-        let mnemonic =
-        "chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string();
-        DescriptorSecretKey::new(Testnet, mnemonic, None).unwrap()
+        let mnemonic = Mnemonic::from_str("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
+        DescriptorSecretKey::new(Testnet, Arc::new(mnemonic), None)
     }
 
     fn derive_dsk(

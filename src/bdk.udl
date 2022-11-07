@@ -1,6 +1,5 @@
 namespace bdk {
-  [Throws=BdkError]
-  string generate_mnemonic(WordCount word_count);
+
 };
 
 [Error]
@@ -274,14 +273,25 @@ interface BumpFeeTxBuilder {
   PartiallySignedBitcoinTransaction finish([ByRef] Wallet wallet);
 };
 
+interface Mnemonic {
+  constructor(WordCount word_count);
+
+  [Name=from_str, Throws=BdkError]
+  constructor(string mnemonic);
+
+  [Name=from_entropy, Throws=BdkError]
+  constructor(sequence<u8> entropy);
+
+  string as_string();
+};
+
 interface DerivationPath {
   [Throws=BdkError]
   constructor(string path);
 };
 
 interface DescriptorSecretKey {
-  [Throws=BdkError]
-  constructor(Network network, string mnemonic, string? password);
+  constructor(Network network, Mnemonic mnemonic, string? password);
 
   [Throws=BdkError]
   DescriptorSecretKey derive(DerivationPath path);
