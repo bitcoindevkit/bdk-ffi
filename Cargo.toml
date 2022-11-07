@@ -9,13 +9,12 @@ license = "MIT OR Apache-2.0"
 members = [".","bdk-ffi-bindgen"]
 default-members = [".", "bdk-ffi-bindgen"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 crate-type = ["staticlib", "cdylib"]
 name = "bdkffi"
 
 [dependencies]
-bdk = { version = "0.23", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled"] }
+bdk = { version = "0.24", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled"] }
 
 uniffi_macros = { version = "0.21.0", features = ["builtin-bindgen"] }
 uniffi = { version = "0.21.0", features = ["builtin-bindgen"] }

@@ -4,6 +4,7 @@ use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::util::psbt::serialize::Serialize;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction;
+use bdk::bitcoin::Sequence;
 use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::GetBlockHash;
@@ -758,7 +759,7 @@ impl TxBuilder {
                     tx_builder.enable_rbf();
                 }
                 RbfValue::Value(nsequence) => {
-                    tx_builder.enable_rbf_with_sequence(nsequence);
+                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
                 }
             }
         }
@@ -844,7 +845,7 @@ impl BumpFeeTxBuilder {
                     tx_builder.enable_rbf();
                 }
                 RbfValue::Value(nsequence) => {
-                    tx_builder.enable_rbf_with_sequence(nsequence);
+                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
                 }
             }
         }
@@ -947,7 +948,7 @@ impl DescriptorSecretKey {
                     descriptor_secret_key_mutex: Mutex::new(derived_descriptor_secret_key),
                 }))
             }
-            BdkDescriptorSecretKey::SinglePriv(_) => {
+            BdkDescriptorSecretKey::Single(_) => {
                 unreachable!()
             }
         }
@@ -969,7 +970,7 @@ impl DescriptorSecretKey {
                     descriptor_secret_key_mutex: Mutex::new(extended_descriptor_secret_key),
                 })
             }
-            BdkDescriptorSecretKey::SinglePriv(_) => {
+            BdkDescriptorSecretKey::Single(_) => {
                 unreachable!()
             }
         }
@@ -981,7 +982,7 @@ impl DescriptorSecretKey {
             .descriptor_secret_key_mutex
             .lock()
             .unwrap()
-            .as_public(&secp)
+            .to_public(&secp)
             .unwrap();
         Arc::new(DescriptorPublicKey {
             descriptor_public_key_mutex: Mutex::new(descriptor_public_key),
@@ -995,7 +996,7 @@ impl DescriptorSecretKey {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 descriptor_x_key.xkey.private_key.secret_bytes().to_vec()
             }
-            BdkDescriptorSecretKey::SinglePriv(_) => {
+            BdkDescriptorSecretKey::Single(_) => {
                 unreachable!()
             }
         };
@@ -1035,7 +1036,7 @@ impl DescriptorPublicKey {
                     descriptor_public_key_mutex: Mutex::new(derived_descriptor_public_key),
                 }))
             }
-            BdkDescriptorPublicKey::SinglePub(_) => {
+            BdkDescriptorPublicKey::Single(_) => {
                 unreachable!()
             }
         }
@@ -1057,7 +1058,7 @@ impl DescriptorPublicKey {
                     descriptor_public_key_mutex: Mutex::new(extended_descriptor_public_key),
                 })
             }
-            BdkDescriptorPublicKey::SinglePub(_) => {
+            BdkDescriptorPublicKey::Single(_) => {
                 unreachable!()
             }
         }
