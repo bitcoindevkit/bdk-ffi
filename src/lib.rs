@@ -890,7 +890,7 @@ impl Mnemonic {
     }
 
     /// Parse a Mnemonic with given string
-    fn from_str(mnemonic: String) -> Result<Self, BdkError> {
+    fn from_string(mnemonic: String) -> Result<Self, BdkError> {
         BdkMnemonic::from_str(&mnemonic)
             .map(|m| Mnemonic { internal: m })
             .map_err(|e| BdkError::Generic(e.to_string()))
@@ -1164,7 +1164,7 @@ mod test {
     }
 
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
-        let mnemonic = Mnemonic::from_str("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
+        let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
         DescriptorSecretKey::new(Testnet, Arc::new(mnemonic), None)
     }
 
