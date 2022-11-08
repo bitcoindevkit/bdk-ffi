@@ -130,7 +130,7 @@ fun descriptorSecretKeyExtendSample() {
     // The `DescriptorSecretKey.extend()` method allows you to extend a key to any given path.
 
     // val mnemonic: String = generateMnemonic(WordCount.WORDS12)
-    val mnemonic: String = "scene change clap smart together mind wheel knee clip normal trial unusual"
+    val mnemonic: Mnemonic = Mnemonic("scene change clap smart together mind wheel knee clip normal trial unusual")
 
     // the initial DescriptorSecretKey will always be at the "master" node,
     // i.e. the derivation path is empty
@@ -159,7 +159,7 @@ fun descriptorSecretKeyDeriveSample() {
     // The DescriptorSecretKey.derive() method allows you to derive an extended key for a given
     // node in the derivation tree (for example to create an xpub for a particular account)
 
-    val mnemonic: String = "scene change clap smart together mind wheel knee clip normal trial unusual"
+    val mnemonic: Mnemonic = Mnemonic("scene change clap smart together mind wheel knee clip normal trial unusual")
     val bip32RootKey: DescriptorSecretKey = DescriptorSecretKey(
         network = Network.TESTNET,
         mnemonic = mnemonic,
@@ -221,6 +221,13 @@ fun walletSample() {
     )
 }
 
-fun generateMnemonicSample() {
-    val mnemonic: String = generateMnemonic(WordCount.WORDS12)
+fun mnemonicSample() {
+    val mnemonic0: Mnemonic = Mnemonic(WordCount.WORDS12)
+
+    val mnemonic1: Mnemonic = Mnemonic.fromString("scene change clap smart together mind wheel knee clip normal trial unusual")
+
+    val entropy: List<UByte> = listOf<UByte>(0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u)
+    val mnemonic2: Mnemonic = Mnemonic.fromEntropy(entropy)
+
+    println(mnemonic0.asString(), mnemonic1.asString(), mnemonic2.asString())
 }

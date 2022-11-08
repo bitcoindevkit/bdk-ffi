@@ -458,16 +458,6 @@ class BumpFeeTxBuilder() {
 }
 
 /**
- * Generates a new mnemonic using the English word list and the given number of words (12, 15, 18, 21, or 24).
- *
- * @param wordCount The number of words to use for the mnemonic (also determines the amount of entropy that is used).
- * @return The mnemonic words separated by a space in a String
- *
- * @sample org.bitcoindevkit.generateMnemonicSample
- */
-fun generateMnemonic(wordCount: WordCount): String
-
-/**
  * A BIP-32 derivation path.
  *
  * @param path The derivation path. Must start with `m`. Use this type to derive or extend a [DescriptorSecretKey]
@@ -485,7 +475,7 @@ class DerivationPath(path: String) {}
  * @sample org.bitcoindevkit.descriptorSecretKeyDeriveSample
  * @sample org.bitcoindevkit.descriptorSecretKeyExtendSample
  */
-class DescriptorSecretKey(network: Network, mnemonic: String, password: String?) {
+class DescriptorSecretKey(network: Network, mnemonic: Mnemonic, password: String?) {
     /** Derive a private descriptor at a given path. */
     fun derive(path: DerivationPath): DescriptorSecretKey {}
 
@@ -567,4 +557,26 @@ class Script(rawOutputScript: List<UByte>)
 class Address(address: String) {
     /* Return the ScriptPubKey. */
     fun scriptPubkey(): Script
+}
+
+/**
+ * Mnemonic phrases are a human-readable version of the private keys. Supported number of words are 12, 15, 18, 21 and 24.
+ *
+ * @constructor Generates Mnemonic with a random entropy.
+ * @param mnemonic The mnemonic as a string of space-separated words.
+ *
+ * @sample org.bitcoindevkit.mnemonicSample
+ */
+class Mnemonic(mnemonic: String) {
+    /* Returns Mnemonic as string */
+    fun asString(): String
+
+    /* Parse a Mnemonic from a given string. */
+    fun fromString(): Mnemonic
+
+    /*
+     * Create a new Mnemonic in the specified language from the given entropy. Entropy must be a
+     * multiple of 32 bits (4 bytes) and 128-256 bits in length.
+     */
+    fun fromEntropy(): Mnemonic
 }

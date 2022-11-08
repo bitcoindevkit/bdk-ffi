@@ -27,7 +27,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
     dokkaSourceSets {
         named("main") {
             moduleName.set("bdk-android")
-            moduleVersion.set("0.10.0")
+            moduleVersion.set("0.11.0")
             includes.from("Module1.md")
             samples.from("src/test/kotlin/org/bitcoindevkit/Samples.kt")
         }
@@ -38,7 +38,7 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
 //     dokkaSourceSets {
 //         named("main") {
 //             moduleName.set("bdk-jvm")
-//             moduleVersion.set("0.10.0")
+//             moduleVersion.set("0.11.0")
 //             includes.from("Module2.md")
 //             samples.from("src/test/kotlin/org/bitcoindevkit/Samples.kt")
 //         }
