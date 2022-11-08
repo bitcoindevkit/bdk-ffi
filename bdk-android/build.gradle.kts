@@ -16,7 +16,7 @@ plugins {
 // and knows whether to publish to a SNAPSHOT repository or not
 // https://github.com/gradle-nexus/publish-plugin#applying-the-plugin
 group = "org.bitcoindevkit"
-version = "0.11.0-SNAPSHOT"
+version = "0.12.0-SNAPSHOT"
 
 nexusPublishing {
     repositories {
