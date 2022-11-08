@@ -22,7 +22,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             workingDir("${projectDir}/../../bdk-ffi")
             val cargoArgs: MutableList<String> =
-                mutableListOf("build", "--release", "--target", "aarch64-linux-android")
+                mutableListOf("build", "--profile", "release-smaller", "--target", "aarch64-linux-android")
 
             executable("cargo")
             args(cargoArgs)
@@ -54,7 +54,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             workingDir("${project.projectDir}/../../bdk-ffi")
             val cargoArgs: MutableList<String> =
-                mutableListOf("build", "--release", "--target", "x86_64-linux-android")
+                mutableListOf("build", "--profile", "release-smaller", "--target", "x86_64-linux-android")
 
             executable("cargo")
             args(cargoArgs)
@@ -86,7 +86,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             workingDir("${project.projectDir}/../../bdk-ffi")
             val cargoArgs: MutableList<String> =
-                mutableListOf("build", "--release", "--target", "armv7-linux-androideabi")
+                mutableListOf("build", "--profile", "release-smaller", "--target", "armv7-linux-androideabi")
 
             executable("cargo")
             args(cargoArgs)
@@ -124,15 +124,15 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             into("${project.projectDir}/../lib/src/main/jniLibs/")
 
             into("arm64-v8a") {
-                from("${project.projectDir}/../../bdk-ffi/target/aarch64-linux-android/release/libbdkffi.so")
+                from("${project.projectDir}/../../bdk-ffi/target/aarch64-linux-android/release-smaller/libbdkffi.so")
             }
 
             into("x86_64") {
-                from("${project.projectDir}/../../bdk-ffi/target/x86_64-linux-android/release/libbdkffi.so")
+                from("${project.projectDir}/../../bdk-ffi/target/x86_64-linux-android/release-smaller/libbdkffi.so")
             }
 
             into("armeabi-v7a") {
-                from("${project.projectDir}/../../bdk-ffi/target/armv7-linux-androideabi/release/libbdkffi.so")
+                from("${project.projectDir}/../../bdk-ffi/target/armv7-linux-androideabi/release-smaller/libbdkffi.so")
             }
 
             doLast {

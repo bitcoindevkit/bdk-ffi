@@ -18,20 +18,20 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
-                    val cargoArgs: List<String> = listOf("build", "--release", "--target", "x86_64-apple-darwin")
+                    val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-apple-darwin")
                     args(cargoArgs)
                 }
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
-                    val cargoArgs: List<String> = listOf("build", "--release", "--target", "aarch64-apple-darwin")
+                    val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "aarch64-apple-darwin")
                     args(cargoArgs)
                 }
             } else if(operatingSystem == OS.LINUX) {
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
-                    val cargoArgs: List<String> = listOf("build", "--release", "--target", "x86_64-unknown-linux-gnu")
+                    val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-unknown-linux-gnu")
                     args(cargoArgs)
                 }
             }
@@ -76,7 +76,7 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
                 doFirst {
                     copy {
                         with(it) {
-                            from("${project.projectDir}/../../bdk-ffi/target/${this.targetDir}/release/libbdkffi.${this.ext}")
+                            from("${project.projectDir}/../../bdk-ffi/target/${this.targetDir}/release-smaller/libbdkffi.${this.ext}")
                             into("${project.projectDir}/../../bdk-jvm/lib/src/main/resources/${this.resDir}/")
                         }
                     }
