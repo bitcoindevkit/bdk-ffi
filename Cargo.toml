@@ -13,11 +13,14 @@ default-members = [".", "bdk-ffi-bindgen"]
 crate-type = ["staticlib", "cdylib"]
 name = "bdkffi"
 
+[patch.crates-io]
+bip39 = { git = "https://github.com/tcharding/rust-bip39.git", branch = "10-26-bump-version" }
+
 [dependencies]
 bdk = { version = "0.24", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled"] }
-
 uniffi_macros = { version = "0.21.0", features = ["builtin-bindgen"] }
 uniffi = { version = "0.21.0", features = ["builtin-bindgen"] }
+bip39 = { git = "https://github.com/tcharding/rust-bip39.git", branch = "10-26-bump-version", features = ["rand"] }
 
 [build-dependencies]
 uniffi_build = { version = "0.21.0", features = ["builtin-bindgen"] }

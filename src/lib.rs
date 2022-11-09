@@ -16,12 +16,11 @@ use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::descriptor::DescriptorXKey;
-use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic, WordCount};
+use bdk::keys::bip39::{Mnemonic as BdkMnemonic, WordCount};
 use bdk::keys::{
     DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
-    DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
+    DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey,
 };
-use bdk::miniscript::BareCtx;
 use bdk::psbt::PsbtUtils;
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
@@ -883,9 +882,8 @@ struct Mnemonic {
 impl Mnemonic {
     /// Generates Mnemonic with a random entropy
     fn new(word_count: WordCount) -> Self {
-        let generated_key: GeneratedKey<_, BareCtx> =
-            BdkMnemonic::generate((word_count, Language::English)).unwrap();
-        let mnemonic = BdkMnemonic::parse_in(Language::English, generated_key.to_string()).unwrap();
+        let word_count = word_count as usize / 32 * 3;
+        let mnemonic = BdkMnemonic::generate(word_count).unwrap();
         Mnemonic { internal: mnemonic }
     }
 
@@ -1289,5 +1287,21 @@ mod test {
 
         assert!(tx_builder_result.psbt.fee_amount().is_some());
         assert_eq!(tx_builder_result.psbt.fee_amount().unwrap(), 220);
+    }
+
+    #[test]
+    fn test_generate_mnemonic() {
+        const WORD_COUNTS: [(WordCount, usize); 5] = [
+            (WordCount::Words12, 12),
+            (WordCount::Words15, 15),
+            (WordCount::Words18, 18),
+            (WordCount::Words21, 21),
+            (WordCount::Words24, 24),
+        ];
+
+        for (word_count, count) in WORD_COUNTS {
+            let mnemonic = Mnemonic::new(word_count);
+            assert_eq!(mnemonic.as_string().split(' ').count(), count);
+        }
     }
 }
