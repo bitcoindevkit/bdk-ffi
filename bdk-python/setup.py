@@ -53,7 +53,7 @@ print(f"Wallet balance is: {balance.total}")
 
 rust_ext = RustExtension(
     target="bdkpython.bdkffi",
-    path="./bdk-ffi/Cargo.toml",
+    path="../bdk-ffi/Cargo.toml",
     binding=Binding.NoBinding,
 )
 
