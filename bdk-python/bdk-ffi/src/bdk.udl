@@ -1,0 +1,337 @@
+namespace bdk {
+
+};
+
+[Error]
+enum BdkError {
+  "InvalidU32Bytes",
+  "Generic",
+  "MissingCachedScripts",
+  "ScriptDoesntHaveAddressForm",
+  "NoRecipients",
+  "NoUtxosSelected",
+  "OutputBelowDustLimit",
+  "InsufficientFunds",
+  "BnBTotalTriesExceeded",
+  "BnBNoExactMatch",
+  "UnknownUtxo",
+  "TransactionNotFound",
+  "TransactionConfirmed",
+  "IrreplaceableTransaction",
+  "FeeRateTooLow",
+  "FeeTooLow",
+  "FeeRateUnavailable",
+  "MissingKeyOrigin",
+  "Key",
+  "ChecksumMismatch",
+  "SpendingPolicyRequired",
+  "InvalidPolicyPathError",
+  "Signer",
+  "InvalidNetwork",
+  "InvalidProgressValue",
+  "ProgressUpdateError",
+  "InvalidOutpoint",
+  "Descriptor",
+  "Encode",
+  "Miniscript",
+  "MiniscriptPsbt",
+  "Bip32",
+  "Secp256k1",
+  "Json",
+  "Hex",
+  "Psbt",
+  "PsbtParse",
+  "Electrum",
+  "Esplora",
+  "Sled",
+  "Rusqlite",
+};
+
+dictionary AddressInfo {
+  u32 index;
+  string address;
+};
+
+enum AddressIndex {
+  "New",
+  "LastUnused",
+};
+
+enum Network {
+  "Bitcoin",
+  "Testnet",
+  "Signet",
+  "Regtest",
+};
+
+dictionary SledDbConfiguration {
+  string path;
+  string tree_name;
+};
+
+dictionary SqliteDbConfiguration {
+  string path;
+};
+
+dictionary Balance {
+  u64 immature;
+  u64 trusted_pending;
+  u64 untrusted_pending;
+  u64 confirmed;
+  u64 spendable;
+  u64 total;
+};
+
+[Enum]
+interface DatabaseConfig {
+  Memory();
+  Sled(SledDbConfiguration config);
+  Sqlite(SqliteDbConfiguration config);
+};
+
+dictionary TransactionDetails {
+  u64? fee;
+  u64 received;
+  u64 sent;
+  string txid;
+  BlockTime? confirmation_time;
+};
+
+dictionary BlockTime {
+  u32 height;
+  u64 timestamp;
+};
+
+enum WordCount {
+  "Words12",
+  "Words15",
+  "Words18",
+  "Words21",
+  "Words24",
+};
+
+dictionary ElectrumConfig {
+  string url;
+  string? socks5;
+  u8 retry;
+  u8? timeout;
+  u64 stop_gap;
+};
+
+dictionary EsploraConfig {
+  string base_url;
+  string? proxy;
+  u8? concurrency;
+  u64 stop_gap;
+  u64? timeout;
+};
+
+[Enum]
+interface BlockchainConfig {
+  Electrum(ElectrumConfig config);
+  Esplora(EsploraConfig config);
+};
+
+interface Blockchain {
+  [Throws=BdkError]
+  constructor(BlockchainConfig config);
+
+  [Throws=BdkError]
+  void broadcast([ByRef] PartiallySignedTransaction psbt);
+
+  [Throws=BdkError]
+  u32 get_height();
+
+  [Throws=BdkError]
+  string get_block_hash(u32 height);
+};
+
+callback interface Progress {
+  void update(f32 progress, string? message);
+};
+
+dictionary OutPoint {
+  string txid;
+  u32 vout;
+};
+
+dictionary TxOut {
+  u64 value;
+  string address;
+};
+
+enum KeychainKind {
+  "External",
+  "Internal",
+};
+
+dictionary LocalUtxo {
+  OutPoint outpoint;
+  TxOut txout;
+  KeychainKind keychain;
+  boolean is_spent;
+};
+
+dictionary ScriptAmount {
+  Script script;
+  u64 amount;
+};
+
+interface Wallet {
+  [Throws=BdkError]
+  constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
+
+  [Throws=BdkError]
+  AddressInfo get_address(AddressIndex address_index);
+
+  [Throws=BdkError]
+  Balance get_balance();
+
+  [Throws=BdkError]
+  boolean sign([ByRef] PartiallySignedTransaction psbt);
+
+  [Throws=BdkError]
+  sequence<TransactionDetails> list_transactions();
+
+  Network network();
+
+  [Throws=BdkError]
+  void sync([ByRef] Blockchain blockchain, Progress? progress);
+
+  [Throws=BdkError]
+  sequence<LocalUtxo> list_unspent();
+};
+
+interface FeeRate {
+  [Name=from_sat_per_vb]
+  constructor(float sat_per_vb);
+
+  float as_sat_per_vb();
+};
+
+interface PartiallySignedTransaction {
+  [Throws=BdkError]
+  constructor(string psbt_base64);
+
+  string serialize();
+
+  string txid();
+
+  sequence<u8> extract_tx();
+
+  [Throws=BdkError]
+  PartiallySignedTransaction combine(PartiallySignedTransaction other);
+
+  u64? fee_amount();
+
+  FeeRate? fee_rate();
+};
+
+dictionary TxBuilderResult {
+  PartiallySignedTransaction psbt;
+  TransactionDetails transaction_details;
+};
+
+interface TxBuilder {
+  constructor();
+
+  TxBuilder add_recipient(Script script, u64 amount);
+
+  TxBuilder add_unspendable(OutPoint unspendable);
+
+  TxBuilder add_utxo(OutPoint outpoint);
+
+  TxBuilder add_utxos(sequence<OutPoint> outpoints);
+
+  TxBuilder do_not_spend_change();
+
+  TxBuilder manually_selected_only();
+
+  TxBuilder only_spend_change();
+
+  TxBuilder unspendable(sequence<OutPoint> unspendable);
+
+  TxBuilder fee_rate(float sat_per_vbyte);
+
+  TxBuilder fee_absolute(u64 fee_amount);
+
+  TxBuilder drain_wallet();
+
+  TxBuilder drain_to(string address);
+
+  TxBuilder enable_rbf();
+
+  TxBuilder enable_rbf_with_sequence(u32 nsequence);
+
+  TxBuilder add_data(sequence<u8> data);
+
+  TxBuilder set_recipients(sequence<ScriptAmount> recipients);
+
+  [Throws=BdkError]
+  TxBuilderResult finish([ByRef] Wallet wallet);
+};
+
+interface BumpFeeTxBuilder {
+  constructor(string txid, float new_fee_rate);
+
+  BumpFeeTxBuilder allow_shrinking(string address);
+
+  BumpFeeTxBuilder enable_rbf();
+
+  BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
+
+  [Throws=BdkError]
+  PartiallySignedTransaction finish([ByRef] Wallet wallet);
+};
+
+interface Mnemonic {
+  constructor(WordCount word_count);
+
+  [Name=from_string, Throws=BdkError]
+  constructor(string mnemonic);
+
+  [Name=from_entropy, Throws=BdkError]
+  constructor(sequence<u8> entropy);
+
+  string as_string();
+};
+
+interface DerivationPath {
+  [Throws=BdkError]
+  constructor(string path);
+};
+
+interface DescriptorSecretKey {
+  constructor(Network network, Mnemonic mnemonic, string? password);
+
+  [Throws=BdkError]
+  DescriptorSecretKey derive(DerivationPath path);
+
+  DescriptorSecretKey extend(DerivationPath path);
+
+  DescriptorPublicKey as_public();
+
+  sequence<u8> secret_bytes();
+
+  string as_string();
+};
+
+interface DescriptorPublicKey {
+  [Throws=BdkError]
+  DescriptorPublicKey derive(DerivationPath path);
+
+  DescriptorPublicKey extend(DerivationPath path);
+
+  string as_string();
+};
+
+interface Address {
+  [Throws=BdkError]
+  constructor(string address);
+
+  Script script_pubkey();
+};
+
+interface Script {
+  constructor(sequence<u8> raw_output_script);
+};
