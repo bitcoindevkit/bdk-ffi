@@ -36,12 +36,18 @@ jobs:
       - name: Update toolchain
         run: rustup update
       - name: Build
-        run: cargo build
+        run: |
+          cd bdk-ffi
+          cargo build
       - name: Clippy
         if: ${{ matrix.rust.clippy }}
-        run: cargo clippy --all-targets -- -D warnings
+        run: |
+          cd bdk-ffi
+          cargo clippy --all-targets -- -D warnings
       - name: Test
-        run: CLASSPATH=./tests/jna/jna-5.8.0.jar cargo test
+        run: |
+          cd bdk-ffi
+          CLASSPATH=./tests/jna/jna-5.8.0.jar cargo test
 
   fmt:
     name: Rust fmt
@@ -58,4 +64,6 @@ jobs:
       - name: Update toolchain
         run: rustup update
       - name: Check fmt
-        run: cargo fmt --all -- --config format_code_in_doc_comments=true --check
+        run: |
+          cd bdk-ffi
+          cargo fmt --all -- --config format_code_in_doc_comments=true --check
