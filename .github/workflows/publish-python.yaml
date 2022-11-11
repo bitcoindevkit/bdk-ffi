@@ -10,6 +10,9 @@ jobs:
   build-manylinux2014-x86_64-wheel:
     name: 'Build Manylinux 2014 x86_64 wheel'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bdk-python
     container:
       image: quay.io/pypa/manylinux2014_x86_64
       env:
@@ -34,21 +37,13 @@ jobs:
         with:
           toolchain: stable
       - name: install requirements
-        run: |
-          cd bdk-python
-          ${PYBIN}/pip install -r requirements.txt
+        run: ${PYBIN}/pip install -r requirements.txt
       - name: generate bindings
-        run: |
-          cd bdk-python
-          bash generate.sh
+        run: bash generate.sh
       - name: build wheel
-        run: |
-          cd bdk-python
-          ${PYBIN}/pip wheel . --no-deps -w /tmp/wheelhouse
+        run: ${PYBIN}/pip wheel . --no-deps -w /tmp/wheelhouse
       - name: repair wheel
-        run: |
-          cd bdk-python
-          auditwheel repair /tmp/wheelhouse/* --plat "$PLAT" -w /tmp/wheelhouse-repaired
+        run: auditwheel repair /tmp/wheelhouse/* --plat "$PLAT" -w /tmp/wheelhouse-repaired
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
@@ -57,6 +52,9 @@ jobs:
   build-macos-universal-wheel:
     name: 'Build macOS universal wheel'
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: bdk-python
     strategy:
       matrix:
         python:
@@ -65,30 +63,22 @@ jobs:
           - '3.9'
           - '3.10'
     steps:
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python }}
-      - run: python3 --version
       - name: checkout
         uses: actions/checkout@v2
         with:
           submodules: true
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python3 --version
       - run: rustup target add aarch64-apple-darwin
-      - run: |
-          cd bdk-python
-          pip3 install --user -r requirements.txt
-      - run: |
-          cd bdk-python
-          pip3 install --user wheel
-      - run: |
-          cd bdk-python
-          bash generate.sh
+      - run: pip3 install --user -r requirements.txt
+      - run: pip3 install --user wheel
+      - run: bash generate.sh
       - name: build wheel
         env:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
-        run: |
-          cd bdk-python
-          python3 setup.py -v bdist_wheel
+        run: python3 setup.py -v bdist_wheel
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-macos-${{ matrix.python }}
@@ -97,6 +87,9 @@ jobs:
   build-windows-wheel:
     name: 'Build windows wheel'
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: bdk-python
     strategy:
       matrix:
         python:
@@ -105,28 +98,20 @@ jobs:
           - '3.9'
           - '3.10'
     steps:
-      - uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python }}
-      - run: python --version
       - name: checkout
         uses: actions/checkout@v2
         with:
           submodules: true
-      - run: |
-          cd bdk-python
-          pip install --user -r requirements.txt
-      - run: |
-          cd bdk-python
-          bash generate.sh
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python --version
+      - run: pip install --user -r requirements.txt
+      - run: bash generate.sh
         shell: bash
-      - run: |
-          cd bdk-python
-          pip install --user wheel
+      - run: pip install --user wheel
       - name: build wheel
-        run: |
-          cd bdk-python
-          python setup.py -v bdist_wheel
+        run: python setup.py -v bdist_wheel
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-win-${{ matrix.python }}
@@ -135,17 +120,20 @@ jobs:
   publish-pypi:
     name: 'Publish on PyPI'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bdk-python
     needs: [build-manylinux2014-x86_64-wheel, build-macos-universal-wheel, build-windows-wheel]
     # needs: [build-macos-universal-wheel]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      
+
       - name: 'Download artifacts in dist/ directory'
         uses: actions/download-artifact@v2
         with:
           path: dist/
-      
+
       # - name: Display structure of downloaded files
       #   run: ls -R
 
