@@ -1,5 +1,11 @@
 name: bdk-ffi CI
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - "bdk-ffi/**"
+  pull_request:
+    paths:
+      - "bdk-ffi/**"
 
 jobs:
 

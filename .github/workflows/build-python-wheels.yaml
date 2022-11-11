@@ -1,5 +1,13 @@
 name: Build Python wheels
-on: [push, pull_request]
+on: 
+  push:
+    paths:
+      - "bdk-ffi/**"
+      - "bdk-python/**"
+  pull_request:
+    paths:
+      - "bdk-ffi/**"
+      - "bdk-python/**"
 
 # We use manylinux2014 because older CentOS versions used by 2010 and 1 have a very old glibc version, which
 # makes it very hard to use GitHub's javascript actions (checkout, upload-artifact, etc).
