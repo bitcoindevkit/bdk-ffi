@@ -1,0 +1,39 @@
+name: Test JVM
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@v2
+
+      - name: Update bdk-ffi git submodule
+        run: |
+          git submodule set-url bdk-ffi https://github.com/bitcoindevkit/bdk-ffi.git
+          git submodule update --init bdk-ffi
+
+      - name: cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            bdk-ffi/target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Build bdk-jvm library
+        run: |
+          cd bdk-jvm
+          ./gradlew buildJvmLib
+
+      - name: Run JVM tests
+        run: |
+          cd bdk-jvm
+          ./gradlew test --console=rich

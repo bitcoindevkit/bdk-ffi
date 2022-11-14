@@ -1,0 +1,101 @@
+name: Publish bdk-jvm to Maven Central
+on: [workflow_dispatch]
+#on:
+#  release:
+#    types: [published]
+
+jobs:
+  build-jvm-macOS-M1-native-lib:
+    name: Create M1 and x86_64 JVM native binaries
+    runs-on: macos-12
+    steps:
+      - name: Checkout publishing branch
+        uses: actions/checkout@v2
+
+      - name: Update bdk-ffi git submodule
+        run: |
+          git submodule set-url bdk-ffi https://github.com/bitcoindevkit/bdk-ffi.git
+          git submodule update --init bdk-ffi
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ./bdk-ffi/target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Install aarch64 Rust target
+        run: rustup target add aarch64-apple-darwin
+
+      - name: Build bdk-jvm library
+        run: |
+          cd bdk-jvm
+          ./gradlew buildJvmLib
+
+      # build aarch64 + x86_64 native libraries and upload
+      - name: Upload macOS native libraries for reuse in publishing job
+        uses: actions/upload-artifact@v3
+        with:
+          # name: no name is required because we upload the entire directory
+          # the default name "artifact" will be used
+          path: /Users/runner/work/bdk-kotlin/bdk-kotlin/bdk-jvm/lib/src/main/resources/
+
+  build-jvm-full-library:
+    name: Create full bdk-jvm library
+    needs: [build-jvm-macOS-M1-native-lib]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout publishing branch
+        uses: actions/checkout@v2
+
+      - name: Update bdk-ffi git submodule
+        run: |
+          git submodule set-url bdk-ffi https://github.com/bitcoindevkit/bdk-ffi.git
+          git submodule update --init bdk-ffi
+
+      - name: Cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ./bdk-ffi/target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Build bdk-jvm library
+        run: |
+          cd bdk-jvm
+          ./gradlew buildJvmLib
+
+      - name: Download macOS native libraries from previous job
+        uses: actions/download-artifact@v3
+        id: download
+        with:
+          # download the artifact created in the prior job (named "artifact")
+          name: artifact
+          path: ./bdk-jvm/lib/src/main/resources/
+
+      - name: Publish to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.PGP_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.PGP_SECRET_KEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.PGP_PASSPHRASE }}
+          ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.NEXUS_USERNAME }}
+          ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.NEXUS_PASSWORD }}
+        run: |
+          cd bdk-jvm
+          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository

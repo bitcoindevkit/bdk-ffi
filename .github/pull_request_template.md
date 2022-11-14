@@ -1,4 +1,4 @@
-<!-- You can erase any parts of this template not applicable to your Pull Request. -->
+<!-- Erase any parts of this template not applicable to your Pull Request. -->
 
 ### Description
 
