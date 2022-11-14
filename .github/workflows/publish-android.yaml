@@ -20,11 +20,6 @@ jobs:
       - name: Check out PR branch
         uses: actions/checkout@v2
 
-      - name: Update bdk-ffi git submodule
-        run: |
-          git submodule set-url bdk-ffi https://github.com/bitcoindevkit/bdk-ffi.git
-          git submodule update --init bdk-ffi
-
       - name: cache
         uses: actions/cache@v2
         with:

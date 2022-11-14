@@ -1,8 +1,5 @@
 name: Publish bdk-jvm to Maven Central
 on: [workflow_dispatch]
-#on:
-#  release:
-#    types: [published]
 
 jobs:
   build-jvm-macOS-M1-native-lib:
@@ -11,11 +8,6 @@ jobs:
     steps:
       - name: Checkout publishing branch
         uses: actions/checkout@v2
-
-      - name: Update bdk-ffi git submodule
-        run: |
-          git submodule set-url bdk-ffi https://github.com/bitcoindevkit/bdk-ffi.git
-          git submodule update --init bdk-ffi
 
       - name: Cache
         uses: actions/cache@v3
