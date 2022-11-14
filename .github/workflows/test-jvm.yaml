@@ -1,5 +1,13 @@
 name: Test JVM
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - "bdk-ffi/**"
+      - "bdk-jvm/**"
+  pull_request:
+    paths:
+      - "bdk-ffi/**"
+      - "bdk-jvm/**"
 
 jobs:
   build:

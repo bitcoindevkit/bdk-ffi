@@ -1,5 +1,13 @@
 name: Test Android
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - "bdk-ffi/**"
+      - "bdk-android/**"
+  pull_request:
+    paths:
+      - "bdk-ffi/**"
+      - "bdk-android/**"
 
 env:
   ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/21.4.7075529
