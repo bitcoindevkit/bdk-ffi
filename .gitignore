@@ -1,7 +1,6 @@
 target
 build
 Cargo.lock
-/bindings/bdk-kotlin/local.properties
 .gradle
 wallet_db
 bdk_ffi_test
@@ -15,3 +14,5 @@ xcuserdata
 .lsp
 .clj-kondo
 .idea/
+.editorconfig
+*/bdk.kt

@@ -3,7 +3,7 @@ on: [workflow_dispatch]
 
 env:
   ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/21.4.7075529
-  # By default the new ubuntu-20.04 images use the following ANDROID_NDK_ROOT
+  # By default, the new ubuntu-20.04 images use the following ANDROID_NDK_ROOT
   # ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/25.0.8775105
 
 jobs:
