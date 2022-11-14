@@ -9,14 +9,12 @@ on:
     - cron: '0 0 * * 0' # Once per week
 
 jobs:
-
   security_audit:
+    name: Security Audit
     runs-on: ubuntu-20.04
-    defaults:
-      run:
-        working-directory: bdk-ffi
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/audit-check@v1
         with:
+          args: --manifest-path bdk-ffi/Cargo.toml
           token: ${{ secrets.GITHUB_TOKEN }}
