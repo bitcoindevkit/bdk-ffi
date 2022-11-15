@@ -37,7 +37,7 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
             }
         }
 
-        // move the native libs build by cargo from bdk-ffi/target/.../release/
+        // move the native libs build by cargo from target/.../release/
         // to their place in the bdk-jvm library
         val moveNativeJvmLibs by tasks.register<DefaultTask>("moveNativeJvmLibs") {
 
@@ -76,7 +76,7 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
                 doFirst {
                     copy {
                         with(it) {
-                            from("${project.projectDir}/../../bdk-ffi/target/${this.targetDir}/release-smaller/libbdkffi.${this.ext}")
+                            from("${project.projectDir}/../../target/${this.targetDir}/release-smaller/libbdkffi.${this.ext}")
                             into("${project.projectDir}/../../bdk-jvm/lib/src/main/resources/${this.resDir}/")
                         }
                     }

@@ -114,7 +114,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             }
         }
 
-        // move the native libs build by cargo from bdk-ffi/target/<architecture>/release/
+        // move the native libs build by cargo from target/<architecture>/release/
         // to their place in the bdk-android library
         // the task only copies the available binaries built using the buildAndroid<architecture>Binary tasks
         val moveNativeAndroidLibs by tasks.register<Copy>("moveNativeAndroidLibs") {
@@ -124,15 +124,15 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             into("${project.projectDir}/../lib/src/main/jniLibs/")
 
             into("arm64-v8a") {
-                from("${project.projectDir}/../../bdk-ffi/target/aarch64-linux-android/release-smaller/libbdkffi.so")
+                from("${project.projectDir}/../../target/aarch64-linux-android/release-smaller/libbdkffi.so")
             }
 
             into("x86_64") {
-                from("${project.projectDir}/../../bdk-ffi/target/x86_64-linux-android/release-smaller/libbdkffi.so")
+                from("${project.projectDir}/../../target/x86_64-linux-android/release-smaller/libbdkffi.so")
             }
 
             into("armeabi-v7a") {
-                from("${project.projectDir}/../../bdk-ffi/target/armv7-linux-androideabi/release-smaller/libbdkffi.so")
+                from("${project.projectDir}/../../target/armv7-linux-androideabi/release-smaller/libbdkffi.so")
             }
 
             doLast {

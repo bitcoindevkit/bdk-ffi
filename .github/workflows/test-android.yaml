@@ -34,7 +34,7 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            bdk-ffi/target
+            ./target
           key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
       - name: Set up JDK
