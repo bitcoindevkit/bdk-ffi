@@ -946,9 +946,7 @@ impl DescriptorSecretKey {
 
     fn from_string(private_key: String) -> Result<Self, BdkError> {
         let descriptor_secret_key = BdkDescriptorSecretKey::from_str(private_key.as_str())
-            .map_err(
-                | e | BdkError::Generic(e.to_string())
-            )?;
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
         Ok(Self {
             descriptor_secret_key_mutex: Mutex::new(descriptor_secret_key),
         })
@@ -975,9 +973,9 @@ impl DescriptorSecretKey {
                     descriptor_secret_key_mutex: Mutex::new(derived_descriptor_secret_key),
                 }))
             }
-            BdkDescriptorSecretKey::Single(_) => {
-                Err(BdkError::Generic("Cannot derive from a single key".to_string()))
-            }
+            BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
+                "Cannot derive from a single key".to_string(),
+            )),
         }
     }
 
@@ -997,9 +995,9 @@ impl DescriptorSecretKey {
                     descriptor_secret_key_mutex: Mutex::new(extended_descriptor_secret_key),
                 }))
             }
-            BdkDescriptorSecretKey::Single(_) => {
-                Err(BdkError::Generic("Cannot extend from a single key".to_string()))
-            }
+            BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
+                "Cannot extend from a single key".to_string(),
+            )),
         }
     }
 
@@ -1044,9 +1042,7 @@ struct DescriptorPublicKey {
 impl DescriptorPublicKey {
     fn from_string(public_key: String) -> Result<Self, BdkError> {
         let descriptor_public_key = BdkDescriptorPublicKey::from_str(public_key.as_str())
-            .map_err(
-                | e | BdkError::Generic(e.to_string())
-            )?;
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
         Ok(Self {
             descriptor_public_key_mutex: Mutex::new(descriptor_public_key),
         })
@@ -1074,9 +1070,9 @@ impl DescriptorPublicKey {
                     descriptor_public_key_mutex: Mutex::new(derived_descriptor_public_key),
                 }))
             }
-            BdkDescriptorPublicKey::Single(_) => {
-                Err(BdkError::Generic("Cannot derive from a single key".to_string()))
-            }
+            BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
+                "Cannot derive from a single key".to_string(),
+            )),
         }
     }
 
@@ -1096,9 +1092,9 @@ impl DescriptorPublicKey {
                     descriptor_public_key_mutex: Mutex::new(extended_descriptor_public_key),
                 }))
             }
-            BdkDescriptorPublicKey::Single(_) => {
-                Err(BdkError::Generic("Cannot extend from a single key".to_string()))
-            }
+            BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
+                "Cannot extend from a single key".to_string(),
+            )),
         }
     }
 
@@ -1198,7 +1194,10 @@ mod test {
         key.derive(path)
     }
 
-    fn extend_dsk(key: &DescriptorSecretKey, path: &str) -> Result<Arc<DescriptorSecretKey>, BdkError> {
+    fn extend_dsk(
+        key: &DescriptorSecretKey,
+        path: &str,
+    ) -> Result<Arc<DescriptorSecretKey>, BdkError> {
         let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
         key.extend(path)
     }
@@ -1211,7 +1210,10 @@ mod test {
         key.derive(path)
     }
 
-    fn extend_dpk(key: &DescriptorPublicKey, path: &str) -> Result<Arc<DescriptorPublicKey>, BdkError> {
+    fn extend_dpk(
+        key: &DescriptorPublicKey,
+        path: &str,
+    ) -> Result<Arc<DescriptorPublicKey>, BdkError> {
         let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
         key.extend(path)
     }
@@ -1257,9 +1259,7 @@ mod test {
 
         let wif = "L2wTu6hQrnDMiFNWA5na6jB12ErGQqtXwqpSL7aWquJaZG8Ai3ch";
         let extended_key = DescriptorSecretKey::from_string(wif.to_string()).unwrap();
-        let result = extended_key.derive(
-            Arc::new(DerivationPath::new("m/0".to_string()).unwrap())
-        );
+        let result = extended_key.derive(Arc::new(DerivationPath::new("m/0".to_string()).unwrap()));
         dbg!(&result);
         assert!(result.is_err());
     }
