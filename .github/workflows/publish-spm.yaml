@@ -2,10 +2,6 @@ name: Build, tag and create release
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Release branch, eg. release/0.MINOR'
-        required: true
-        type: string
       version:
         description: 'New release version, eg. 0.MINOR.PATCH'
         required: true
@@ -19,7 +15,6 @@ jobs:
       - name: Checkout release branch
         uses: actions/checkout@v2
         with:
-          ref: ${{ inputs.branch }}
           submodules: true
 
       - name: Cache
@@ -98,8 +93,9 @@ jobs:
           echo checksum = ${{ env.BDKFFICHECKSUM }}
           echo url = ${{ env.BDKFFIURL }}
           sed "s/BDKFFICHECKSUM/${BDKFFICHECKSUM}/;s/BDKFFIURL/${BDKFFIURL}/" Package.swift.txt > Package.swift
+          git add Sources/BitcoinDevKit/BitcoinDevKit.swift
           git add Package.swift
-          git commit -m "Update Package.swift for release ${{ inputs.version }}"
+          git commit -m "Update BitcoinDevKit.swift and Package.swift for release ${{ inputs.version }}"
           git push
 
       - name: Tag new release
