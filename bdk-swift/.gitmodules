@@ -1,3 +1,0 @@
-[submodule "bdk-ffi"]
-	path = bdk-ffi
-	url = https://github.com/bitcoindevkit/bdk-ffi.git 
