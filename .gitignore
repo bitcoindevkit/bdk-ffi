@@ -15,3 +15,18 @@ xcuserdata
 .idea/
 .editorconfig
 */bdk.kt
+
+# Swift related
+.DS_Store
+/.build
+/.swiftpm
+/Packages
+/*.xcodeproj
+xcuserdata/
+DerivedData/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+bdkFFI.xcframework.zip
+bdkFFI
+libbdkffi.a
+bdkFFI.h
+BitcoinDevKit.swift
