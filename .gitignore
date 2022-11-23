@@ -17,7 +17,6 @@ xcuserdata
 */bdk.kt
 
 # Swift related
-.DS_Store
 /.build
 /.swiftpm
 /Packages

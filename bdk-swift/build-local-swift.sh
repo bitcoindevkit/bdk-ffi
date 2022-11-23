@@ -1,3 +1,10 @@
+#!/bin/bash
+# This script builds local swift-bdk Swift language bindings and corresponding bdkFFI.xcframework.
+# The results of this script can be used for locally testing your SPM package adding a local package
+# to your application pointing at the bdk-swift directory.
+#
+# Run the script from the repo root directory, ie: ./bdk-swift/build-local-swift.sh
+
 rustup install nightly-x86_64-apple-darwin
 rustup component add rust-src --toolchain nightly-x86_64-apple-darwin
 rustup target add aarch64-apple-ios x86_64-apple-ios
