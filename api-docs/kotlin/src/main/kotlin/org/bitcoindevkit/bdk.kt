@@ -351,7 +351,7 @@ class TxBuilder() {
     /** Add a recipient to the internal list. */
     fun addRecipient(script: Script, amount: ULong): TxBuilder {}
 
-    /** Set the list of recipients by providing a list of [AddressAmount]. */
+    /** Set the list of recipients by providing a list of [ScriptAmount]. */
     fun setRecipients(recipients: List<ScriptAmount>): TxBuilder {}
 
     /** Add a utxo to the internal list of unspendable utxos. It’s important to note that the "must-be-spent" utxos added with [TxBuilder.addUtxo] have priority over this. See the Rust docs of the two linked methods for more details. */
@@ -420,12 +420,12 @@ class TxBuilder() {
 }
 
 /**
- * A object holding an ScriptPubKey and an amount.
+ * A object holding a ScriptPubKey and an amount.
  *
  * @property script The ScriptPubKey.
  * @property amount The amount.
  */
-data class AddressAmount (
+data class ScriptAmount (
     var script: Script,
     var amount: ULong
 )
