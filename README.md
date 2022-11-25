@@ -81,6 +81,9 @@ pip3 install bdkpython
 ### bdk-swift
 Add bdk-swift to your dependencies in XCode.
 
+## Developing language bindings using uniffi-rs
+If you are interested in better understanding the base structure we use here in order to build your own Rust-to-Kotlin/Swift/Python language bindings, check out the [uniffi-bindings-template](https://github.com/thunderbiscuit/uniffi-bindings-template) repository. We maintain it as an example and starting point for other projects that wish to leverage the tech stack used in producing the BDK language bindings.
+
 ## Verifying Signatures
 Both libraries and all their corresponding artifacts are signed with a PGP key you can find in the
 root of this repository. To verify the signatures follow the below steps:
