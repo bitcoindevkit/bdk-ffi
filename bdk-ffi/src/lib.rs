@@ -924,6 +924,7 @@ impl DerivationPath {
     }
 }
 
+#[derive(Debug)]
 struct DescriptorSecretKey {
     descriptor_secret_key_mutex: Mutex<BdkDescriptorSecretKey>,
 }
@@ -941,6 +942,14 @@ impl DescriptorSecretKey {
         Self {
             descriptor_secret_key_mutex: Mutex::new(descriptor_secret_key),
         }
+    }
+
+    fn from_string(private_key: String) -> Result<Self, BdkError> {
+        let descriptor_secret_key = BdkDescriptorSecretKey::from_str(private_key.as_str())
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
+        Ok(Self {
+            descriptor_secret_key_mutex: Mutex::new(descriptor_secret_key),
+        })
     }
 
     fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
@@ -964,13 +973,13 @@ impl DescriptorSecretKey {
                     descriptor_secret_key_mutex: Mutex::new(derived_descriptor_secret_key),
                 }))
             }
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
-            }
+            BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
+                "Cannot derive from a single key".to_string(),
+            )),
         }
     }
 
-    fn extend(&self, path: Arc<DerivationPath>) -> Arc<Self> {
+    fn extend(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let descriptor_secret_key = self.descriptor_secret_key_mutex.lock().unwrap();
         let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
         match descriptor_secret_key.deref() {
@@ -982,13 +991,13 @@ impl DescriptorSecretKey {
                     derivation_path: extended_path,
                     wildcard: descriptor_x_key.wildcard,
                 });
-                Arc::new(Self {
+                Ok(Arc::new(Self {
                     descriptor_secret_key_mutex: Mutex::new(extended_descriptor_secret_key),
-                })
+                }))
             }
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
-            }
+            BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
+                "Cannot extend from a single key".to_string(),
+            )),
         }
     }
 
@@ -1025,11 +1034,20 @@ impl DescriptorSecretKey {
     }
 }
 
+#[derive(Debug)]
 struct DescriptorPublicKey {
     descriptor_public_key_mutex: Mutex<BdkDescriptorPublicKey>,
 }
 
 impl DescriptorPublicKey {
+    fn from_string(public_key: String) -> Result<Self, BdkError> {
+        let descriptor_public_key = BdkDescriptorPublicKey::from_str(public_key.as_str())
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
+        Ok(Self {
+            descriptor_public_key_mutex: Mutex::new(descriptor_public_key),
+        })
+    }
+
     fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let secp = Secp256k1::new();
         let descriptor_public_key = self.descriptor_public_key_mutex.lock().unwrap();
@@ -1052,13 +1070,13 @@ impl DescriptorPublicKey {
                     descriptor_public_key_mutex: Mutex::new(derived_descriptor_public_key),
                 }))
             }
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
-            }
+            BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
+                "Cannot derive from a single key".to_string(),
+            )),
         }
     }
 
-    fn extend(&self, path: Arc<DerivationPath>) -> Arc<Self> {
+    fn extend(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let descriptor_public_key = self.descriptor_public_key_mutex.lock().unwrap();
         let path = path.derivation_path_mutex.lock().unwrap().deref().clone();
         match descriptor_public_key.deref() {
@@ -1070,13 +1088,13 @@ impl DescriptorPublicKey {
                     derivation_path: extended_path,
                     wildcard: descriptor_x_key.wildcard,
                 });
-                Arc::new(Self {
+                Ok(Arc::new(Self {
                     descriptor_public_key_mutex: Mutex::new(extended_descriptor_public_key),
-                })
+                }))
             }
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
-            }
+            BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
+                "Cannot extend from a single key".to_string(),
+            )),
         }
     }
 
@@ -1176,7 +1194,10 @@ mod test {
         key.derive(path)
     }
 
-    fn extend_dsk(key: &DescriptorSecretKey, path: &str) -> Arc<DescriptorSecretKey> {
+    fn extend_dsk(
+        key: &DescriptorSecretKey,
+        path: &str,
+    ) -> Result<Arc<DescriptorSecretKey>, BdkError> {
         let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
         key.extend(path)
     }
@@ -1189,7 +1210,10 @@ mod test {
         key.derive(path)
     }
 
-    fn extend_dpk(key: &DescriptorPublicKey, path: &str) -> Arc<DescriptorPublicKey> {
+    fn extend_dpk(
+        key: &DescriptorPublicKey,
+        path: &str,
+    ) -> Result<Arc<DescriptorPublicKey>, BdkError> {
         let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
         key.extend(path)
     }
@@ -1226,12 +1250,34 @@ mod test {
     #[test]
     fn test_extend_descriptor_keys() {
         let master_dsk = get_descriptor_secret_key();
-        let extended_dsk: &DescriptorSecretKey = &extend_dsk(&master_dsk, "m/0");
+        let extended_dsk: &DescriptorSecretKey = &extend_dsk(&master_dsk, "m/0").unwrap();
         assert_eq!(extended_dsk.as_string(), "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h/0/*");
 
         let master_dpk: &DescriptorPublicKey = &master_dsk.as_public();
-        let extended_dpk: &DescriptorPublicKey = &extend_dpk(master_dpk, "m/0");
+        let extended_dpk: &DescriptorPublicKey = &extend_dpk(master_dpk, "m/0").unwrap();
         assert_eq!(extended_dpk.as_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/0/*");
+
+        let wif = "L2wTu6hQrnDMiFNWA5na6jB12ErGQqtXwqpSL7aWquJaZG8Ai3ch";
+        let extended_key = DescriptorSecretKey::from_string(wif.to_string()).unwrap();
+        let result = extended_key.derive(Arc::new(DerivationPath::new("m/0".to_string()).unwrap()));
+        dbg!(&result);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_from_str_descriptor_secret_key() {
+        let key1 = "L2wTu6hQrnDMiFNWA5na6jB12ErGQqtXwqpSL7aWquJaZG8Ai3ch";
+        let key2 = "tprv8ZgxMBicQKsPcwcD4gSnMti126ZiETsuX7qwrtMypr6FBwAP65puFn4v6c3jrN9VwtMRMph6nyT63NrfUL4C3nBzPcduzVSuHD7zbX2JKVc/1/1/1/*";
+
+        let private_descriptor_key1 = DescriptorSecretKey::from_string(key1.to_string()).unwrap();
+        let private_descriptor_key2 = DescriptorSecretKey::from_string(key2.to_string()).unwrap();
+
+        dbg!(private_descriptor_key1);
+        dbg!(private_descriptor_key2);
+
+        // Should error out because you can't produce a DescriptorSecretKey from an xpub
+        let key0 = "tpubDBrgjcxBxnXyL575sHdkpKohWu5qHKoQ7TJXKNrYznh5fVEGBv89hA8ENW7A8MFVpFUSvgLqc4Nj1WZcpePX6rrxviVtPowvMuGF5rdT2Vi";
+        assert!(DescriptorSecretKey::from_string(key0.to_string()).is_err());
     }
 
     #[test]
@@ -1242,7 +1288,7 @@ mod test {
         assert_eq!(derived_dsk.as_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/*");
 
         // extend derived_dsk with path "m/0"
-        let extended_dsk: &DescriptorSecretKey = &extend_dsk(derived_dsk, "m/0");
+        let extended_dsk: &DescriptorSecretKey = &extend_dsk(derived_dsk, "m/0").unwrap();
         assert_eq!(extended_dsk.as_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/0/*");
     }
 
