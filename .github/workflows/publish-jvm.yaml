@@ -38,7 +38,7 @@ jobs:
         with:
           # name: no name is required because we upload the entire directory
           # the default name "artifact" will be used
-          path: /Users/runner/work/bdk-kotlin/bdk-kotlin/bdk-jvm/lib/src/main/resources/
+          path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-jvm/lib/src/main/resources/
 
   build-jvm-full-library:
     name: Create full bdk-jvm library
