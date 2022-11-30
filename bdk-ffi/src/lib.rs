@@ -7,10 +7,12 @@ use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTr
 use bdk::bitcoin::Sequence;
 use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
+use bdk::blockchain::rpc::Auth as BdkAuth;
 use bdk::blockchain::GetBlockHash;
 use bdk::blockchain::GetHeight;
 use bdk::blockchain::{
-    electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig, ConfigurableBlockchain,
+    electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
+    rpc::RpcConfig as BdkRpcConfig, rpc::RpcSyncParams as BdkRpcSyncParams, ConfigurableBlockchain,
 };
 use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
@@ -34,6 +36,7 @@ use std::collections::HashSet;
 use std::convert::{From, TryFrom};
 use std::fmt;
 use std::ops::Deref;
+use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -134,12 +137,84 @@ pub struct EsploraConfig {
     pub timeout: Option<u64>,
 }
 
+pub enum Auth {
+    /// No authentication
+    None,
+    /// Authentication with username and password, usually [Auth::Cookie] should be preferred
+    UserPass {
+        /// Username
+        username: String,
+        /// Password
+        password: String,
+    },
+    /// Authentication with a cookie file
+    Cookie {
+        /// Cookie file
+        file: String,
+    },
+}
+
+impl From<Auth> for BdkAuth {
+    fn from(auth: Auth) -> Self {
+        match auth {
+            Auth::None => BdkAuth::None,
+            Auth::UserPass { username, password } => BdkAuth::UserPass { username, password },
+            Auth::Cookie { file } => BdkAuth::Cookie {
+                file: PathBuf::from(file),
+            },
+        }
+    }
+}
+
+/// Sync parameters for Bitcoin Core RPC.
+///
+/// In general, BDK tries to sync `scriptPubKey`s cached in `Database` with
+/// `scriptPubKey`s imported in the Bitcoin Core Wallet. These parameters are used for determining
+/// how the `importdescriptors` RPC calls are to be made.
+pub struct RpcSyncParams {
+    /// The minimum number of scripts to scan for on initial sync.
+    pub start_script_count: u64,
+    /// Time in unix seconds in which initial sync will start scanning from (0 to start from genesis).
+    pub start_time: u64,
+    /// Forces every sync to use `start_time` as import timestamp.
+    pub force_start_time: bool,
+    /// RPC poll rate (in seconds) to get state updates.
+    pub poll_rate_sec: u64,
+}
+
+impl From<RpcSyncParams> for BdkRpcSyncParams {
+    fn from(params: RpcSyncParams) -> Self {
+        BdkRpcSyncParams {
+            start_script_count: params.start_script_count as usize,
+            start_time: params.start_time,
+            force_start_time: params.force_start_time,
+            poll_rate_sec: params.poll_rate_sec,
+        }
+    }
+}
+
+/// RpcBlockchain configuration options
+pub struct RpcConfig {
+    /// The bitcoin node url
+    pub url: String,
+    /// The bitcoin node authentication mechanism
+    pub auth: Auth,
+    /// The network we are using (it will be checked the bitcoin node network matches this)
+    pub network: Network,
+    /// The wallet name in the bitcoin node, consider using [crate::wallet::wallet_name_from_descriptor] for this
+    pub wallet_name: String,
+    /// Sync parameters
+    pub sync_params: Option<RpcSyncParams>,
+}
+
 /// Type that can contain any of the blockchain configurations defined by the library.
 pub enum BlockchainConfig {
     /// Electrum client
     Electrum { config: ElectrumConfig },
     /// Esplora client
     Esplora { config: EsploraConfig },
+    /// Bitcoin Core RPC client
+    Rpc { config: RpcConfig },
 }
 
 /// A wallet transaction
@@ -200,6 +275,13 @@ impl Blockchain {
                     timeout: config.timeout,
                 })
             }
+            BlockchainConfig::Rpc { config } => AnyBlockchainConfig::Rpc(BdkRpcConfig {
+                url: config.url,
+                auth: config.auth.into(),
+                network: config.network,
+                wallet_name: config.wallet_name,
+                sync_params: config.sync_params.map(|p| p.into()),
+            }),
         };
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         Ok(Self {

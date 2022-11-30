@@ -45,6 +45,7 @@ enum BdkError {
   "Esplora",
   "Sled",
   "Rusqlite",
+  "Rpc",
 };
 
 dictionary AddressInfo {
@@ -127,9 +128,32 @@ dictionary EsploraConfig {
 };
 
 [Enum]
+interface Auth {
+  None();
+  UserPass(string username, string password);
+  Cookie(string file);
+};
+
+dictionary RpcSyncParams {
+    u64 start_script_count;
+    u64 start_time;
+    boolean force_start_time;
+    u64 poll_rate_sec;
+};
+
+dictionary RpcConfig {
+    string url;
+    Auth auth;
+    Network network;
+    string wallet_name;
+    RpcSyncParams? sync_params;
+};
+
+[Enum]
 interface BlockchainConfig {
   Electrum(ElectrumConfig config);
   Esplora(EsploraConfig config);
+  Rpc(RpcConfig config);
 };
 
 interface Blockchain {
