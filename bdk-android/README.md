@@ -1,9 +1,9 @@
 # bdk-android
-This project builds an .aar package for the `android` platform that provide [Kotlin] language bindings for the [`bdk`] library. The Kotlin language bindings are created by the [`bdk-ffi`] project which is included in the root of this repository.
+This project builds an .aar package for the Android platform that provide Kotlin language bindings for the [`bdk`] library. The Kotlin language bindings are created by the [`bdk-ffi`] project which is included in the root of this repository.
 
 ## How to Use
-To use the Kotlin language bindings for [`bdk`] in your `android` project add the following to your gradle dependencies:
-```groovy
+To use the Kotlin language bindings for [`bdk`] in your Android project add the following to your gradle dependencies:
+```kotlin
 repositories {
     mavenCentral()
 }
@@ -30,6 +30,18 @@ val blockchainConfig =
   )
 val wallet = Wallet(externalDescriptor, internalDescriptor, Network.TESTNET, databaseConfig, blockchainConfig)
 val newAddress = wallet.getNewAddress()
+```
+
+### Snapshot releases
+To use a snapshot release, specify the snapshot repository url in the `repositories` block and use the snapshot version in the `dependencies` block:
+```kotlin
+repositories {
+    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+}
+
+dependencies {
+  implementation("org.bitcoindevkit:bdk-android:<version-SNAPSHOT>")
+}
 ```
 
 ### Example Projects
@@ -67,10 +79,8 @@ git clone https://github.com/bitcoindevkit/bdk-ffi
 ./gradlew connectedAndroidTest 
 ```
 
-## How to publish
-### Publish to your local maven repo
+## How to publish to your local Maven repo
 ```shell
-# bdk-android
 cd bdk-android
 ./gradlew publishToMavenLocal --exclude-task signMavenPublication
 ```
@@ -85,3 +95,6 @@ and use the `publishToMavenLocal` task without excluding the signing task:
 ```shell
 ./gradlew publishToMavenLocal
 ```
+
+[`bdk`]: https://github.com/bitcoindevkit/bdk
+[`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi

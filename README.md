@@ -73,6 +73,8 @@ dependencies {
 }
 ```
 
+_Note:_ We also publish snapshot versions of bdk-jvm and bdk-android. See the specific readmes for instructions on how to use those.
+
 ### bdk-python
 ```shell
 pip3 install bdkpython
