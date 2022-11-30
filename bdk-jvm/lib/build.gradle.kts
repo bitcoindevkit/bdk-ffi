@@ -1,6 +1,9 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.*
 import org.gradle.api.tasks.testing.logging.TestLogEvent.*
 
+// library version is defined in gradle.properties
+val libraryVersion: String by project
+
 plugins {
     id("org.jetbrains.kotlin.jvm") version "1.6.10"
     id("java-library")
@@ -51,7 +54,7 @@ afterEvaluate {
             create<MavenPublication>("maven") {
                 groupId = "org.bitcoindevkit"
                 artifactId = "bdk-jvm"
-                version = "0.12.0-SNAPSHOT"
+                version = libraryVersion
 
                 from(components["java"])
                 pom {

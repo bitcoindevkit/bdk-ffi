@@ -1,3 +1,6 @@
+// library version is defined in gradle.properties
+val libraryVersion: String by project
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android") version "1.6.10"
@@ -57,7 +60,7 @@ afterEvaluate {
             create<MavenPublication>("maven") {
                 groupId = "org.bitcoindevkit"
                 artifactId = "bdk-android"
-                version = "0.12.0-SNAPSHOT"
+                version = libraryVersion
 
                 from(components["release"])
                 pom {
