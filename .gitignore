@@ -14,7 +14,7 @@ xcuserdata
 .clj-kondo
 .idea/
 .editorconfig
-*/bdk.kt
+bdk.kt
 
 # Swift related
 /.build
