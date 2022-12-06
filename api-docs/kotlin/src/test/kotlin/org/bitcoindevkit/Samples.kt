@@ -44,6 +44,18 @@ fun electrumBlockchainConfigSample() {
     )
 }
 
+fun esploraBlockchainConfigSample() {
+    val esploraURL: String = "http://10.0.2.2:3002"
+    val esploraConfig: EsploraConfig = EsploraConfig(
+        baseUrl = esploraURL,
+        proxy = null,
+        concurrency = 4u,
+        stopGap = 20UL,
+        timeout = null
+    )
+    val blockchainConfig = BlockchainConfig.Esplora(config = esploraConfig)
+}
+
 fun memoryDatabaseConfigSample() {
     val memoryDatabaseConfig = DatabaseConfig.Memory
 }
@@ -102,9 +114,9 @@ fun blockchainSample() {
 fun txBuilderResultSample1() {
     val faucetAddress = Address("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt")
     // TxBuilderResult is a data class, which means you can use destructuring declarations on it to
-    // open it up in its component parts
+    // open it up into its component parts
     val (psbt, txDetails) = TxBuilder()
-        .addRecipient(faucetAddress.scriptPubkey(), 1000u)
+        .addRecipient(faucetAddress.scriptPubkey(), 1000uL)
         .feeRate(1.2f)
         .finish(wallet)
 
@@ -115,7 +127,7 @@ fun txBuilderResultSample1() {
 fun txBuilderResultSample2() {
     val faucetAddress = Address("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt")
     val txBuilderResult: TxBuilderResult = TxBuilder()
-        .addRecipient(faucetAddress.scriptPubkey(), 1000u)
+        .addRecipient(faucetAddress.scriptPubkey(), 1000uL)
         .feeRate(1.2f)
         .finish(wallet)
 
@@ -200,7 +212,7 @@ fun createTransaction() {
 
     val paymentAddress: Address = Address("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt")
     val (psbt, txDetails) = TxBuilder()
-        .addRecipient(faucetAddress.scriptPubkey(), 1000u)
+        .addRecipient(faucetAddress.scriptPubkey(), 1000uL)
         .feeRate(1.2f)
         .finish(wallet)
 
@@ -213,7 +225,7 @@ fun walletSample() {
     val internalDescriptor = "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEfVULesmhEfZYyBXdE/84h/1h/0h/1/*)"
     val sqliteDatabaseConfig = DatabaseConfig.Sqlite(SqliteDbConfiguration("bdk-sqlite"))
 
-    val wallet = BdkWallet(
+    val wallet = Wallet(
         descriptor = externalDescriptor,
         changeDescriptor = internalDescriptor,
         network = Network.TESTNET,

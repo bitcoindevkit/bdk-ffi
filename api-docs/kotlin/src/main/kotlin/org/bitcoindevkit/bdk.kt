@@ -94,6 +94,8 @@ sealed class DatabaseConfig {
  * Configuration type for a SQLite database.
  *
  * @property path Main directory of the DB.
+ *
+ * @sample org.bitcoindevkit.sqliteDatabaseConfigSample
  */
 data class SqliteDbConfiguration(
     var path: String,
@@ -137,6 +139,8 @@ data class ElectrumConfig (
  * @property concurrency Number of parallel requests sent to the esplora service (default: 4).
  * @property stopGap Stop searching addresses for transactions after finding an unused gap of this length.
  * @property timeout Socket timeout.
+ *
+ * @sample org.bitcoindevkit.esploraBlockchainConfigSample
  */
 data class EsploraConfig (
     var baseUrl: String,
@@ -213,7 +217,7 @@ class PartiallySignedBitcoinTransaction(psbtBase64: String) {
     fun txid(): String {}
 
     /** Return the transaction as bytes. */
-    fun `extractTx`(): List<UByte>
+    fun extractTx(): List<UByte>
 
     /**
      * Combines this PartiallySignedTransaction with another PSBT as described by BIP 174.
@@ -343,6 +347,9 @@ class Progress {
  * After creating the TxBuilder, you set options on it until finally calling `.finish` to consume the builder and generate the transaction.
  *
  * Each method on the TxBuilder returns an instance of a new TxBuilder with the option set/added.
+ *
+ * @sample org.bitcoindevkit.txBuilderResultSample1
+ * @sample org.bitcoindevkit.txBuilderResultSample2
  */
 class TxBuilder() {
     /** Add data as an output using OP_RETURN. */
@@ -476,6 +483,9 @@ class DerivationPath(path: String) {}
  * @sample org.bitcoindevkit.descriptorSecretKeyExtendSample
  */
 class DescriptorSecretKey(network: Network, mnemonic: Mnemonic, password: String?) {
+    /** Build a DescriptorSecretKey from a String */
+    fun fromString(secretKey: String): DescriptorSecretKey {}
+
     /** Derive a private descriptor at a given path. */
     fun derive(path: DerivationPath): DescriptorSecretKey {}
 
@@ -500,11 +510,14 @@ class DescriptorSecretKey(network: Network, mnemonic: Mnemonic, password: String
  * @param password The optional passphrase that can be provided as per BIP-39.
  */
 class DescriptorPublicKey(network: Network, mnemonic: String, password: String?) {
+    /** Build a DescriptorPublicKey from a String */
+    fun fromString(publicKey: String): DescriptorPublicKey {}
+
     /** Derive a public descriptor at a given path. */
-    fun derive(path: DerivationPath): DescriptorSecretKey
+    fun derive(path: DerivationPath): DescriptorPublicKey
 
     /** Extend the public descriptor with a custom path. */
-    fun extend(path: DerivationPath): DescriptorSecretKey
+    fun extend(path: DerivationPath): DescriptorPublicKey
 
     /** Return the public descriptor as a string. */
     fun asString(): String
