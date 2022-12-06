@@ -24,12 +24,11 @@ val internalDescriptor = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEm
 
 val databaseConfig = DatabaseConfig.Memory
 
-val blockchainConfig =
-  BlockchainConfig.Electrum(
-    ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u)
-  )
+val blockchainConfig = BlockchainConfig.Electrum(
+        ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u)
+    )
 val wallet = Wallet(externalDescriptor, internalDescriptor, Network.TESTNET, databaseConfig, blockchainConfig)
-val newAddress = wallet.getNewAddress()
+val newAddress = wallet.getAddress(AddressIndex.LAST_UNUSED)
 ```
 
 ### Snapshot releases
