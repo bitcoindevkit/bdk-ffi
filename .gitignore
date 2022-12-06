@@ -29,3 +29,5 @@ bdkFFI
 libbdkffi.a
 bdkFFI.h
 BitcoinDevKit.swift
+bdk.swift
+.build
