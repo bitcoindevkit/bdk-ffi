@@ -257,7 +257,7 @@ interface TxBuilder {
 
   TxBuilder drain_wallet();
 
-  TxBuilder drain_to(string address);
+  TxBuilder drain_to(Script script);
 
   TxBuilder enable_rbf();
 

@@ -501,12 +501,6 @@ impl Wallet {
     }
 }
 
-fn to_script_pubkey(address: &str) -> Result<BdkScript, BdkError> {
-    BdkAddress::from_str(address)
-        .map(|x| x.script_pubkey())
-        .map_err(|e| BdkError::Generic(e.to_string()))
-}
-
 /// A Bitcoin address.
 struct Address {
     address: BdkAddress,
@@ -527,7 +521,7 @@ impl Address {
 }
 
 /// A Bitcoin script.
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Script {
     script: BdkScript,
 }
@@ -565,7 +559,7 @@ struct TxBuilder {
     fee_rate: Option<f32>,
     fee_absolute: Option<u64>,
     drain_wallet: bool,
-    drain_to: Option<String>,
+    drain_to: Option<BdkScript>,
     rbf: Option<RbfValue>,
     data: Vec<u8>,
 }
@@ -703,9 +697,9 @@ impl TxBuilder {
     /// either provide the utxos that the transaction should spend via add_utxos, or set drain_wallet to spend all of them.
     /// When bumping the fees of a transaction made with this option, you probably want to use BumpFeeTxBuilder.allow_shrinking
     /// to allow this output to be reduced to pay for the extra fees.
-    fn drain_to(&self, address: String) -> Arc<Self> {
+    fn drain_to(&self, script: Arc<Script>) -> Arc<Self> {
         Arc::new(TxBuilder {
-            drain_to: Some(address),
+            drain_to: Some(script.script.clone()),
             ..self.clone()
         })
     }
@@ -766,8 +760,8 @@ impl TxBuilder {
         if self.drain_wallet {
             tx_builder.drain_wallet();
         }
-        if let Some(address) = &self.drain_to {
-            tx_builder.drain_to(to_script_pubkey(address)?);
+        if let Some(script) = &self.drain_to {
+            tx_builder.drain_to(script.clone());
         }
         if let Some(rbf) = &self.rbf {
             match *rbf {
@@ -1125,11 +1119,14 @@ mod test {
             wallet_mutex: Mutex::new(funded_wallet),
         };
         let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
+        let drain_to_script = crate::Address::new(drain_to_address)
+            .unwrap()
+            .script_pubkey();
         let tx_builder = TxBuilder::new()
             .drain_wallet()
-            .drain_to(drain_to_address.clone());
+            .drain_to(drain_to_script.clone());
         assert!(tx_builder.drain_wallet);
-        assert_eq!(tx_builder.drain_to, Some(drain_to_address));
+        assert_eq!(tx_builder.drain_to, Some(drain_to_script.script.clone()));
 
         let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
         let psbt = tx_builder_result.psbt.internal.lock().unwrap().clone();
@@ -1317,13 +1314,17 @@ mod test {
             wallet_mutex: Mutex::new(funded_wallet),
         };
         let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
+        let drain_to_script = crate::Address::new(drain_to_address)
+            .unwrap()
+            .script_pubkey();
+
         let tx_builder = TxBuilder::new()
             .fee_rate(2.0)
             .drain_wallet()
-            .drain_to(drain_to_address.clone());
+            .drain_to(drain_to_script.clone());
         //dbg!(&tx_builder);
         assert!(tx_builder.drain_wallet);
-        assert_eq!(tx_builder.drain_to, Some(drain_to_address));
+        assert_eq!(tx_builder.drain_to, Some(drain_to_script.script.clone()));
 
         let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
 
