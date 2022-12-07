@@ -410,7 +410,7 @@ class TxBuilder() {
      * [drainWallet] to spend all of them. When bumping the fees of a transaction made with this option,
      * you probably want to use [BumpFeeTxBuilder.allowShrinking] to allow this output to be reduced to pay for the extra fees.
      */
-    fun drainTo(address: String): TxBuilder {}
+    fun drainTo(script: Script): TxBuilder {}
 
     /** Enable signaling RBF. This will use the default `nsequence` value of `0xFFFFFFFD`. */
     fun enableRbf(): TxBuilder {}
