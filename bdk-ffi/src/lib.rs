@@ -17,7 +17,7 @@ use bdk::blockchain::{
 use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
-use bdk::descriptor::{DescriptorXKey, IntoWalletDescriptor};
+use bdk::descriptor::DescriptorXKey;
 use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic, WordCount};
 use bdk::keys::{
     DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
@@ -25,7 +25,10 @@ use bdk::keys::{
 };
 use bdk::miniscript::BareCtx;
 use bdk::psbt::PsbtUtils;
-use bdk::template::{Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate, DescriptorTemplateOut};
+use bdk::template::{
+    Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate,
+    DescriptorTemplateOut,
+};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
@@ -1583,5 +1586,103 @@ mod test {
 
         assert!(tx_builder_result.psbt.fee_amount().is_some());
         assert_eq!(tx_builder_result.psbt.fee_amount().unwrap(), 220);
+    }
+
+    #[test]
+    fn test_descriptor_templates() {
+        let master: Arc<DescriptorSecretKey> = Arc::new(get_descriptor_secret_key());
+        println!("Master: {:?}", master.as_string());
+        // tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h
+
+        let handmade_public_44 = master
+            .derive(Arc::new(
+                DerivationPath::new("m/44h/1h/0h".to_string()).unwrap(),
+            ))
+            .unwrap()
+            .as_public();
+        println!("Public 44: {}", handmade_public_44.as_string());
+        // Public 44: [d1d04177/44'/1'/0']tpubDCoPjomfTqh1e7o1WgGpQtARWtkueXQAepTeNpWiitS3Sdv8RKJ1yvTrGHcwjDXp2SKyMrTEca4LoN7gEUiGCWboyWe2rz99Kf4jK4m2Zmx/*
+
+        let handmade_public_49 = master
+            .derive(Arc::new(
+                DerivationPath::new("m/49h/1h/0h".to_string()).unwrap(),
+            ))
+            .unwrap()
+            .as_public();
+        println!("Public 49: {}", handmade_public_49.as_string());
+        // Public 49: [d1d04177/49'/1'/0']tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR/*
+
+        let handmade_public_84 = master
+            .derive(Arc::new(
+                DerivationPath::new("m/84h/1h/0h".to_string()).unwrap(),
+            ))
+            .unwrap()
+            .as_public();
+        println!("Public 84: {}", handmade_public_84.as_string());
+        // Public 84: [d1d04177/84'/1'/0']tpubDDNxbq17egjFk2edjv8oLnzxk52zny9aAYNv9CMqTzA4mQDiQq818sEkNe9Gzmd4QU8558zftqbfoVBDQorG3E4Wq26tB2JeE4KUoahLkx6/*
+
+        let template_private_44 =
+            Descriptor::new_bip44(master.clone(), KeychainKind::External, Testnet);
+        let template_private_49 =
+            Descriptor::new_bip49(master.clone(), KeychainKind::External, Testnet);
+        let template_private_84 = Descriptor::new_bip84(master, KeychainKind::External, Testnet);
+
+        // the extended public keys are the same when creating them manually as they are with the templates
+        println!("Template 49: {}", template_private_49.as_string());
+        println!("Template 44: {}", template_private_44.as_string());
+        println!("Template 84: {}", template_private_84.as_string());
+
+        // for the public versions of the templates these are incorrect, bug report and fix in bitcoindevkit/bdk#817 and bitcoindevkit/bdk#818
+        let template_public_44 = Descriptor::new_bip44_public(
+            handmade_public_44,
+            "d1d04177".to_string(),
+            KeychainKind::External,
+            Testnet,
+        );
+        let template_public_49 = Descriptor::new_bip49_public(
+            handmade_public_49,
+            "d1d04177".to_string(),
+            KeychainKind::External,
+            Testnet,
+        );
+        let template_public_84 = Descriptor::new_bip84_public(
+            handmade_public_84,
+            "d1d04177".to_string(),
+            KeychainKind::External,
+            Testnet,
+        );
+
+        println!("Template public 49: {}", template_public_49.as_string());
+        println!("Template public 44: {}", template_public_44.as_string());
+        println!("Template public 84: {}", template_public_84.as_string());
+
+        // when using a public key, both as_string and as_string_private return the same string
+        assert_eq!(
+            template_public_44.as_string_private(),
+            template_public_44.as_string()
+        );
+        assert_eq!(
+            template_public_49.as_string_private(),
+            template_public_49.as_string()
+        );
+        assert_eq!(
+            template_public_84.as_string_private(),
+            template_public_84.as_string()
+        );
+
+        // when using as_string on a private key, we get the same result as when using it on a public key
+        // these currently fails as described in #817
+        // assert_eq!(
+        //     template_private_44.as_string(),
+        //     template_public_44.as_string()
+        // );
+        // assert_eq!(
+        //     template_private_49.as_string(),
+        //     template_public_49.as_string()
+        // );
+        // assert_eq!(
+        //     template_private_84.as_string(),
+        //     template_public_84.as_string()
+        // );
     }
 }
