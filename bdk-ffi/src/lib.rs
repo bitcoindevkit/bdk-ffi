@@ -1,7 +1,7 @@
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
-use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;
+use bdk::bitcoin::util::bip32::{DerivationPath as BdkDerivationPath, Fingerprint};
 use bdk::bitcoin::util::psbt::serialize::Serialize;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::bitcoin::Sequence;
@@ -17,7 +17,7 @@ use bdk::blockchain::{
 use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
-use bdk::descriptor::DescriptorXKey;
+use bdk::descriptor::{DescriptorXKey, IntoWalletDescriptor};
 use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic, WordCount};
 use bdk::keys::{
     DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
@@ -25,6 +25,7 @@ use bdk::keys::{
 };
 use bdk::miniscript::BareCtx;
 use bdk::psbt::PsbtUtils;
+use bdk::template::{Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate, DescriptorTemplateOut};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
@@ -1176,6 +1177,170 @@ impl DescriptorPublicKey {
 
     fn as_string(&self) -> String {
         self.descriptor_public_key_mutex.lock().unwrap().to_string()
+    }
+}
+
+#[derive(Debug)]
+struct Descriptor {
+    pub descriptor: DescriptorTemplateOut,
+}
+
+impl Descriptor {
+    fn new_bip44(
+        secret_key: Arc<DescriptorSecretKey>,
+        keychain_kind: KeychainKind,
+        network: Network,
+    ) -> Self {
+        let derivable_key = secret_key.descriptor_secret_key_mutex.lock().unwrap();
+
+        match derivable_key.deref() {
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
+                let derivable_key = descriptor_x_key.xkey;
+                let descriptor_template_out =
+                    Bip44(derivable_key, keychain_kind).build(network).unwrap();
+                Self {
+                    descriptor: descriptor_template_out,
+                }
+            }
+            BdkDescriptorSecretKey::Single(_) => {
+                unreachable!()
+            }
+        }
+    }
+
+    fn new_bip44_public(
+        public_key: Arc<DescriptorPublicKey>,
+        fingerprint: String,
+        keychain_kind: KeychainKind,
+        network: Network,
+    ) -> Self {
+        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
+        let derivable_key = public_key.descriptor_public_key_mutex.lock().unwrap();
+
+        match derivable_key.deref() {
+            BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
+                let derivable_key = descriptor_x_key.xkey;
+                let descriptor_template_out =
+                    Bip44Public(derivable_key, fingerprint, keychain_kind)
+                        .build(network)
+                        .unwrap();
+
+                Self {
+                    descriptor: descriptor_template_out,
+                }
+            }
+            BdkDescriptorPublicKey::Single(_) => {
+                unreachable!()
+            }
+        }
+    }
+
+    fn new_bip49(
+        secret_key: Arc<DescriptorSecretKey>,
+        keychain_kind: KeychainKind,
+        network: Network,
+    ) -> Self {
+        let derivable_key = secret_key.descriptor_secret_key_mutex.lock().unwrap();
+
+        match derivable_key.deref() {
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
+                let derivable_key = descriptor_x_key.xkey;
+                let descriptor_template_out =
+                    Bip49(derivable_key, keychain_kind).build(network).unwrap();
+                Self {
+                    descriptor: descriptor_template_out,
+                }
+            }
+            BdkDescriptorSecretKey::Single(_) => {
+                unreachable!()
+            }
+        }
+    }
+
+    fn new_bip49_public(
+        public_key: Arc<DescriptorPublicKey>,
+        fingerprint: String,
+        keychain_kind: KeychainKind,
+        network: Network,
+    ) -> Self {
+        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
+        let derivable_key = public_key.descriptor_public_key_mutex.lock().unwrap();
+
+        match derivable_key.deref() {
+            BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
+                let derivable_key = descriptor_x_key.xkey;
+                let descriptor_template_out =
+                    Bip49Public(derivable_key, fingerprint, keychain_kind)
+                        .build(network)
+                        .unwrap();
+
+                Self {
+                    descriptor: descriptor_template_out,
+                }
+            }
+            BdkDescriptorPublicKey::Single(_) => {
+                unreachable!()
+            }
+        }
+    }
+
+    fn new_bip84(
+        secret_key: Arc<DescriptorSecretKey>,
+        keychain_kind: KeychainKind,
+        network: Network,
+    ) -> Self {
+        let derivable_key = secret_key.descriptor_secret_key_mutex.lock().unwrap();
+
+        match derivable_key.deref() {
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
+                let derivable_key = descriptor_x_key.xkey;
+                let descriptor_template_out =
+                    Bip84(derivable_key, keychain_kind).build(network).unwrap();
+                Self {
+                    descriptor: descriptor_template_out,
+                }
+            }
+            BdkDescriptorSecretKey::Single(_) => {
+                unreachable!()
+            }
+        }
+    }
+
+    fn new_bip84_public(
+        public_key: Arc<DescriptorPublicKey>,
+        fingerprint: String,
+        keychain_kind: KeychainKind,
+        network: Network,
+    ) -> Self {
+        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
+        let derivable_key = public_key.descriptor_public_key_mutex.lock().unwrap();
+
+        match derivable_key.deref() {
+            BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
+                let derivable_key = descriptor_x_key.xkey;
+                let descriptor_template_out =
+                    Bip84Public(derivable_key, fingerprint, keychain_kind)
+                        .build(network)
+                        .unwrap();
+
+                Self {
+                    descriptor: descriptor_template_out,
+                }
+            }
+            BdkDescriptorPublicKey::Single(_) => {
+                unreachable!()
+            }
+        }
+    }
+
+    fn as_string_private(&self) -> String {
+        let descriptor = &self.descriptor.0;
+        let key_map = &self.descriptor.1;
+        descriptor.to_string_with_secret(key_map)
+    }
+
+    fn as_string(&self) -> String {
+        self.descriptor.0.to_string()
     }
 }
 

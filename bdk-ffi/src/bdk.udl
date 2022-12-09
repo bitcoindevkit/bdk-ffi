@@ -357,6 +357,33 @@ interface DescriptorPublicKey {
   string as_string();
 };
 
+interface Descriptor {
+  // [Throws=Error]
+  // constructor(string descriptor);
+
+  [Name=new_bip44]
+  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+
+  [Name=new_bip44_public]
+  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+
+  // [Name=new_bip49]
+  // constructor(DescriptorSecretKey secret_key, KeychainKind keychain);
+
+  // [Name=new_bip49_public]
+  // constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain);
+
+  // [Name=new_bip84]
+  // constructor(DescriptorSecretKey secret_key, KeychainKind keychain);
+
+  // [Name=new_bip84_public]
+  // constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain);
+
+  string as_string();
+
+  string as_string_private();
+};
+
 interface Address {
   [Throws=BdkError]
   constructor(string address);
