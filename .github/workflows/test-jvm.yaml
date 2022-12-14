@@ -31,11 +31,6 @@ jobs:
           distribution: temurin
           java-version: 11
 
-      - name: Build bdk-jvm library
-        run: |
-          cd bdk-jvm
-          ./gradlew buildJvmLib
-
       - name: Run JVM tests
         run: |
           cd bdk-jvm

@@ -46,11 +46,6 @@ jobs:
       - name: Install rust android targets
         run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
 
-      - name: Build bdk-android library
-        run: |
-          cd bdk-android
-          ./gradlew buildAndroidLib
-
       - name: Run Android tests
         run: |
           cd bdk-android
