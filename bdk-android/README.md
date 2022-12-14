@@ -95,5 +95,18 @@ and use the `publishToMavenLocal` task without excluding the signing task:
 ./gradlew publishToMavenLocal
 ```
 
+## Known issues
+Depending on the JVM version you use, you might not have the JNA dependency on your classpath. The exception thrown will be
+```shell
+class file for com.sun.jna.Pointer not found
+```
+The solution is to add JNA as a dependency like so:
+```kotlin
+dependencies {
+    // ...
+    implementation("net.java.dev.jna:jna:5.12.1")
+}
+```
+
 [`bdk`]: https://github.com/bitcoindevkit/bdk
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
