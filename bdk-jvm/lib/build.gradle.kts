@@ -1,5 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat.*
 import org.gradle.api.tasks.testing.logging.TestLogEvent.*
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 // library version is defined in gradle.properties
 val libraryVersion: String by project
@@ -100,4 +101,10 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     sign(publishing.publications)
+}
+
+// This task dependency ensures that we build the bindings
+// binaries before running the tests
+tasks.withType<KotlinCompile> {
+    dependsOn("buildJvmLib")
 }
