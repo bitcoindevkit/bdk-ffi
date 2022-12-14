@@ -17,17 +17,17 @@ use bdk::blockchain::{
 use bdk::blockchain::{Blockchain as BdkBlockchain, Progress as BdkProgress};
 use bdk::database::any::{AnyDatabase, SledDbConfiguration, SqliteDbConfiguration};
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
-use bdk::descriptor::DescriptorXKey;
+use bdk::descriptor::{DescriptorXKey, ExtendedDescriptor, IntoWalletDescriptor};
 use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic, WordCount};
 use bdk::keys::{
     DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
     DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
+    KeyMap,
 };
 use bdk::miniscript::BareCtx;
 use bdk::psbt::PsbtUtils;
 use bdk::template::{
     Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate,
-    DescriptorTemplateOut,
 };
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
@@ -1185,10 +1185,20 @@ impl DescriptorPublicKey {
 
 #[derive(Debug)]
 struct Descriptor {
-    pub descriptor: DescriptorTemplateOut,
+    pub extended_descriptor: ExtendedDescriptor,
+    pub key_map: KeyMap,
 }
 
 impl Descriptor {
+    fn new(descriptor: String, network: Network) -> Result<Self, BdkError> {
+        let secp = Secp256k1::new();
+        let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network)?;
+        Ok(Self {
+            extended_descriptor,
+            key_map,
+        })
+    }
+
     fn new_bip44(
         secret_key: Arc<DescriptorSecretKey>,
         keychain_kind: KeychainKind,
@@ -1199,10 +1209,11 @@ impl Descriptor {
         match derivable_key.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let descriptor_template_out =
+                let (extended_descriptor, key_map, _) =
                     Bip44(derivable_key, keychain_kind).build(network).unwrap();
                 Self {
-                    descriptor: descriptor_template_out,
+                    extended_descriptor,
+                    key_map,
                 }
             }
             BdkDescriptorSecretKey::Single(_) => {
@@ -1223,13 +1234,14 @@ impl Descriptor {
         match derivable_key.deref() {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let descriptor_template_out =
+                let (extended_descriptor, key_map, _) =
                     Bip44Public(derivable_key, fingerprint, keychain_kind)
                         .build(network)
                         .unwrap();
 
                 Self {
-                    descriptor: descriptor_template_out,
+                    extended_descriptor,
+                    key_map,
                 }
             }
             BdkDescriptorPublicKey::Single(_) => {
@@ -1248,10 +1260,11 @@ impl Descriptor {
         match derivable_key.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let descriptor_template_out =
+                let (extended_descriptor, key_map, _) =
                     Bip49(derivable_key, keychain_kind).build(network).unwrap();
                 Self {
-                    descriptor: descriptor_template_out,
+                    extended_descriptor,
+                    key_map,
                 }
             }
             BdkDescriptorSecretKey::Single(_) => {
@@ -1272,13 +1285,14 @@ impl Descriptor {
         match derivable_key.deref() {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let descriptor_template_out =
+                let (extended_descriptor, key_map, _) =
                     Bip49Public(derivable_key, fingerprint, keychain_kind)
                         .build(network)
                         .unwrap();
 
                 Self {
-                    descriptor: descriptor_template_out,
+                    extended_descriptor,
+                    key_map,
                 }
             }
             BdkDescriptorPublicKey::Single(_) => {
@@ -1297,10 +1311,11 @@ impl Descriptor {
         match derivable_key.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let descriptor_template_out =
+                let (extended_descriptor, key_map, _) =
                     Bip84(derivable_key, keychain_kind).build(network).unwrap();
                 Self {
-                    descriptor: descriptor_template_out,
+                    extended_descriptor,
+                    key_map,
                 }
             }
             BdkDescriptorSecretKey::Single(_) => {
@@ -1321,13 +1336,14 @@ impl Descriptor {
         match derivable_key.deref() {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let descriptor_template_out =
+                let (extended_descriptor, key_map, _) =
                     Bip84Public(derivable_key, fingerprint, keychain_kind)
                         .build(network)
                         .unwrap();
 
                 Self {
-                    descriptor: descriptor_template_out,
+                    extended_descriptor,
+                    key_map,
                 }
             }
             BdkDescriptorPublicKey::Single(_) => {
@@ -1337,13 +1353,13 @@ impl Descriptor {
     }
 
     fn as_string_private(&self) -> String {
-        let descriptor = &self.descriptor.0;
-        let key_map = &self.descriptor.1;
+        let descriptor = &self.extended_descriptor;
+        let key_map = &self.key_map;
         descriptor.to_string_with_secret(key_map)
     }
 
     fn as_string(&self) -> String {
-        self.descriptor.0.to_string()
+        self.extended_descriptor.to_string()
     }
 }
 

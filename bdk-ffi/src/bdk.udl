@@ -358,8 +358,8 @@ interface DescriptorPublicKey {
 };
 
 interface Descriptor {
-  // [Throws=Error]
-  // constructor(string descriptor);
+  [Throws=BdkError]
+  constructor(string descriptor, Network network);
 
   [Name=new_bip44]
   constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
