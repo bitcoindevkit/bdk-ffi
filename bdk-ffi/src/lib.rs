@@ -313,10 +313,6 @@ impl Blockchain {
     }
 }
 
-struct Wallet {
-    wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
-}
-
 /// A reference to a transaction output.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct OutPoint {
@@ -493,6 +489,11 @@ impl PartiallySignedTransaction {
     }
 }
 
+#[derive(Debug)]
+struct Wallet {
+    wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
+}
+
 /// A Bitcoin wallet.
 /// The Wallet acts as a way of coherently interfacing with output descriptors and related transactions. Its main components are:
 ///     1. Output descriptors from which it can derive addresses.
@@ -500,8 +501,8 @@ impl PartiallySignedTransaction {
 ///     3. Signers that can contribute signatures to addresses instantiated from the descriptors.
 impl Wallet {
     fn new(
-        descriptor: String,
-        change_descriptor: Option<String>,
+        descriptor: Arc<Descriptor>,
+        change_descriptor: Option<Arc<Descriptor>>,
         network: Network,
         database_config: DatabaseConfig,
     ) -> Result<Self, BdkError> {
@@ -511,6 +512,9 @@ impl Wallet {
             DatabaseConfig::Sqlite { config } => AnyDatabaseConfig::Sqlite(config),
         };
         let database = AnyDatabase::from_config(&any_database_config)?;
+        let descriptor: String = descriptor.as_string_private();
+        let change_descriptor: Option<String> = change_descriptor.map(|d| d.as_string_private());
+
         let wallet_mutex = Mutex::new(BdkWallet::new(
             &descriptor,
             change_descriptor.as_ref(),
@@ -1372,7 +1376,6 @@ uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
 mod test {
     use crate::*;
     use bdk::bitcoin::Address;
-    use bdk::bitcoin::Network::Testnet;
     use bdk::wallet::get_funded_wallet;
     use std::str::FromStr;
     use std::sync::Mutex;
@@ -1423,7 +1426,7 @@ mod test {
                 .cloned()
                 .unwrap()
                 .script_pubkey,
-            Testnet,
+            Network::Testnet,
         )
         .unwrap();
         assert_eq!(
@@ -1446,7 +1449,7 @@ mod test {
 
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
-        DescriptorSecretKey::new(Testnet, Arc::new(mnemonic), None)
+        DescriptorSecretKey::new(Network::Testnet, Arc::new(mnemonic), None)
     }
 
     fn derive_dsk(
@@ -1638,10 +1641,11 @@ mod test {
         // Public 84: [d1d04177/84'/1'/0']tpubDDNxbq17egjFk2edjv8oLnzxk52zny9aAYNv9CMqTzA4mQDiQq818sEkNe9Gzmd4QU8558zftqbfoVBDQorG3E4Wq26tB2JeE4KUoahLkx6/*
 
         let template_private_44 =
-            Descriptor::new_bip44(master.clone(), KeychainKind::External, Testnet);
+            Descriptor::new_bip44(master.clone(), KeychainKind::External, Network::Testnet);
         let template_private_49 =
-            Descriptor::new_bip49(master.clone(), KeychainKind::External, Testnet);
-        let template_private_84 = Descriptor::new_bip84(master, KeychainKind::External, Testnet);
+            Descriptor::new_bip49(master.clone(), KeychainKind::External, Network::Testnet);
+        let template_private_84 =
+            Descriptor::new_bip84(master, KeychainKind::External, Network::Testnet);
 
         // the extended public keys are the same when creating them manually as they are with the templates
         println!("Template 49: {}", template_private_49.as_string());
@@ -1653,19 +1657,19 @@ mod test {
             handmade_public_44,
             "d1d04177".to_string(),
             KeychainKind::External,
-            Testnet,
+            Network::Testnet,
         );
         let template_public_49 = Descriptor::new_bip49_public(
             handmade_public_49,
             "d1d04177".to_string(),
             KeychainKind::External,
-            Testnet,
+            Network::Testnet,
         );
         let template_public_84 = Descriptor::new_bip84_public(
             handmade_public_84,
             "d1d04177".to_string(),
             KeychainKind::External,
-            Testnet,
+            Network::Testnet,
         );
 
         println!("Template public 49: {}", template_public_49.as_string());
@@ -1700,5 +1704,44 @@ mod test {
         //     template_private_84.as_string(),
         //     template_public_84.as_string()
         // );
+    }
+
+    #[test]
+    fn test_descriptor_from_string() {
+        let descriptor1 = Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Testnet);
+        let descriptor2 = Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Bitcoin);
+
+        // Creating a Descriptor using an extended key that doesn't match the network provided will throw and InvalidNetwork Error
+        assert!(descriptor1.is_ok());
+        assert_eq!(
+            descriptor2.unwrap_err().to_string(),
+            "Descriptor(Key(InvalidNetwork))"
+        )
+    }
+
+    #[test]
+    fn test_wallet_from_descriptor() {
+        let descriptor1 = Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Testnet).unwrap();
+
+        let wallet1 = Wallet::new(
+            Arc::new(Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Testnet).unwrap()),
+            None,
+            Network::Testnet,
+            DatabaseConfig::Memory
+        );
+
+        let wallet2 = Wallet::new(
+            Arc::new(descriptor1),
+            None,
+            Network::Bitcoin,
+            DatabaseConfig::Memory,
+        );
+
+        // Creating a wallet using a Descriptor with an extended key that doesn't match the network provided in the wallet constructor will throw and InvalidNetwork Error
+        assert!(wallet1.is_ok());
+        assert_eq!(
+            wallet2.unwrap_err().to_string(),
+            "Descriptor(Key(InvalidNetwork))"
+        );
     }
 }

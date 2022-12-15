@@ -203,7 +203,7 @@ dictionary ScriptAmount {
 
 interface Wallet {
   [Throws=BdkError]
-  constructor(string descriptor, string? change_descriptor, Network network, DatabaseConfig database_config);
+  constructor(Descriptor descriptor, Descriptor? change_descriptor, Network network, DatabaseConfig database_config);
 
   [Throws=BdkError]
   AddressInfo get_address(AddressIndex address_index);
