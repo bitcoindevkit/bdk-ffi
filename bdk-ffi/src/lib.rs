@@ -1375,7 +1375,10 @@ uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
 #[cfg(test)]
 mod test {
     use crate::*;
+    use assert_matches::assert_matches;
     use bdk::bitcoin::Address;
+    use bdk::descriptor::DescriptorError::Key;
+    use bdk::keys::KeyError::InvalidNetwork;
     use bdk::wallet::get_funded_wallet;
     use std::str::FromStr;
     use std::sync::Mutex;
@@ -1713,9 +1716,9 @@ mod test {
 
         // Creating a Descriptor using an extended key that doesn't match the network provided will throw and InvalidNetwork Error
         assert!(descriptor1.is_ok());
-        assert_eq!(
-            descriptor2.unwrap_err().to_string(),
-            "Descriptor(Key(InvalidNetwork))"
+        assert_matches!(
+            descriptor2.unwrap_err(),
+            bdk::Error::Descriptor(Key(InvalidNetwork))
         )
     }
 
@@ -1739,9 +1742,9 @@ mod test {
 
         // Creating a wallet using a Descriptor with an extended key that doesn't match the network provided in the wallet constructor will throw and InvalidNetwork Error
         assert!(wallet1.is_ok());
-        assert_eq!(
-            wallet2.unwrap_err().to_string(),
-            "Descriptor(Key(InvalidNetwork))"
-        );
+        assert_matches!(
+            wallet2.unwrap_err(),
+            bdk::Error::Descriptor(Key(InvalidNetwork))
+        )
     }
 }

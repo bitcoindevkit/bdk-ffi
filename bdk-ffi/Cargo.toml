@@ -11,9 +11,11 @@ name = "bdkffi"
 
 [dependencies]
 bdk = { version = "0.25", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
-
 uniffi_macros = { version = "0.21.0", features = ["builtin-bindgen"] }
 uniffi = { version = "0.21.0", features = ["builtin-bindgen"] }
 
 [build-dependencies]
 uniffi_build = { version = "0.21.0", features = ["builtin-bindgen"] }
+
+[dev-dependencies]
+assert_matches = "1.5.0"
