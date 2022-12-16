@@ -123,7 +123,7 @@ data class SledDbConfiguration(
  *
  * @sample org.bitcoindevkit.electrumBlockchainConfigSample
  */
-data class ElectrumConfig (
+data class ElectrumConfig(
     var url: String,
     var socks5: String?,
     var retry: UByte,
@@ -142,12 +142,62 @@ data class ElectrumConfig (
  *
  * @sample org.bitcoindevkit.esploraBlockchainConfigSample
  */
-data class EsploraConfig (
+data class EsploraConfig(
     var baseUrl: String,
     var proxy: String?,
     var concurrency: UByte?,
     var stopGap: ULong,
     var timeout: ULong?
+)
+
+/**
+ * Authentication mechanism for RPC connection to full node
+ */
+sealed class Auth {
+    /** No authentication */
+    object None: Auth()
+
+    /** Authentication with username and password, usually [Auth.Cookie] should be preferred */
+    data class UserPass(val username: String, val password: String): Auth()
+
+    /** Authentication with a cookie file */
+    data class Cookie(val file: String): Auth()
+}
+
+/**
+ * Sync parameters for Bitcoin Core RPC.
+ *
+ * In general, BDK tries to sync `scriptPubKey`s cached in `Database` with
+ * `scriptPubKey`s imported in the Bitcoin Core Wallet. These parameters are used for determining
+ * how the `importdescriptors` RPC calls are to be made.
+ *
+ * @property startScriptCount The minimum number of scripts to scan for on initial sync.
+ * @property startTime Time in unix seconds in which initial sync will start scanning from (0 to start from genesis).
+ * @property forceStartTime Forces every sync to use `start_time` as import timestamp.
+ * @property pollRateSec RPC poll rate (in seconds) to get state updates.
+ */
+data class RcpSyncParams(
+    val startScriptCount: ULong,
+    val startTime: Ulong,
+    val forceStartTime: Boolean,
+    val pollRateSec: ULong,
+)
+
+/**
+ * RpcBlockchain configuration options
+ *
+ * @property url The bitcoin node url.
+ * @property auth The bicoin node authentication mechanism.
+ * @property network The network we are using (it will be checked the bitcoin node network matches this).
+ * @property walletName The wallet name in the bitcoin node.
+ * @property syncParams Sync parameters.
+ */
+data class RpcConfig(
+    val url: String,
+    val auth: Auth,
+    val network: Network,
+    val walletName: String,
+    val syncParams: RcpSyncParams?,
 )
 
 /**
@@ -161,6 +211,9 @@ sealed class BlockchainConfig {
 
     /** Esplora client. */
     data class Esplora(val config: EsploraConfig) : BlockchainConfig()
+
+    /** Bitcoin Core RPC client. */
+    data class Rpc(val config: RpcConfig) : BlockchainConfig()
 }
 
 /**
