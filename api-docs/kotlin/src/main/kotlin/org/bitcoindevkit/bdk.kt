@@ -367,8 +367,8 @@ class Wallet(
      */
     fun getAddress(addressIndex: AddressIndex): AddressInfo {}
 
-    /** Return the balance, meaning the sum of this wallet’s unspent outputs’ values. Note that this method only operates on the internal database, which first needs to be [Wallet.sync] manually. */
-    fun getBalance(): ULong {}
+    /** Return the wallet's balance, across different categories. See [Balance] for the categories. Note that this method only operates on the internal database, which first needs to be [Wallet.sync] manually. */
+    fun getBalance(): Balance {}
 
     /** Sign a transaction with all the wallet’s signers. */
     fun sign(psbt: PartiallySignedBitcoinTransaction): Boolean {}
