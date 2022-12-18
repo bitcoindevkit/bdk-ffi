@@ -246,7 +246,7 @@ class Blockchain(
     config: BlockchainConfig
 ) {
     /** Broadcast a transaction. */
-    fun broadcast(psbt: PartiallySignedBitcoinTransaction): String {}
+    fun broadcast(psbt: PartiallySignedBitcoinTransaction) {}
 
     /** Get the current height of the blockchain. */
     fun getHeight(): UInt {}
