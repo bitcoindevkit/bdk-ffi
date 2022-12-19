@@ -1,5 +1,5 @@
 // use crate::BlockchainConfig;
-use crate::PartiallySignedTransaction;
+use crate::{PartiallySignedTransaction, BdkError};
 use bdk::bitcoin::Network;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::rpc::Auth as BdkAuth;
@@ -11,7 +11,6 @@ use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
     rpc::RpcConfig as BdkRpcConfig, ConfigurableBlockchain,
 };
-use bdk::Error as BdkError;
 use std::convert::{From, TryFrom};
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard};

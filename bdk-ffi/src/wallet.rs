@@ -4,7 +4,7 @@ use bdk::database::any::AnyDatabase;
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::{
-    Error as BdkError, FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
+    FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
 use std::collections::HashSet;
 use std::ops::Deref;
@@ -13,10 +13,11 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::blockchain::Blockchain;
 use crate::psbt::PartiallySignedTransaction;
+use crate::descriptor::Descriptor;
 use crate::{
-    AddressIndex, AddressInfo, Balance, DatabaseConfig, Descriptor, LocalUtxo, NetworkLocalUtxo,
+    AddressIndex, AddressInfo, Balance, DatabaseConfig, LocalUtxo, NetworkLocalUtxo,
     OutPoint, Progress, ProgressHolder, RbfValue, Script, ScriptAmount, TransactionDetails,
-    TxBuilderResult,
+    TxBuilderResult, BdkError,
 };
 
 #[derive(Debug)]

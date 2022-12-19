@@ -2,11 +2,10 @@ use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::psbt::serialize::Serialize;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::psbt::PsbtUtils;
-use bdk::Error as BdkError;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-use crate::FeeRate;
+use crate::{FeeRate, BdkError};
 
 #[derive(Debug)]
 pub(crate) struct PartiallySignedTransaction {
