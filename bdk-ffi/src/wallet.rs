@@ -11,11 +11,12 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use crate::blockchain::Blockchain;
 use crate::psbt::PartiallySignedTransaction;
 use crate::{
-    AddressIndex, AddressInfo, Balance, Blockchain, DatabaseConfig, Descriptor, LocalUtxo,
-    NetworkLocalUtxo, OutPoint, Progress, ProgressHolder, RbfValue, Script, ScriptAmount,
-    TransactionDetails, TxBuilderResult,
+    AddressIndex, AddressInfo, Balance, DatabaseConfig, Descriptor, LocalUtxo, NetworkLocalUtxo,
+    OutPoint, Progress, ProgressHolder, RbfValue, Script, ScriptAmount, TransactionDetails,
+    TxBuilderResult,
 };
 
 #[derive(Debug)]
