@@ -3,21 +3,19 @@ use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Sequ
 use bdk::database::any::AnyDatabase;
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
-use bdk::{
-    FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
-};
+use bdk::{FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet};
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::blockchain::Blockchain;
-use crate::psbt::PartiallySignedTransaction;
 use crate::descriptor::Descriptor;
+use crate::psbt::PartiallySignedTransaction;
 use crate::{
-    AddressIndex, AddressInfo, Balance, DatabaseConfig, LocalUtxo, NetworkLocalUtxo,
+    AddressIndex, AddressInfo, Balance, BdkError, DatabaseConfig, LocalUtxo, NetworkLocalUtxo,
     OutPoint, Progress, ProgressHolder, RbfValue, Script, ScriptAmount, TransactionDetails,
-    TxBuilderResult, BdkError,
+    TxBuilderResult,
 };
 
 #[derive(Debug)]

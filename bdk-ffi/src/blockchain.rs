@@ -1,5 +1,5 @@
 // use crate::BlockchainConfig;
-use crate::{PartiallySignedTransaction, BdkError};
+use crate::{BdkError, PartiallySignedTransaction};
 use bdk::bitcoin::Network;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::rpc::Auth as BdkAuth;

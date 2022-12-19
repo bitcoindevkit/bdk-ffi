@@ -1,17 +1,18 @@
+use crate::{BdkError, DescriptorPublicKey, DescriptorSecretKey};
+use bdk::bitcoin::secp256k1::Secp256k1;
+use bdk::bitcoin::util::bip32::Fingerprint;
+use bdk::bitcoin::Network;
+use bdk::descriptor::{ExtendedDescriptor, IntoWalletDescriptor, KeyMap};
+use bdk::keys::{
+    DescriptorPublicKey as BdkDescriptorPublicKey, DescriptorSecretKey as BdkDescriptorSecretKey,
+};
+use bdk::template::{
+    Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate,
+};
+use bdk::KeychainKind;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
-use bdk::bitcoin::Network;
-use bdk::bitcoin::secp256k1::Secp256k1;
-use bdk::bitcoin::util::bip32::Fingerprint;
-use bdk::descriptor::{ExtendedDescriptor, IntoWalletDescriptor, KeyMap};
-use bdk::KeychainKind;
-use bdk::template::{Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate};
-use bdk::keys::{
-    DescriptorPublicKey as BdkDescriptorPublicKey,
-    DescriptorSecretKey as BdkDescriptorSecretKey,
-};
-use crate::{DescriptorPublicKey, DescriptorSecretKey, BdkError};
 
 #[derive(Debug)]
 pub(crate) struct Descriptor {

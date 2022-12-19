@@ -5,7 +5,7 @@ use bdk::psbt::PsbtUtils;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-use crate::{FeeRate, BdkError};
+use crate::{BdkError, FeeRate};
 
 #[derive(Debug)]
 pub(crate) struct PartiallySignedTransaction {
