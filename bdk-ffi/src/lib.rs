@@ -1,4 +1,5 @@
 mod blockchain;
+mod database;
 mod descriptor;
 mod keys;
 mod psbt;
@@ -7,22 +8,17 @@ mod wallet;
 use crate::blockchain::{
     Auth, Blockchain, BlockchainConfig, ElectrumConfig, EsploraConfig, RpcConfig, RpcSyncParams,
 };
+use crate::database::DatabaseConfig;
 use crate::descriptor::Descriptor;
 use crate::keys::DerivationPath;
 use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
-use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Txid};
 use bdk::blockchain::Progress as BdkProgress;
 use bdk::database::any::{SledDbConfiguration, SqliteDbConfiguration};
-use bdk::descriptor::{DescriptorXKey};
-use bdk::keys::bip39::{Language, WordCount};
-use bdk::keys::{
-    DerivableKey, ExtendedKey, GeneratableKey, GeneratedKey,
-};
-use bdk::miniscript::BareCtx;
+use bdk::keys::bip39::WordCount;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
@@ -78,19 +74,6 @@ impl From<AddressIndex> for BdkAddressIndex {
             AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
         }
     }
-}
-
-/// Type that can contain any of the database configurations defined by the library
-/// This allows storing a single configuration that can be loaded into an AnyDatabaseConfig
-/// instance. Wallets that plan to offer users the ability to switch blockchain backend at runtime
-/// will find this particularly useful.
-pub enum DatabaseConfig {
-    /// Memory database has no config
-    Memory,
-    /// Simple key-value embedded database based on sled
-    Sled { config: SledDbConfiguration },
-    /// Sqlite embedded database using rusqlite
-    Sqlite { config: SqliteDbConfiguration },
 }
 
 /// A wallet transaction
@@ -288,6 +271,7 @@ uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
 // crate.
 #[cfg(test)]
 mod test {
+    use crate::database::DatabaseConfig;
     use crate::*;
     use assert_matches::assert_matches;
     use bdk::bitcoin::hashes::hex::ToHex;

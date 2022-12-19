@@ -10,12 +10,12 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use crate::blockchain::Blockchain;
+use crate::database::DatabaseConfig;
 use crate::descriptor::Descriptor;
 use crate::psbt::PartiallySignedTransaction;
 use crate::{
-    AddressIndex, AddressInfo, Balance, BdkError, DatabaseConfig, LocalUtxo, NetworkLocalUtxo,
-    OutPoint, Progress, ProgressHolder, RbfValue, Script, ScriptAmount, TransactionDetails,
-    TxBuilderResult,
+    AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, NetworkLocalUtxo, OutPoint, Progress,
+    ProgressHolder, RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
 };
 
 #[derive(Debug)]
