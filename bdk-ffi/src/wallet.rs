@@ -5,9 +5,10 @@ use bdk::{Error as BdkError, SignOptions, SyncOptions as BdkSyncOptions, Wallet 
 use std::ops::Deref;
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use crate::psbt::PartiallySignedTransaction;
 use crate::{
     AddressIndex, AddressInfo, Balance, Blockchain, DatabaseConfig, Descriptor, LocalUtxo,
-    NetworkLocalUtxo, PartiallySignedTransaction, Progress, ProgressHolder, TransactionDetails,
+    NetworkLocalUtxo, Progress, ProgressHolder, TransactionDetails,
 };
 
 #[derive(Debug)]

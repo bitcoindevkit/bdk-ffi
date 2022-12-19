@@ -1,13 +1,11 @@
-mod wallet;
 mod psbt;
+mod wallet;
 
+use crate::psbt::PartiallySignedTransaction;
 use crate::wallet::Wallet;
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
-use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::{DerivationPath as BdkDerivationPath, Fingerprint};
-use bdk::bitcoin::util::psbt::serialize::Serialize;
-use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::bitcoin::Sequence;
 use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Txid};
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
@@ -28,7 +26,6 @@ use bdk::keys::{
     KeyMap,
 };
 use bdk::miniscript::BareCtx;
-use bdk::psbt::PsbtUtils;
 use bdk::template::{
     Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate,
 };
@@ -432,72 +429,6 @@ impl fmt::Debug for ProgressHolder {
     }
 }
 
-#[derive(Debug)]
-pub struct PartiallySignedTransaction {
-    internal: Mutex<BdkPartiallySignedTransaction>,
-}
-
-impl PartiallySignedTransaction {
-    fn new(psbt_base64: String) -> Result<Self, BdkError> {
-        let psbt: BdkPartiallySignedTransaction =
-            BdkPartiallySignedTransaction::from_str(&psbt_base64)?;
-        Ok(PartiallySignedTransaction {
-            internal: Mutex::new(psbt),
-        })
-    }
-
-    fn serialize(&self) -> String {
-        let psbt = self.internal.lock().unwrap().clone();
-        psbt.to_string()
-    }
-
-    fn txid(&self) -> String {
-        let tx = self.internal.lock().unwrap().clone().extract_tx();
-        let txid = tx.txid();
-        txid.to_hex()
-    }
-
-    /// Return the transaction as bytes.
-    fn extract_tx(&self) -> Vec<u8> {
-        self.internal
-            .lock()
-            .unwrap()
-            .clone()
-            .extract_tx()
-            .serialize()
-    }
-
-    /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.
-    ///
-    /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
-    fn combine(
-        &self,
-        other: Arc<PartiallySignedTransaction>,
-    ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
-        let other_psbt = other.internal.lock().unwrap().clone();
-        let mut original_psbt = self.internal.lock().unwrap().clone();
-
-        original_psbt.combine(other_psbt)?;
-        Ok(Arc::new(PartiallySignedTransaction {
-            internal: Mutex::new(original_psbt),
-        }))
-    }
-
-    /// The total transaction fee amount, sum of input amounts minus sum of output amounts, in Sats.
-    /// If the PSBT is missing a TxOut for an input returns None.
-    fn fee_amount(&self) -> Option<u64> {
-        self.internal.lock().unwrap().fee_amount()
-    }
-
-    /// The transaction's fee rate. This value will only be accurate if calculated AFTER the
-    /// `PartiallySignedTransaction` is finalized and all witness/signature data is added to the
-    /// transaction.
-    /// If the PSBT is missing a TxOut for an input returns None.
-    fn fee_rate(&self) -> Option<Arc<FeeRate>> {
-        self.internal.lock().unwrap().fee_rate().map(Arc::new)
-    }
-}
-
 /// A Bitcoin address.
 struct Address {
     address: BdkAddress,
@@ -539,7 +470,7 @@ enum RbfValue {
 /// The result after calling the TxBuilder finish() function. Contains unsigned PSBT and
 /// transaction details.
 pub struct TxBuilderResult {
-    pub psbt: Arc<PartiallySignedTransaction>,
+    pub(crate) psbt: Arc<PartiallySignedTransaction>,
     pub transaction_details: TransactionDetails,
 }
 
@@ -1283,6 +1214,7 @@ uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
 mod test {
     use crate::*;
     use assert_matches::assert_matches;
+    use bdk::bitcoin::hashes::hex::ToHex;
     use bdk::bitcoin::Address;
     use bdk::descriptor::DescriptorError::Key;
     use bdk::keys::KeyError::InvalidNetwork;
