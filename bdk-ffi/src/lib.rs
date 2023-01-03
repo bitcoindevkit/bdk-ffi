@@ -305,6 +305,12 @@ impl Blockchain {
         self.get_blockchain().broadcast(&tx)
     }
 
+    fn estimate_fee(&self, target: u64) -> Result<Arc<FeeRate>, BdkError> {
+        let result: Result<FeeRate, bdk::Error> =
+            self.get_blockchain().estimate_fee(target as usize);
+        result.map(Arc::new)
+    }
+
     fn get_height(&self) -> Result<u32, BdkError> {
         self.get_blockchain().get_height()
     }

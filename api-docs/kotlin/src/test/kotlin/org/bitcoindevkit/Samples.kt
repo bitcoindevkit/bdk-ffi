@@ -107,7 +107,16 @@ fun blockchainSample() {
 
     val blockchain: Blockchain = Blockchain(blockchainConfig)
 
-    blockchain.broadcast(signedPsbt)
+    val feeRate: FeeRate = blockchain.estimateFee(3u)
+
+    val (psbt, txDetails) = TxBuilder()
+        .addRecipient(faucetAddress.scriptPubkey(), 1000uL)
+        .feeRate(feeRate.asSatPerVb())
+        .finish(wallet)
+
+    wallet.sign(psbt)
+
+    blockchain.broadcast(psbt)
 }
 
 

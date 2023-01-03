@@ -250,6 +250,9 @@ class Blockchain(
     /** Broadcast a transaction. */
     fun broadcast(psbt: PartiallySignedBitcoinTransaction) {}
 
+    /** Estimate the fee rate required to confirm a transaction in a given target of blocks. */
+    fun estimateFee(target: ULong): FeeRate {}
+
     /** Get the current height of the blockchain. */
     fun getHeight(): UInt {}
 

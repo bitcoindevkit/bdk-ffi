@@ -165,6 +165,9 @@ interface Blockchain {
   void broadcast([ByRef] PartiallySignedTransaction psbt);
 
   [Throws=BdkError]
+  FeeRate estimate_fee(u64 target);
+
+  [Throws=BdkError]
   u32 get_height();
 
   [Throws=BdkError]
