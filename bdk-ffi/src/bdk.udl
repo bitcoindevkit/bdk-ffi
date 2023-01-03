@@ -117,6 +117,7 @@ dictionary ElectrumConfig {
   u8 retry;
   u8? timeout;
   u64 stop_gap;
+  boolean validate_domain;
 };
 
 dictionary EsploraConfig {

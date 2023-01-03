@@ -10,8 +10,7 @@ crate-type = ["staticlib", "cdylib"]
 name = "bdkffi"
 
 [dependencies]
-#bdk = { version = "0.26", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
-bdk = { git = "https://github.com/bitcoindevkit/bdk", tag = "v0.26.0-rc.2", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
+bdk = { version = "0.26", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
 uniffi_macros = { version = "0.21.0", features = ["builtin-bindgen"] }
 uniffi = { version = "0.21.0", features = ["builtin-bindgen"] }
 

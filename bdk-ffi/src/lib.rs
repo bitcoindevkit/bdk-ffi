@@ -118,6 +118,8 @@ pub struct ElectrumConfig {
     pub timeout: Option<u8>,
     /// Stop searching addresses for transactions after finding an unused gap of this length
     pub stop_gap: u64,
+    /// Validate the domain when using SSL
+    pub validate_domain: bool,
 }
 
 /// Configuration for an EsploraBlockchain
@@ -268,6 +270,7 @@ impl Blockchain {
                     timeout: config.timeout,
                     url: config.url,
                     stop_gap: usize::try_from(config.stop_gap).unwrap(),
+                    validate_domain: config.validate_domain,
                 })
             }
             BlockchainConfig::Esplora { config } => {

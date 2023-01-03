@@ -120,6 +120,7 @@ data class SledDbConfiguration(
  * @property retry Request retry count.
  * @property timeout Request timeout (seconds).
  * @property stopGap Stop searching addresses for transactions after finding an unused gap of this length.
+ * @property validateDomain Validate the domain when using SSL.
  *
  * @sample org.bitcoindevkit.electrumBlockchainConfigSample
  */
@@ -128,7 +129,8 @@ data class ElectrumConfig(
     var socks5: String?,
     var retry: UByte,
     var timeout: UByte?,
-    var stopGap: ULong
+    var stopGap: ULong,
+    var validateDomain: Boolean
 )
 
 /**

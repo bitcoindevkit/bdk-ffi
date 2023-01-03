@@ -130,8 +130,9 @@ dependencies = [
 
 [[package]]
 name = "bdk"
-version = "0.26.0-rc.2"
-source = "git+https://github.com/bitcoindevkit/bdk?tag=v0.26.0-rc.2#7e8e9921a961367ae85d7df29e1cc5eb36fdd210"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b238a07736baee43ba9663933e44b1c6c27b43ef871b9486e175902335d83880"
 dependencies = [
  "ahash",
  "async-trait",
