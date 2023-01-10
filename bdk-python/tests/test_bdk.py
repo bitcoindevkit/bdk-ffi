@@ -1,7 +1,8 @@
 import bdkpython as bdk
 import unittest
 
-descriptor = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
+
+descriptor = bdk.Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)", bdk.Network.TESTNET)
 db_config = bdk.DatabaseConfig.MEMORY()
 blockchain_config = bdk.BlockchainConfig.ELECTRUM(
     bdk.ElectrumConfig(
@@ -9,7 +10,8 @@ blockchain_config = bdk.BlockchainConfig.ELECTRUM(
         None,
         5,
         None,
-        100
+        100,
+        True,
     )
 )
 blockchain = bdk.Blockchain(blockchain_config)

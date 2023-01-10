@@ -18,7 +18,7 @@ pip install bdkpython
 import bdkpython as bdk
 
 
-descriptor = "wpkh(tprv8ZgxMBicQKsPcx5nBGsR63Pe8KnRUqmbJNENAfGftF3yuXoMMoVJJcYeUw5eVkm9WBPjWYt6HMWYJNesB5HaNVBaFc1M6dRjWSYnmewUMYy/84h/0h/0h/0/*)"
+descriptor = bdk.Descriptor("wpkh(tprv8ZgxMBicQKsPcx5nBGsR63Pe8KnRUqmbJNENAfGftF3yuXoMMoVJJcYeUw5eVkm9WBPjWYt6HMWYJNesB5HaNVBaFc1M6dRjWSYnmewUMYy/84h/0h/0h/0/*)", bdk.Network.TESTNET) 
 db_config = bdk.DatabaseConfig.MEMORY()
 blockchain_config = bdk.BlockchainConfig.ELECTRUM(
     bdk.ElectrumConfig(
@@ -26,7 +26,8 @@ blockchain_config = bdk.BlockchainConfig.ELECTRUM(
         None,
         5,
         None,
-        100
+        100,
+        True,
     )
 )
 blockchain = bdk.Blockchain(blockchain_config)
