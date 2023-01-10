@@ -1697,19 +1697,18 @@ mod test {
         );
 
         // when using as_string on a private key, we get the same result as when using it on a public key
-        // these currently fails as described in #817
-        // assert_eq!(
-        //     template_private_44.as_string(),
-        //     template_public_44.as_string()
-        // );
-        // assert_eq!(
-        //     template_private_49.as_string(),
-        //     template_public_49.as_string()
-        // );
-        // assert_eq!(
-        //     template_private_84.as_string(),
-        //     template_public_84.as_string()
-        // );
+        assert_eq!(
+            template_private_44.as_string(),
+            template_public_44.as_string()
+        );
+        assert_eq!(
+            template_private_49.as_string(),
+            template_public_49.as_string()
+        );
+        assert_eq!(
+            template_private_84.as_string(),
+            template_public_84.as_string()
+        );
     }
 
     #[test]

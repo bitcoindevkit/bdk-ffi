@@ -243,3 +243,34 @@ fun mnemonicSample() {
 
     println(mnemonic0.asString(), mnemonic1.asString(), mnemonic2.asString())
 }
+
+fun descriptorTemplates1() {
+    // Bip84 private descriptor
+    val recoveryPhrase: String = "scene change clap smart together mind wheel knee clip normal trial unusual"
+    val mnemonic = Mnemonic.fromString(recoveryPhrase)
+    val bip32ExtendedRootKey: DescriptorSecretKey = DescriptorSecretKey(Network.TESTNET, mnemonic, null)
+    val bip84ExternalDescriptor: Descriptor = Descriptor.newBip84(bip32ExtendedRootKey, KeychainKind.EXTERNAL, Network.TESTNET)
+}
+
+fun descriptorTemplates2() {
+    // Bip49 public descriptor
+    // assume we already have the xpub for m/49'/0'/1' created on an external device that only shared the xpub with the wallet
+    // using the template requires the parent fingerprint to populate correctly the metadata of PSBTs, which the external device would provide
+    // the xpub (tpub for testnet): tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR
+    // the fingerprint: d1d04177
+    val descriptorPublicKey: DescriptorPublicKey = DescriptorPublicKey.fromString("tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR")
+    val bip49PublicDescriptor: Descriptor = Descriptor.newBip49Public(
+        publicKey = descriptorPublicKey,
+        fingerprint = "d1d04177",
+        keychain = KeychainKind.EXTERNAL,
+        network = Network.TESTNET,
+    )
+    println(bip49PublicDescriptor.asString())        // sh(wpkh([d1d04177/49'/1'/0']tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR/0/*))#a7lxzefl
+    println(bip49PublicDescriptor.asStringPrivate()) // sh(wpkh([d1d04177/49'/1'/0']tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR/0/*))#a7lxzefl
+
+    // Creating it starting from the full xprv derived from a mnemonic will give you the same public descriptor
+    val mnemonic = Mnemonic.fromString("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect")
+    val bip32ExtendedRootKey: DescriptorSecretKey = DescriptorSecretKey(Network.TESTNET, mnemonic, null)
+    val bip49PrivateDescriptor: Descriptor = Descriptor.newBip49(bip32ExtendedRootKey, KeychainKind.EXTERNAL, Network.TESTNET)
+    println(bip49PrivateDescriptor.asString()) // sh(wpkh([d1d04177/49'/1'/0']tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR/0/*))#a7lxzefl
+}

@@ -350,15 +350,15 @@ data class BlockTime (
  * @constructor Create a BDK wallet.
  *
  * @param descriptor The main (or "external") descriptor.
- * @param changeDescriptor The change (or "internal") descriptor.
+ * @param changeDescriptor? The change (or "internal") descriptor.
  * @param network The network to act on.
  * @param databaseConfig The database configuration.
  *
  * @sample org.bitcoindevkit.walletSample
  */
 class Wallet(
-    descriptor: String,
-    changeDescriptor: String,
+    descriptor: Descriptor,
+    changeDescriptor: Descriptor?,
     network: Network,
     databaseConfig: DatabaseConfig,
 ) {
@@ -538,22 +538,22 @@ class DerivationPath(path: String) {}
  * @sample org.bitcoindevkit.descriptorSecretKeyExtendSample
  */
 class DescriptorSecretKey(network: Network, mnemonic: Mnemonic, password: String?) {
-    /** Build a DescriptorSecretKey from a String */
+    /* Build a DescriptorSecretKey from a String */
     fun fromString(secretKey: String): DescriptorSecretKey {}
 
-    /** Derive a private descriptor at a given path. */
+    /* Derive a private descriptor at a given path. */
     fun derive(path: DerivationPath): DescriptorSecretKey {}
 
     /** Extend the private descriptor with a custom path. */
     fun extend(path: DerivationPath): DescriptorSecretKey {}
 
-    /** Return the public version of the descriptor. */
+    /* Return the public version of the descriptor. */
     fun asPublic(): DescriptorPublicKey {}
 
     /* Return the raw private key as bytes. */
     fun secretBytes(): List<UByte>
 
-    /** Return the private descriptor as a string. */
+    /* Return the private descriptor as a string. */
     fun asString(): String {}
 }
 
@@ -579,23 +579,79 @@ class DescriptorPublicKey(network: Network, mnemonic: String, password: String?)
 }
 
 /**
- * An enum describing entropy length (aka word count) in the mnemonic.
+ * A output descriptor.
+ *
+ * @param descriptor The descriptor in string format.
+ * @param network The network this DescriptorPublicKey is to be used on.
+ *
+ * @sample org.bitcoindevkit.descriptorTemplates1
+ * @sample org.bitcoindevkit.descriptorTemplates2
  */
+class Descriptor(descriptor: String, network: Network) {
+    /**
+     * BIP44 template. Expands to pkh(key/44'/{0,1}'/0'/{0,1}/\*)
+     * Since there are hardened derivation steps, this template requires a private derivable key (generally a xprv/tprv).
+     */
+    fun newBip44(secretKey: DescriptorSecretKey, keychain: KeychainKind, network: Network) {}
+
+    /**
+     * BIP44 public template. Expands to pkh(key/{0,1}/\*)
+     * This assumes that the key used has already been derived with m/44'/0'/0' for Mainnet or m/44'/1'/0' for Testnet.
+     * This template requires the parent fingerprint to populate correctly the metadata of PSBTs.
+     */
+    fun newBip44Public(publicKey: DescriptorPublicKey, fingerprint: String, keychain: KeychainKind, network: Network) {}
+
+    /**
+     * BIP49 template. Expands to sh(wpkh(key/49'/{0,1}'/0'/{0,1}/\*))
+     * Since there are hardened derivation steps, this template requires a private derivable key (generally a xprv/tprv).
+     */
+    fun newBip49(secretKey: DescriptorSecretKey, keychain: KeychainKind, network: Network) {}
+
+    /**
+     * BIP49 public template. Expands to sh(wpkh(key/{0,1}/\*))
+     * This assumes that the key used has already been derived with m/49'/0'/0' for Mainnet or m/49'/1'/0' for Testnet.
+     * This template requires the parent fingerprint to populate correctly the metadata of PSBTs.
+     */
+    fun newBip49Public(publicKey: DescriptorPublicKey, fingerprint: String, keychain: KeychainKind, network: Network) {}
+
+    /**
+     * BIP84 template. Expands to wpkh(key/84'/{0,1}'/0'/{0,1}/\*)
+     * Since there are hardened derivation steps, this template requires a private derivable key (generally a xprv/tprv).
+     */
+    fun newBip84(secretKey: DescriptorSecretKey, keychain: KeychainKind, network: Network) {}
+
+    /**
+     * BIP84 public template. Expands to wpkh(key/{0,1}/\*)
+     * This assumes that the key used has already been derived with m/84'/0'/0' for Mainnet or m/84'/1'/0' for Testnet.
+     * This template requires the parent fingerprint to populate correctly the metadata of PSBTs.
+     */
+    fun newBip84Public(publicKey: DescriptorPublicKey, fingerprint: String, keychain: KeychainKind, network: Network) {}
+
+    /** Return the public version of the output descriptor. */
+    fun asString(): String {}
+
+    /** Return the private version of the output descriptor if available, otherwise return the public version. */
+    fun asStringPrivate(): String {}
+}
+
+/**
+ * An enum describing entropy length (aka word count) in the mnemonic.
+*/
 enum class WordCount {
-    /** 12 words mnemonic (128 bits entropy). */
-    WORDS12,
+/** 12 words mnemonic (128 bits entropy). */
+WORDS12,
 
-    /** 15 words mnemonic (160 bits entropy). */
-    WORDS15,
+/** 15 words mnemonic (160 bits entropy). */
+WORDS15,
 
-    /** 18 words mnemonic (192 bits entropy). */
-    WORDS18,
+/** 18 words mnemonic (192 bits entropy). */
+WORDS18,
 
-    /** 21 words mnemonic (224 bits entropy). */
-    WORDS21,
+/** 21 words mnemonic (224 bits entropy). */
+WORDS21,
 
-    /** 24 words mnemonic (256 bits entropy). */
-    WORDS24,
+/** 24 words mnemonic (256 bits entropy). */
+WORDS24,
 }
 
 /**
@@ -606,25 +662,25 @@ enum class WordCount {
  *
  * @sample org.bitcoindevkit.txBuilderResultSample1
  * @sample org.bitcoindevkit.txBuilderResultSample2
- */
+*/
 data class TxBuilderResult (
-    var psbt: PartiallySignedBitcoinTransaction,
-    var transactionDetails: TransactionDetails
+var psbt: PartiallySignedBitcoinTransaction,
+var transactionDetails: TransactionDetails
 )
 
 /**
  * A bitcoin script.
- */
+*/
 class Script(rawOutputScript: List<UByte>)
 
 /**
  * A bitcoin address.
  *
  * @param address The address in string format.
- */
+*/
 class Address(address: String) {
-    /* Return the ScriptPubKey. */
-    fun scriptPubkey(): Script
+/* Return the ScriptPubKey. */
+fun scriptPubkey(): Script
 }
 
 /**
@@ -634,17 +690,17 @@ class Address(address: String) {
  * @param mnemonic The mnemonic as a string of space-separated words.
  *
  * @sample org.bitcoindevkit.mnemonicSample
- */
+*/
 class Mnemonic(mnemonic: String) {
-    /* Returns Mnemonic as string */
-    fun asString(): String
+/* Returns Mnemonic as string */
+fun asString(): String
 
-    /* Parse a Mnemonic from a given string. */
-    fun fromString(): Mnemonic
+/* Parse a Mnemonic from a given string. */
+fun fromString(): Mnemonic
 
-    /*
-     * Create a new Mnemonic in the specified language from the given entropy. Entropy must be a
-     * multiple of 32 bits (4 bytes) and 128-256 bits in length.
-     */
-    fun fromEntropy(): Mnemonic
+/*
+ * Create a new Mnemonic in the specified language from the given entropy. Entropy must be a
+ * multiple of 32 bits (4 bytes) and 128-256 bits in length.
+*/
+fun fromEntropy(): Mnemonic
 }
