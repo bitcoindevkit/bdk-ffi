@@ -60,7 +60,7 @@ rust_ext = RustExtension(
 
 setup(
     name='bdkpython',
-    version='0.26.0.dev0',
+    version='0.27.0.dev0',
     description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
