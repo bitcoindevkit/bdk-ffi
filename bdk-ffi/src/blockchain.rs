@@ -11,9 +11,10 @@ use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
     rpc::RpcConfig as BdkRpcConfig, ConfigurableBlockchain,
 };
+use bdk::FeeRate;
 use std::convert::{From, TryFrom};
 use std::path::PathBuf;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 pub(crate) struct Blockchain {
     blockchain_mutex: Mutex<AnyBlockchain>,
@@ -62,6 +63,12 @@ impl Blockchain {
     pub(crate) fn broadcast(&self, psbt: &PartiallySignedTransaction) -> Result<(), BdkError> {
         let tx = psbt.internal.lock().unwrap().clone().extract_tx();
         self.get_blockchain().broadcast(&tx)
+    }
+
+    pub(crate) fn estimate_fee(&self, target: u64) -> Result<Arc<FeeRate>, BdkError> {
+        let result: Result<FeeRate, bdk::Error> =
+            self.get_blockchain().estimate_fee(target as usize);
+        result.map(Arc::new)
     }
 
     pub(crate) fn get_height(&self) -> Result<u32, BdkError> {

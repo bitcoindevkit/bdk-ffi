@@ -24,9 +24,8 @@ use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
 use std::convert::From;
 use std::fmt;
-use std::ops::Deref;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 uniffi_macros::include_scaffolding!("bdk");
 
