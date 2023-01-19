@@ -68,7 +68,7 @@ setup(
     zip_safe=False,
     packages=['bdkpython'],
     package_dir={'bdkpython': './src/bdkpython'},
-    url="https://github.com/bitcoindevkit/bdk-python",
+    url="https://github.com/bitcoindevkit/bdk-ffi",
     author="Alekos Filini <alekos.filini@gmail.com>, Steve Myers <steve@notmandatory.org>",
     license="MIT or Apache 2.0",
 )
