@@ -444,3 +444,82 @@ impl BumpFeeTxBuilder {
             .map(Arc::new)
     }
 }
+
+// The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.
+// These tests should not be used to verify `bdk` behavior that is already tested in the `bdk`
+// crate.
+#[cfg(test)]
+mod test {
+    use crate::wallet::{TxBuilder, Wallet};
+    use bdk::bitcoin::{Address, Network};
+    use bdk::wallet::get_funded_wallet;
+    use std::str::FromStr;
+    use std::sync::Mutex;
+
+    #[test]
+    fn test_drain_wallet() {
+        let test_wpkh = "wpkh(cVpPVruEDdmutPzisEsYvtST1usBR3ntr8pXSyt6D2YYqXRyPcFW)";
+        let (funded_wallet, _, _) = get_funded_wallet(test_wpkh);
+        let test_wallet = Wallet {
+            wallet_mutex: Mutex::new(funded_wallet),
+        };
+        let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
+        let drain_to_script = crate::Address::new(drain_to_address)
+            .unwrap()
+            .script_pubkey();
+        let tx_builder = TxBuilder::new()
+            .drain_wallet()
+            .drain_to(drain_to_script.clone());
+        assert!(tx_builder.drain_wallet);
+        assert_eq!(tx_builder.drain_to, Some(drain_to_script.script.clone()));
+
+        let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
+        let psbt = tx_builder_result.psbt.internal.lock().unwrap().clone();
+        let tx_details = tx_builder_result.transaction_details;
+
+        // confirm one input with 50,000 sats
+        assert_eq!(psbt.inputs.len(), 1);
+        let input_value = psbt
+            .inputs
+            .get(0)
+            .cloned()
+            .unwrap()
+            .non_witness_utxo
+            .unwrap()
+            .output
+            .get(0)
+            .unwrap()
+            .value;
+        assert_eq!(input_value, 50_000_u64);
+
+        // confirm one output to correct address with all sats - fee
+        assert_eq!(psbt.outputs.len(), 1);
+        let output_address = Address::from_script(
+            &psbt
+                .unsigned_tx
+                .output
+                .get(0)
+                .cloned()
+                .unwrap()
+                .script_pubkey,
+            Network::Testnet,
+        )
+        .unwrap();
+        assert_eq!(
+            output_address,
+            Address::from_str("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt").unwrap()
+        );
+        let output_value = psbt.unsigned_tx.output.get(0).cloned().unwrap().value;
+        assert_eq!(output_value, 49_890_u64); // input - fee
+
+        assert_eq!(
+            tx_details.txid,
+            "312f1733badab22dc26b8dcbc83ba5629fb7b493af802e8abe07d865e49629c5"
+        );
+        assert_eq!(tx_details.received, 0);
+        assert_eq!(tx_details.sent, 50000);
+        assert!(tx_details.fee.is_some());
+        assert_eq!(tx_details.fee.unwrap(), 110);
+        assert!(tx_details.confirmation_time.is_none());
+    }
+}
