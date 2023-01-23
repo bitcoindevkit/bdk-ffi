@@ -1,5 +1,5 @@
 // use crate::BlockchainConfig;
-use crate::{BdkError, PartiallySignedTransaction};
+use crate::{BdkError, Transaction};
 use bdk::bitcoin::Network;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::rpc::Auth as BdkAuth;
@@ -60,9 +60,9 @@ impl Blockchain {
         self.blockchain_mutex.lock().expect("blockchain")
     }
 
-    pub(crate) fn broadcast(&self, psbt: &PartiallySignedTransaction) -> Result<(), BdkError> {
-        let tx = psbt.internal.lock().unwrap().clone().extract_tx();
-        self.get_blockchain().broadcast(&tx)
+    pub(crate) fn broadcast(&self, transaction: &Transaction) -> Result<(), BdkError> {
+        let tx = &transaction.internal;
+        self.get_blockchain().broadcast(tx)
     }
 
     pub(crate) fn estimate_fee(&self, target: u64) -> Result<Arc<FeeRate>, BdkError> {

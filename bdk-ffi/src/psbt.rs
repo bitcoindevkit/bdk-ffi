@@ -1,11 +1,10 @@
 use bdk::bitcoin::hashes::hex::ToHex;
-use bdk::bitcoin::psbt::serialize::Serialize;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::psbt::PsbtUtils;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-use crate::{BdkError, FeeRate};
+use crate::{BdkError, FeeRate, Transaction};
 
 #[derive(Debug)]
 pub(crate) struct PartiallySignedTransaction {
@@ -32,14 +31,10 @@ impl PartiallySignedTransaction {
         txid.to_hex()
     }
 
-    /// Return the transaction as bytes.
-    pub(crate) fn extract_tx(&self) -> Vec<u8> {
-        self.internal
-            .lock()
-            .unwrap()
-            .clone()
-            .extract_tx()
-            .serialize()
+    /// Return the transaction.
+    pub(crate) fn extract_tx(&self) -> Arc<Transaction> {
+        let tx = self.internal.lock().unwrap().clone().extract_tx();
+        Arc::new(Transaction { internal: tx })
     }
 
     /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.
