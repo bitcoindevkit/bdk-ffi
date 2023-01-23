@@ -90,7 +90,7 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-macos-${{ matrix.python }}
-          path: dist/*.whl
+          path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-windows-wheel:
     name: 'Build windows wheel'
@@ -123,4 +123,4 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-win-${{ matrix.python }}
-          path: dist/*.whl
+          path: D:\a\bdk-ffi\bdk-ffi\bdk-python\dist\*.whl
