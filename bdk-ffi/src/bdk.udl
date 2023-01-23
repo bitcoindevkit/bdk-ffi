@@ -162,7 +162,7 @@ interface Blockchain {
   constructor(BlockchainConfig config);
 
   [Throws=BdkError]
-  void broadcast([ByRef] PartiallySignedTransaction psbt);
+  void broadcast([ByRef] Transaction transaction);
 
   [Throws=BdkError]
   FeeRate estimate_fee(u64 target);
@@ -237,6 +237,13 @@ interface FeeRate {
   float as_sat_per_vb();
 };
 
+interface Transaction {
+   [Throws=BdkError]
+   constructor(sequence<u8> transaction_bytes);
+
+   sequence<u8> serialize();
+};
+
 interface PartiallySignedTransaction {
   [Throws=BdkError]
   constructor(string psbt_base64);
@@ -245,7 +252,7 @@ interface PartiallySignedTransaction {
 
   string txid();
 
-  sequence<u8> extract_tx();
+  Transaction extract_tx();
 
   [Throws=BdkError]
   PartiallySignedTransaction combine(PartiallySignedTransaction other);

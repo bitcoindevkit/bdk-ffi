@@ -248,7 +248,7 @@ class Blockchain(
     config: BlockchainConfig
 ) {
     /** Broadcast a transaction. */
-    fun broadcast(psbt: PartiallySignedBitcoinTransaction) {}
+    fun broadcast(transaction: Transaction) {}
 
     /** Estimate the fee rate required to confirm a transaction in a given target of blocks. */
     fun estimateFee(target: ULong): FeeRate {}
@@ -258,6 +258,18 @@ class Blockchain(
 
     /** Get the block hash of a given block. */
     fun getBlockHash(height: UInt): String {}
+}
+
+/**
+ * A bitcoin transaction.
+ *
+ * @constructor Build a new Bitcoin Transaction.
+ *
+ * @param transactionBytes The transaction bytes, bitcoin consensus encoded.
+ */
+class Transaction(transactionBytes: List<UByte>) {
+    /** Return the transaction bytes, bitcoin consensus encoded. */
+    fun serialize(): List<UByte> {}
 }
 
 /**
@@ -274,8 +286,8 @@ class PartiallySignedBitcoinTransaction(psbtBase64: String) {
     /** Get the txid of the PSBT. */
     fun txid(): String {}
 
-    /** Return the transaction as bytes. */
-    fun extractTx(): List<UByte>
+    /** Extract the transaction. */
+    fun extractTx(): Transaction {}
 
     /**
      * Combines this PartiallySignedTransaction with another PSBT as described by BIP 174.
