@@ -213,6 +213,9 @@ interface Wallet {
   AddressInfo get_address(AddressIndex address_index);
 
   [Throws=BdkError]
+  AddressInfo get_internal_address(AddressIndex address_index);
+
+  [Throws=BdkError]
   Balance get_balance();
 
   [Throws=BdkError]

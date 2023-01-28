@@ -88,6 +88,22 @@ impl Wallet {
             .map(AddressInfo::from)
     }
 
+    /// Return a derived address using the internal (change) descriptor.
+    ///
+    /// If the wallet doesn't have an internal descriptor it will use the external descriptor.
+    ///
+    /// see [`AddressIndex`] for available address index selection strategies. If none of the keys
+    /// in the descriptor are derivable (i.e. does not end with /*) then the same address will always
+    /// be returned for any [`AddressIndex`].
+    pub(crate) fn get_internal_address(
+        &self,
+        address_index: AddressIndex,
+    ) -> Result<AddressInfo, BdkError> {
+        self.get_wallet()
+            .get_internal_address(address_index.into())
+            .map(AddressInfo::from)
+    }
+
     /// Return the balance, meaning the sum of this wallet’s unspent outputs’ values. Note that this method only operates
     /// on the internal database, which first needs to be Wallet.sync manually.
     pub(crate) fn get_balance(&self) -> Result<Balance, BdkError> {
