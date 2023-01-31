@@ -53,9 +53,11 @@ dictionary AddressInfo {
   string address;
 };
 
-enum AddressIndex {
-  "New",
-  "LastUnused",
+[Enum]
+interface AddressIndex {
+  New();
+  LastUnused();
+  Peek(u32 index);
 };
 
 enum Network {

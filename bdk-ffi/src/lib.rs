@@ -69,6 +69,9 @@ pub enum AddressIndex {
     /// caller is untrusted; for example when deriving donation addresses on-demand for a public
     /// web page.
     LastUnused,
+    Peek {
+        index: u32,
+    },
 }
 
 impl From<AddressIndex> for BdkAddressIndex {
@@ -76,6 +79,7 @@ impl From<AddressIndex> for BdkAddressIndex {
         match x {
             AddressIndex::New => BdkAddressIndex::New,
             AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
+            AddressIndex::Peek { index } => BdkAddressIndex::Peek(index),
         }
     }
 }
