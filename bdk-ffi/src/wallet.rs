@@ -466,11 +466,13 @@ impl BumpFeeTxBuilder {
 // crate.
 #[cfg(test)]
 mod test {
+    use crate::database::DatabaseConfig;
+    use crate::descriptor::Descriptor;
     use crate::wallet::{TxBuilder, Wallet};
     use bdk::bitcoin::{Address, Network};
     use bdk::wallet::get_funded_wallet;
     use std::str::FromStr;
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
 
     #[test]
     fn test_drain_wallet() {
@@ -537,5 +539,60 @@ mod test {
         assert!(tx_details.fee.is_some());
         assert_eq!(tx_details.fee.unwrap(), 110);
         assert!(tx_details.confirmation_time.is_none());
+    }
+
+    #[test]
+    fn test_get_address() {
+        let test_wpkh = "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)";
+        let descriptor = Descriptor::new(test_wpkh.to_string(), Network::Regtest).unwrap();
+        let change_descriptor = Descriptor::new(
+            test_wpkh.to_string().replace("/0/*", "/1/*"),
+            Network::Regtest,
+        )
+        .unwrap();
+
+        let wallet = Wallet::new(
+            Arc::new(descriptor),
+            Some(Arc::new(change_descriptor)),
+            Network::Regtest,
+            DatabaseConfig::Memory,
+        )
+        .unwrap();
+
+        assert_eq!(
+            wallet
+                .get_address(crate::AddressIndex::New)
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
+        );
+
+        assert_eq!(
+            wallet
+                .get_address(crate::AddressIndex::New)
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
+        );
+
+        assert_eq!(
+            wallet
+                .get_internal_address(crate::AddressIndex::New)
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1qpmz73cyx00r4a5dea469j40ax6d6kqyd67nnpj"
+        );
+
+        assert_eq!(
+            wallet
+                .get_internal_address(crate::AddressIndex::New)
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"
+        );
     }
 }
