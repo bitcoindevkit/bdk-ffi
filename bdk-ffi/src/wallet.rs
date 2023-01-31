@@ -468,7 +468,7 @@ impl BumpFeeTxBuilder {
 mod test {
     use crate::database::DatabaseConfig;
     use crate::descriptor::Descriptor;
-    use crate::wallet::{TxBuilder, Wallet};
+    use crate::wallet::{AddressIndex, TxBuilder, Wallet};
     use bdk::bitcoin::{Address, Network};
     use bdk::wallet::get_funded_wallet;
     use std::str::FromStr;
@@ -539,6 +539,70 @@ mod test {
         assert!(tx_details.fee.is_some());
         assert_eq!(tx_details.fee.unwrap(), 110);
         assert!(tx_details.confirmation_time.is_none());
+    }
+
+    #[test]
+    fn test_peek_address() {
+        let test_wpkh = "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)";
+        let descriptor = Descriptor::new(test_wpkh.to_string(), Network::Regtest).unwrap();
+        let change_descriptor = Descriptor::new(
+            test_wpkh.to_string().replace("/0/*", "/1/*"),
+            Network::Regtest,
+        )
+        .unwrap();
+
+        let wallet = Wallet::new(
+            Arc::new(descriptor),
+            Some(Arc::new(change_descriptor)),
+            Network::Regtest,
+            DatabaseConfig::Memory,
+        )
+        .unwrap();
+
+        assert_eq!(
+            wallet
+                .get_address(AddressIndex::Peek { index: 2 })
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1q5g0mq6dkmwzvxscqwgc932jhgcxuqqkjv09tkj"
+        );
+
+        assert_eq!(
+            wallet
+                .get_address(AddressIndex::Peek { index: 1 })
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
+        );
+
+        assert_eq!(
+            wallet
+                .get_address(crate::AddressIndex::New)
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
+        );
+
+        assert_eq!(
+            wallet
+                .get_address(crate::AddressIndex::New)
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
+        );
+
+        assert_eq!(
+            wallet
+                .get_address(AddressIndex::Peek { index: 0 })
+                .unwrap()
+                .address
+                .to_string(),
+            "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
+        );
     }
 
     #[test]
