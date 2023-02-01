@@ -577,6 +577,14 @@ mod test {
 
         assert_eq!(
             wallet
+                .get_address(crate::AddressIndex::LastUnused)
+                .unwrap()
+                .address,
+            "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
+        );
+
+        assert_eq!(
+            wallet
                 .get_internal_address(crate::AddressIndex::New)
                 .unwrap()
                 .address,
@@ -589,6 +597,14 @@ mod test {
                 .unwrap()
                 .address,
             "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"
+        );
+
+        assert_eq!(
+            wallet
+                .get_internal_address(crate::AddressIndex::LastUnused)
+                .unwrap()
+                .address,
+            "bcrt1qpmz73cyx00r4a5dea469j40ax6d6kqyd67nnpj"
         );
     }
 }
