@@ -384,6 +384,15 @@ class Wallet(
      */
     fun getAddress(addressIndex: AddressIndex): AddressInfo {}
 
+    /**
+     * Return a derived address using the internal (change) descriptor.
+     * If the wallet doesn't have an internal descriptor it will use the external descriptor.
+     * See [AddressIndex] for available address index selection strategies. If none of the keys
+     * in the descriptor are derivable (i.e. does not end with /\*) then the same address will always
+     * be returned for any [AddressIndex].
+     */
+    fun getInternalAddress(addressIndex: AddressIndex): AddressInfo {}
+
     /** Return the wallet's balance, across different categories. See [Balance] for the categories. Note that this method only operates on the internal database, which first needs to be [Wallet.sync] manually. */
     fun getBalance(): Balance {}
 
