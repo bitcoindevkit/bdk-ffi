@@ -46,7 +46,7 @@ class JvmLibTest {
     @Test
     fun memoryWalletNewAddress() {
         val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val address = wallet.getAddress(AddressIndex.NEW).address
+        val address = wallet.getAddress(AddressIndex.New).address
         assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
     }
 
