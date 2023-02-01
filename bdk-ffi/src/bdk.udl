@@ -391,7 +391,7 @@ interface Descriptor {
   constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
   [Name=from_miniscript_policy]
-  constructor(string policy, Network network);
+  constructor(string policy, Network network, string script_type);
 
   string as_string();
 

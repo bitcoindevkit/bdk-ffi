@@ -7,16 +7,16 @@ use bdk::descriptor::{ExtendedDescriptor, IntoWalletDescriptor, KeyMap};
 use bdk::keys::{
     DescriptorPublicKey as BdkDescriptorPublicKey, DescriptorSecretKey as BdkDescriptorSecretKey,
 };
+use bdk::miniscript::policy::concrete::Policy;
 use bdk::miniscript::policy::Concrete;
 use bdk::template::{
     Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate,
 };
 use bdk::KeychainKind;
+use miniscript::{Legacy, Miniscript, Segwitv0};
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
-use bdk::miniscript::policy::concrete::Policy;
-use bdk::miniscript::descriptor::Descriptor as MiniscriptDescriptor;
 
 #[derive(Debug)]
 pub(crate) struct Descriptor {
@@ -189,18 +189,44 @@ impl Descriptor {
 
     // Note that this only produces WSH descriptors. More thought required to define the exact API
     // we should use.
+    // pub(crate) fn from_miniscript_policy(
+    //     policy: String,
+    //     network: Network,
+    // ) -> Result<Self, BdkError> {
+    //     let secp = Secp256k1::new();
+    //     let miniscript_policy: Policy<String> = Concrete::<String>::from_str(policy.as_str())?;
+    //     let descriptor = BdkDescriptor::new_wsh(miniscript_policy.compile().unwrap())?;
+    //     let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network)?;
+    //     Ok(Self {
+    //         extended_descriptor,
+    //         key_map,
+    //     })
+    // }
+
     pub(crate) fn from_miniscript_policy(
         policy: String,
         network: Network,
-    ) -> Result<Self, BdkError> {
-        let secp = Secp256k1::new();
-        let miniscript_policy: Policy<String> = Concrete::<String>::from_str(policy.as_str())?;
-        let descriptor = BdkDescriptor::new_wsh(miniscript_policy.compile().unwrap())?;
-        let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network)?;
-        Ok(Self {
-            extended_descriptor,
-            key_map,
-        })
+        script_type: String,
+    ) -> Self {
+        let miniscript_policy: Policy<String> =
+            Concrete::<String>::from_str(policy.as_str()).unwrap();
+        let legacy_policy: Miniscript<String, Legacy> = miniscript_policy
+            .compile()
+            .map_err(|e| BdkError::Generic(e.to_string()))
+            .unwrap();
+        let segwit_policy: Miniscript<String, Segwitv0> = miniscript_policy
+            .compile()
+            .map_err(|e| BdkError::Generic(e.to_string()))
+            .unwrap();
+
+        let descriptor = match script_type.as_str() {
+            "sh" => BdkDescriptor::new_sh(legacy_policy),
+            "wsh" => BdkDescriptor::new_wsh(segwit_policy),
+            "sh-wsh" => BdkDescriptor::new_sh_wsh(segwit_policy),
+            _ => panic!("Invalid type"),
+        };
+
+        Descriptor::new(descriptor.unwrap().to_string(), network).unwrap()
     }
 
     pub(crate) fn as_string_private(&self) -> String {
