@@ -542,7 +542,7 @@ mod test {
     }
 
     #[test]
-    fn test_peek_address() {
+    fn test_peek_reset_address() {
         let test_wpkh = "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)";
         let descriptor = Descriptor::new(test_wpkh.to_string(), Network::Regtest).unwrap();
         let change_descriptor = Descriptor::new(
@@ -608,6 +608,21 @@ mod test {
                 .get_address(AddressIndex::Peek { index: 0 })
                 .unwrap()
                 .address,
+            "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
+        );
+
+        // reset to index 0
+        assert_eq!(
+            wallet
+                .get_address(AddressIndex::Reset { index: 0 })
+                .unwrap()
+                .address,
+            "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
+        );
+
+        // new index 1 again
+        assert_eq!(
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
     }
