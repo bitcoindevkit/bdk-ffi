@@ -72,10 +72,6 @@ fun addressIndexSample() {
         databaseConfig = DatabaseConfig.Memory
     )
 
-    fun getLastUnusedAddress(): AddressInfo {
-        return wallet.getAddress(AddressIndex.LastUnused)
-    }
-
     fun peekAddress100(): AddressInfo {
         return wallet.getAddress(AddressIndex.Peek(100u))
     }
@@ -89,11 +85,7 @@ fun addressInfoSample() {
         databaseConfig = DatabaseConfig.Memory
     )
 
-    fun getLastUnusedAddress(): AddressInfo {
-        return wallet.getAddress(AddressIndex.New)
-    }
-
-    val newAddress: AddressInfo = getLastUnusedAddress()
+    val newAddress: AddressInfo = wallet.getAddress(AddressIndex.New)
 
     println("New address at index ${newAddress.index} is ${newAddress.address}")
 }
