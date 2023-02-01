@@ -2,10 +2,12 @@ use crate::{BdkError, DescriptorPublicKey, DescriptorSecretKey};
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::Fingerprint;
 use bdk::bitcoin::Network;
+use bdk::descriptor::Descriptor as BdkDescriptor;
 use bdk::descriptor::{ExtendedDescriptor, IntoWalletDescriptor, KeyMap};
 use bdk::keys::{
     DescriptorPublicKey as BdkDescriptorPublicKey, DescriptorSecretKey as BdkDescriptorSecretKey,
 };
+use bdk::miniscript::policy::Concrete;
 use bdk::template::{
     Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate,
 };
@@ -13,6 +15,8 @@ use bdk::KeychainKind;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
+use bdk::miniscript::policy::concrete::Policy;
+use bdk::miniscript::descriptor::Descriptor as MiniscriptDescriptor;
 
 #[derive(Debug)]
 pub(crate) struct Descriptor {
@@ -181,6 +185,22 @@ impl Descriptor {
                 unreachable!()
             }
         }
+    }
+
+    // Note that this only produces WSH descriptors. More thought required to define the exact API
+    // we should use.
+    pub(crate) fn from_miniscript_policy(
+        policy: String,
+        network: Network,
+    ) -> Result<Self, BdkError> {
+        let secp = Secp256k1::new();
+        let miniscript_policy: Policy<String> = Concrete::<String>::from_str(policy.as_str())?;
+        let descriptor = BdkDescriptor::new_wsh(miniscript_policy.compile().unwrap())?;
+        let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network)?;
+        Ok(Self {
+            extended_descriptor,
+            key_map,
+        })
     }
 
     pub(crate) fn as_string_private(&self) -> String {

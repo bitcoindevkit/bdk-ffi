@@ -160,6 +160,7 @@ version = "0.26.0"
 dependencies = [
  "assert_matches",
  "bdk",
+ "miniscript",
  "uniffi",
  "uniffi_build",
  "uniffi_macros",
