@@ -254,6 +254,18 @@ impl Transaction {
     fn serialize(&self) -> Vec<u8> {
         self.internal.serialize()
     }
+
+    fn weight(&self) -> u64 {
+        self.internal.weight() as u64
+    }
+
+    fn size(&self) -> u64 {
+        self.internal.size() as u64
+    }
+
+    fn vsize(&self) -> u64 {
+        self.internal.vsize() as u64
+    }
 }
 
 /// A Bitcoin address.

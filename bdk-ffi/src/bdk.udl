@@ -244,10 +244,16 @@ interface FeeRate {
 };
 
 interface Transaction {
-   [Throws=BdkError]
-   constructor(sequence<u8> transaction_bytes);
+  [Throws=BdkError]
+  constructor(sequence<u8> transaction_bytes);
 
-   sequence<u8> serialize();
+  sequence<u8> serialize();
+
+  u64 weight();
+
+  u64 size();
+
+  u64 vsize();
 };
 
 interface PartiallySignedTransaction {
