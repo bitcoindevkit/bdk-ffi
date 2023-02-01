@@ -73,7 +73,11 @@ fun addressIndexSample() {
     )
 
     fun getLastUnusedAddress(): AddressInfo {
-        return wallet.getAddress(AddressIndex.LAST_UNUSED)
+        return wallet.getAddress(AddressIndex.LastUnused)
+    }
+
+    fun peekAddress100(): AddressInfo {
+        return wallet.getAddress(AddressIndex.Peek(100u))
     }
 }
 
@@ -86,7 +90,7 @@ fun addressInfoSample() {
     )
 
     fun getLastUnusedAddress(): AddressInfo {
-        return wallet.getAddress(AddressIndex.NEW)
+        return wallet.getAddress(AddressIndex.New)
     }
 
     val newAddress: AddressInfo = getLastUnusedAddress()

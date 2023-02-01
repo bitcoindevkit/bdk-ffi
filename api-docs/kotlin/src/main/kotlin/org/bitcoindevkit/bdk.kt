@@ -35,21 +35,41 @@ data class AddressInfo (
 /**
  * The address index selection strategy to use to derive an address from the wallet’s external descriptor.
  *
- * If you’re unsure which one to use, use `AddressIndex.NEW`.
+ * If you’re unsure which one to use, use `AddressIndex.New`.
  *
  * @sample org.bitcoindevkit.addressIndexSample
  */
-enum class AddressIndex {
+sealed class AddressIndex {
     /** Return a new address after incrementing the current descriptor index. */
-    NEW,
+    object New: AddressIndex(),
 
-    /** Return the address for the current descriptor index if it has not been used in a received transaction.
+    /**
+     * Return the address for the current descriptor index if it has not been used in a received transaction.
      * Otherwise return a new address as with `AddressIndex.NEW`. Use with caution, if the wallet
      * has not yet detected an address has been used it could return an already used address.
      * This function is primarily meant for situations where the caller is untrusted;
      * for example when deriving donation addresses on-demand for a public web page.
      */
-    LAST_UNUSED,
+    object LastUnused: AddressIndex(),
+
+    /**
+     * Return the address for a specific descriptor index. Does not change the current descriptor
+     * index used by [AddressIndex.New] and [AddressIndex.LastUsed].
+     * Use with caution, if an index is given that is less than the current descriptor index
+     * then the returned address may have already been used.
+     */
+    data class Peek(val index: UInt): AddressIndex(),
+
+    /**
+     * Return the address for a specific descriptor index and reset the current descriptor index
+     * used by [AddressIndex.New] and [AddressIndex.LastUsed] to this value.
+     * Use with caution, if an index is given that is less than the current descriptor index
+     * then the returned address and subsequent addresses returned by calls to [AddressIndex.New]
+     * and [AddressIndex.LastUsed] may have already been used. Also if the index is reset to a
+     * value earlier than the [Blockchain] stopGap (default is 20) then a
+     * larger stopGap should be used to monitor for all possibly used addresses.
+     */
+    data class Reset(val index: UInt): AddressIndex()
 }
 
 /**
