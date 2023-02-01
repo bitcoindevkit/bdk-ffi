@@ -575,6 +575,7 @@ mod test {
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
 
+        // new index still 0
         assert_eq!(
             wallet
                 .get_address(crate::AddressIndex::New)
@@ -583,6 +584,7 @@ mod test {
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
         );
 
+        // new index now 1
         assert_eq!(
             wallet
                 .get_address(crate::AddressIndex::New)
@@ -591,12 +593,22 @@ mod test {
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
 
+        // new index now 2
+        assert_eq!(
+            wallet
+                .get_address(crate::AddressIndex::New)
+                .unwrap()
+                .address,
+            "bcrt1q5g0mq6dkmwzvxscqwgc932jhgcxuqqkjv09tkj"
+        );
+
+        // peek index 1
         assert_eq!(
             wallet
                 .get_address(AddressIndex::Peek { index: 0 })
                 .unwrap()
                 .address,
-            "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
+            "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
     }
 
