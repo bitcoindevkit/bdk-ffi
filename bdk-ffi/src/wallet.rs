@@ -604,7 +604,7 @@ mod test {
                 .get_internal_address(crate::AddressIndex::LastUnused)
                 .unwrap()
                 .address,
-            "bcrt1qpmz73cyx00r4a5dea469j40ax6d6kqyd67nnpj"
+            "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"
         );
     }
 }
