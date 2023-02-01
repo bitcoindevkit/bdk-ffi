@@ -605,7 +605,7 @@ mod test {
         // peek index 1
         assert_eq!(
             wallet
-                .get_address(AddressIndex::Peek { index: 0 })
+                .get_address(AddressIndex::Peek { index: 1 })
                 .unwrap()
                 .address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
