@@ -58,6 +58,7 @@ interface AddressIndex {
   New();
   LastUnused();
   Peek(u32 index);
+  Reset(u32 index);
 };
 
 enum Network {
