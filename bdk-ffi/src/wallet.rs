@@ -563,8 +563,7 @@ mod test {
             wallet
                 .get_address(AddressIndex::Peek { index: 2 })
                 .unwrap()
-                .address
-                .to_string(),
+                .address,
             "bcrt1q5g0mq6dkmwzvxscqwgc932jhgcxuqqkjv09tkj"
         );
 
@@ -572,8 +571,7 @@ mod test {
             wallet
                 .get_address(AddressIndex::Peek { index: 1 })
                 .unwrap()
-                .address
-                .to_string(),
+                .address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
 
@@ -581,8 +579,7 @@ mod test {
             wallet
                 .get_address(crate::AddressIndex::New)
                 .unwrap()
-                .address
-                .to_string(),
+                .address,
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
         );
 
@@ -590,8 +587,7 @@ mod test {
             wallet
                 .get_address(crate::AddressIndex::New)
                 .unwrap()
-                .address
-                .to_string(),
+                .address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
 
@@ -599,8 +595,7 @@ mod test {
             wallet
                 .get_address(AddressIndex::Peek { index: 0 })
                 .unwrap()
-                .address
-                .to_string(),
+                .address,
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
         );
     }
