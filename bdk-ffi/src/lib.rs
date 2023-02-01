@@ -69,9 +69,11 @@ pub enum AddressIndex {
     /// caller is untrusted; for example when deriving donation addresses on-demand for a public
     /// web page.
     LastUnused,
-    Peek {
-        index: u32,
-    },
+    /// Return the address for a specific descriptor index. Does not change the current descriptor
+    /// index used by `AddressIndex::New` and `AddressIndex::LastUsed`.
+    /// Use with caution, if an index is given that is less than the current descriptor index
+    /// then the returned address may have already been used.
+    Peek { index: u32 },
 }
 
 impl From<AddressIndex> for BdkAddressIndex {
