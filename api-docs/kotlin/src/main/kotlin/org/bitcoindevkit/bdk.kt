@@ -299,7 +299,7 @@ class Transaction(transactionBytes: List<UByte>) {
  *
  * @param psbtBase64 The PSBT in base64 format.
  */
-class PartiallySignedBitcoinTransaction(psbtBase64: String) {
+class PartiallySignedTransaction(psbtBase64: String) {
     /** Return the PSBT in string format, using a base64 encoding. */
     fun serialize(): String {}
 
@@ -313,7 +313,7 @@ class PartiallySignedBitcoinTransaction(psbtBase64: String) {
      * Combines this PartiallySignedTransaction with another PSBT as described by BIP 174.
      * In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
      */
-    fun combine(other: PartiallySignedBitcoinTransaction): PartiallySignedBitcoinTransaction
+    fun combine(other: PartiallySignedTransaction): PartiallySignedTransaction
 }
 
 /**
@@ -417,7 +417,7 @@ class Wallet(
     fun getBalance(): Balance {}
 
     /** Sign a transaction with all the wallet’s signers. */
-    fun sign(psbt: PartiallySignedBitcoinTransaction): Boolean {}
+    fun sign(psbt: PartiallySignedTransaction): Boolean {}
 
     /** Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually. */
     fun listTransactions(): List<TransactionDetails> {}
@@ -708,7 +708,7 @@ enum class WordCount {
  * @sample org.bitcoindevkit.txBuilderResultSample2
  */
 data class TxBuilderResult (
-    var psbt: PartiallySignedBitcoinTransaction,
+    var psbt: PartiallySignedTransaction,
     var transactionDetails: TransactionDetails
 )
 
