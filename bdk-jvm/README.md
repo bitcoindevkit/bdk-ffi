@@ -28,7 +28,7 @@ val blockchainConfig = BlockchainConfig.Electrum(
         ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u, true)
     )
 val wallet = Wallet(externalDescriptor, internalDescriptor, Network.TESTNET, databaseConfig, blockchainConfig)
-val newAddress = wallet.getAddress(AddressIndex.LAST_UNUSED)
+val newAddress = wallet.getAddress(AddressIndex.LastUnused)
 ```
 
 ### Snapshot releases
@@ -83,6 +83,7 @@ and use the `publishToMavenLocal` task without excluding the signing task:
 ```
 
 ## Known issues
+## JNA dependency
 Depending on the JVM version you use, you might not have the JNA dependency on your classpath. The exception thrown will be 
 ```shell
 class file for com.sun.jna.Pointer not found
