@@ -26,7 +26,7 @@ class TestSimpleBip84Wallet(unittest.TestCase):
             network=bdk.Network.TESTNET,
             database_config=db_config
         )
-        address_info = wallet.get_address(bdk.AddressIndex.LAST_UNUSED)
+        address_info = wallet.get_address(bdk.AddressIndex.LAST_UNUSED())
         address = address_info.address
         # print(f"New address is {address}")
         assert address == "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", f"Wrong address {address}, should be tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e"

@@ -40,7 +40,7 @@ wallet = bdk.Wallet(
          )
 
 # print new receive address
-address_info = wallet.get_address(bdk.AddressIndex.LAST_UNUSED)
+address_info = wallet.get_address(bdk.AddressIndex.LAST_UNUSED())
 address = address_info.address
 index = address_info.index
 print(f"New BIP84 testnet address: {address} at index {index}")
