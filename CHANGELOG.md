@@ -7,7 +7,88 @@ page. See [DEVELOPMENT_CYCLE.md](DEVELOPMENT_CYCLE.md) for more details.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.27.1]
+- Update BDK to latest version 0.27.1 [#312]
+- APIs changed
+  - `PartiallySignedTransaction.extract_tx()` returns a `Transaction` instead of the transaction bytes. [#296]
+  - `Blockchain.broadcast()` takes a `Transaction` instead of a `PartiallySignedTransaction`. [#296]
+- APIs added
+  - New `Transaction` structure that can be created from or serialized to consensus encoded bytes. [#296]
+  - Add Wallet.get_internal_address() API [#304]
+  - Add `AddressIndex::Peek(index)` and `AddressIndex::Reset(index)` APIs [#305]
+
+[#296]: https://github.com/bitcoindevkit/bdk-ffi/pull/296
+[#304]: https://github.com/bitcoindevkit/bdk-ffi/pull/304
+[#305]: https://github.com/bitcoindevkit/bdk-ffi/pull/305
+[#312]: https://github.com/bitcoindevkit/bdk-ffi/pull/312
+
+## [v0.26.0]
+- Update BDK to latest version 0.26.0 [#288]
+- APIs changed
+  - The descriptor and change_descriptor arguments on the wallet constructor now take a `Descriptor` instead of a `String`. [#260]
+  - TxBuilder.drain_to() argument is now `Script` instead of address `String`. [#279]
+- APIs added
+  - Added RpcConfig, BlockchainConfig::Rpc, and Auth [#125]
+  - Added Descriptor type in [#260] with the following methods:
+    - Default constructor requires a descriptor in String format and a Network
+    - new_bip44 constructor returns a Descriptor with structure pkh(key/44'/{0,1}'/0'/{0,1}/*)
+    - new_bip44_public constructor returns a Descriptor with structure pkh(key/{0,1}/*)
+    - new_bip49 constructor returns a Descriptor with structure sh(wpkh(key/49'/{0,1}'/0'/{0,1}/*))
+    - new_bip49_public constructor returns a Descriptor with structure sh(wpkh(key/{0,1}/*))
+    - new_bip84 constructor returns a Descriptor with structure wpkh(key/84'/{0,1}'/0'/{0,1}/*)
+    - new_bip84_public constructor returns a Descriptor with structure wpkh(key/{0,1}/*)
+    - as_string returns the public version of the output descriptor
+    - as_string_private returns the private version of the output descriptor if available, otherwise return the public version
+
+[#125]: https://github.com/bitcoindevkit/bdk-ffi/pull/125
+[#260]: https://github.com/bitcoindevkit/bdk-ffi/pull/260
+[#279]: https://github.com/bitcoindevkit/bdk-ffi/pull/279
+[#288]: https://github.com/bitcoindevkit/bdk-ffi/pull/288
+
+## [v0.25.0]
+- Update BDK to latest version 0.25.0 [#272]
+- APIs Added:
+  - from_string() constructors now available on DescriptorSecretKey and DescriptorPublicKey [#247]
+
+[#247]: https://github.com/bitcoindevkit/bdk-ffi/pull/247
+[#272]: https://github.com/bitcoindevkit/bdk-ffi/pull/272
+
+## [v0.11.0]
+- Update BDK to latest version 0.24.0 [#221]
+- APIs changed
+  - The constructor on the DescriptorSecretKey type now takes a Mnemonic instead of a String.
+- APIs added
+  - Added Mnemonic struct [#219] with following methods:
+    - new(word_count: WordCount) generates and returns Mnemonic with random entropy
+    - from_string(mnemonic: String) converts string Mnemonic to Mnemonic type with error
+    - from_entropy(entropy: Vec<u8>) generates and returns Mnemonic with given entropy
+    - as_string() view Mnemonic as string
+- APIs removed
+  - generate_mnemonic(word_count: WordCount)
+
+[#219]: https://github.com/bitcoindevkit/bdk-ffi/pull/219
+[#221]: https://github.com/bitcoindevkit/bdk-ffi/pull/221
+
+## [v0.10.0]
+- Update BDK to latest version 0.23.0 [#204]
+- Update uniffi-rs to latest version 0.21.0 [#216]
+- Breaking Changes
+  - Changed `TxBuilder.finish()` to return new `TxBuilderResult` [#209]
+  - `TxBuilder.add_recipient()` now takes a `Script` instead of an `Address` [#192]
+  - `AddressAmount` is now `ScriptAmount` [#192]
+- APIs Added
+  - Added `TxBuilderResult` with PSBT and TransactionDetails [#209]
+  - `Address` and `Script` structs have been added [#192]
+  - Add `PartiallySignedBitcoinTransaction.extract_tx()` function [#192]
+  - Add `secret_bytes()` method on the `DescriptorSecretKey` [#199]
+  - Add `PartiallySignedBitcoinTransaction.combine()` method [#200]
+
+[#192]: https://github.com/bitcoindevkit/bdk-ffi/pull/192
+[#199]: https://github.com/bitcoindevkit/bdk-ffi/pull/199
+[#200]: https://github.com/bitcoindevkit/bdk-ffi/pull/200
+[#204]: https://github.com/bitcoindevkit/bdk-ffi/pull/204
+[#209]: https://github.com/bitcoindevkit/bdk-ffi/pull/209
+[#216]: https://github.com/bitcoindevkit/bdk-ffi/pull/216
 
 ## [v0.9.0]
 - Breaking Changes
@@ -104,7 +185,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.2.0]
 
-[unreleased]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.9.0...HEAD
+[v0.27.1]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.26.0...v0.27.1
+[v0.26.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.25.0...v0.26.0
+[v0.25.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.11.0...v0.25.0
+[v0.11.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.10.0...v0.11.0
+[v0.10.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.9.0...v0.10.0
 [v0.9.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.8.0...v0.9.0
 [v0.8.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.7.0...v0.8.0
 [v0.7.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.6.0...v0.7.0
