@@ -9,8 +9,8 @@ use std::sync::{Arc, Mutex};
 use crate::{BdkError, FeeRate, Transaction};
 
 #[derive(Debug)]
-pub(crate) struct PartiallySignedTransaction {
-    pub(crate) internal: Mutex<BdkPartiallySignedTransaction>,
+pub struct PartiallySignedTransaction {
+    pub internal: Mutex<BdkPartiallySignedTransaction>,
 }
 
 impl PartiallySignedTransaction {

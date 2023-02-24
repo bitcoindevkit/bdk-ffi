@@ -3,6 +3,7 @@ mod database;
 mod descriptor;
 mod keys;
 mod psbt;
+mod signer;
 mod wallet;
 
 use crate::blockchain::{
@@ -13,6 +14,9 @@ use crate::descriptor::Descriptor;
 use crate::keys::DerivationPath;
 use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
+use crate::signer::CustomError;
+use crate::signer::InputSigner;
+use crate::signer::SignerId;
 use crate::wallet::SignOptions;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;

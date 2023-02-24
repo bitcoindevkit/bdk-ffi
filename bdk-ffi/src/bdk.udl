@@ -3,6 +3,11 @@ namespace bdk {
 };
 
 [Error]
+enum CustomError {
+  "SignerError",
+};
+
+[Error]
 enum BdkError {
   "InvalidU32Bytes",
   "Generic",
@@ -493,4 +498,19 @@ enum WitnessVersion {
 
 interface Script {
   constructor(sequence<u8> raw_output_script);
+};
+
+callback interface InputSigner {
+  [Throws=CustomError]
+  SignerId id();
+
+  [Throws=CustomError]
+  void sign_input(PartiallySignedTransaction psbt, u32 input_index, SignOptions sign_options);
+};
+
+[Enum]
+interface SignerId {
+  PkHash(string hash);
+  Fingerprint(string fingerprint);
+  Dummy(u64 index);
 };
