@@ -1,6 +1,6 @@
 [package]
 name = "bdk-ffi"
-version = "0.27.0"
+version = "0.27.1"
 authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -9,13 +9,16 @@ license = "MIT OR Apache-2.0"
 crate-type = ["staticlib", "cdylib"]
 name = "bdkffi"
 
+[[bin]]
+name = "uniffi-bindgen"
+path = "uniffi-bindgen.rs"
+
 [dependencies]
 bdk = { version = "0.27.1", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
-uniffi_macros = { version = "0.21.0", features = ["builtin-bindgen"] }
-uniffi = { version = "0.21.0", features = ["builtin-bindgen"] }
+uniffi = { version = "0.23.0" }
 
 [build-dependencies]
-uniffi_build = { version = "0.21.0", features = ["builtin-bindgen"] }
+uniffi = { version = "0.23.0", features = ["build"] }
 
 [dev-dependencies]
 assert_matches = "1.5.0"

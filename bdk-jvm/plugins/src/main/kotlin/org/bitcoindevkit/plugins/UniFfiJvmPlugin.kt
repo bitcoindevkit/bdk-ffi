@@ -12,26 +12,26 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = target.run {
 
         // register a task called buildJvmBinaries which will run something like
-        // cargo build --release --target aarch64-apple-darwin
+        // cargo build --features uniffi/cli --release --target aarch64-apple-darwin
         val buildJvmBinaries by tasks.register<DefaultTask>("buildJvmBinaries") {
             if (operatingSystem == OS.MAC) {
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
-                    val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-apple-darwin")
+                    val cargoArgs: List<String> = listOf("build", "--features", "uniffi/cli", "--profile", "release-smaller", "--target", "x86_64-apple-darwin")
                     args(cargoArgs)
                 }
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
-                    val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "aarch64-apple-darwin")
+                    val cargoArgs: List<String> = listOf("build", "--features", "uniffi/cli", "--profile", "release-smaller", "--target", "aarch64-apple-darwin")
                     args(cargoArgs)
                 }
             } else if(operatingSystem == OS.LINUX) {
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
-                    val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-unknown-linux-gnu")
+                    val cargoArgs: List<String> = listOf("build", "--features", "uniffi/cli", "--profile", "release-smaller", "--target", "x86_64-unknown-linux-gnu")
                     args(cargoArgs)
                 }
             }
@@ -90,17 +90,10 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
             dependsOn(moveNativeJvmLibs)
 
             workingDir("${project.projectDir}/../../bdk-ffi")
+            val cargoArgs: List<String> = listOf("run", "--features", "uniffi/cli", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--out-dir", "../bdk-jvm/lib/src/main/kotlin")
+
             executable("cargo")
-            args(
-                "run",
-                "--package",
-                "bdk-ffi-bindgen",
-                "--",
-                "--language",
-                "kotlin",
-                "--out-dir",
-                "../bdk-jvm/lib/src/main/kotlin"
-            )
+            args(cargoArgs)
 
             doLast {
                 println("JVM bindings file successfully created")

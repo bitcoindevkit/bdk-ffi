@@ -32,7 +32,7 @@ use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::Arc;
 
-uniffi_macros::include_scaffolding!("bdk");
+uniffi::include_scaffolding!("bdk");
 
 /// A output script and an amount of satoshis.
 pub struct ScriptAmount {
