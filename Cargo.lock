@@ -1296,6 +1296,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f71cc01459bc34cfe43fabf32b39f1228709bc6db1b3a664a92940af3d062376"
 dependencies = [
  "anyhow",
+ "uniffi_bindgen 0.23.0",
  "uniffi_build",
  "uniffi_core",
  "uniffi_macros",
