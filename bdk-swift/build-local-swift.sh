@@ -13,14 +13,14 @@ rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
 pushd bdk-ffi
 mkdir -p Sources/BitcoinDevKit
-cargo run --package bdk-ffi-bindgen -- --language swift --out-dir ../bdk-swift/Sources/BitcoinDevKit
+cargo run --features uniffi/cli --bin uniffi-bindgen generate src/bdk.udl --language swift --out-dir ../bdk-swift/Sources/BitcoinDevKit --no-format
 popd
 
-cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-darwin
-cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-darwin
-cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-ios
-cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-ios
-cargo +nightly build --package bdk-ffi --release -Z build-std --target aarch64-apple-ios-sim
+cargo build --package bdk-ffi --features uniffi/cli --profile release-smaller --target x86_64-apple-darwin
+cargo build --package bdk-ffi --features uniffi/cli --profile release-smaller --target aarch64-apple-darwin
+cargo build --package bdk-ffi --features uniffi/cli --profile release-smaller --target x86_64-apple-ios
+cargo build --package bdk-ffi --features uniffi/cli --profile release-smaller --target aarch64-apple-ios
+cargo +nightly build --package bdk-ffi --features uniffi/cli --release -Z build-std --target aarch64-apple-ios-sim
 
 mkdir -p target/lipo-ios-sim/release-smaller
 lipo target/aarch64-apple-ios-sim/release/libbdkffi.a target/x86_64-apple-ios/release-smaller/libbdkffi.a -create -output target/lipo-ios-sim/release-smaller/libbdkffi.a
