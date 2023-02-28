@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-import os
-
 from setuptools import setup
-from setuptools_rust import Binding, RustExtension
 
 LONG_DESCRIPTION = """# bdkpython
 The Python language bindings for the [Bitcoin Dev Kit](https://github.com/bitcoindevkit).
@@ -52,22 +49,16 @@ balance = wallet.get_balance()
 print(f"Wallet balance is: {balance.total}")
 """
 
-rust_ext = RustExtension(
-    target="bdkpython.bdkffi",
-    path="../bdk-ffi/Cargo.toml",
-    binding=Binding.NoBinding,
-)
-
 setup(
-    name='bdkpython',
-    version='0.28.0.dev0',
+    name="bdkpython",
+    version="0.28.0.dev0",
     description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
-    long_description_content_type='text/markdown',
-    rust_extensions=[rust_ext],
+    long_description_content_type="text/markdown",
+    include_package_data = True,
     zip_safe=False,
-    packages=['bdkpython'],
-    package_dir={'bdkpython': './src/bdkpython'},
+    packages=["bdkpython"],
+    package_dir={"bdkpython": "./src/bdkpython"},
     url="https://github.com/bitcoindevkit/bdk-ffi",
     author="Alekos Filini <alekos.filini@gmail.com>, Steve Myers <steve@notmandatory.org>",
     license="MIT or Apache 2.0",

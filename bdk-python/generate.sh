@@ -2,10 +2,16 @@
 
 set -euo pipefail
 
-SCRIPT_DIR=$(dirname "$(realpath $0)")
-PY_SRC="${SCRIPT_DIR}/src/bdkpython/"
-
 echo "Generating bdk.py..."
-# GENERATE_PYTHON_BINDINGS_OUT="$PY_SRC" GENERATE_PYTHON_BINDINGS_FIXUP_LIB_PATH=bdkffi cargo run --manifest-path ./bdk-ffi/Cargo.toml --release --bin generate --features generate-python
-# BDKFFI_BINDGEN_PYTHON_FIXUP_PATH=bdkffi cargo run --manifest-path ./bdk-ffi/Cargo.toml --package bdk-ffi-bindgen -- --language python --udl-file ./bdk-ffi/src/bdk.udl --out-dir ./src/bdkpython/
-BDKFFI_BINDGEN_OUTPUT_DIR="$PY_SRC" BDKFFI_BINDGEN_PYTHON_FIXUP_PATH=bdkffi cargo run --manifest-path ../bdk-ffi/Cargo.toml --package bdk-ffi-bindgen -- --language python --udl-file ../bdk-ffi/src/bdk.udl
+cd ../bdk-ffi/
+cargo run --features uniffi/cli --bin uniffi-bindgen generate src/bdk.udl --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
+cargo build --features uniffi/cli --profile release-smaller
+
+echo "Generating native binaries..."
+mv ../target/release-smaller/libbdkffi.dylib ../bdk-python/src/bdkpython/libbdkffi.dylib
+
+echo "Bundling bdkpython..."
+cd ../bdk-python/
+python3 setup.py --verbose bdist_wheel
+
+echo "All done!"
