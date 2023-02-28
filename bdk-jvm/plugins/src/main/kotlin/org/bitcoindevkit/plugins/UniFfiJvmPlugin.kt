@@ -90,7 +90,7 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
             dependsOn(moveNativeJvmLibs)
 
             workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("run", "--features", "uniffi/cli", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--out-dir", "../bdk-jvm/lib/src/main/kotlin")
+            val cargoArgs: List<String> = listOf("run", "--features", "uniffi/cli", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--out-dir", "../bdk-jvm/lib/src/main/kotlin", "--no-format")
 
             executable("cargo")
             args(cargoArgs)
