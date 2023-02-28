@@ -1,1 +1,2 @@
 include ./src/bdkpython/libbdkffi.dylib
+include ./src/bdkpython/libbdkffi.so

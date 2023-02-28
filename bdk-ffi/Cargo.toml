@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 [lib]
 crate-type = ["lib", "staticlib", "cdylib"]
 #crate-type = ["staticlib", "cdylib"]
+#crate-type = ["cdylib"]
 name = "bdkffi"
 
 [[bin]]

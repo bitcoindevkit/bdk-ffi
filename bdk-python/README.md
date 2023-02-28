@@ -13,8 +13,7 @@ pip install bdkpython
 ```shell
 pip3 install --requirement requirements.txt
 bash ./generate.sh
-python3 setup.py --verbose bdist_wheel
-pip3 install ./dist/bdkpython-<yourversion>-py3-none-any.whl
+pip3 install ./dist/bdkpython-<yourversion>-py3-none-any.whl --force-reinstall
 python -m unittest --verbose tests/test_bdk.py
 ```
 

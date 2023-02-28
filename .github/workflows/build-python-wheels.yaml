@@ -16,8 +16,8 @@ on:
 
 jobs:
   build-manylinux2014-x86_64-wheel:
-    name: 'Build Manylinux 2014 x86_64 wheel'
-    runs-on: ubuntu-latest
+    name: 'Build Manylinux 2014 x86_64 wheels'
+    runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: bdk-python
@@ -49,17 +49,15 @@ jobs:
       - name: generate bindings
         run: bash generate.sh
       - name: build wheel
-        run: ${PYBIN}/pip wheel . --no-deps -w /tmp/wheelhouse
-      - name: repair wheel
-        run: auditwheel repair /tmp/wheelhouse/* --plat "$PLAT" -w /tmp/wheelhouse-repaired
+        run: ${PYBIN}/python setup.py bdist_wheel --verbose
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
-          path: /tmp/wheelhouse-repaired/*.whl
+          path: ./dist/*.whl
 
   build-macos-universal-wheel:
-    name: 'Build macOS universal wheel'
-    runs-on: macos-latest
+    name: 'Build macOS universal wheels'
+    runs-on: macos-12
     defaults:
       run:
         working-directory: bdk-python
@@ -81,20 +79,19 @@ jobs:
       - run: python3 --version
       - run: rustup target add aarch64-apple-darwin
       - run: pip3 install --user -r requirements.txt
-      - run: pip3 install --user wheel
       - run: bash generate.sh
       - name: build wheel
         env:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
-        run: python3 setup.py -v bdist_wheel
+        run: python3 setup.py bdist_wheel --verbose
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-macos-${{ matrix.python }}
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-windows-wheel:
-    name: 'Build windows wheel'
-    runs-on: windows-latest
+    name: 'Build Windows wheels'
+    runs-on: windows-2022
     defaults:
       run:
         working-directory: bdk-python
@@ -116,10 +113,8 @@ jobs:
       - run: python --version
       - run: pip install --user -r requirements.txt
       - run: bash generate.sh
-        shell: bash
-      - run: pip install --user wheel
       - name: build wheel
-        run: python setup.py -v bdist_wheel
+        run: python setup.py bdist_wheel --verbose
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-win-${{ matrix.python }}
