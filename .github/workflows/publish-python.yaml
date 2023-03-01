@@ -8,8 +8,8 @@ on: [workflow_dispatch]
 
 jobs:
   build-manylinux2014-x86_64-wheel:
-    name: 'Build Manylinux 2014 x86_64 wheel'
-    runs-on: ubuntu-latest
+    name: "Build Manylinux 2014 x86_64 wheel"
+    runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: bdk-python
@@ -17,7 +17,7 @@ jobs:
       image: quay.io/pypa/manylinux2014_x86_64
       env:
         PLAT: manylinux2014_x86_64
-        PYBIN: '/opt/python/${{ matrix.python }}/bin'
+        PYBIN: "/opt/python/${{ matrix.python }}/bin"
     strategy:
       matrix:
         python: # Update this list whenever the docker image is updated (check /opt/python/)
@@ -29,29 +29,31 @@ jobs:
           - pp37-pypy37_pp73
           - pp38-pypy38_pp73
     steps:
-      - name: checkout
+      - name: "Checkout"
         uses: actions/checkout@v2
         with:
           submodules: true
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: install requirements
+
+      - name: "Install requirements"
         run: ${PYBIN}/pip install -r requirements.txt
-      - name: generate bindings
+
+      - name: "Generate bdk.py"
         run: bash generate.sh
-      - name: build wheel
-        run: ${PYBIN}/pip wheel . --no-deps -w /tmp/wheelhouse
-      - name: repair wheel
-        run: auditwheel repair /tmp/wheelhouse/* --plat "$PLAT" -w /tmp/wheelhouse-repaired
+
+      - name: "Build wheel"
+        run: ${PYBIN}/python setup.py bdist_wheel --verbose
+
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
-          path: /tmp/wheelhouse-repaired/*.whl
+          path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-macos-universal-wheel:
-    name: 'Build macOS universal wheel'
-    runs-on: macos-latest
+    name: "Build macOS universal wheel"
+    runs-on: macos-12
     defaults:
       run:
         working-directory: bdk-python
@@ -63,30 +65,34 @@ jobs:
           - '3.9'
           - '3.10'
     steps:
-      - name: checkout
+      - name: "Checkout"
         uses: actions/checkout@v2
         with:
           submodules: true
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - run: python3 --version
-      - run: rustup target add aarch64-apple-darwin
-      - run: pip3 install --user -r requirements.txt
-      - run: pip3 install --user wheel
-      - run: bash generate.sh
-      - name: build wheel
+
+      - name: "Generate bdk.py"
+        run: |
+          python3 --version
+          rustup target add aarch64-apple-darwin
+          pip3 install --user -r requirements.txt
+          bash generate.sh
+
+      - name: "Build wheel"
         env:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
-        run: python3 setup.py -v bdist_wheel
+        run: python3 setup.py bdist_wheel --verbose
+
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-macos-${{ matrix.python }}
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-windows-wheel:
-    name: 'Build windows wheel'
-    runs-on: windows-latest
+    name: "Build windows wheel"
+    runs-on: windows-2022
     defaults:
       run:
         working-directory: bdk-python
@@ -98,44 +104,43 @@ jobs:
           - '3.9'
           - '3.10'
     steps:
-      - name: checkout
+      - name: "Checkout"
         uses: actions/checkout@v2
         with:
           submodules: true
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - run: python --version
-      - run: pip install --user -r requirements.txt
-      - run: bash generate.sh
-        shell: bash
-      - run: pip install --user wheel
-      - name: build wheel
-        run: python setup.py -v bdist_wheel
+
+      - name: "Generate bdk.py"
+        run: |
+          python --version
+          pip install --user -r requirements.txt
+          bash generate.sh
+
+      - name: "Build wheel"
+        run: python setup.py bdist_wheel --verbose
+
       - uses: actions/upload-artifact@v2
         with:
           name: bdkpython-win-${{ matrix.python }}
           path: D:\a\bdk-ffi\bdk-ffi\bdk-python\dist\*.whl
 
   publish-pypi:
-    name: 'Publish on PyPI'
-    runs-on: ubuntu-latest
+    name: "Publish on PyPI"
+    runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: bdk-python
     needs: [build-manylinux2014-x86_64-wheel, build-macos-universal-wheel, build-windows-wheel]
-    # needs: [build-macos-universal-wheel]
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v2
 
-      - name: 'Download artifacts in dist/ directory'
+      - name: "Download artifacts in dist/ directory"
         uses: actions/download-artifact@v2
         with:
           path: dist/
-
-      # - name: Display structure of downloaded files
-      #   run: ls -R
 
       # - name: 'Publish on test PyPI'
       #   uses: pypa/gh-action-pypi-publish@release/v1
@@ -145,7 +150,7 @@ jobs:
       #     repository_url: https://test.pypi.org/legacy/
       #     packages_dir: dist/*/
 
-      - name: 'Publish on PyPI'
+      - name: "Publish on PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__

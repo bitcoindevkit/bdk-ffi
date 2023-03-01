@@ -25,17 +25,17 @@ jobs:
       image: quay.io/pypa/manylinux2014_x86_64
       env:
         PLAT: manylinux2014_x86_64
-        PYBIN: '/opt/python/${{ matrix.python }}/bin'
+        PYBIN: "/opt/python/${{ matrix.python }}/bin"
     strategy:
       matrix:
-        python: # Update this list whenever the docker image is updated (check /opt/python/)
+        python:
           # - cp36-cp36m
           # - cp37-cp37m
           # - cp38-cp38
           # - cp39-cp39
           - cp310-cp310
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v2
         with:
           submodules: true
@@ -43,13 +43,13 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Install requirements
+      - name: "Install requirements"
         run: ${PYBIN}/pip install -r requirements.txt
 
-      - name: Generate bindings
+      - name: "Generate bdk.py"
         run: bash generate.sh
 
-      - name: Build wheel
+      - name: "Build wheel"
         run: ${PYBIN}/python setup.py bdist_wheel --verbose
 
       - name: Install wheel
@@ -57,6 +57,12 @@ jobs:
 
       - name: Run tests
         run: ${PYBIN}/python -m unittest tests/test_bdk.py --verbose
+
+      - name: Upload artifact test
+        uses: actions/upload-artifact@v2
+        with:
+          name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
+          path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-macos-universal-wheel:
     name: "Build and test macOS wheels"
@@ -80,14 +86,14 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Generate bdk.py
+      - name: "Generate bdk.py"
         run: | 
           python3 --version
           rustup target add aarch64-apple-darwin
           pip3 install --user -r requirements.txt
           bash generate.sh
 
-      - name: Build wheel
+      - name: "Build wheel"
         env:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
         run: python3 setup.py bdist_wheel --verbose
@@ -112,7 +118,7 @@ jobs:
           # - '3.9'
           - '3.10'
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v2
         with:
           submodules: true
@@ -120,13 +126,13 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Generate bdk.py
+      - name: "Generate bdk.py"
         run: |
           python --version
           pip install --user -r requirements.txt
           bash generate.sh
 
-      - name: Build wheel
+      - name: "Build wheel"
         run: python setup.py bdist_wheel --verbose
 
       # TODO: On Windows the pip install ./dist/*.whl step fails with the following error:
