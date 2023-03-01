@@ -1,4 +1,4 @@
-name: Build Python wheels
+name: Test Python
 on:
   push:
     paths:
@@ -16,7 +16,7 @@ on:
 
 jobs:
   build-manylinux2014-x86_64-wheel:
-    name: 'Build Manylinux 2014 x86_64 wheels'
+    name: "Build and test Manylinux 2014 x86_64 wheels"
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -34,29 +34,32 @@ jobs:
           # - cp38-cp38
           # - cp39-cp39
           - cp310-cp310
-          # - pp37-pypy37_pp73
-          # - pp38-pypy38_pp73
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           submodules: true
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - name: install requirements
+
+      - name: Install requirements
         run: ${PYBIN}/pip install -r requirements.txt
-      - name: generate bindings
+
+      - name: Generate bindings
         run: bash generate.sh
-      - name: build wheel
+
+      - name: Build wheel
         run: ${PYBIN}/python setup.py bdist_wheel --verbose
-      - uses: actions/upload-artifact@v2
-        with:
-          name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
-          path: ./dist/*.whl
+
+      - name: Install wheel
+        run: ${PYBIN}/pip install ./dist/*.whl
+
+      - name: Run tests
+        run: ${PYBIN}/python -m unittest tests/test_bdk.py --verbose
 
   build-macos-universal-wheel:
-    name: 'Build macOS universal wheels'
+    name: "Build and test macOS wheels"
     runs-on: macos-12
     defaults:
       run:
@@ -69,28 +72,34 @@ jobs:
           # - '3.9'
           - '3.10'
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           submodules: true
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - run: python3 --version
-      - run: rustup target add aarch64-apple-darwin
-      - run: pip3 install --user -r requirements.txt
-      - run: bash generate.sh
-      - name: build wheel
+
+      - name: Generate bdk.py
+        run: | 
+          python3 --version
+          rustup target add aarch64-apple-darwin
+          pip3 install --user -r requirements.txt
+          bash generate.sh
+
+      - name: Build wheel
         env:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
         run: python3 setup.py bdist_wheel --verbose
-      - uses: actions/upload-artifact@v2
-        with:
-          name: bdkpython-macos-${{ matrix.python }}
-          path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
+
+      - name: Install wheel
+        run: pip3 install ./dist/*.whl
+
+      - name: Run tests
+        run: python3 -m unittest tests/test_bdk.py --verbose
 
   build-windows-wheel:
-    name: 'Build Windows wheels'
+    name: "Build and test Windows wheels"
     runs-on: windows-2022
     defaults:
       run:
@@ -103,19 +112,30 @@ jobs:
           # - '3.9'
           - '3.10'
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v2
         with:
           submodules: true
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
-      - run: python --version
-      - run: pip install --user -r requirements.txt
-      - run: bash generate.sh
-      - name: build wheel
+
+      - name: Generate bdk.py
+        run: |
+          python --version
+          pip install --user -r requirements.txt
+          bash generate.sh
+
+      - name: Build wheel
         run: python setup.py bdist_wheel --verbose
-      - uses: actions/upload-artifact@v2
-        with:
-          name: bdkpython-win-${{ matrix.python }}
-          path: D:\a\bdk-ffi\bdk-ffi\bdk-python\dist\*.whl
+
+      # TODO: On Windows the pip install ./dist/*.whl step fails with the following error:
+      # Run pip install ./dist/*.whl
+      # WARNING: Requirement './dist/*.whl' looks like a filename, but the file does not exist
+      # ERROR: *.whl is not a valid wheel filename.*.whl is not a valid wheel name
+      # So we skip the installing and the tests and simply test that the wheel builds
+
+      # - name: Install wheel
+      #   run: pip install ./dist/*.whl
+      # - name: Run tests
+      #   run: python -m unittest tests/test_bdk.py --verbose

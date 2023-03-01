@@ -19,9 +19,6 @@ case $OS in
     cp ../target/release-smaller/libbdkffi.so ../bdk-python/src/bdkpython/libbdkffi.so
     ;;
 esac
-
-# echo "Bundling bdkpython..."
 cd ../bdk-python/
-# python setup.py --verbose bdist_wheel
 
 echo "All done!"

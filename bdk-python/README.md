@@ -11,9 +11,10 @@ pip install bdkpython
 
 ## Run the tests
 ```shell
-pip3 install --requirement requirements.txt
+pip install --requirement requirements.txt
 bash ./generate.sh
-pip3 install ./dist/bdkpython-<yourversion>-py3-none-any.whl --force-reinstall
+python setup.py bdist_wheel --verbose
+pip install ./dist/bdkpython-<yourversion>-py3-none-any.whl --force-reinstall
 python -m unittest --verbose tests/test_bdk.py
 ```
 
@@ -22,11 +23,11 @@ python -m unittest --verbose tests/test_bdk.py
 # Install dependencies
 pip install --requirement requirements.txt
 
-# Generate the bindings first
+# Generate the bindings
 bash generate.sh
 
 # Build the wheel
-python3 setup.py --verbose bdist_wheel
+python setup.py --verbose bdist_wheel
 ```
 
 ## Run tox to build and test locally
@@ -34,7 +35,7 @@ python3 setup.py --verbose bdist_wheel
 # install dev requirements
 pip install --requirement requirements-dev.txt
 
-# build bindings glue code (located at .bdk-python/src/bdkpython/bdk.py)
+# build bindings glue code (located at ./src/bdkpython/bdk.py)
 source ./generate.sh
 
 # build and test
