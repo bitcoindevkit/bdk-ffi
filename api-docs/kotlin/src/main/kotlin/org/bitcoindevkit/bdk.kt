@@ -290,6 +290,23 @@ class Blockchain(
 class Transaction(transactionBytes: List<UByte>) {
     /** Return the transaction bytes, bitcoin consensus encoded. */
     fun serialize(): List<UByte> {}
+
+    /**
+     * Returns the "weight" of this transaction, as defined by BIP141.
+     *
+     * For transactions with an empty witness, this is simply the consensus-serialized size times four. For transactions with a witness, this is the non-witness consensus-serialized size multiplied by three plus the with-witness consensus-serialized size.
+     */
+    fun weight(): ULong {}
+
+    /** Returns the regular byte-wise consensus-serialized size of this transaction. */
+    fun size(): ULong {}
+
+    /**
+     * Returns the "virtual size" (vsize) of this transaction.
+     *
+     * Will be ceil(weight / 4.0). Note this implements the virtual size as per BIP141, which is different to what is implemented in Bitcoin Core. The computation should be the same for any remotely sane transaction.
+     */
+    fun vsize(): ULong {}
 }
 
 /**
