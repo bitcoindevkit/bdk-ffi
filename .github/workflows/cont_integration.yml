@@ -1,4 +1,4 @@
-name: bdk-ffi CI
+name: Rust layer CI
 on:
   push:
     paths:
@@ -10,7 +10,7 @@ on:
 jobs:
   build-test:
     name: Build and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         rust:
@@ -18,11 +18,13 @@ jobs:
             clippy: true
           - version: 1.61.0 # MSRV
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v2
+
       - name: Generate cache key
         run: echo "${{ matrix.rust.version }} ${{ matrix.features }}" | tee .cache_key
-      - name: cache
+
+      - name: Cache
         uses: actions/cache@v2
         with:
           path: |
@@ -30,20 +32,27 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('.cache_key') }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+
       - name: Set default toolchain
         run: rustup default ${{ matrix.rust.version }}
+
       - name: Set profile
         run: rustup set profile minimal
+
       - name: Add clippy
         if: ${{ matrix.rust.clippy }}
         run: rustup component add clippy
+
       - name: Update toolchain
         run: rustup update
+
       - name: Build
         run: cargo build --features uniffi/cli
+
       - name: Clippy
         if: ${{ matrix.rust.clippy }}
         run: cargo clippy --all-targets --features "uniffi/bindgen-tests uniffi/cli" -- -D warnings
+
       - name: Test
         run: CLASSPATH=./tests/jna/jna-5.8.0.jar cargo test --features uniffi/bindgen-tests,uniffi/cli
 
@@ -53,13 +62,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Set default toolchain
         run: rustup default nightly
+
       - name: Set profile
         run: rustup set profile minimal
+
       - name: Add rustfmt
         run: rustup component add rustfmt
+
       - name: Update toolchain
         run: rustup update
+
       - name: Check fmt
         run: cargo fmt --all -- --config format_code_in_doc_comments=true --check

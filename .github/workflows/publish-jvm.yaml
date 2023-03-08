@@ -3,10 +3,10 @@ on: [workflow_dispatch]
 
 jobs:
   build-jvm-macOS-M1-native-lib:
-    name: Create M1 and x86_64 JVM native binaries
+    name: "Create M1 and x86_64 JVM native binaries"
     runs-on: macos-12
     steps:
-      - name: Checkout publishing branch
+      - name: "Checkout publishing branch"
         uses: actions/checkout@v2
 
       - name: Cache

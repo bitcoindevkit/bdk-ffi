@@ -52,13 +52,13 @@ jobs:
       - name: "Build wheel"
         run: ${PYBIN}/python setup.py bdist_wheel --verbose
 
-      - name: Install wheel
+      - name: "Install wheel"
         run: ${PYBIN}/pip install ./dist/*.whl
 
-      - name: Run tests
+      - name: "Run tests"
         run: ${PYBIN}/python -m unittest tests/test_bdk.py --verbose
 
-      - name: Upload artifact test
+      - name: "Upload artifact test"
         uses: actions/upload-artifact@v2
         with:
           name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
@@ -98,10 +98,10 @@ jobs:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
         run: python3 setup.py bdist_wheel --verbose
 
-      - name: Install wheel
+      - name: "Install wheel"
         run: pip3 install ./dist/*.whl
 
-      - name: Run tests
+      - name: "Run tests"
         run: python3 -m unittest tests/test_bdk.py --verbose
 
   build-windows-wheel:

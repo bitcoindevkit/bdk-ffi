@@ -1,4 +1,4 @@
-name: Test JVM
+name: Test Kotlin/JVM
 on:
   push:
     paths:
@@ -16,7 +16,7 @@ jobs:
       - name: Check out PR branch
         uses: actions/checkout@v2
 
-      - name: cache
+      - name: Cache
         uses: actions/cache@v2
         with:
           path: |

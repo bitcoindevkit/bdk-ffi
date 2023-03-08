@@ -10,7 +10,7 @@ on:
 
 jobs:
   security_audit:
-    name: Security Audit
+    name: Security audit
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
