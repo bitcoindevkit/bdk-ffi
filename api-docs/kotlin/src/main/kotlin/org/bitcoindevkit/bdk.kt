@@ -288,13 +288,15 @@ class Blockchain(
  * @param transactionBytes The transaction bytes, bitcoin consensus encoded.
  */
 class Transaction(transactionBytes: List<UByte>) {
-    /** Return the transaction bytes, bitcoin consensus encoded. */
-    fun serialize(): List<UByte> {}
+    /** Computes the txid. */
+    fun txid(): String {}
 
     /**
      * Returns the "weight" of this transaction, as defined by BIP141.
      *
-     * For transactions with an empty witness, this is simply the consensus-serialized size times four. For transactions with a witness, this is the non-witness consensus-serialized size multiplied by three plus the with-witness consensus-serialized size.
+     * For transactions with an empty witness, this is simply the consensus-serialized size times four.
+     * For transactions with a witness, this is the non-witness consensus-serialized size multiplied by three
+     * plus the with-witness consensus-serialized size.
      */
     fun weight(): ULong {}
 
@@ -304,9 +306,25 @@ class Transaction(transactionBytes: List<UByte>) {
     /**
      * Returns the "virtual size" (vsize) of this transaction.
      *
-     * Will be ceil(weight / 4.0). Note this implements the virtual size as per BIP141, which is different to what is implemented in Bitcoin Core. The computation should be the same for any remotely sane transaction.
+     * Will be ceil(weight / 4.0). Note this implements the virtual size as per BIP141, which is different to
+     * what is implemented in Bitcoin Core. The computation should be the same for any remotely sane transaction.
      */
     fun vsize(): ULong {}
+
+    /** Return the transaction bytes, bitcoin consensus encoded. */
+    fun serialize(): List<UByte> {}
+
+    /** Is this a coin base transaction? */
+    fun isCoinBase(): Boolean {}
+
+    /**
+     * Returns true if the transaction itself opted in to be BIP-125-replaceable (RBF).
+     * This does not cover the case where a transaction becomes replaceable due to ancestors being RBF.
+     */
+    fun isExplicitlyRbf(): Boolean {}
+
+    /** Returns true if this transactions nLockTime is enabled (BIP-65). */
+    fun isLockTimeEnabled(): Boolean {}
 }
 
 /**

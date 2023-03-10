@@ -247,13 +247,21 @@ interface Transaction {
   [Throws=BdkError]
   constructor(sequence<u8> transaction_bytes);
 
-  sequence<u8> serialize();
+  string txid();
 
   u64 weight();
 
   u64 size();
 
   u64 vsize();
+
+  sequence<u8> serialize();
+
+  boolean is_coin_base();
+
+  boolean is_explicitly_rbf();
+
+  boolean is_lock_time_enabled();
 };
 
 interface PartiallySignedTransaction {

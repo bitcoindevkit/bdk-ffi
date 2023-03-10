@@ -251,8 +251,8 @@ impl Transaction {
         Ok(Transaction { internal: tx })
     }
 
-    fn serialize(&self) -> Vec<u8> {
-        self.internal.serialize()
+    fn txid(&self) -> String {
+        self.internal.txid().to_string()
     }
 
     fn weight(&self) -> u64 {
@@ -265,6 +265,22 @@ impl Transaction {
 
     fn vsize(&self) -> u64 {
         self.internal.vsize() as u64
+    }
+
+    fn serialize(&self) -> Vec<u8> {
+        self.internal.serialize()
+    }
+
+    fn is_coin_base(&self) -> bool {
+        self.internal.is_coin_base()
+    }
+
+    fn is_explicitly_rbf(&self) -> bool {
+        self.internal.is_explicitly_rbf()
+    }
+
+    fn is_lock_time_enabled(&self) -> bool {
+        self.internal.is_lock_time_enabled()
     }
 }
 
