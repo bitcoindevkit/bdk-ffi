@@ -19,6 +19,7 @@ use bdk::bitcoin::blockdata::transaction::TxIn as BdkTxIn;
 use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::psbt::serialize::Serialize;
+use bdk::bitcoin::util::address::{Payload as BdkPayload, WitnessVersion};
 use bdk::bitcoin::{
     Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid,
 };
@@ -356,11 +357,46 @@ impl Address {
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
+    fn payload(&self) -> Payload {
+        match &self.address.payload.clone() {
+            BdkPayload::PubkeyHash(pubkey_hash) => Payload::PubkeyHash {
+                pubkey_hash: pubkey_hash.to_vec(),
+            },
+            BdkPayload::ScriptHash(script_hash) => Payload::ScriptHash {
+                script_hash: script_hash.to_vec(),
+            },
+            BdkPayload::WitnessProgram { version, program } => Payload::WitnessProgram {
+                version: *version,
+                program: program.clone(),
+            },
+        }
+    }
+
+    fn network(&self) -> Network {
+        self.address.network
+    }
+
     fn script_pubkey(&self) -> Arc<Script> {
         Arc::new(Script {
             script: self.address.script_pubkey(),
         })
     }
+}
+
+/// The method used to produce an address.
+#[derive(Debug)]
+pub enum Payload {
+    /// P2PKH address.
+    PubkeyHash { pubkey_hash: Vec<u8> },
+    /// P2SH address.
+    ScriptHash { script_hash: Vec<u8> },
+    /// Segwit address.
+    WitnessProgram {
+        /// The witness program version.
+        version: WitnessVersion,
+        /// The witness program.
+        program: Vec<u8>,
+    },
 }
 
 /// A Bitcoin script.
@@ -403,7 +439,11 @@ uniffi::deps::static_assertions::assert_impl_all!(Wallet: Sync, Send);
 #[cfg(test)]
 mod test {
     use super::Transaction;
+    use crate::Network::Regtest;
+    use crate::{Address, Payload};
+    use assert_matches::assert_matches;
     use bdk::bitcoin::hashes::hex::FromHex;
+    use bdk::bitcoin::util::address::WitnessVersion;
 
     // Verify that bdk-ffi Transaction can be created from valid bytes and serialized back into the same bytes.
     #[test]
@@ -412,5 +452,18 @@ mod test {
         let new_tx_from_bytes = Transaction::new(test_tx_bytes.clone()).unwrap();
         let serialized_tx_to_bytes = new_tx_from_bytes.serialize();
         assert_eq!(test_tx_bytes, serialized_tx_to_bytes);
+    }
+
+    // Verify that bdk-ffi Address.payload includes expected WitnessProgram variant, version and program bytes.
+    #[test]
+    fn test_address_witness_program() {
+        let address =
+            Address::new("bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv".to_string()).unwrap();
+        let payload = address.payload();
+        assert_matches!(payload, Payload::WitnessProgram { version, program } => {
+            assert_eq!(version,WitnessVersion::V0);
+            assert_eq!(program, Vec::from_hex("04a6545885dd87b8e147cd327f2e9db362b72346").unwrap());
+        });
+        assert_eq!(address.network(), Regtest);
     }
 }
