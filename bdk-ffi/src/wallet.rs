@@ -129,10 +129,7 @@ impl Wallet {
     /// which first needs to be Wallet.sync manually.
     pub(crate) fn list_unspent(&self) -> Result<Vec<LocalUtxo>, BdkError> {
         let unspents = self.get_wallet().list_unspent()?;
-        Ok(unspents
-            .iter()
-            .map(|u| LocalUtxo::from_utxo(u))
-            .collect())
+        Ok(unspents.iter().map(|u| LocalUtxo::from_utxo(u)).collect())
     }
 }
 

@@ -15,9 +15,11 @@ use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
-use bdk::bitcoin::consensus::{Decodable, serialize};
+use bdk::bitcoin::consensus::{serialize, Decodable};
 use bdk::bitcoin::psbt::serialize::Serialize;
-use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid};
+use bdk::bitcoin::{
+    Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid,
+};
 use bdk::blockchain::Progress as BdkProgress;
 use bdk::database::any::{SledDbConfiguration, SqliteDbConfiguration};
 use bdk::keys::bip39::WordCount;
@@ -211,7 +213,9 @@ impl NetworkLocalUtxo for LocalUtxo {
             },
             txout: TxOut {
                 value: x.txout.value,
-                script_pubkey: Arc::new(Script { script: x.txout.script_pubkey.clone() })
+                script_pubkey: Arc::new(Script {
+                    script: x.txout.script_pubkey.clone(),
+                }),
             },
             keychain: x.keychain,
             is_spent: x.is_spent,
@@ -265,19 +269,27 @@ impl Transaction {
     fn new(transaction_bytes: Vec<u8>) -> Result<Self, BdkError> {
         let mut decoder = Cursor::new(transaction_bytes);
         let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
-        let inputs: Vec<TxIn> = tx.input.iter().map(|input| TxIn {
-            previous_output: OutPoint {
-                txid: input.previous_output.txid.to_string(),
-                vout: input.previous_output.vout,
-            },
-            script_sig: Arc::new(Script::from(input.script_sig.clone())),
-            sequence: input.sequence.0,
-            witness: input.witness.to_vec(),
-        }).collect();
-        let outputs: Vec<TxOut> = tx.output.iter().map(|output| TxOut {
-            value: output.value,
-            script_pubkey: Arc::new(Script::from(output.script_pubkey.clone())),
-        }).collect();
+        let inputs: Vec<TxIn> = tx
+            .input
+            .iter()
+            .map(|input| TxIn {
+                previous_output: OutPoint {
+                    txid: input.previous_output.txid.to_string(),
+                    vout: input.previous_output.vout,
+                },
+                script_sig: Arc::new(Script::from(input.script_sig.clone())),
+                sequence: input.sequence.0,
+                witness: input.witness.to_vec(),
+            })
+            .collect();
+        let outputs: Vec<TxOut> = tx
+            .output
+            .iter()
+            .map(|output| TxOut {
+                value: output.value,
+                script_pubkey: Arc::new(Script::from(output.script_pubkey.clone())),
+            })
+            .collect();
 
         Ok(Transaction {
             internal: tx.clone(),

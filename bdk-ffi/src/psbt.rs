@@ -1,9 +1,9 @@
+use bdk::bitcoin::consensus::serialize;
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::psbt::PsbtUtils;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use bdk::bitcoin::consensus::serialize;
 
 use crate::{BdkError, FeeRate, Transaction};
 
