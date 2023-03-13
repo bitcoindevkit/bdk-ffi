@@ -15,7 +15,7 @@ use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
-use bdk::bitcoin::consensus::Decodable;
+use bdk::bitcoin::consensus::{Decodable, serialize};
 use bdk::bitcoin::psbt::serialize::Serialize;
 use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid};
 use bdk::blockchain::Progress as BdkProgress;
@@ -94,8 +94,9 @@ impl From<AddressIndex> for BdkAddressIndex {
 }
 
 /// A wallet transaction
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct TransactionDetails {
+    pub transaction: Option<Arc<Transaction>>,
     /// Transaction id.
     pub txid: String,
     /// Received value (sats)
@@ -116,7 +117,16 @@ pub struct TransactionDetails {
 
 impl From<&bdk::TransactionDetails> for TransactionDetails {
     fn from(x: &bdk::TransactionDetails) -> TransactionDetails {
+        let potential_tx: Option<Arc<Transaction>> = match &x.transaction {
+            Some(tx) => {
+                let buffer: Vec<u8> = serialize(tx);
+                Some(Arc::new(Transaction::new(buffer).unwrap()))
+            }
+            None => None,
+        };
+
         TransactionDetails {
+            transaction: potential_tx,
             fee: x.fee,
             txid: x.txid.to_string(),
             received: x.received,
@@ -173,7 +183,7 @@ impl From<BdkBalance> for Balance {
 }
 
 /// A transaction output, which defines new coins to be created from old ones.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TxOut {
     /// The value of the output, in satoshis.
     value: u64,
@@ -233,16 +243,16 @@ impl fmt::Debug for ProgressHolder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TxIn {
     pub previous_output: OutPoint,
-    pub script_sig: Script,
+    pub script_sig: Arc<Script>,
     pub sequence: u32,
     pub witness: Vec<Vec<u8>>,
 }
 
 /// A Bitcoin transaction.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Transaction {
     internal: BdkTransaction,
     pub version: i32,
@@ -260,7 +270,7 @@ impl Transaction {
                 txid: input.previous_output.txid.to_string(),
                 vout: input.previous_output.vout,
             },
-            script_sig: Script::from(input.script_sig.clone()),
+            script_sig: Arc::new(Script::from(input.script_sig.clone())),
             sequence: input.sequence.0,
             witness: input.witness.to_vec(),
         }).collect();
@@ -308,6 +318,22 @@ impl Transaction {
 
     fn is_lock_time_enabled(&self) -> bool {
         self.internal.is_lock_time_enabled()
+    }
+
+    fn version(&self) -> i32 {
+        self.version
+    }
+
+    fn lock_time(&self) -> u32 {
+        self.lock_time
+    }
+
+    fn inputs(&self) -> Vec<TxIn> {
+        self.inputs.clone()
+    }
+
+    fn outputs(&self) -> Vec<TxOut> {
+        self.outputs.clone()
     }
 }
 
