@@ -1,6 +1,6 @@
 [workspace]
-members = ["bdk-ffi", "bdk-ffi-bindgen"]
-default-members = ["bdk-ffi", "bdk-ffi-bindgen"]
+members = ["bdk-ffi"]
+default-members = ["bdk-ffi"]
 exclude = ["api-docs", "bdk-android", "bdk-jvm", "bdk-python", "bdk-swift"]
 
 [profile.release-smaller]
