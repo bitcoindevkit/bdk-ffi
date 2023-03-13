@@ -131,7 +131,7 @@ impl Wallet {
         let unspents = self.get_wallet().list_unspent()?;
         Ok(unspents
             .iter()
-            .map(|u| LocalUtxo::from_utxo(u, self.network()))
+            .map(|u| LocalUtxo::from_utxo(u))
             .collect())
     }
 }

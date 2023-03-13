@@ -3,6 +3,7 @@ use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTr
 use bdk::psbt::PsbtUtils;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+use bdk::bitcoin::consensus::serialize;
 
 use crate::{BdkError, FeeRate, Transaction};
 
@@ -34,7 +35,8 @@ impl PartiallySignedTransaction {
     /// Return the transaction.
     pub(crate) fn extract_tx(&self) -> Arc<Transaction> {
         let tx = self.internal.lock().unwrap().clone().extract_tx();
-        Arc::new(Transaction { internal: tx })
+        let buffer: Vec<u8> = serialize(&tx);
+        Arc::new(Transaction::new(buffer).unwrap())
     }
 
     /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.

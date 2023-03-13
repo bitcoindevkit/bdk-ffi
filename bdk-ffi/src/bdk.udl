@@ -188,7 +188,7 @@ dictionary OutPoint {
 
 dictionary TxOut {
   u64 value;
-  string address;
+  Script script_pubkey;
 };
 
 enum KeychainKind {

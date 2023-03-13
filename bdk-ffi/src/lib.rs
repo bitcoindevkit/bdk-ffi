@@ -17,9 +17,7 @@ use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
 use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::psbt::serialize::Serialize;
-use bdk::bitcoin::{
-    Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid,
-};
+use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid};
 use bdk::blockchain::Progress as BdkProgress;
 use bdk::database::any::{SledDbConfiguration, SqliteDbConfiguration};
 use bdk::keys::bip39::WordCount;
@@ -79,7 +77,7 @@ pub enum AddressIndex {
     /// Use with caution, if an index is given that is less than the current descriptor index
     /// then the returned address and subsequent addresses returned by calls to `AddressIndex::New`
     /// and `AddressIndex::LastUsed` may have already been used. Also if the index is reset to a
-    /// value earlier than the [`crate::blockchain::Blockchain`] stop_gap (default is 20) then a
+    /// value earlier than the [`Blockchain`] stop_gap (default is 20) then a
     /// larger stop_gap should be used to monitor for all possibly used addresses.
     Reset { index: u32 },
 }
@@ -175,11 +173,12 @@ impl From<BdkBalance> for Balance {
 }
 
 /// A transaction output, which defines new coins to be created from old ones.
+#[derive(Debug)]
 pub struct TxOut {
     /// The value of the output, in satoshis.
     value: u64,
     /// The address of the output.
-    address: String,
+    script_pubkey: Arc<Script>,
 }
 
 pub struct LocalUtxo {
@@ -189,14 +188,12 @@ pub struct LocalUtxo {
     is_spent: bool,
 }
 
-// This trait is used to convert the bdk TxOut type with field `script_pubkey: Script`
-// into the bdk-ffi TxOut type which has a field `address: String` instead
 trait NetworkLocalUtxo {
-    fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo;
+    fn from_utxo(x: &bdk::LocalUtxo) -> LocalUtxo;
 }
 
 impl NetworkLocalUtxo for LocalUtxo {
-    fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo {
+    fn from_utxo(x: &bdk::LocalUtxo) -> LocalUtxo {
         LocalUtxo {
             outpoint: OutPoint {
                 txid: x.outpoint.txid.to_string(),
@@ -204,9 +201,7 @@ impl NetworkLocalUtxo for LocalUtxo {
             },
             txout: TxOut {
                 value: x.txout.value,
-                address: BdkAddress::from_script(&x.txout.script_pubkey, network)
-                    .unwrap()
-                    .to_string(),
+                script_pubkey: Arc::new(Script { script: x.txout.script_pubkey.clone() })
             },
             keychain: x.keychain,
             is_spent: x.is_spent,
@@ -238,17 +233,49 @@ impl fmt::Debug for ProgressHolder {
     }
 }
 
+#[derive(Debug)]
+pub struct TxIn {
+    pub previous_output: OutPoint,
+    pub script_sig: Script,
+    pub sequence: u32,
+    pub witness: Vec<Vec<u8>>,
+}
+
 /// A Bitcoin transaction.
 #[derive(Debug)]
 pub struct Transaction {
     internal: BdkTransaction,
+    pub version: i32,
+    pub lock_time: u32,
+    pub inputs: Vec<TxIn>,
+    pub outputs: Vec<TxOut>,
 }
 
 impl Transaction {
     fn new(transaction_bytes: Vec<u8>) -> Result<Self, BdkError> {
         let mut decoder = Cursor::new(transaction_bytes);
         let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
-        Ok(Transaction { internal: tx })
+        let inputs: Vec<TxIn> = tx.input.iter().map(|input| TxIn {
+            previous_output: OutPoint {
+                txid: input.previous_output.txid.to_string(),
+                vout: input.previous_output.vout,
+            },
+            script_sig: Script::from(input.script_sig.clone()),
+            sequence: input.sequence.0,
+            witness: input.witness.to_vec(),
+        }).collect();
+        let outputs: Vec<TxOut> = tx.output.iter().map(|output| TxOut {
+            value: output.value,
+            script_pubkey: Arc::new(Script::from(output.script_pubkey.clone())),
+        }).collect();
+
+        Ok(Transaction {
+            internal: tx.clone(),
+            version: tx.version,
+            lock_time: tx.lock_time.0,
+            inputs,
+            outputs,
+        })
     }
 
     fn txid(&self) -> String {
@@ -313,6 +340,12 @@ impl Script {
     fn new(raw_output_script: Vec<u8>) -> Self {
         let script: BdkScript = BdkScript::from(raw_output_script);
         Script { script }
+    }
+}
+
+impl From<BdkScript> for Script {
+    fn from(bdk_script: BdkScript) -> Self {
+        Script { script: bdk_script }
     }
 }
 
