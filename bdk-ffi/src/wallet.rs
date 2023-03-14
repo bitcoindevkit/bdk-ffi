@@ -3,7 +3,10 @@ use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Sequ
 use bdk::database::any::AnyDatabase;
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
-use bdk::{FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet};
+use bdk::{
+    FeeRate, LocalUtxo as BdkLocalUtxo, SignOptions, SyncOptions as BdkSyncOptions,
+    Wallet as BdkWallet,
+};
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -128,8 +131,8 @@ impl Wallet {
     /// Return the list of unspent outputs of this wallet. Note that this method only operates on the internal database,
     /// which first needs to be Wallet.sync manually.
     pub(crate) fn list_unspent(&self) -> Result<Vec<LocalUtxo>, BdkError> {
-        let unspents = self.get_wallet().list_unspent()?;
-        Ok(unspents.iter().map(|u| LocalUtxo::from_utxo(u)).collect())
+        let unspents: Vec<BdkLocalUtxo> = self.get_wallet().list_unspent()?;
+        Ok(unspents.iter().map(LocalUtxo::from_utxo).collect())
     }
 }
 

@@ -190,8 +190,8 @@ dictionary OutPoint {
 dictionary TxIn {
   OutPoint previous_output;
   Script script_sig;
-   u32 sequence;
-   sequence<sequence<u8>> witness;
+  u32 sequence;
+  sequence<sequence<u8>> witness;
 };
 
 dictionary TxOut {
