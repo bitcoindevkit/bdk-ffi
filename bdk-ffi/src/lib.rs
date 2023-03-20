@@ -193,6 +193,17 @@ pub struct TxOut {
     script_pubkey: Arc<Script>,
 }
 
+impl From<&bdk::bitcoin::blockdata::transaction::TxOut> for TxOut {
+    fn from(x: &bdk::bitcoin::blockdata::transaction::TxOut) -> TxOut {
+        TxOut {
+            value: x.value,
+            script_pubkey: Arc::new(Script {
+                script: x.script_pubkey.clone(),
+            }),
+        }
+    }
+}
+
 pub struct LocalUtxo {
     outpoint: OutPoint,
     txout: TxOut,
@@ -255,49 +266,33 @@ pub struct TxIn {
     pub witness: Vec<Vec<u8>>,
 }
 
+impl From<&bdk::bitcoin::blockdata::transaction::TxIn> for TxIn {
+    fn from(x: &bdk::bitcoin::blockdata::transaction::TxIn) -> TxIn {
+        TxIn {
+            previous_output: OutPoint {
+                txid: x.previous_output.txid.to_string(),
+                vout: x.previous_output.vout,
+            },
+            script_sig: Arc::new(Script {
+                script: x.script_sig.clone(),
+            }),
+            sequence: x.sequence.0,
+            witness: x.witness.to_vec(),
+        }
+    }
+}
+
 /// A Bitcoin transaction.
 #[derive(Debug, Clone)]
 pub struct Transaction {
     internal: BdkTransaction,
-    pub version: i32,
-    pub lock_time: u32,
-    pub inputs: Vec<TxIn>,
-    pub outputs: Vec<TxOut>,
 }
 
 impl Transaction {
     fn new(transaction_bytes: Vec<u8>) -> Result<Self, BdkError> {
         let mut decoder = Cursor::new(transaction_bytes);
         let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
-        let inputs: Vec<TxIn> = tx
-            .input
-            .iter()
-            .map(|input| TxIn {
-                previous_output: OutPoint {
-                    txid: input.previous_output.txid.to_string(),
-                    vout: input.previous_output.vout,
-                },
-                script_sig: Arc::new(Script::from(input.script_sig.clone())),
-                sequence: input.sequence.0,
-                witness: input.witness.to_vec(),
-            })
-            .collect();
-        let outputs: Vec<TxOut> = tx
-            .output
-            .iter()
-            .map(|output| TxOut {
-                value: output.value,
-                script_pubkey: Arc::new(Script::from(output.script_pubkey.clone())),
-            })
-            .collect();
-
-        Ok(Transaction {
-            internal: tx.clone(),
-            version: tx.version,
-            lock_time: tx.lock_time.0,
-            inputs,
-            outputs,
-        })
+        Ok(Transaction { internal: tx })
     }
 
     fn txid(&self) -> String {
@@ -333,19 +328,19 @@ impl Transaction {
     }
 
     fn version(&self) -> i32 {
-        self.version
+        self.internal.version
     }
 
     fn lock_time(&self) -> u32 {
-        self.lock_time
+        self.internal.lock_time.0
     }
 
-    fn inputs(&self) -> Vec<TxIn> {
-        self.inputs.clone()
+    fn input(&self) -> Vec<TxIn> {
+        self.internal.input.iter().map(|x| x.into()).collect()
     }
 
-    fn outputs(&self) -> Vec<TxOut> {
-        self.outputs.clone()
+    fn output(&self) -> Vec<TxOut> {
+        self.internal.output.iter().map(|x| x.into()).collect()
     }
 }
 

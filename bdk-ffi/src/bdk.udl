@@ -275,9 +275,9 @@ interface Transaction {
 
   u32 lock_time();
 
-  sequence<TxIn> inputs();
+  sequence<TxIn> input();
 
-  sequence<TxOut> outputs();
+  sequence<TxOut> output();
 };
 
 interface PartiallySignedTransaction {
