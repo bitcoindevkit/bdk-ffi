@@ -487,8 +487,20 @@ class Wallet(
     /** Return the wallet's balance, across different categories. See [Balance] for the categories. Note that this method only operates on the internal database, which first needs to be [Wallet.sync] manually. */
     fun getBalance(): Balance {}
 
-    /** Sign a transaction with all the wallet’s signers. */
-    fun sign(psbt: PartiallySignedTransaction): Boolean {}
+    /**
+     * Sign a transaction with all the wallet's signers, in the order specified by every signer's
+     * `SignerOrdering`.
+     *
+     * The `SignOptions` can be used to tweak the behavior of the software signers, and the way
+     * the transaction is finalized at the end. Note that it can't be guaranteed that *every*
+     * signers will follow the options, but the "software signers" (WIF keys and `xprv`) defined
+     * in this library will.
+     *
+     * @param psbt PSBT to be signed
+     * @param signOptions signing options
+     * @return true if the PSBT was finalized, or false otherwise
+     */
+    fun sign(psbt: PartiallySignedTransaction, signOptions: SignOptions?): Boolean {}
 
     /** Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually. */
     fun listTransactions(includeRaw: Boolean): List<TransactionDetails> {}
@@ -595,6 +607,29 @@ class TxBuilder() {
     /** Finish building the transaction. Returns a [TxBuilderResult]. */
     fun finish(wallet: Wallet): TxBuilderResult {}
 }
+
+/**
+ * Options for a software signer.
+ *
+ * Adjust the behavior of our software signers and the way a transaction is finalized.
+ *
+ * @property trustWitnessUtxo Whether the signer should trust the `witness_utxo`, if the `non_witness_utxo` hasn't been provided. Defaults to `false`.
+ * @property assumeHeight Whether the wallet should assume a specific height has been reached when trying to finalize a transaction.
+ * @property allowAllSighashes Whether the signer should use the sighash_type set in the PSBT when signing, no matter what its value is. Defaults to `false`.
+ * @property removePartialSigs Whether to remove partial signatures from the PSBT inputs while finalizing PSBT. Defaults to `true`.
+ * @property tryFinalize Whether to try finalizing the PSBT after the inputs are signed. Defaults to `true`.
+ * @property signWithTapInternalKey Whether we should try to sign a taproot transaction with the taproot internal key or not. This option is ignored if we're signing a non-taproot PSBT. Defaults to `true`.
+ * @property allowGrinding Whether we should grind ECDSA signature to ensure signing with low r or not. Defaults to `true`.
+ */
+data class SignOptions (
+    var trustWitnessUtxo: Boolean,
+    var assumeHeight: UInt?,
+    var allowAllSighashes: Boolean,
+    var removePartialSigs: Boolean,
+    var tryFinalize: Boolean,
+    var signWithTapInternalKey: Boolean,
+    var allowGrinding: Boolean
+)
 
 /**
  * A object holding a ScriptPubKey and an amount.

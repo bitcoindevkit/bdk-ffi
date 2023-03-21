@@ -13,6 +13,7 @@ use crate::descriptor::Descriptor;
 use crate::keys::DerivationPath;
 use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
+use crate::wallet::SignOptions;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
 use bdk::bitcoin::blockdata::transaction::TxIn as BdkTxIn;
