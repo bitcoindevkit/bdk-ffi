@@ -491,7 +491,7 @@ class Wallet(
     fun sign(psbt: PartiallySignedTransaction): Boolean {}
 
     /** Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually. */
-    fun listTransactions(): List<TransactionDetails> {}
+    fun listTransactions(includeRaw: Boolean): List<TransactionDetails> {}
 
     /** Get the Bitcoin network the wallet is using. */
     fun network(): Network {}

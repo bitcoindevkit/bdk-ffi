@@ -233,7 +233,7 @@ interface Wallet {
   boolean sign([ByRef] PartiallySignedTransaction psbt);
 
   [Throws=BdkError]
-  sequence<TransactionDetails> list_transactions();
+  sequence<TransactionDetails> list_transactions(boolean include_raw);
 
   Network network();
 

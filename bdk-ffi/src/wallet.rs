@@ -120,8 +120,11 @@ impl Wallet {
     }
 
     /// Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually.
-    pub(crate) fn list_transactions(&self) -> Result<Vec<TransactionDetails>, BdkError> {
-        let transaction_details = self.get_wallet().list_transactions(true)?;
+    pub(crate) fn list_transactions(
+        &self,
+        include_raw: bool,
+    ) -> Result<Vec<TransactionDetails>, BdkError> {
+        let transaction_details = self.get_wallet().list_transactions(include_raw)?;
         Ok(transaction_details
             .iter()
             .map(TransactionDetails::from)
@@ -577,28 +580,19 @@ mod test {
 
         // new index still 0
         assert_eq!(
-            wallet
-                .get_address(AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
         );
 
         // new index now 1
         assert_eq!(
-            wallet
-                .get_address(AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
 
         // new index now 2
         assert_eq!(
-            wallet
-                .get_address(AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1q5g0mq6dkmwzvxscqwgc932jhgcxuqqkjv09tkj"
         );
 
@@ -646,18 +640,12 @@ mod test {
         .unwrap();
 
         assert_eq!(
-            wallet
-                .get_address(AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
         );
 
         assert_eq!(
-            wallet
-                .get_address(AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
 
