@@ -96,7 +96,7 @@ impl From<AddressIndex> for BdkAddressIndex {
 }
 
 /// A wallet transaction
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TransactionDetails {
     pub transaction: Option<Arc<Transaction>>,
     /// Transaction id.
@@ -279,7 +279,7 @@ impl From<&bdk::bitcoin::blockdata::transaction::TxIn> for TxIn {
 }
 
 /// A Bitcoin transaction.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
     internal: BdkTransaction,
 }
