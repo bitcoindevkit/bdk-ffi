@@ -35,8 +35,6 @@ impl PartiallySignedTransaction {
     pub(crate) fn extract_tx(&self) -> Arc<Transaction> {
         let tx = self.internal.lock().unwrap().clone().extract_tx();
         Arc::new(tx.into())
-        // let buffer: Vec<u8> = serialize(&tx);
-        // Arc::new(Transaction::new(buffer).unwrap())
     }
 
     /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.

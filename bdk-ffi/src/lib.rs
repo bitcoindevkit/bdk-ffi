@@ -15,6 +15,8 @@ use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
+use bdk::bitcoin::blockdata::transaction::TxIn as BdkTxIn;
+use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::psbt::serialize::Serialize;
 use bdk::bitcoin::{
@@ -25,6 +27,7 @@ use bdk::database::any::{SledDbConfiguration, SqliteDbConfiguration};
 use bdk::keys::bip39::WordCount;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
+use bdk::LocalUtxo as BdkLocalUtxo;
 use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
 use std::convert::From;
 use std::fmt;
@@ -49,7 +52,7 @@ pub struct AddressInfo {
 }
 
 impl From<BdkAddressInfo> for AddressInfo {
-    fn from(x: bdk::wallet::AddressInfo) -> AddressInfo {
+    fn from(x: bdk::wallet::AddressInfo) -> Self {
         AddressInfo {
             index: x.index,
             address: x.address.to_string(),
@@ -85,7 +88,7 @@ pub enum AddressIndex {
 }
 
 impl From<AddressIndex> for BdkAddressIndex {
-    fn from(x: AddressIndex) -> BdkAddressIndex {
+    fn from(x: AddressIndex) -> Self {
         match x {
             AddressIndex::New => BdkAddressIndex::New,
             AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
@@ -143,7 +146,7 @@ pub struct OutPoint {
 }
 
 impl From<&OutPoint> for BdkOutPoint {
-    fn from(x: &OutPoint) -> BdkOutPoint {
+    fn from(x: &OutPoint) -> Self {
         BdkOutPoint {
             txid: Txid::from_str(&x.txid).unwrap(),
             vout: x.vout,
@@ -188,8 +191,8 @@ pub struct TxOut {
     script_pubkey: Arc<Script>,
 }
 
-impl From<&bdk::bitcoin::blockdata::transaction::TxOut> for TxOut {
-    fn from(x: &bdk::bitcoin::blockdata::transaction::TxOut) -> Self {
+impl From<&BdkTxOut> for TxOut {
+    fn from(x: &BdkTxOut) -> Self {
         TxOut {
             value: x.value,
             script_pubkey: Arc::new(Script {
@@ -206,8 +209,8 @@ pub struct LocalUtxo {
     is_spent: bool,
 }
 
-impl From<bdk::LocalUtxo> for LocalUtxo {
-    fn from(local_utxo: bdk::LocalUtxo) -> Self {
+impl From<BdkLocalUtxo> for LocalUtxo {
+    fn from(local_utxo: BdkLocalUtxo) -> Self {
         LocalUtxo {
             outpoint: OutPoint {
                 txid: local_utxo.outpoint.txid.to_string(),
@@ -216,7 +219,7 @@ impl From<bdk::LocalUtxo> for LocalUtxo {
             txout: TxOut {
                 value: local_utxo.txout.value,
                 script_pubkey: Arc::new(Script {
-                    script: local_utxo.txout.script_pubkey.clone(),
+                    script: local_utxo.txout.script_pubkey,
                 }),
             },
             keychain: local_utxo.keychain,
@@ -257,8 +260,8 @@ pub struct TxIn {
     pub witness: Vec<Vec<u8>>,
 }
 
-impl From<&bdk::bitcoin::blockdata::transaction::TxIn> for TxIn {
-    fn from(x: &bdk::bitcoin::blockdata::transaction::TxIn) -> TxIn {
+impl From<&BdkTxIn> for TxIn {
+    fn from(x: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
                 txid: x.previous_output.txid.to_string(),
