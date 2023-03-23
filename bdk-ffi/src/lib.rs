@@ -15,7 +15,7 @@ use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
-use bdk::bitcoin::consensus::{serialize, Decodable};
+use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::psbt::serialize::Serialize;
 use bdk::bitcoin::{
     Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid,
@@ -117,23 +117,18 @@ pub struct TransactionDetails {
     pub confirmation_time: Option<BlockTime>,
 }
 
-impl From<&bdk::TransactionDetails> for TransactionDetails {
-    fn from(x: &bdk::TransactionDetails) -> TransactionDetails {
-        let potential_tx: Option<Arc<Transaction>> = match &x.transaction {
-            Some(tx) => {
-                let buffer: Vec<u8> = serialize(tx);
-                Some(Arc::new(Transaction::new(buffer).unwrap()))
-            }
-            None => None,
-        };
+impl From<bdk::TransactionDetails> for TransactionDetails {
+    fn from(tx_details: bdk::TransactionDetails) -> Self {
+        let optional_tx: Option<Arc<Transaction>> =
+            tx_details.transaction.map(|tx| Arc::new(tx.into()));
 
         TransactionDetails {
-            transaction: potential_tx,
-            fee: x.fee,
-            txid: x.txid.to_string(),
-            received: x.received,
-            sent: x.sent,
-            confirmation_time: x.confirmation_time.clone(),
+            transaction: optional_tx,
+            fee: tx_details.fee,
+            txid: tx_details.txid.to_string(),
+            received: tx_details.received,
+            sent: tx_details.sent,
+            confirmation_time: tx_details.confirmation_time,
         }
     }
 }
@@ -337,6 +332,12 @@ impl Transaction {
 
     fn output(&self) -> Vec<TxOut> {
         self.internal.output.iter().map(|x| x.into()).collect()
+    }
+}
+
+impl From<bdk::bitcoin::Transaction> for Transaction {
+    fn from(tx: bdk::bitcoin::Transaction) -> Self {
+        Transaction { internal: tx }
     }
 }
 

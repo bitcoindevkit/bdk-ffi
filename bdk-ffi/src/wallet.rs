@@ -126,7 +126,7 @@ impl Wallet {
     ) -> Result<Vec<TransactionDetails>, BdkError> {
         let transaction_details = self.get_wallet().list_transactions(include_raw)?;
         Ok(transaction_details
-            .iter()
+            .into_iter()
             .map(TransactionDetails::from)
             .collect())
     }
@@ -376,7 +376,7 @@ impl TxBuilder {
                 psbt: Arc::new(PartiallySignedTransaction {
                     internal: Mutex::new(psbt),
                 }),
-                transaction_details: TransactionDetails::from(&tx_details),
+                transaction_details: TransactionDetails::from(tx_details),
             })
     }
 }
