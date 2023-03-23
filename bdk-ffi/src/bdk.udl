@@ -440,6 +440,8 @@ interface Address {
   Network network();
 
   Script script_pubkey();
+
+  string to_qr_uri();
 };
 
 [Enum]

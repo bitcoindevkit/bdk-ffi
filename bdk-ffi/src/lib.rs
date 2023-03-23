@@ -381,6 +381,10 @@ impl Address {
             script: self.address.script_pubkey(),
         })
     }
+
+    fn to_qr_uri(&self) -> String {
+        self.address.to_qr_uri()
+    }
 }
 
 /// The method used to produce an address.

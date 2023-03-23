@@ -798,11 +798,20 @@ class Address(address: String) {
     fun payload(): Payload
 
     /** Return the Network. */
-    fun Network(): Network
+    fun network(): Network
 
     /** Return the ScriptPubKey. */
     fun scriptPubkey(): Script
-}
+
+    /**
+     * Creates a URI string bitcoin:address optimized to be encoded in QR codes.
+     *
+     * If the address is bech32, both the schema and the address become uppercase. If the address is base58, the schema is lowercase and the address is left mixed case.
+     *
+     * Quoting BIP 173 "inside QR codes uppercase SHOULD be used, as those permit the use of alphanumeric mode, which is 45% more compact than the normal byte mode."
+     */
+    fun toQrUri(): String
+}}
 
 /**
  * The method used to produce an address.
@@ -810,17 +819,18 @@ class Address(address: String) {
 sealed class Payload {
     /** P2PKH address. */
     data class PubkeyHash(
-        val `pubkeyHash`: List<UByte>
+        val pubkeyHash: List<UByte>
     ) : Payload()
 
     /** P2SH address. */
     data class ScriptHash(
-        val `scriptHash`: List<UByte>
+        val scriptHash: List<UByte>
     ) : Payload()
+
     /** Segwit address. */
     data class WitnessProgram(
-        val `version`: WitnessVersion,
-        val `program`: List<UByte>
+        val version: WitnessVersion,
+        val program: List<UByte>
     ) : Payload()
 }
 
@@ -833,7 +843,7 @@ sealed class Payload {
  * from 0 to 16 (inclusive).
  */
 enum class WitnessVersion {
-    V0,V1,V2,V3,V4,V5,V6,V7,V8,V9,V10,V11,V12,V13,V14,V15,V16;
+    V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16
 }
 
 /**
