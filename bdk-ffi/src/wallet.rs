@@ -17,8 +17,8 @@ use crate::database::DatabaseConfig;
 use crate::descriptor::Descriptor;
 use crate::psbt::PartiallySignedTransaction;
 use crate::{
-    AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, NetworkLocalUtxo, OutPoint, Progress,
-    ProgressHolder, RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
+    AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, OutPoint, Progress, ProgressHolder,
+    RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
 };
 
 #[derive(Debug)]
@@ -132,7 +132,7 @@ impl Wallet {
     /// which first needs to be Wallet.sync manually.
     pub(crate) fn list_unspent(&self) -> Result<Vec<LocalUtxo>, BdkError> {
         let unspents: Vec<BdkLocalUtxo> = self.get_wallet().list_unspent()?;
-        Ok(unspents.iter().map(LocalUtxo::from_utxo).collect())
+        Ok(unspents.into_iter().map(LocalUtxo::from).collect())
     }
 }
 
@@ -578,7 +578,7 @@ mod test {
         // new index still 0
         assert_eq!(
             wallet
-                .get_address(crate::AddressIndex::New)
+                .get_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
@@ -587,7 +587,7 @@ mod test {
         // new index now 1
         assert_eq!(
             wallet
-                .get_address(crate::AddressIndex::New)
+                .get_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
@@ -596,7 +596,7 @@ mod test {
         // new index now 2
         assert_eq!(
             wallet
-                .get_address(crate::AddressIndex::New)
+                .get_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1q5g0mq6dkmwzvxscqwgc932jhgcxuqqkjv09tkj"
@@ -647,7 +647,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_address(crate::AddressIndex::New)
+                .get_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
@@ -655,7 +655,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_address(crate::AddressIndex::New)
+                .get_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
@@ -663,7 +663,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_address(crate::AddressIndex::LastUnused)
+                .get_address(AddressIndex::LastUnused)
                 .unwrap()
                 .address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
@@ -671,7 +671,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_internal_address(crate::AddressIndex::New)
+                .get_internal_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1qpmz73cyx00r4a5dea469j40ax6d6kqyd67nnpj"
@@ -679,7 +679,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_internal_address(crate::AddressIndex::New)
+                .get_internal_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"
@@ -687,7 +687,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_internal_address(crate::AddressIndex::LastUnused)
+                .get_internal_address(AddressIndex::LastUnused)
                 .unwrap()
                 .address,
             "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"

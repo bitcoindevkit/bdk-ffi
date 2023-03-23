@@ -194,7 +194,7 @@ pub struct TxOut {
 }
 
 impl From<&bdk::bitcoin::blockdata::transaction::TxOut> for TxOut {
-    fn from(x: &bdk::bitcoin::blockdata::transaction::TxOut) -> TxOut {
+    fn from(x: &bdk::bitcoin::blockdata::transaction::TxOut) -> Self {
         TxOut {
             value: x.value,
             script_pubkey: Arc::new(Script {
@@ -211,25 +211,21 @@ pub struct LocalUtxo {
     is_spent: bool,
 }
 
-trait NetworkLocalUtxo {
-    fn from_utxo(x: &bdk::LocalUtxo) -> LocalUtxo;
-}
-
-impl NetworkLocalUtxo for LocalUtxo {
-    fn from_utxo(x: &bdk::LocalUtxo) -> LocalUtxo {
+impl From<bdk::LocalUtxo> for LocalUtxo {
+    fn from(local_utxo: bdk::LocalUtxo) -> Self {
         LocalUtxo {
             outpoint: OutPoint {
-                txid: x.outpoint.txid.to_string(),
-                vout: x.outpoint.vout,
+                txid: local_utxo.outpoint.txid.to_string(),
+                vout: local_utxo.outpoint.vout,
             },
             txout: TxOut {
-                value: x.txout.value,
+                value: local_utxo.txout.value,
                 script_pubkey: Arc::new(Script {
-                    script: x.txout.script_pubkey.clone(),
+                    script: local_utxo.txout.script_pubkey.clone(),
                 }),
             },
-            keychain: x.keychain,
-            is_spent: x.is_spent,
+            keychain: local_utxo.keychain,
+            is_spent: local_utxo.is_spent,
         }
     }
 }
