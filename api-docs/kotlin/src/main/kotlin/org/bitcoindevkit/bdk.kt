@@ -794,8 +794,56 @@ class Script(rawOutputScript: List<UByte>)
  * @param address The address in string format.
  */
 class Address(address: String) {
+    /** Return the Payload */
+    fun payload(): Payload
+
+    /** Return the Network. */
+    fun network(): Network
+
     /** Return the ScriptPubKey. */
     fun scriptPubkey(): Script
+
+    /**
+     * Creates a URI string bitcoin:address optimized to be encoded in QR codes.
+     *
+     * If the address is bech32, both the schema and the address become uppercase. If the address is base58, the schema is lowercase and the address is left mixed case.
+     *
+     * Quoting BIP 173 "inside QR codes uppercase SHOULD be used, as those permit the use of alphanumeric mode, which is 45% more compact than the normal byte mode."
+     */
+    fun toQrUri(): String
+}}
+
+/**
+ * The method used to produce an address.
+ */
+sealed class Payload {
+    /** P2PKH address. */
+    data class PubkeyHash(
+        val pubkeyHash: List<UByte>
+    ) : Payload()
+
+    /** P2SH address. */
+    data class ScriptHash(
+        val scriptHash: List<UByte>
+    ) : Payload()
+
+    /** Segwit address. */
+    data class WitnessProgram(
+        val version: WitnessVersion,
+        val program: List<UByte>
+    ) : Payload()
+}
+
+/**
+ * Version of the witness program.
+ *
+ * Helps limit possible versions of the witness according to the specification. If a plain u8 type
+ * was used instead it would mean that the version may be > 16, which would be incorrect.
+ * First byte of scriptPubkey in transaction output for transactions starting with opcodes ranging
+ * from 0 to 16 (inclusive).
+ */
+enum class WitnessVersion {
+    V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16
 }
 
 /**
