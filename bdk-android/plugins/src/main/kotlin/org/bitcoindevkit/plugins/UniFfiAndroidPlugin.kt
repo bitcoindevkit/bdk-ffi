@@ -21,7 +21,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val buildAndroidAarch64Binary by tasks.register<Exec>("buildAndroidAarch64Binary") {
 
             workingDir("${projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("build", "--features", "uniffi/cli", "--profile", "release-smaller", "--target", "aarch64-linux-android")
+            val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "aarch64-linux-android")
 
             executable("cargo")
             args(cargoArgs)
@@ -51,7 +51,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val buildAndroidX86_64Binary by tasks.register<Exec>("buildAndroidX86_64Binary") {
 
             workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("build", "--features", "uniffi/cli", "--profile", "release-smaller", "--target", "x86_64-linux-android")
+            val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-linux-android")
 
             executable("cargo")
             args(cargoArgs)
@@ -81,7 +81,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val buildAndroidArmv7Binary by tasks.register<Exec>("buildAndroidArmv7Binary") {
 
             workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("build", "--features", "uniffi/cli", "--profile", "release-smaller", "--target", "armv7-linux-androideabi")
+            val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "armv7-linux-androideabi")
 
             executable("cargo")
             args(cargoArgs)
@@ -138,7 +138,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             dependsOn(moveNativeAndroidLibs)
 
             workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("run", "--features", "uniffi/cli", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--out-dir", "../bdk-android/lib/src/main/kotlin", "--no-format")
+            val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--out-dir", "../bdk-android/lib/src/main/kotlin", "--no-format")
 
             executable("cargo")
             args(cargoArgs)

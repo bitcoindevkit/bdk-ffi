@@ -5,10 +5,10 @@ OS=$(uname -s)
 
 echo "Generating bdk.py..."
 cd ../bdk-ffi/
-cargo run --features uniffi/cli --bin uniffi-bindgen generate src/bdk.udl --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
+cargo run --bin uniffi-bindgen generate src/bdk.udl --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
 
 echo "Generating native binaries..."
-cargo build --features uniffi/cli --profile release-smaller
+cargo build --profile release-smaller
 case $OS in
   "Darwin")
     echo "Copying macOS libbdkffi.dylib..."
