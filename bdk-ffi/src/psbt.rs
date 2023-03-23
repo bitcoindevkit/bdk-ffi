@@ -1,4 +1,3 @@
-use bdk::bitcoin::consensus::serialize;
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::psbt::PsbtUtils;
@@ -35,8 +34,9 @@ impl PartiallySignedTransaction {
     /// Return the transaction.
     pub(crate) fn extract_tx(&self) -> Arc<Transaction> {
         let tx = self.internal.lock().unwrap().clone().extract_tx();
-        let buffer: Vec<u8> = serialize(&tx);
-        Arc::new(Transaction::new(buffer).unwrap())
+        Arc::new(tx.into())
+        // let buffer: Vec<u8> = serialize(&tx);
+        // Arc::new(Transaction::new(buffer).unwrap())
     }
 
     /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.
