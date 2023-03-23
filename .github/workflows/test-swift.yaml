@@ -24,13 +24,13 @@ jobs:
 
       - name: Run bdk-ffi-bindgen
         working-directory: bdk-ffi
-        run: cargo run --features uniffi/cli --bin uniffi-bindgen generate src/bdk.udl --language swift --out-dir ../bdk-swift/Sources/BitcoinDevKit --no-format
+        run: cargo run --bin uniffi-bindgen generate src/bdk.udl --language swift --out-dir ../bdk-swift/Sources/BitcoinDevKit --no-format
 
       - name: Build bdk-ffi for x86_64-apple-darwin
-        run: cargo build --package bdk-ffi --features uniffi/cli --profile release-smaller --target x86_64-apple-darwin
+        run: cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-darwin
 
       - name: Build bdk-ffi for aarch64-apple-darwin
-        run: cargo build --package bdk-ffi --features uniffi/cli --profile release-smaller --target aarch64-apple-darwin
+        run: cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-darwin
 
       - name: Create lipo-ios-sim and lipo-macos
         run: |

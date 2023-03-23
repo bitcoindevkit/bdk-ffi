@@ -47,14 +47,14 @@ jobs:
         run: rustup update
 
       - name: Build
-        run: cargo build --features uniffi/cli
+        run: cargo build
 
       - name: Clippy
         if: ${{ matrix.rust.clippy }}
-        run: cargo clippy --all-targets --features "uniffi/bindgen-tests uniffi/cli" -- -D warnings
+        run: cargo clippy --all-targets --features "uniffi/bindgen-tests" -- -D warnings
 
       - name: Test
-        run: CLASSPATH=./tests/jna/jna-5.8.0.jar cargo test --features uniffi/bindgen-tests,uniffi/cli
+        run: CLASSPATH=./tests/jna/jna-5.8.0.jar cargo test --features uniffi/bindgen-tests
 
   fmt:
     name: Rust fmt

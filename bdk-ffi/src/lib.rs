@@ -15,6 +15,8 @@ use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
+use bdk::bitcoin::blockdata::transaction::TxIn as BdkTxIn;
+use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::psbt::serialize::Serialize;
 use bdk::bitcoin::{
@@ -25,6 +27,7 @@ use bdk::database::any::{SledDbConfiguration, SqliteDbConfiguration};
 use bdk::keys::bip39::WordCount;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
+use bdk::LocalUtxo as BdkLocalUtxo;
 use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
 use std::convert::From;
 use std::fmt;
@@ -49,7 +52,7 @@ pub struct AddressInfo {
 }
 
 impl From<BdkAddressInfo> for AddressInfo {
-    fn from(x: bdk::wallet::AddressInfo) -> AddressInfo {
+    fn from(x: bdk::wallet::AddressInfo) -> Self {
         AddressInfo {
             index: x.index,
             address: x.address.to_string(),
@@ -79,13 +82,13 @@ pub enum AddressIndex {
     /// Use with caution, if an index is given that is less than the current descriptor index
     /// then the returned address and subsequent addresses returned by calls to `AddressIndex::New`
     /// and `AddressIndex::LastUsed` may have already been used. Also if the index is reset to a
-    /// value earlier than the [`crate::blockchain::Blockchain`] stop_gap (default is 20) then a
+    /// value earlier than the [`Blockchain`] stop_gap (default is 20) then a
     /// larger stop_gap should be used to monitor for all possibly used addresses.
     Reset { index: u32 },
 }
 
 impl From<AddressIndex> for BdkAddressIndex {
-    fn from(x: AddressIndex) -> BdkAddressIndex {
+    fn from(x: AddressIndex) -> Self {
         match x {
             AddressIndex::New => BdkAddressIndex::New,
             AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
@@ -98,6 +101,7 @@ impl From<AddressIndex> for BdkAddressIndex {
 /// A wallet transaction
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct TransactionDetails {
+    pub transaction: Option<Arc<Transaction>>,
     /// Transaction id.
     pub txid: String,
     /// Received value (sats)
@@ -116,14 +120,18 @@ pub struct TransactionDetails {
     pub confirmation_time: Option<BlockTime>,
 }
 
-impl From<&bdk::TransactionDetails> for TransactionDetails {
-    fn from(x: &bdk::TransactionDetails) -> TransactionDetails {
+impl From<bdk::TransactionDetails> for TransactionDetails {
+    fn from(tx_details: bdk::TransactionDetails) -> Self {
+        let optional_tx: Option<Arc<Transaction>> =
+            tx_details.transaction.map(|tx| Arc::new(tx.into()));
+
         TransactionDetails {
-            fee: x.fee,
-            txid: x.txid.to_string(),
-            received: x.received,
-            sent: x.sent,
-            confirmation_time: x.confirmation_time.clone(),
+            transaction: optional_tx,
+            fee: tx_details.fee,
+            txid: tx_details.txid.to_string(),
+            received: tx_details.received,
+            sent: tx_details.sent,
+            confirmation_time: tx_details.confirmation_time,
         }
     }
 }
@@ -138,7 +146,7 @@ pub struct OutPoint {
 }
 
 impl From<&OutPoint> for BdkOutPoint {
-    fn from(x: &OutPoint) -> BdkOutPoint {
+    fn from(x: &OutPoint) -> Self {
         BdkOutPoint {
             txid: Txid::from_str(&x.txid).unwrap(),
             vout: x.vout,
@@ -175,11 +183,23 @@ impl From<BdkBalance> for Balance {
 }
 
 /// A transaction output, which defines new coins to be created from old ones.
+#[derive(Debug, Clone)]
 pub struct TxOut {
     /// The value of the output, in satoshis.
     value: u64,
     /// The address of the output.
-    address: String,
+    script_pubkey: Arc<Script>,
+}
+
+impl From<&BdkTxOut> for TxOut {
+    fn from(x: &BdkTxOut) -> Self {
+        TxOut {
+            value: x.value,
+            script_pubkey: Arc::new(Script {
+                script: x.script_pubkey.clone(),
+            }),
+        }
+    }
 }
 
 pub struct LocalUtxo {
@@ -189,27 +209,21 @@ pub struct LocalUtxo {
     is_spent: bool,
 }
 
-// This trait is used to convert the bdk TxOut type with field `script_pubkey: Script`
-// into the bdk-ffi TxOut type which has a field `address: String` instead
-trait NetworkLocalUtxo {
-    fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo;
-}
-
-impl NetworkLocalUtxo for LocalUtxo {
-    fn from_utxo(x: &bdk::LocalUtxo, network: Network) -> LocalUtxo {
+impl From<BdkLocalUtxo> for LocalUtxo {
+    fn from(local_utxo: BdkLocalUtxo) -> Self {
         LocalUtxo {
             outpoint: OutPoint {
-                txid: x.outpoint.txid.to_string(),
-                vout: x.outpoint.vout,
+                txid: local_utxo.outpoint.txid.to_string(),
+                vout: local_utxo.outpoint.vout,
             },
             txout: TxOut {
-                value: x.txout.value,
-                address: BdkAddress::from_script(&x.txout.script_pubkey, network)
-                    .unwrap()
-                    .to_string(),
+                value: local_utxo.txout.value,
+                script_pubkey: Arc::new(Script {
+                    script: local_utxo.txout.script_pubkey,
+                }),
             },
-            keychain: x.keychain,
-            is_spent: x.is_spent,
+            keychain: local_utxo.keychain,
+            is_spent: local_utxo.is_spent,
         }
     }
 }
@@ -238,8 +252,32 @@ impl fmt::Debug for ProgressHolder {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct TxIn {
+    pub previous_output: OutPoint,
+    pub script_sig: Arc<Script>,
+    pub sequence: u32,
+    pub witness: Vec<Vec<u8>>,
+}
+
+impl From<&BdkTxIn> for TxIn {
+    fn from(x: &BdkTxIn) -> Self {
+        TxIn {
+            previous_output: OutPoint {
+                txid: x.previous_output.txid.to_string(),
+                vout: x.previous_output.vout,
+            },
+            script_sig: Arc::new(Script {
+                script: x.script_sig.clone(),
+            }),
+            sequence: x.sequence.0,
+            witness: x.witness.to_vec(),
+        }
+    }
+}
+
 /// A Bitcoin transaction.
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
     internal: BdkTransaction,
 }
@@ -251,8 +289,58 @@ impl Transaction {
         Ok(Transaction { internal: tx })
     }
 
+    fn txid(&self) -> String {
+        self.internal.txid().to_string()
+    }
+
+    fn weight(&self) -> u64 {
+        self.internal.weight() as u64
+    }
+
+    fn size(&self) -> u64 {
+        self.internal.size() as u64
+    }
+
+    fn vsize(&self) -> u64 {
+        self.internal.vsize() as u64
+    }
+
     fn serialize(&self) -> Vec<u8> {
         self.internal.serialize()
+    }
+
+    fn is_coin_base(&self) -> bool {
+        self.internal.is_coin_base()
+    }
+
+    fn is_explicitly_rbf(&self) -> bool {
+        self.internal.is_explicitly_rbf()
+    }
+
+    fn is_lock_time_enabled(&self) -> bool {
+        self.internal.is_lock_time_enabled()
+    }
+
+    fn version(&self) -> i32 {
+        self.internal.version
+    }
+
+    fn lock_time(&self) -> u32 {
+        self.internal.lock_time.0
+    }
+
+    fn input(&self) -> Vec<TxIn> {
+        self.internal.input.iter().map(|x| x.into()).collect()
+    }
+
+    fn output(&self) -> Vec<TxOut> {
+        self.internal.output.iter().map(|x| x.into()).collect()
+    }
+}
+
+impl From<bdk::bitcoin::Transaction> for Transaction {
+    fn from(tx: bdk::bitcoin::Transaction) -> Self {
+        Transaction { internal: tx }
     }
 }
 
@@ -285,6 +373,12 @@ impl Script {
     fn new(raw_output_script: Vec<u8>) -> Self {
         let script: BdkScript = BdkScript::from(raw_output_script);
         Script { script }
+    }
+}
+
+impl From<BdkScript> for Script {
+    fn from(bdk_script: BdkScript) -> Self {
+        Script { script: bdk_script }
     }
 }
 

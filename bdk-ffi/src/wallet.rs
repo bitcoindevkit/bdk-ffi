@@ -3,7 +3,10 @@ use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Sequ
 use bdk::database::any::AnyDatabase;
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
-use bdk::{FeeRate, SignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet};
+use bdk::{
+    FeeRate, LocalUtxo as BdkLocalUtxo, SignOptions, SyncOptions as BdkSyncOptions,
+    Wallet as BdkWallet,
+};
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -14,8 +17,8 @@ use crate::database::DatabaseConfig;
 use crate::descriptor::Descriptor;
 use crate::psbt::PartiallySignedTransaction;
 use crate::{
-    AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, NetworkLocalUtxo, OutPoint, Progress,
-    ProgressHolder, RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
+    AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, OutPoint, Progress, ProgressHolder,
+    RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
 };
 
 #[derive(Debug)]
@@ -117,10 +120,13 @@ impl Wallet {
     }
 
     /// Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually.
-    pub(crate) fn list_transactions(&self) -> Result<Vec<TransactionDetails>, BdkError> {
-        let transaction_details = self.get_wallet().list_transactions(true)?;
+    pub(crate) fn list_transactions(
+        &self,
+        include_raw: bool,
+    ) -> Result<Vec<TransactionDetails>, BdkError> {
+        let transaction_details = self.get_wallet().list_transactions(include_raw)?;
         Ok(transaction_details
-            .iter()
+            .into_iter()
             .map(TransactionDetails::from)
             .collect())
     }
@@ -128,11 +134,8 @@ impl Wallet {
     /// Return the list of unspent outputs of this wallet. Note that this method only operates on the internal database,
     /// which first needs to be Wallet.sync manually.
     pub(crate) fn list_unspent(&self) -> Result<Vec<LocalUtxo>, BdkError> {
-        let unspents = self.get_wallet().list_unspent()?;
-        Ok(unspents
-            .iter()
-            .map(|u| LocalUtxo::from_utxo(u, self.network()))
-            .collect())
+        let unspents: Vec<BdkLocalUtxo> = self.get_wallet().list_unspent()?;
+        Ok(unspents.into_iter().map(LocalUtxo::from).collect())
     }
 }
 
@@ -373,7 +376,7 @@ impl TxBuilder {
                 psbt: Arc::new(PartiallySignedTransaction {
                     internal: Mutex::new(psbt),
                 }),
-                transaction_details: TransactionDetails::from(&tx_details),
+                transaction_details: TransactionDetails::from(tx_details),
             })
     }
 }
@@ -577,28 +580,19 @@ mod test {
 
         // new index still 0
         assert_eq!(
-            wallet
-                .get_address(crate::AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
         );
 
         // new index now 1
         assert_eq!(
-            wallet
-                .get_address(crate::AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
         );
 
         // new index now 2
         assert_eq!(
-            wallet
-                .get_address(crate::AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1q5g0mq6dkmwzvxscqwgc932jhgcxuqqkjv09tkj"
         );
 
@@ -646,16 +640,18 @@ mod test {
         .unwrap();
 
         assert_eq!(
-            wallet
-                .get_address(crate::AddressIndex::New)
-                .unwrap()
-                .address,
+            wallet.get_address(AddressIndex::New).unwrap().address,
             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
         );
 
         assert_eq!(
+            wallet.get_address(AddressIndex::New).unwrap().address,
+            "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
+        );
+
+        assert_eq!(
             wallet
-                .get_address(crate::AddressIndex::New)
+                .get_address(AddressIndex::LastUnused)
                 .unwrap()
                 .address,
             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
@@ -663,15 +659,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_address(crate::AddressIndex::LastUnused)
-                .unwrap()
-                .address,
-            "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
-        );
-
-        assert_eq!(
-            wallet
-                .get_internal_address(crate::AddressIndex::New)
+                .get_internal_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1qpmz73cyx00r4a5dea469j40ax6d6kqyd67nnpj"
@@ -679,7 +667,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_internal_address(crate::AddressIndex::New)
+                .get_internal_address(AddressIndex::New)
                 .unwrap()
                 .address,
             "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"
@@ -687,7 +675,7 @@ mod test {
 
         assert_eq!(
             wallet
-                .get_internal_address(crate::AddressIndex::LastUnused)
+                .get_internal_address(AddressIndex::LastUnused)
                 .unwrap()
                 .address,
             "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"

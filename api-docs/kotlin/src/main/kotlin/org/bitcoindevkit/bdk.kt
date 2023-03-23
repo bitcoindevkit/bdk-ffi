@@ -248,6 +248,7 @@ sealed class BlockchainConfig {
  * @property confirmationTime If the transaction is confirmed, [BlockTime] contains height and timestamp of the block containing the transaction. This property is null for unconfirmed transactions.
  */
 data class TransactionDetails (
+    var transaction?: Transaction,
     var fee: ULong?,
     var received: ULong,
     var sent: ULong,
@@ -288,8 +289,60 @@ class Blockchain(
  * @param transactionBytes The transaction bytes, bitcoin consensus encoded.
  */
 class Transaction(transactionBytes: List<UByte>) {
+    /** Computes the txid. */
+    fun txid(): String {}
+
+    /**
+     * Returns the "weight" of this transaction, as defined by BIP141.
+     *
+     * For transactions with an empty witness, this is simply the consensus-serialized size times four.
+     * For transactions with a witness, this is the non-witness consensus-serialized size multiplied by three
+     * plus the with-witness consensus-serialized size.
+     */
+    fun weight(): ULong {}
+
+    /** Returns the regular byte-wise consensus-serialized size of this transaction. */
+    fun size(): ULong {}
+
+    /**
+     * Returns the "virtual size" (vsize) of this transaction.
+     *
+     * Will be ceil(weight / 4.0). Note this implements the virtual size as per BIP141, which is different to
+     * what is implemented in Bitcoin Core. The computation should be the same for any remotely sane transaction.
+     */
+    fun vsize(): ULong {}
+
     /** Return the transaction bytes, bitcoin consensus encoded. */
     fun serialize(): List<UByte> {}
+
+    /** Is this a coin base transaction? */
+    fun isCoinBase(): Boolean {}
+
+    /**
+     * Returns true if the transaction itself opted in to be BIP-125-replaceable (RBF).
+     * This does not cover the case where a transaction becomes replaceable due to ancestors being RBF.
+     */
+    fun isExplicitlyRbf(): Boolean {}
+
+    /** Returns true if this transactions nLockTime is enabled (BIP-65). */
+    fun isLockTimeEnabled(): Boolean {}
+
+    /** The protocol version, is currently expected to be 1 or 2 (BIP 68). */
+    fun version(): Int {}
+
+    /**
+     * Block height or timestamp. Transaction cannot be included in a block until this height/time.
+     * Relevant BIPs
+     *     BIP-65 OP_CHECKLOCKTIMEVERIFY
+     *     BIP-113 Median time-past as endpoint for lock-time calculations
+     */
+    fun lockTime(): UInt {}
+
+    /** List of transaction inputs. */
+    fun input(): List<TxIn> {}
+
+    /** List of transaction outputs. */
+    fun output(): List<TxOut> {}
 }
 
 /**
@@ -331,11 +384,29 @@ data class OutPoint (
  * A transaction output, which defines new coins to be created from old ones.
  *
  * @property value The value of the output, in satoshis.
- * @property address The address of the output.
+ * @property scriptPubkey The script which must be satisfied for the output to be spent.
  */
 data class TxOut (
     var value: ULong,
-    var address: String
+    var scriptPubkey: Script
+)
+
+/**
+ * Bitcoin transaction input.
+ *
+ * It contains the location of the previous transaction’s output, that it spends and set of scripts that satisfy its spending conditions.
+ *
+ * @property previousOutput The reference to the previous output that is being used an an input.
+ * @property scriptSig The script which pushes values on the stack which will cause the referenced output’s script to be accepted.
+ * @property sequence The sequence number, which suggests to miners which of two conflicting transactions should be preferred, or 0xFFFFFFFF to ignore this feature. This is generally never used since the miner behaviour cannot be enforced.
+ * @property witness Witness data: an array of byte-arrays. Note that this field is not (de)serialized with the rest of the TxIn in Encodable/Decodable, as it is (de)serialized at the end of the full Transaction. It is (de)serialized with the rest of the TxIn in other (de)serialization routines.
+ *
+ */
+data class TxIn (
+    var previousOutput: OutPoint,
+    var scriptSig: Script,
+    var sequence: UInt,
+    var witness: List<List<UByte>>
 )
 
 /**
@@ -420,7 +491,7 @@ class Wallet(
     fun sign(psbt: PartiallySignedTransaction): Boolean {}
 
     /** Return the list of transactions made and received by the wallet. Note that this method only operate on the internal database, which first needs to be [Wallet.sync] manually. */
-    fun listTransactions(): List<TransactionDetails> {}
+    fun listTransactions(includeRaw: Boolean): List<TransactionDetails> {}
 
     /** Get the Bitcoin network the wallet is using. */
     fun network(): Network {}

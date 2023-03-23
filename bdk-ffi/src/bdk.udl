@@ -94,6 +94,7 @@ interface DatabaseConfig {
 };
 
 dictionary TransactionDetails {
+  Transaction? transaction;
   u64? fee;
   u64 received;
   u64 sent;
@@ -186,9 +187,16 @@ dictionary OutPoint {
   u32 vout;
 };
 
+dictionary TxIn {
+  OutPoint previous_output;
+  Script script_sig;
+  u32 sequence;
+  sequence<sequence<u8>> witness;
+};
+
 dictionary TxOut {
   u64 value;
-  string address;
+  Script script_pubkey;
 };
 
 enum KeychainKind {
@@ -225,7 +233,7 @@ interface Wallet {
   boolean sign([ByRef] PartiallySignedTransaction psbt);
 
   [Throws=BdkError]
-  sequence<TransactionDetails> list_transactions();
+  sequence<TransactionDetails> list_transactions(boolean include_raw);
 
   Network network();
 
@@ -244,10 +252,32 @@ interface FeeRate {
 };
 
 interface Transaction {
-   [Throws=BdkError]
-   constructor(sequence<u8> transaction_bytes);
+  [Throws=BdkError]
+  constructor(sequence<u8> transaction_bytes);
 
-   sequence<u8> serialize();
+  string txid();
+
+  u64 weight();
+
+  u64 size();
+
+  u64 vsize();
+
+  sequence<u8> serialize();
+
+  boolean is_coin_base();
+
+  boolean is_explicitly_rbf();
+
+  boolean is_lock_time_enabled();
+
+  i32 version();
+
+  u32 lock_time();
+
+  sequence<TxIn> input();
+
+  sequence<TxOut> output();
 };
 
 interface PartiallySignedTransaction {
