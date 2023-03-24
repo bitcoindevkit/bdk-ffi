@@ -23,13 +23,6 @@ The below directories (a separate repository in the case of bdk-swift) include i
 | Swift    | iOS, macOS            | [bdk-swift (GitHub)]          | [Readme bdk-swift]     |                       |
 | Python   | linux, macOS, Windows | [bdk-python (PyPI)]           | [Readme bdk-python]    |                       |
 
-## Language bindings generator tool
-Use the `bdk-ffi-bindgen` tool to generate language binding code for the above supported languages. 
-To run `bdk-ffi-bindgen` and see the available options use the command:
-```shell
-cargo run -p bdk-ffi-bindgen -- --help
-```
-
 ## Contributing
 
 ### Adding new structs and functions
