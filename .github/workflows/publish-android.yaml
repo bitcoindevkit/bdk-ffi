@@ -1,26 +1,14 @@
 name: Publish bdk-android to Maven Central
 on: [workflow_dispatch]
 
-env:
-  ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/21.4.7075529
-  # By default, the new ubuntu-20.04 images use the following ANDROID_NDK_ROOT
-  # ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/25.0.8775105
-
 jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-      - name: Install Android NDK 21.4.7075529
-        run: |
-          ANDROID_ROOT=/usr/local/lib/android
-          ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-          SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
-          echo "y" | $SDKMANAGER "ndk;21.4.7075529"
-
-      - name: Check out PR branch
+      - name: "Check out PR branch"
         uses: actions/checkout@v2
 
-      - name: Cache
+      - name: "Cache"
         uses: actions/cache@v2
         with:
           path: |
@@ -29,21 +17,21 @@ jobs:
             ./target
           key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
-      - name: Set up JDK
+      - name: "Set up JDK"
         uses: actions/setup-java@v2
         with:
           distribution: temurin
           java-version: 11
 
-      - name: Install Rust Android targets
+      - name: "Install Rust Android targets"
         run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
 
-      - name: Build bdk-android library
+      - name: "Build bdk-android library"
         run: |
           cd bdk-android
           ./gradlew buildAndroidLib
 
-      - name: Publish to Maven Local and Maven Central
+      - name: "Publish to Maven Local and Maven Central"
         env:
           ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.PGP_KEY_ID }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.PGP_SECRET_KEY }}
