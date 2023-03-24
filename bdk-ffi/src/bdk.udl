@@ -230,7 +230,7 @@ interface Wallet {
   Balance get_balance();
 
   [Throws=BdkError]
-  boolean sign([ByRef] PartiallySignedTransaction psbt);
+  boolean sign([ByRef] PartiallySignedTransaction psbt, SignOptions? sign_options);
 
   [Throws=BdkError]
   sequence<TransactionDetails> list_transactions(boolean include_raw);
@@ -249,6 +249,16 @@ interface FeeRate {
   constructor(float sat_per_vb);
 
   float as_sat_per_vb();
+};
+
+dictionary SignOptions {
+  boolean trust_witness_utxo;
+  u32? assume_height;
+  boolean allow_all_sighashes;
+  boolean remove_partial_sigs;
+  boolean try_finalize;
+  boolean sign_with_tap_internal_key;
+  boolean allow_grinding;
 };
 
 interface Transaction {
