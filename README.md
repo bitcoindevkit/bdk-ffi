@@ -8,8 +8,7 @@
 </p>
 
 The workspace in this repository creates the `libbdkffi` multi-language library for the Rust-based 
-[bdk] library from the [Bitcoin Dev Kit] project. The `bdk-ffi-bindgen` package builds a tool for 
-generating the actual language binding code used to access the `libbdkffi` library.
+[bdk] library from the [Bitcoin Dev Kit] project.
 
 Each supported language and the platform(s) it's packaged for has its own directory. The Rust code in this project is in the bdk-ffi directory and is a wrapper around the [bdk] library to expose its APIs in a uniform way using the [mozilla/uniffi-rs] bindings generator for each supported target language.
 
