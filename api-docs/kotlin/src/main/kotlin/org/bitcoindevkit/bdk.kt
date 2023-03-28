@@ -24,12 +24,14 @@ enum class Network {
  *
  * @property index Child index of this address.
  * @property address Address.
+ * @property keychain Type of keychain.
  *
  * @sample org.bitcoindevkit.addressInfoSample
  */
 data class AddressInfo (
     var index: UInt,
-    var address: String
+    var address: Address,
+    var keychain: KeychainKind
 )
 
 /**
@@ -846,6 +848,9 @@ class Address(address: String) {
      * Quoting BIP 173 "inside QR codes uppercase SHOULD be used, as those permit the use of alphanumeric mode, which is 45% more compact than the normal byte mode."
      */
     fun toQrUri(): String
+
+    /** Return the address as a string. */
+    fun asString(): String
 }}
 
 /**

@@ -87,7 +87,7 @@ fun addressInfoSample() {
 
     val newAddress: AddressInfo = wallet.getAddress(AddressIndex.New)
 
-    println("New address at index ${newAddress.index} is ${newAddress.address}")
+    println("New address at index ${newAddress.index} is ${newAddress.address.asString()}")
 }
 
 fun blockchainSample() {
