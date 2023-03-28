@@ -47,17 +47,20 @@ pub struct ScriptAmount {
 
 /// A derived address and the index it was found at.
 pub struct AddressInfo {
-    /// Child index of this address
+    /// Child index of this address.
     pub index: u32,
-    /// Address
-    pub address: String,
+    /// Address.
+    pub address: Arc<Address>,
+    /// Type of keychain.
+    pub keychain: KeychainKind,
 }
 
 impl From<BdkAddressInfo> for AddressInfo {
-    fn from(x: bdk::wallet::AddressInfo) -> Self {
+    fn from(x: BdkAddressInfo) -> Self {
         AddressInfo {
             index: x.index,
-            address: x.address.to_string(),
+            address: Arc::new(Address::from(x.address)),
+            keychain: x.keychain,
         }
     }
 }
@@ -347,7 +350,8 @@ impl From<bdk::bitcoin::Transaction> for Transaction {
 }
 
 /// A Bitcoin address.
-struct Address {
+#[derive(Debug, PartialEq, Eq)]
+pub struct Address {
     address: BdkAddress,
 }
 
@@ -385,6 +389,16 @@ impl Address {
 
     fn to_qr_uri(&self) -> String {
         self.address.to_qr_uri()
+    }
+
+    fn as_string(&self) -> String {
+        self.address.to_string()
+    }
+}
+
+impl From<BdkAddress> for Address {
+    fn from(address: BdkAddress) -> Self {
+        Address { address }
     }
 }
 

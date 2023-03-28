@@ -50,7 +50,8 @@ enum BdkError {
 
 dictionary AddressInfo {
   u32 index;
-  string address;
+  Address address;
+  KeychainKind keychain;
 };
 
 [Enum]
@@ -452,6 +453,8 @@ interface Address {
   Script script_pubkey();
 
   string to_qr_uri();
+
+  string as_string();
 };
 
 [Enum]
