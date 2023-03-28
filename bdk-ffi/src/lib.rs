@@ -30,9 +30,11 @@ use bdk::keys::bip39::WordCount;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::LocalUtxo as BdkLocalUtxo;
+use bdk::TransactionDetails as BdkTransactionDetails;
 use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
 use std::convert::From;
 use std::fmt;
+use std::fmt::Debug;
 use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -56,11 +58,11 @@ pub struct AddressInfo {
 }
 
 impl From<BdkAddressInfo> for AddressInfo {
-    fn from(x: BdkAddressInfo) -> Self {
+    fn from(address_info: BdkAddressInfo) -> Self {
         AddressInfo {
-            index: x.index,
-            address: Arc::new(Address::from(x.address)),
-            keychain: x.keychain,
+            index: address_info.index,
+            address: Arc::new(Address::from(address_info.address)),
+            keychain: address_info.keychain,
         }
     }
 }
@@ -93,8 +95,8 @@ pub enum AddressIndex {
 }
 
 impl From<AddressIndex> for BdkAddressIndex {
-    fn from(x: AddressIndex) -> Self {
-        match x {
+    fn from(address_index: AddressIndex) -> Self {
+        match address_index {
             AddressIndex::New => BdkAddressIndex::New,
             AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
             AddressIndex::Peek { index } => BdkAddressIndex::Peek(index),
@@ -125,8 +127,8 @@ pub struct TransactionDetails {
     pub confirmation_time: Option<BlockTime>,
 }
 
-impl From<bdk::TransactionDetails> for TransactionDetails {
-    fn from(tx_details: bdk::TransactionDetails) -> Self {
+impl From<BdkTransactionDetails> for TransactionDetails {
+    fn from(tx_details: BdkTransactionDetails) -> Self {
         let optional_tx: Option<Arc<Transaction>> =
             tx_details.transaction.map(|tx| Arc::new(tx.into()));
 
@@ -151,10 +153,10 @@ pub struct OutPoint {
 }
 
 impl From<&OutPoint> for BdkOutPoint {
-    fn from(x: &OutPoint) -> Self {
+    fn from(outpoint: &OutPoint) -> Self {
         BdkOutPoint {
-            txid: Txid::from_str(&x.txid).unwrap(),
-            vout: x.vout,
+            txid: Txid::from_str(&outpoint.txid).unwrap(),
+            vout: outpoint.vout,
         }
     }
 }
@@ -197,11 +199,11 @@ pub struct TxOut {
 }
 
 impl From<&BdkTxOut> for TxOut {
-    fn from(x: &BdkTxOut) -> Self {
+    fn from(tx_out: &BdkTxOut) -> Self {
         TxOut {
-            value: x.value,
+            value: tx_out.value,
             script_pubkey: Arc::new(Script {
-                script: x.script_pubkey.clone(),
+                script: tx_out.script_pubkey.clone(),
             }),
         }
     }
@@ -251,7 +253,7 @@ impl BdkProgress for ProgressHolder {
     }
 }
 
-impl fmt::Debug for ProgressHolder {
+impl Debug for ProgressHolder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ProgressHolder").finish_non_exhaustive()
     }
@@ -266,17 +268,17 @@ pub struct TxIn {
 }
 
 impl From<&BdkTxIn> for TxIn {
-    fn from(x: &BdkTxIn) -> Self {
+    fn from(tx_in: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
-                txid: x.previous_output.txid.to_string(),
-                vout: x.previous_output.vout,
+                txid: tx_in.previous_output.txid.to_string(),
+                vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script {
-                script: x.script_sig.clone(),
+                script: tx_in.script_sig.clone(),
             }),
-            sequence: x.sequence.0,
-            witness: x.witness.to_vec(),
+            sequence: tx_in.sequence.0,
+            witness: tx_in.witness.to_vec(),
         }
     }
 }
@@ -343,8 +345,8 @@ impl Transaction {
     }
 }
 
-impl From<bdk::bitcoin::Transaction> for Transaction {
-    fn from(tx: bdk::bitcoin::Transaction) -> Self {
+impl From<BdkTransaction> for Transaction {
+    fn from(tx: BdkTransaction) -> Self {
         Transaction { internal: tx }
     }
 }
