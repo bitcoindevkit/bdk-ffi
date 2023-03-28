@@ -10,6 +10,6 @@ final class BitcoinDevKitTests: XCTestCase {
         let databaseConfig = DatabaseConfig.memory
         let wallet = try Wallet.init(descriptor: desc, changeDescriptor: nil, network: Network.regtest, databaseConfig: databaseConfig)
         let addressInfo = try wallet.getAddress(addressIndex: AddressIndex.new)
-        XCTAssertEqual(addressInfo.address, "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
+        XCTAssertEqual(addressInfo.address.asString(), "bcrt1qzg4mckdh50nwdm9hkzq06528rsu73hjxytqkxs")
     }
 }
