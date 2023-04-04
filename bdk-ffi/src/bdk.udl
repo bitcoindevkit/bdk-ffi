@@ -307,6 +307,8 @@ interface PartiallySignedTransaction {
   u64? fee_amount();
 
   FeeRate? fee_rate();
+
+  string json_serialize();
 };
 
 dictionary TxBuilderResult {

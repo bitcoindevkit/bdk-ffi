@@ -369,6 +369,9 @@ class PartiallySignedTransaction(psbtBase64: String) {
      * In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
      */
     fun combine(other: PartiallySignedTransaction): PartiallySignedTransaction
+
+    /** Serialize the PSBT data structure as a String of JSON. */
+    fun jsonSerialize(): String
 }
 
 /**

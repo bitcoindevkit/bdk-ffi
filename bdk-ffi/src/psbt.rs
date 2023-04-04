@@ -1,6 +1,8 @@
 use bdk::bitcoin::hashes::hex::ToHex;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
+use bdk::bitcoincore_rpc::jsonrpc::serde_json;
 use bdk::psbt::PsbtUtils;
+use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
@@ -65,6 +67,12 @@ impl PartiallySignedTransaction {
     /// If the PSBT is missing a TxOut for an input returns None.
     pub(crate) fn fee_rate(&self) -> Option<Arc<FeeRate>> {
         self.internal.lock().unwrap().fee_rate().map(Arc::new)
+    }
+
+    /// Serialize the PSBT data structure as a String of JSON.
+    pub(crate) fn json_serialize(&self) -> String {
+        let psbt = self.internal.lock().unwrap();
+        serde_json::to_string(psbt.deref()).unwrap()
     }
 }
 
