@@ -16,6 +16,7 @@ use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::psbt::PartiallySignedTransaction;
 use crate::signer::CustomError;
 use crate::signer::InputSigner;
+use crate::signer::SignerOrdering;
 use crate::signer::SignerId;
 use crate::wallet::SignOptions;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};

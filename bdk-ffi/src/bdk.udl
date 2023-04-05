@@ -210,6 +210,10 @@ enum KeychainKind {
   "Internal",
 };
 
+dictionary SignerOrdering {
+  u64 order;
+};
+
 dictionary LocalUtxo {
   OutPoint outpoint;
   TxOut txout;

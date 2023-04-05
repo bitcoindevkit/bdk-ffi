@@ -3,14 +3,12 @@ use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Sequ
 use bdk::database::any::AnyDatabase;
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
-use bdk::{
-    FeeRate, LocalUtxo as BdkLocalUtxo, SignOptions as BdkSignOptions,
-    SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
-};
+use bdk::{FeeRate, KeychainKind, LocalUtxo as BdkLocalUtxo, SignOptions as BdkSignOptions, SyncOptions as BdkSyncOptions, Wallet as BdkWallet};
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
+use bdk::signer::SignerOrdering;
 
 use crate::blockchain::Blockchain;
 use crate::database::DatabaseConfig;
@@ -20,6 +18,7 @@ use crate::{
     AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, OutPoint, Progress, ProgressHolder,
     RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
 };
+use crate::signer::InputSigner;
 
 #[derive(Debug)]
 pub(crate) struct Wallet {
@@ -58,6 +57,16 @@ impl Wallet {
 
     pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyDatabase>> {
         self.wallet_mutex.lock().expect("wallet")
+    }
+
+    /// Add an external signer.
+    pub(crate) fn add_signer(
+        &mut self,
+        keychain: KeychainKind,
+        ordering: SignerOrdering,
+        signer: Arc<dyn InputSigner>
+    ) {
+        self.get_wallet().add_signer(keychain, ordering, signer);
     }
 
     /// Get the Bitcoin network the wallet is using.

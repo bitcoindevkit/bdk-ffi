@@ -1,11 +1,12 @@
 use crate::psbt::PartiallySignedTransaction;
+use crate::wallet::SignOptions;
 use bdk::bitcoin::util::bip32::Fingerprint;
 use bdk::bitcoincore_rpc::jsonrpc::serde_json::from_str;
-use bdk::signer::SignerId as BdkSignerId;
+use bdk::signer::{SignerId as BdkSignerId};
 use std::fmt::{Debug, Display};
 use std::str::FromStr;
 use std::sync::Arc;
-use crate::wallet::SignOptions;
+use bdk::signer::SignerOrdering as BdkSignerOrdering;
 
 pub enum SignerId {
     /// Bitcoin HASH160 (RIPEMD160 after SHA256) hash of an ECDSA public key
@@ -38,6 +39,35 @@ pub trait InputSigner: Send + Sync + Debug {
         input_index: u32,
         sign_options: SignOptions,
     ) -> Result<(), CustomError>;
+}
+
+
+
+// pub trait TransactionSigner
+
+// impl<T: InputSigner> TransactionSigner for T {
+//     fn sign_transaction(
+//         &self,
+//         psbt: &mut psbt::PartiallySignedTransaction,
+//         sign_options: &SignOptions,
+//         secp: &SecpCtx,
+//     ) -> Result<(), SignerError> {
+//         for input_index in 0..psbt.inputs.len() {
+//             self.sign_input(psbt, input_index, sign_options, secp)?;
+//         }
+//
+//         Ok(())
+//     }
+// }
+
+pub struct SignerOrdering {
+    pub order: u64
+}
+
+impl From<SignerOrdering> for BdkSignerOrdering {
+    fn from(signer_ordering: SignerOrdering) -> BdkSignerOrdering {
+        BdkSignerOrdering(signer_ordering.order as usize) // QUESTION 1: is this safe? We seem to use it elsewhere
+    }
 }
 
 #[derive(Debug)]
