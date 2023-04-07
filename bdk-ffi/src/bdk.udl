@@ -446,6 +446,9 @@ interface Address {
   [Throws=BdkError]
   constructor(string address);
 
+  [Name=from_script, Throws=BdkError]
+  constructor(Script script, Network network);
+
   Payload payload();
 
   Network network();

@@ -364,6 +364,13 @@ impl Address {
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
+    /// alternative constructor
+    fn from_script(script: Arc<Script>, network: Network) -> Result<Self, BdkError> {
+        BdkAddress::from_script(&script.script, network)
+            .map(|a| Address { address: a })
+            .map_err(|e| BdkError::Generic(e.to_string()))
+    }
+
     fn payload(&self) -> Payload {
         match &self.address.payload.clone() {
             BdkPayload::PubkeyHash(pubkey_hash) => Payload::PubkeyHash {
