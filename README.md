@@ -10,7 +10,7 @@
 The workspace in this repository creates the `libbdkffi` multi-language library for the Rust-based 
 [bdk] library from the [Bitcoin Dev Kit] project.
 
-Each supported language and the platform(s) it's packaged for has its own directory. The Rust code in this project is in the bdk-ffi directory and is a wrapper around the [bdk] library to expose its APIs in a uniform way using the [mozilla/uniffi-rs] bindings generator for each supported target language.
+Each supported language and the platform(s) it's packaged for has its own directory. The Rust code in this project is in the bdk-ffi directory and is a wrapper around the [bdk] library to expose its APIs uniformly using the [mozilla/uniffi-rs] bindings generator for each supported target language.
 
 ## Supported target languages and platforms
 The below directories (a separate repository in the case of bdk-swift) include instructions for using, building, and publishing the native language binding for [bdk] supported by this project.
@@ -20,18 +20,18 @@ The below directories (a separate repository in the case of bdk-swift) include i
 | Kotlin   | JVM                   | [bdk-jvm (Maven Central)]     | [Readme bdk-jvm]       | [Kotlin JVM API Docs] |
 | Kotlin   | Android               | [bdk-android (Maven Central)] | [Readme bdk-android]   | [Android API Docs]    |
 | Swift    | iOS, macOS            | [bdk-swift (GitHub)]          | [Readme bdk-swift]     |                       |
-| Python   | linux, macOS, Windows | [bdk-python (PyPI)]           | [Readme bdk-python]    |                       |
+| Python   | Linux, macOS, Windows | [bdk-python (PyPI)]           | [Readme bdk-python]    |                       |
 
 ## Contributing
 
 ### Adding new structs and functions
 See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
 
-#### For pass by value objects
-1. Create new rust struct with only fields that are supported UniFFI types
-2. Update mapping `bdk.udl` file with new `dictionary`
+#### For pass-by-value objects
+1. Create a new rust struct with only fields that are supported by UniFFI types
+2. Update mapping `bdk.udl` file with a new `dictionary`
 
-#### For pass by reference values
+#### For pass-by-reference values
 1. Create wrapper rust struct/impl with only fields that are `Sync + Send`
 2. Update mapping `bdk.udl` file with new `interface`
 
@@ -76,11 +76,11 @@ pip3 install bdkpython
 Add bdk-swift to your dependencies in XCode.
 
 ## Developing language bindings using uniffi-rs
-If you are interested in better understanding the base structure we use here in order to build your own Rust-to-Kotlin/Swift/Python language bindings, check out the [uniffi-bindings-template](https://github.com/thunderbiscuit/uniffi-bindings-template) repository. We maintain it as an example and starting point for other projects that wish to leverage the tech stack used in producing the BDK language bindings.
+If you are interested in better understanding the base structure we use here to build your own Rust-to-Kotlin/Swift/Python language bindings, check out the [uniffi-bindings-template](https://github.com/thunderbiscuit/uniffi-bindings-template) repository. We maintain it as an example and starting point for other projects that wish to leverage the tech stack used in producing the BDK language bindings.
 
 ## Verifying Signatures
 Both libraries and all their corresponding artifacts are signed with a PGP key you can find in the
-root of this repository. To verify the signatures follow the below steps:
+root of this repository. To verify the signatures, follow the below steps:
 
 1. Import the PGP key in your keyring.
 ```shell
@@ -112,7 +112,7 @@ sub   cv25519 2022-08-31 [E]
 gpg --verify bdk-jvm-<version>.jar.asc 
 gpg --verify bdk-android-<version>.aar.asc
 
-# you should see a "Good signature" result
+# You should see a "Good signature" result
 gpg: Good signature from "bitcoindevkit-bindings <bindings@bitcoindevkit.org>" [unknown]
 ```
 
@@ -123,7 +123,7 @@ Name: `bitcoindevkit-bindings`
 Email: `bindings@bitcoindevkit.org`
 
 ## Thanks
-This project is made possible thanks to the wonderful work by the [mozilla/uniffi-rs] team.
+This project is made possible thanks to the great work of the [mozilla/uniffi-rs] team.
 
 [Kotlin]: https://kotlinlang.org/
 [Android Studio]: https://developer.android.com/studio/
