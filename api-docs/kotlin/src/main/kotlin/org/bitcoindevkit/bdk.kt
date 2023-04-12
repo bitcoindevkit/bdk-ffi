@@ -831,6 +831,9 @@ class Script(rawOutputScript: List<UByte>)
  * @param address The address in string format.
  */
 class Address(address: String) {
+    /** Construct an [`Address`] from an output script. */
+    fun fromScript(script: Script, network: Network): Address {}
+
     /** Return the Payload */
     fun payload(): Payload
 
