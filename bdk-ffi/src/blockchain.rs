@@ -46,13 +46,13 @@ impl Blockchain {
             BlockchainConfig::Cbf { config } => {
 
                 let mut peers = Vec::new();
-                let peer = BitcoinPeerConfig{
-                    address:config.address,
-                    socks5:None,
-                    socks5_credentials:None
-                };
-                peers.push(peer);          
-            
+                for address in config.addresses {
+                    peers.push(BitcoinPeerConfig{
+                        address:address,
+                        socks5:None,
+                        socks5_credentials:None
+                    });
+                }                                     
 
                 AnyBlockchainConfig::CompactFilters(CompactFiltersBlockchainConfig {
                     peers: peers,
@@ -211,7 +211,7 @@ pub struct RpcConfig {
 
 
 pub struct CompactFiltersConfig {
-    pub address: String,
+    pub addresses: Vec<String>,
     pub network: Network,
     pub storage_dir: String,
 }

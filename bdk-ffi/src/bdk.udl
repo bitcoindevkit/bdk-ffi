@@ -158,8 +158,10 @@ dictionary RpcConfig {
 };
 
 
+
+
 dictionary CompactFiltersConfig {
-  string address;
+  sequence<string> addresses;
   Network network;
   string storage_dir;
 };
