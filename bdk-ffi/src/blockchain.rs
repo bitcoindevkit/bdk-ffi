@@ -162,11 +162,6 @@ pub struct EsploraConfig {
     pub timeout: Option<u64>,
 }
 
-pub struct CBFConfig {
-    network: Network,
-    datadir: String,
-}
-
 pub enum Auth {
     /// No authentication
     None,
@@ -239,7 +234,7 @@ pub struct RpcConfig {
 
 
 pub struct CompactFiltersConfig {
-    pub address: String,
+    pub addresses: Vec<String>,
     pub network: Network,
     pub storage_dir: String,
 }
