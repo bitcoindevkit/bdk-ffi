@@ -158,6 +158,7 @@ dictionary RpcConfig {
 
 
 dictionary CompactFiltersConfig {
+  string address;
   Network network;
   string storage_dir;
 };

@@ -48,7 +48,7 @@ impl Blockchain {
 
                 let mut peers = Vec::new();
                 let peer = BitcoinPeerConfig{
-                    address:"btcd-mainnet.lightning.computer:8333".to_string(),
+                    address:config.address,
                     socks5:None,
                     socks5_credentials:None
                 };
@@ -239,6 +239,7 @@ pub struct RpcConfig {
 
 
 pub struct CompactFiltersConfig {
+    pub address: String,
     pub network: Network,
     pub storage_dir: String,
 }
