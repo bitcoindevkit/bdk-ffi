@@ -1,6 +1,6 @@
 [package]
 name = "bdk-ffi"
-version = "0.27.1"
+version = "0.28.0"
 authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -19,7 +19,7 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { version = "0.27.1", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
+bdk = { version = "0.28", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
 uniffi = { version = "0.23.0" }
 
 [build-dependencies]
