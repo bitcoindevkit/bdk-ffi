@@ -6,7 +6,7 @@ mod psbt;
 mod wallet;
 
 use crate::blockchain::{
-    Auth, Blockchain, BlockchainConfig, ElectrumConfig, EsploraConfig, RpcConfig, RpcSyncParams,
+    Auth, Blockchain, BlockchainConfig, ElectrumConfig, EsploraConfig, RpcConfig, CompactFiltersConfig, RpcSyncParams,
 };
 use crate::database::DatabaseConfig;
 use crate::descriptor::Descriptor;

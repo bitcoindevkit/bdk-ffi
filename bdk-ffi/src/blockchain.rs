@@ -11,6 +11,7 @@ use bdk::blockchain::GetHeight;
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
     rpc::RpcConfig as BdkRpcConfig, ConfigurableBlockchain,
+    compact_filters::CompactFiltersBlockchainConfig, compact_filters::BitcoinPeerConfig,
 };
 use bdk::FeeRate;
 use std::convert::{From, TryFrom};
@@ -43,6 +44,24 @@ impl Blockchain {
                     timeout: config.timeout,
                 })
             }
+            BlockchainConfig::Cbf { config } => {
+
+                let mut peers = Vec::new();
+                let peer = BitcoinPeerConfig{
+                    address:"btcd-mainnet.lightning.computer:8333".to_string(),
+                    socks5:None,
+                    socks5_credentials:None
+                };
+                peers.push(peer);
+
+
+                AnyBlockchainConfig::CompactFilters(CompactFiltersBlockchainConfig {
+                    peers: peers,
+                    network: config.network,
+                    storage_dir: config.storage_dir,
+                    skip_blocks : None,
+                })
+            }
             BlockchainConfig::Rpc { config } => AnyBlockchainConfig::Rpc(BdkRpcConfig {
                 url: config.url,
                 auth: config.auth.into(),
@@ -71,6 +90,7 @@ impl Blockchain {
                     datadir: Some(PathBuf::from(config.datadir)),
                 })
             }
+            })
         };
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         Ok(Self {
@@ -217,6 +237,12 @@ pub struct RpcConfig {
     pub sync_params: Option<RpcSyncParams>,
 }
 
+
+pub struct CompactFiltersConfig {
+    pub network: Network,
+    pub storage_dir: String,
+}
+
 /// Type that can contain any of the blockchain configurations defined by the library.
 pub enum BlockchainConfig {
     /// Electrum client
@@ -225,6 +251,6 @@ pub enum BlockchainConfig {
     Esplora { config: EsploraConfig },
     /// Bitcoin Core RPC client
     Rpc { config: RpcConfig },
-    /// Nakamoto client
-    CBF { config: CBFConfig },
+    /// CompactFilters
+    Cbf { config: CompactFiltersConfig },
 }

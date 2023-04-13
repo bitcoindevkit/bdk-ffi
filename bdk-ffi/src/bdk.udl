@@ -46,7 +46,7 @@ enum BdkError {
   "Sled",
   "Rusqlite",
   "Rpc",
-  "Cbf"
+  "CompactFilters",
 };
 
 dictionary AddressInfo {
@@ -134,11 +134,6 @@ dictionary EsploraConfig {
   u64? timeout;
 };
 
-dictionary CBFConfig {
-  Network network;
-  string datadir;
-};
-
 [Enum]
 interface Auth {
   None();
@@ -161,12 +156,19 @@ dictionary RpcConfig {
     RpcSyncParams? sync_params;
 };
 
+
+dictionary CompactFiltersConfig {
+  Network network;
+  string storage_dir;
+};
+
+
 [Enum]
 interface BlockchainConfig {
   Electrum(ElectrumConfig config);
   Esplora(EsploraConfig config);
   Rpc(RpcConfig config);
-  CBF(CBFConfig config);
+  Cbf(CompactFiltersConfig config);
 };
 
 interface Blockchain {
@@ -227,8 +229,6 @@ dictionary ScriptAmount {
 interface Wallet {
   [Throws=BdkError]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, Network network, DatabaseConfig database_config);
-
-  Network network();
 
   [Throws=BdkError]
   AddressInfo get_address(AddressIndex address_index);
