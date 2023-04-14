@@ -2,7 +2,6 @@
 use crate::{BdkError, Transaction};
 use bdk::bitcoin::Network;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
-use bdk::blockchain::compact_filters::nakamoto::CBFBlockchainConfig;
 use bdk::blockchain::rpc::Auth as BdkAuth;
 use bdk::blockchain::rpc::RpcSyncParams as BdkRpcSyncParams;
 use bdk::blockchain::Blockchain as BdkBlockchain;
@@ -11,6 +10,7 @@ use bdk::blockchain::GetHeight;
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
     rpc::RpcConfig as BdkRpcConfig, ConfigurableBlockchain,
+    compact_filters::CompactFiltersBlockchainConfig, compact_filters::BitcoinPeerConfig,
 };
 use bdk::FeeRate;
 use std::convert::{From, TryFrom};
@@ -43,34 +43,36 @@ impl Blockchain {
                     timeout: config.timeout,
                 })
             }
+            BlockchainConfig::Cbf { config } => {
+
+                let mut peers = Vec::new();
+                for address in config.addresses {
+                    peers.push(BitcoinPeerConfig{
+                        address:address,
+                        socks5:None,
+                        socks5_credentials:None
+                    });
+                }                                     
+
+
+                AnyBlockchainConfig::CompactFilters(CompactFiltersBlockchainConfig {
+                    peers: peers,
+                    network: config.network,
+                    storage_dir: config.storage_dir,
+                    skip_blocks : match usize::try_from(config.skip_blocks) {
+                        Ok(value) => Some(value),
+                        Err(_) => None,
+                    }
+                      ,
+                })
+            }
             BlockchainConfig::Rpc { config } => AnyBlockchainConfig::Rpc(BdkRpcConfig {
                 url: config.url,
                 auth: config.auth.into(),
                 network: config.network,
                 wallet_name: config.wallet_name,
                 sync_params: config.sync_params.map(|p| p.into()),
-            }),
-            // TODO: not sure this is the right way to deal with the PathBuf
-            // Attempt 1, if you make datadir an Option<String> in the CBFConfig struct
-            // BlockchainConfig::CBF { config } => {
-            //     let path0: String = config
-            //         .datadir
-            //         .map(|d| d)
-            //         .unwrap_or(String::from("./nakamoto/"));
-            //     let path: PathBuf = PathBuf::from(path0);
-            //     AnyBlockchainConfig::CompactFilters(CBFBlockchainConfig {
-            //         network: config.network,
-            //         datadir: Some(path),
-            //     })
-            // }
-
-            // Attempt 2, if you make the datadir field mandatory
-            BlockchainConfig::CBF { config } => {
-                AnyBlockchainConfig::CompactFilters(CBFBlockchainConfig {
-                    network: config.network,
-                    datadir: Some(PathBuf::from(config.datadir)),
-                })
-            }
+            })
         };
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         Ok(Self {
@@ -142,10 +144,6 @@ pub struct EsploraConfig {
     pub timeout: Option<u64>,
 }
 
-pub struct CBFConfig {
-    network: Network,
-    datadir: String,
-}
 
 pub enum Auth {
     /// No authentication
@@ -217,6 +215,14 @@ pub struct RpcConfig {
     pub sync_params: Option<RpcSyncParams>,
 }
 
+
+pub struct CompactFiltersConfig {
+    pub addresses: Vec<String>,
+    pub network: Network,
+    pub storage_dir: String,
+    pub skip_blocks: u32,
+}
+
 /// Type that can contain any of the blockchain configurations defined by the library.
 pub enum BlockchainConfig {
     /// Electrum client
@@ -225,6 +231,6 @@ pub enum BlockchainConfig {
     Esplora { config: EsploraConfig },
     /// Bitcoin Core RPC client
     Rpc { config: RpcConfig },
-    /// Nakamoto client
-    CBF { config: CBFConfig },
+    /// CompactFilters
+    Cbf { config: CompactFiltersConfig },
 }
