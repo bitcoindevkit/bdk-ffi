@@ -54,11 +54,16 @@ impl Blockchain {
                     });
                 }                                     
 
+
                 AnyBlockchainConfig::CompactFilters(CompactFiltersBlockchainConfig {
                     peers: peers,
                     network: config.network,
                     storage_dir: config.storage_dir,
-                    skip_blocks : None,
+                    skip_blocks : match usize::try_from(config.skip_blocks) {
+                        Ok(value) => Some(value),
+                        Err(_) => None,
+                    }
+                      ,
                 })
             }
             BlockchainConfig::Rpc { config } => AnyBlockchainConfig::Rpc(BdkRpcConfig {
@@ -214,6 +219,7 @@ pub struct CompactFiltersConfig {
     pub addresses: Vec<String>,
     pub network: Network,
     pub storage_dir: String,
+    pub skip_blocks: u32,
 }
 
 /// Type that can contain any of the blockchain configurations defined by the library.

@@ -164,6 +164,7 @@ dictionary CompactFiltersConfig {
   sequence<string> addresses;
   Network network;
   string storage_dir;
+  u32 skip_blocks;
 };
 
 
