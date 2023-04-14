@@ -46,6 +46,7 @@ enum BdkError {
   "Sled",
   "Rusqlite",
   "Rpc",
+  "Cbf"
 };
 
 dictionary AddressInfo {
@@ -133,6 +134,11 @@ dictionary EsploraConfig {
   u64? timeout;
 };
 
+dictionary CBFConfig {
+  Network network;
+  string datadir;
+};
+
 [Enum]
 interface Auth {
   None();
@@ -160,6 +166,7 @@ interface BlockchainConfig {
   Electrum(ElectrumConfig config);
   Esplora(EsploraConfig config);
   Rpc(RpcConfig config);
+  CBF(CBFConfig config);
 };
 
 interface Blockchain {

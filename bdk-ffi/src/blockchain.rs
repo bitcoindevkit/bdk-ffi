@@ -2,6 +2,7 @@
 use crate::{BdkError, Transaction};
 use bdk::bitcoin::Network;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
+use bdk::blockchain::compact_filters::nakamoto::CBFBlockchainConfig;
 use bdk::blockchain::rpc::Auth as BdkAuth;
 use bdk::blockchain::rpc::RpcSyncParams as BdkRpcSyncParams;
 use bdk::blockchain::Blockchain as BdkBlockchain;
@@ -49,6 +50,27 @@ impl Blockchain {
                 wallet_name: config.wallet_name,
                 sync_params: config.sync_params.map(|p| p.into()),
             }),
+            // TODO: not sure this is the right way to deal with the PathBuf
+            // Attempt 1, if you make datadir an Option<String> in the CBFConfig struct
+            // BlockchainConfig::CBF { config } => {
+            //     let path0: String = config
+            //         .datadir
+            //         .map(|d| d)
+            //         .unwrap_or(String::from("./nakamoto/"));
+            //     let path: PathBuf = PathBuf::from(path0);
+            //     AnyBlockchainConfig::CompactFilters(CBFBlockchainConfig {
+            //         network: config.network,
+            //         datadir: Some(path),
+            //     })
+            // }
+
+            // Attempt 2, if you make the datadir field mandatory
+            BlockchainConfig::CBF { config } => {
+                AnyBlockchainConfig::CompactFilters(CBFBlockchainConfig {
+                    network: config.network,
+                    datadir: Some(PathBuf::from(config.datadir)),
+                })
+            }
         };
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         Ok(Self {
@@ -118,6 +140,11 @@ pub struct EsploraConfig {
     pub stop_gap: u64,
     /// Socket timeout.
     pub timeout: Option<u64>,
+}
+
+pub struct CBFConfig {
+    network: Network,
+    datadir: String,
 }
 
 pub enum Auth {
@@ -198,4 +225,6 @@ pub enum BlockchainConfig {
     Esplora { config: EsploraConfig },
     /// Bitcoin Core RPC client
     Rpc { config: RpcConfig },
+    /// Nakamoto client
+    CBF { config: CBFConfig },
 }
