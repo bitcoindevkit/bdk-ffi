@@ -7,7 +7,6 @@ assignees: ''
 ---
 
 # Creating a new patch release
-
 ## Bumping BDK Rust Version
 1. - [ ] Open a PR with an update to `Cargo.toml` to the new bdk release candidate and ensure all CI workflows run correctly. Fix errors if necessary.
 2. - [ ] Once the new bdk release is out, update the PR to replace the release candidate with the full release and merge.
@@ -59,26 +58,28 @@ python -m unittest --verbose tests/test_bdk.py
 16. - [ ] Update the readme and `setup.py` if necessary
 
 ### Release Workflow
-17. - [ ] Update the Android, JVM, Python, and Swift libraries as per the _Specific Libraries' Workflows_ section above. Open a single PR on master for all of these changes called `Prepare language bindings libraries for 0.X release`
+17. - [ ] Update the Android, JVM, Python, and Swift libraries as per the _Specific Libraries' Workflows_ section above. Open a single PR on master for all of these changes called `Prepare language bindings libraries for 0.X release`. See [example PR here](https://github.com/bitcoindevkit/bdk-ffi/pull/315).
 - [ ] Create a new branch off of `master` called `release/version`
-18. - [ ] Checkout that branch and open a PR to update the Android, JVM, and Python libraries' versions
-    - [ ] Update bdk-android version from `SNAPSHOT` version to release version
-    - [ ] Update bdk-jvm version from `SNAPSHOT` version to release version
-    - [ ] Update bdk-python version from `.dev` version to release version
-19. - [ ] Merge the PR updating all of the languages to their release versions
+18. - [ ] Open a PR to that branch to update the Android, JVM, and Python libraries' versions. See [example PR here](https://github.com/bitcoindevkit/bdk-ffi/pull/316).
+- [ ] Update bdk-android version from `SNAPSHOT` version to release version
+- [ ] Update bdk-jvm version from `SNAPSHOT` version to release version
+- [ ] Update bdk-python version from `.dev` version to release version
+19. - [ ] Merge the PR updating all the languages to their release versions
 20. - [ ] Create the tag and make sure to add the changelog info to the tag (works better if you prepare the tag message on the side in a text editor) and push it to GitHub.
 ```sh
 git tag v0.6.0 --sign --edit
 git push upstream v0.6.0
 ```
-21. - [ ] Make release on GitHub (set as pre-release and generate auto release notes between the previous tag and the new one)
-22. - [ ] Trigger manual releases for all 4 libraries (for Swift, simply add the version number in the text field when running the workflow manually. Note that the version number must not contain the `v`, i.e. `0.26.0`)
-23. - [ ] Bump the versions on master from `0.9.0-SNAPSHOT` to `0.10.0-SNAPSHOT`, `0.6.0.dev0` to `0.7.0.dev0`
-24. - [ ] Build and publish API docs for JVM, Android, and Java on the website
+21. - [ ] Aggregate all the changelog notices from the PRs and add them to the changelog file
+22. - [ ] Open a PR on master with the changes to the changelog file and the development versions bump. See [example PR here](https://github.com/bitcoindevkit/bdk-ffi/pull/317).
+23. - [ ] Make release on GitHub (set as pre-release and generate auto release notes between the previous tag and the new one)
+24. - [ ] Trigger manual releases for all 4 libraries (for Swift, simply add the version number in the text field when running the workflow manually. Note that the version number must not contain the `v`, i.e. `0.26.0`)
+25. - [ ] Bump the versions on master from `0.9.0-SNAPSHOT` to `0.10.0-SNAPSHOT`, `0.6.0.dev0` to `0.7.0.dev0`
+26. - [ ] Build and publish API docs for JVM, Android, and Java on the website
 ```bash!
 ./gradlew dokkaHtml    # bdk-jvm (Dokka)
 ./gradlew dokkaJavadoc # bdk-jvm (java-style documentation)
 ./gradlew dokkaHtml    # bdk-android (Dokka)
 ```
-25. - [ ] Tweet about the library
-26. - [ ] Post in the announcement channel
+27. - [ ] Tweet about the library
+28. - [ ] Post in the announcement channel
