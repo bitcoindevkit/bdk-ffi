@@ -1,14 +1,27 @@
 # Changelog
-All notable changes to this project prior to release **0.9.0** are documented in this file. Future
-changelog information can be found in each release's git tag and can be viewed with `git tag -ln100 "v*"`.
-Changelog info is also documented on the [GitHub releases](https://github.com/bitcoindevkit/bdk-ffi/releases)
-page. See [DEVELOPMENT_CYCLE.md](DEVELOPMENT_CYCLE.md) for more details.
+Changelog information can also be found in each release's git tag (which can be viewed with `git tag -ln100 "v*"`), as well as on the [GitHub releases](https://github.com/bitcoindevkit/bdk-ffi/releases) page. See [DEVELOPMENT_CYCLE.md](DEVELOPMENT_CYCLE.md) for more details.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.28.0]
+- Update BDK to version 0.27.1 [#341]
+- APIs changed:
+  - Expose Address payload and network properties. [#325]
+  - Add SignOptions to Wallet.sign() params. [#326]
+  - address field on `AddressInfo` type is now of type `Address` [#333]
+  - new PartiallySignedTransaction.json_serialize() function to get JSON serialized value of all PSBT fields. [#334]
+  - Add from_script constructor to `Address` type [#337]
+
+[#325]: https://github.com/bitcoindevkit/bdk-ffi/pull/325
+[#326]: https://github.com/bitcoindevkit/bdk-ffi/pull/326
+[#333]: https://github.com/bitcoindevkit/bdk-ffi/pull/333
+[#334]: https://github.com/bitcoindevkit/bdk-ffi/pull/334
+[#337]: https://github.com/bitcoindevkit/bdk-ffi/pull/337
+[#341]: https://github.com/bitcoindevkit/bdk-ffi/pull/341
+
 ## [v0.27.1]
-- Update BDK to latest version 0.27.1 [#312]
+- Update BDK to version 0.27.1 [#312]
 - APIs changed
   - `PartiallySignedTransaction.extract_tx()` returns a `Transaction` instead of the transaction bytes. [#296]
   - `Blockchain.broadcast()` takes a `Transaction` instead of a `PartiallySignedTransaction`. [#296]
@@ -23,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#312]: https://github.com/bitcoindevkit/bdk-ffi/pull/312
 
 ## [v0.26.0]
-- Update BDK to latest version 0.26.0 [#288]
+- Update BDK to version 0.26.0 [#288]
 - APIs changed
   - The descriptor and change_descriptor arguments on the wallet constructor now take a `Descriptor` instead of a `String`. [#260]
   - TxBuilder.drain_to() argument is now `Script` instead of address `String`. [#279]
@@ -46,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#288]: https://github.com/bitcoindevkit/bdk-ffi/pull/288
 
 ## [v0.25.0]
-- Update BDK to latest version 0.25.0 [#272]
+- Update BDK to version 0.25.0 [#272]
 - APIs Added:
   - from_string() constructors now available on DescriptorSecretKey and DescriptorPublicKey [#247]
 
@@ -54,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#272]: https://github.com/bitcoindevkit/bdk-ffi/pull/272
 
 ## [v0.11.0]
-- Update BDK to latest version 0.24.0 [#221]
+- Update BDK to version 0.24.0 [#221]
 - APIs changed
   - The constructor on the DescriptorSecretKey type now takes a Mnemonic instead of a String.
 - APIs added
@@ -70,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#221]: https://github.com/bitcoindevkit/bdk-ffi/pull/221
 
 ## [v0.10.0]
-- Update BDK to latest version 0.23.0 [#204]
+- Update BDK to version 0.23.0 [#204]
 - Update uniffi-rs to latest version 0.21.0 [#216]
 - Breaking Changes
   - Changed `TxBuilder.finish()` to return new `TxBuilderResult` [#209]
@@ -103,7 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - APIs Added [#154]
   - `generate_mnemonic()`, returns string mnemonic
   - `interface DescriptorSecretKey`
-    - `new(Network, string_mnenoinc, password)`, contructs DescriptorSecretKey
+    - `new(Network, string_mnenoinc, password)`, constructs DescriptorSecretKey
     - `derive(DerivationPath)`, derives and returns child DescriptorSecretKey
     - `extend(DerivationPath)`, extends and returns DescriptorSecretKey
     - `as_public()`, returns DescriptorSecretKey as DescriptorPublicKey
@@ -183,8 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
-## [v0.2.0]
-
+[v0.28.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.27.1...v0.28.0
 [v0.27.1]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.26.0...v0.27.1
 [v0.26.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.25.0...v0.26.0
 [v0.25.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.11.0...v0.25.0
