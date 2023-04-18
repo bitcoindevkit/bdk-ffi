@@ -114,3 +114,5 @@ For some older versions of macOS, Android Studio will recommend users install th
 
 [`bdk`]: https://github.com/bitcoindevkit/bdk
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
+
+Temporary line: needed to run CI

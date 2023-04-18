@@ -21,7 +21,8 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val buildAndroidAarch64Binary by tasks.register<Exec>("buildAndroidAarch64Binary") {
 
             workingDir("${projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "aarch64-linux-android")
+            val cargoArgs: MutableList<String> =
+                mutableListOf("build", "--profile", "release-smaller", "--target", "aarch64-linux-android")
 
             executable("cargo")
             args(cargoArgs)
@@ -35,9 +36,10 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             environment(
                 // add build toolchain to PATH
-                Pair("PATH", "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
-                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=21"),
-                Pair("AR", "llvm-ar"),
+                Pair("PATH",
+                    "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
+
+                Pair("CFLAGS", "-D__ANDROID_API__=21"),
                 Pair("CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER", "aarch64-linux-android21-clang"),
                 Pair("CC", "aarch64-linux-android21-clang")
             )
@@ -51,7 +53,8 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val buildAndroidX86_64Binary by tasks.register<Exec>("buildAndroidX86_64Binary") {
 
             workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-linux-android")
+            val cargoArgs: MutableList<String> =
+                mutableListOf("build", "--profile", "release-smaller", "--target", "x86_64-linux-android")
 
             executable("cargo")
             args(cargoArgs)
@@ -65,9 +68,10 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             environment(
                 // add build toolchain to PATH
-                Pair("PATH", "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
-                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=21"),
-                Pair("AR", "llvm-ar"),
+                Pair("PATH",
+                    "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
+
+                Pair("CFLAGS", "-D__ANDROID_API__=21"),
                 Pair("CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER", "x86_64-linux-android21-clang"),
                 Pair("CC", "x86_64-linux-android21-clang")
             )
@@ -81,7 +85,8 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val buildAndroidArmv7Binary by tasks.register<Exec>("buildAndroidArmv7Binary") {
 
             workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "armv7-linux-androideabi")
+            val cargoArgs: MutableList<String> =
+                mutableListOf("build", "--profile", "release-smaller", "--target", "armv7-linux-androideabi")
 
             executable("cargo")
             args(cargoArgs)
@@ -95,10 +100,12 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             environment(
                 // add build toolchain to PATH
-                Pair("PATH", "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
-                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=21"),
-                Pair("AR", "llvm-ar"),
-                Pair("CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER", "armv7a-linux-androideabi21-clang"),
+                Pair("PATH",
+                    "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
+
+                Pair("CFLAGS", "-D__ANDROID_API__=21"),
+                Pair("CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER",
+                    "armv7a-linux-androideabi21-clang"),
                 Pair("CC", "armv7a-linux-androideabi21-clang")
             )
 

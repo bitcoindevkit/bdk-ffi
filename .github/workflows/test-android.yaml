@@ -18,7 +18,8 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+# The build cannot be done on the ubuntu-22.04 image, see issue #346
+    runs-on: ubuntu-20.04
     steps:
       - name: "Install Android NDK 21.4.7075529"
         run: |
@@ -48,9 +49,14 @@ jobs:
       - name: "Install Rust Android targets"
         run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
 
-# There are currently no unit tests for bdk-android and the integration tests require the macOS image
-# which is not working with the older NDK version we are using, so for now we just make sure that the library builds.
-#      - name: "Run Android unit tests"
+#      - name: "Build Android library"
 #        run: |
 #          cd bdk-android
-#          ./gradlew test --console=rich
+#          ./gradlew buildAndroidLib
+
+# There are currently no unit tests for bdk-android and the integration tests require the macOS image
+# which is not working with the older NDK version we are using, so for now we just make sure that the library builds.
+      - name: "Run Android unit tests"
+        run: |
+          cd bdk-android
+          ./gradlew test --console=rich
