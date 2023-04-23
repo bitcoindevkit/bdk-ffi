@@ -49,17 +49,25 @@ dependencies {
 
 ## How to build
 _Note that Kotlin version `1.6.10` or later is required to build the library._
-
-1. Clone this repository.
+1. Install JDK 11. It must be JDK 11 (not 17), otherwise it won't build. For example, with SDKMAN!:
+```shell
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
+sdk install java 11.0.19-tem
+```
+2. Install rust:
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+3. Clone this repository.
 ```shell
 git clone https://github.com/bitcoindevkit/bdk-ffi
 ```
-2. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions.
-3. If building on macOS install required intel and m1 jvm targets
+4. If building on macOS install required intel and m1 jvm targets
 ```sh
 rustup target add x86_64-apple-darwin aarch64-apple-darwin
 ```
-4. Build kotlin bindings
+5. Build kotlin bindings
  ```sh
  # build JVM library
  ./gradlew buildJvmLib
