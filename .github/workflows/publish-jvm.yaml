@@ -46,7 +46,7 @@ jobs:
   build-jvm-full-library:
     name: Create full bdk-jvm library
     needs: [build-jvm-macOS-M1-native-lib]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout publishing branch
         uses: actions/checkout@v2
