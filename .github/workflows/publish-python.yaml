@@ -9,7 +9,7 @@ on: [workflow_dispatch]
 jobs:
   build-manylinux2014-x86_64-wheel:
     name: "Build Manylinux 2014 x86_64 wheel"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python
@@ -131,7 +131,7 @@ jobs:
 
   publish-pypi:
     name: "Publish on PyPI"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python

@@ -18,7 +18,7 @@ on:
 jobs:
   build-manylinux2014-x86_64-wheel:
     name: "Build and test Manylinux 2014 x86_64 wheels"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python
