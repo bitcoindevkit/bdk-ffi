@@ -1,5 +1,6 @@
 name: Test Android
 on:
+  workflow_dispatch:
   push:
     paths:
       - "bdk-ffi/**"
