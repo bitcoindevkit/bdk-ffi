@@ -21,13 +21,9 @@ jobs:
     strategy:
       matrix:
         python: # Update this list whenever the docker image is updated (check /opt/python/)
-          - cp36-cp36m
-          - cp37-cp37m
           - cp38-cp38
           - cp39-cp39
           - cp310-cp310
-          - pp37-pypy37_pp73
-          - pp38-pypy38_pp73
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -63,10 +59,9 @@ jobs:
     strategy:
       matrix:
         python:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -94,7 +89,7 @@ jobs:
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-windows-wheel:
-    name: "Build windows wheel"
+    name: "Build Windows wheel"
     runs-on: windows-2022
     defaults:
       run:
@@ -102,10 +97,9 @@ jobs:
     strategy:
       matrix:
         python:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2

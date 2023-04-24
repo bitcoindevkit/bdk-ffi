@@ -30,10 +30,8 @@ jobs:
     strategy:
       matrix:
         python:
-          # - cp36-cp36m
-          # - cp37-cp37m
-          # - cp38-cp38
-          # - cp39-cp39
+          - cp38-cp38
+          - cp39-cp39
           - cp310-cp310
     steps:
       - name: "Checkout"
@@ -77,10 +75,9 @@ jobs:
     strategy:
       matrix:
         python:
-          # - '3.7'
-          # - '3.8'
-          # - '3.9'
-          - '3.10'
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -117,10 +114,9 @@ jobs:
     strategy:
       matrix:
         python:
-          # - '3.7'
-          # - '3.8'
-          # - '3.9'
-          - '3.10'
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -139,12 +135,11 @@ jobs:
       - name: "Build wheel"
         run: python setup.py bdist_wheel --verbose
 
-      # TODO: On Windows the pip install ./dist/*.whl step fails with the following error:
-      # Run pip install ./dist/*.whl
-      # WARNING: Requirement './dist/*.whl' looks like a filename, but the file does not exist
-      # ERROR: *.whl is not a valid wheel filename.*.whl is not a valid wheel name
-      # So we skip the installing and the tests and simply test that the wheel builds
-
+# TODO: On Windows the pip install ./dist/*.whl step fails with the following error:
+# Run pip install ./dist/*.whl
+# WARNING: Requirement './dist/*.whl' looks like a filename, but the file does not exist
+# ERROR: *.whl is not a valid wheel filename.*.whl is not a valid wheel name
+# So we skip the installing and the tests and simply test that the wheel builds
       # - name: Install wheel
       #   run: pip install ./dist/*.whl
       # - name: Run tests
