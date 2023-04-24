@@ -31,6 +31,9 @@ jobs:
           distribution: temurin
           java-version: 11
 
+      - name: "Set default Rust version to 1.67.0"
+        run: rustup default 1.67.0
+
       - name: Run JVM tests
         run: |
           cd bdk-jvm

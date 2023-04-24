@@ -16,6 +16,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: "Set default Rust version to 1.67.0"
+        run: rustup default 1.67.0
+
       - name: Install Rust targets
         run: |
           rustup install nightly-x86_64-apple-darwin
