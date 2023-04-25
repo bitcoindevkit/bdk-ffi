@@ -43,7 +43,9 @@ jobs:
         run: bash generate.sh
 
       - name: "Build wheel"
-        run: ${PYBIN}/python setup.py bdist_wheel --verbose
+        # Specifying the plat-name argument is necessary to build a wheel with the correct name,
+        # see issue #350 for more information
+        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_17_x86_64 --verbose
 
       - uses: actions/upload-artifact@v2
         with:
@@ -81,7 +83,9 @@ jobs:
       - name: "Build wheel"
         env:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
-        run: python3 setup.py bdist_wheel --verbose
+        # Specifying the plat-name argument is necessary to build a wheel with the correct name,
+        # see issue #350 for more information
+        run: python3 setup.py bdist_wheel --plat-name macosx_12_0_universal2 --verbose
 
       - uses: actions/upload-artifact@v2
         with:
