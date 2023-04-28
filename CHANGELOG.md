@@ -5,7 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [v0.28.0]
-- Update BDK to version 0.27.1 [#341]
+- Update BDK to version 0.28.0 [#341]
+- Drop support of pypy releases of Python libraries [#351]
+- Drop support for Python 3.6 and 3.7 [#351]
+- Drop support for very old Linux versions that do not support the manylinux_2_17_x86_64 platform tag [#351]
 - APIs changed:
   - Expose Address payload and network properties. [#325]
   - Add SignOptions to Wallet.sign() params. [#326]
@@ -19,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#334]: https://github.com/bitcoindevkit/bdk-ffi/pull/334
 [#337]: https://github.com/bitcoindevkit/bdk-ffi/pull/337
 [#341]: https://github.com/bitcoindevkit/bdk-ffi/pull/341
+[#351]: https://github.com/bitcoindevkit/bdk-ffi/pull/351
 
 ## [v0.27.1]
 - Update BDK to version 0.27.1 [#312]
