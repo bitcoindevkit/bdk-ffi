@@ -36,7 +36,7 @@ jobs:
       - name: Build bdk-ffi for aarch64-apple-darwin
         run: cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-darwin
 
-      - name: Create lipo-ios-sim and lipo-macos
+      - name: Create lipo-macos
         run: |
           mkdir -p target/lipo-macos/release-smaller
           lipo target/aarch64-apple-darwin/release-smaller/libbdkffi.a target/x86_64-apple-darwin/release-smaller/libbdkffi.a -create -output target/lipo-macos/release-smaller/libbdkffi.a
