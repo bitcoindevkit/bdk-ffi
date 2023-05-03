@@ -221,11 +221,22 @@ interface Wallet {
   [Throws=BdkError]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, Network network, DatabaseConfig database_config);
 
+  Network network();
+
   [Throws=BdkError]
   AddressInfo get_address(AddressIndex address_index);
 
   [Throws=BdkError]
   AddressInfo get_internal_address(AddressIndex address_index);
+
+  [Throws=BdkError]
+  boolean is_mine(Script script);
+
+  [Throws=BdkError]
+  sequence<LocalUtxo> list_unspent();
+
+  [Throws=BdkError]
+  sequence<TransactionDetails> list_transactions(boolean include_raw);
 
   [Throws=BdkError]
   Balance get_balance();
@@ -234,15 +245,7 @@ interface Wallet {
   boolean sign([ByRef] PartiallySignedTransaction psbt, SignOptions? sign_options);
 
   [Throws=BdkError]
-  sequence<TransactionDetails> list_transactions(boolean include_raw);
-
-  Network network();
-
-  [Throws=BdkError]
   void sync([ByRef] Blockchain blockchain, Progress? progress);
-
-  [Throws=BdkError]
-  sequence<LocalUtxo> list_unspent();
 };
 
 interface FeeRate {
