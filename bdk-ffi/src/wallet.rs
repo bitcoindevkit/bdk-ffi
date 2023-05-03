@@ -67,7 +67,7 @@ impl Wallet {
 
     /// Return whether or not a script is part of this wallet (either internal or external).
     pub(crate) fn is_mine(&self, script: Arc<Script>) -> Result<bool, BdkError> {
-        Ok(self.get_wallet().is_mine(&script.script)?)
+        Ok(self.get_wallet().is_mine(&script.script).unwrap())
     }
 
     /// Sync the internal database with the blockchain.
@@ -568,6 +568,7 @@ mod test {
     use crate::keys::{DescriptorSecretKey, Mnemonic};
     use crate::wallet::{AddressIndex, TxBuilder, Wallet};
     use crate::Script;
+    use assert_matches::assert_matches;
     use bdk::bitcoin::{Address, Network};
     use bdk::wallet::get_funded_wallet;
     use bdk::KeychainKind;
@@ -834,7 +835,7 @@ mod test {
         let script: Arc<Script> = address.address.script_pubkey();
 
         let is_mine_1: bool = wallet.is_mine(script).unwrap();
-        assert_eq!(is_mine_1, true);
+        assert!(is_mine_1);
 
         // is_mine returns false when provided a script that is not in the wallet
         let other_wpkh = "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)";
@@ -851,6 +852,6 @@ mod test {
         let other_address = other_wallet.get_address(AddressIndex::New).unwrap();
         let other_script: Arc<Script> = other_address.address.script_pubkey();
         let is_mine_2: bool = wallet.is_mine(other_script).unwrap();
-        assert_eq!(is_mine_2, false);
+        assert_matches!(is_mine_2, false);
     }
 }
