@@ -173,7 +173,7 @@ interface BlockchainConfig {
   Electrum(ElectrumConfig config);
   Esplora(EsploraConfig config);
   Rpc(RpcConfig config);
-  Cbf(CompactFiltersConfig config);
+  CompactFilters(CompactFiltersConfig config);
 };
 
 interface Blockchain {

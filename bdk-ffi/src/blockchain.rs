@@ -8,9 +8,9 @@ use bdk::blockchain::Blockchain as BdkBlockchain;
 use bdk::blockchain::GetBlockHash;
 use bdk::blockchain::GetHeight;
 use bdk::blockchain::{
+    compact_filters::BitcoinPeerConfig, compact_filters::CompactFiltersBlockchainConfig,
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
     rpc::RpcConfig as BdkRpcConfig, ConfigurableBlockchain,
-    compact_filters::CompactFiltersBlockchainConfig, compact_filters::BitcoinPeerConfig,
 };
 use bdk::FeeRate;
 use std::convert::{From, TryFrom};
@@ -43,27 +43,25 @@ impl Blockchain {
                     timeout: config.timeout,
                 })
             }
-            BlockchainConfig::Cbf { config } => {
-
+            BlockchainConfig::CompactFilters { config } => {
                 let mut peers = Vec::new();
                 for address in config.addresses {
-                    peers.push(BitcoinPeerConfig{
-                        address:address,
-                        socks5:None,
-                        socks5_credentials:None
+                    // TODO: the full BitcoinPeerConfig vector should be configurable in python https://github.com/thunderbiscuit/bdk-ffi/pull/6/files#r1182860942
+                    peers.push(BitcoinPeerConfig {
+                        address: address,
+                        socks5: None,
+                        socks5_credentials: None,
                     });
-                }                                     
-
+                }
 
                 AnyBlockchainConfig::CompactFilters(CompactFiltersBlockchainConfig {
                     peers: peers,
                     network: config.network,
                     storage_dir: config.storage_dir,
-                    skip_blocks : match usize::try_from(config.skip_blocks) {
+                    skip_blocks: match usize::try_from(config.skip_blocks) {
                         Ok(value) => Some(value),
                         Err(_) => None,
-                    }
-                      ,
+                    },
                 })
             }
             BlockchainConfig::Rpc { config } => AnyBlockchainConfig::Rpc(BdkRpcConfig {
@@ -72,7 +70,7 @@ impl Blockchain {
                 network: config.network,
                 wallet_name: config.wallet_name,
                 sync_params: config.sync_params.map(|p| p.into()),
-            })
+            }),
         };
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         Ok(Self {
@@ -144,7 +142,6 @@ pub struct EsploraConfig {
     pub timeout: Option<u64>,
 }
 
-
 pub enum Auth {
     /// No authentication
     None,
@@ -215,11 +212,15 @@ pub struct RpcConfig {
     pub sync_params: Option<RpcSyncParams>,
 }
 
-
+// Configuration for a CompactFiltersBlockchain
 pub struct CompactFiltersConfig {
+    // List of addresses of peers to try to connect to for asking headers and filters
     pub addresses: Vec<String>,
+    // Network used
     pub network: Network,
+    // Storage dir to save partially downloaded headers and full blocks. Should be a separate directory per descriptor. Consider using crate::wallet::wallet_name_from_descriptor for this.
     pub storage_dir: String,
+    // Optionally skip initial skip_blocks blocks (default: 0)
     pub skip_blocks: u32,
 }
 
@@ -232,5 +233,5 @@ pub enum BlockchainConfig {
     /// Bitcoin Core RPC client
     Rpc { config: RpcConfig },
     /// CompactFilters
-    Cbf { config: CompactFiltersConfig },
+    CompactFilters { config: CompactFiltersConfig },
 }
