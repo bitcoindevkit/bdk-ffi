@@ -67,7 +67,7 @@ impl Wallet {
 
     /// Return whether or not a script is part of this wallet (either internal or external).
     pub(crate) fn is_mine(&self, script: Arc<Script>) -> Result<bool, BdkError> {
-        Ok(self.get_wallet().is_mine(&script.script).unwrap())
+        self.get_wallet().is_mine(&script.script)
     }
 
     /// Sync the internal database with the blockchain.
