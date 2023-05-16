@@ -5,8 +5,8 @@
 #
 # Run the script from the repo root directory, ie: ./bdk-swift/build-local-swift.sh
 
-rustup install nightly-2023-04-10-x86_64-apple-darwin
-rustup component add rust-src --toolchain nightly-2023-04-10-x86_64-apple-darwin
+rustup install nightly-2023-04-10
+rustup component add rust-src --toolchain nightly-2023-04-10
 rustup target add aarch64-apple-ios x86_64-apple-ios
 rustup target add aarch64-apple-ios-sim --toolchain nightly-2023-04-10
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
