@@ -193,10 +193,10 @@ impl Descriptor {
     ///
     /// # Errors
     /// When the descriptor is impossible to satisfy (ex: sh(OP_FALSE)).
-    pub(crate) fn max_satisfaction_weight(&self) -> Result<u32, BdkError> {
+    pub(crate) fn max_satisfaction_weight(&self) -> Result<u64, BdkError> {
         self.extended_descriptor
             .max_satisfaction_weight()
-            .map(|w| u32::try_from(w).unwrap())
+            .map(|w| u64::try_from(w).unwrap())
             .map_err(BdkError::Miniscript)
     }
 

@@ -363,9 +363,11 @@ interface TxBuilder {
 
   TxBuilder add_unspendable(OutPoint unspendable);
 
+  TxBuilder add_utxos(sequence<OutPoint> outpoints);
+
   TxBuilder add_utxo(OutPoint outpoint);
 
-  TxBuilder add_utxos(sequence<OutPoint> outpoints);
+  TxBuilder add_foreign_utxo(OutPoint outpoint, Input psbt_input, u64 satisfaction_weight);
 
   TxBuilder do_not_spend_change();
 
@@ -480,7 +482,7 @@ interface Descriptor {
   constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
   [Throws=BdkError]
-  u32 max_satisfaction_weight();
+  u64 max_satisfaction_weight();
 
   string as_string();
 

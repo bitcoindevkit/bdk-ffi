@@ -1,3 +1,11 @@
+use crate::blockchain::Blockchain;
+use crate::database::DatabaseConfig;
+use crate::descriptor::Descriptor;
+use crate::psbt::{Input, PartiallySignedTransaction, PsbtSighashType};
+use crate::{
+    AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, OutPoint, Progress, ProgressHolder,
+    RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
+};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
 use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::database::any::AnyDatabase;
@@ -11,15 +19,6 @@ use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
-
-use crate::blockchain::Blockchain;
-use crate::database::DatabaseConfig;
-use crate::descriptor::Descriptor;
-use crate::psbt::{Input, PartiallySignedTransaction, PsbtSighashType};
-use crate::{
-    AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, OutPoint, Progress, ProgressHolder,
-    RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
-};
 
 #[derive(Debug)]
 pub(crate) struct Wallet {
@@ -265,6 +264,7 @@ pub(crate) struct TxBuilder {
     pub(crate) drain_to: Option<BdkScript>,
     pub(crate) rbf: Option<RbfValue>,
     pub(crate) data: Vec<u8>,
+    pub(crate) foreign_utxos: Vec<(OutPoint, Arc<Input>, u64)>,
 }
 
 impl TxBuilder {
@@ -281,6 +281,7 @@ impl TxBuilder {
             drain_to: None,
             rbf: None,
             data: Vec::new(),
+            foreign_utxos: Vec::new(),
         }
     }
 
@@ -330,6 +331,53 @@ impl TxBuilder {
         utxos.append(&mut outpoints);
         Arc::new(TxBuilder {
             utxos,
+            ..self.clone()
+        })
+    }
+
+    /// Add a foreign UTXO i.e. a UTXO not owned by this wallet.
+    /// At a minimum to add a foreign UTXO we need:
+    ///     outpoint: To add it to the raw transaction.
+    ///     psbt_input: To know the value.
+    ///     satisfaction_weight: To know how much weight/vbytes the input will add to the transaction for fee calculation.
+    ///
+    /// There are several security concerns about adding foreign UTXOs that application developers should consider.
+    /// First, how do you know the value of the input is correct? If a non_witness_utxo is provided in the
+    /// psbt_input then this method implicitly verifies the value by checking it against the transaction.
+    /// If only a witness_utxo is provided then this method does not verify the value but just takes it as a
+    /// given – it is up to you to check that whoever sent you the input_psbt was not lying!
+    ///
+    /// Secondly, you must somehow provide satisfaction_weight of the input. Depending on your application
+    /// it may be important that this be known precisely. If not, a malicious counterparty may fool you into putting in
+    /// a value that is too low, giving the transaction a lower than expected feerate. They could also fool you
+    /// into putting a value that is too high causing you to pay a fee that is too high. The party who is broadcasting
+    /// the transaction can of course check the real input weight matches the expected weight prior to broadcasting.
+    ///
+    /// To guarantee the satisfaction_weight is correct, you can require the party providing the psbt_input provide
+    /// a miniscript descriptor for the input so you can check it against the script_pubkey and then ask it for the
+    /// max_satisfaction_weight.
+    ///
+    /// Errors
+    /// This method returns errors in the following circumstances:
+    /// The psbt_input does not contain a witness_utxo or non_witness_utxo.
+    /// The data in non_witness_utxo does not match what is in outpoint.
+    ///
+    /// Note unless you set only_witness_utxo any non-taproot psbt_input you pass to this method must
+    /// have non_witness_utxo set otherwise you will get an error when finish is called.
+    pub(crate) fn add_foreign_utxo(
+        &self,
+        outpoint: OutPoint,
+        psbt_input: Arc<Input>,
+        satisfaction_weight: u64,
+    ) -> Arc<Self> {
+        // TODO: Why doesn't the OutPoint parameter here need an Arc?
+
+        let mut current_foreign_utxos: Vec<(OutPoint, Arc<Input>, u64)> =
+            self.foreign_utxos.clone();
+        let new_foreign_utxo = (outpoint, psbt_input, satisfaction_weight);
+        current_foreign_utxos.push(new_foreign_utxo);
+        Arc::new(TxBuilder {
+            foreign_utxos: current_foreign_utxos,
             ..self.clone()
         })
     }
@@ -445,6 +493,26 @@ impl TxBuilder {
             let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
             let utxos: &[BdkOutPoint] = &bdk_utxos;
             tx_builder.add_utxos(utxos)?;
+        }
+        if !self.foreign_utxos.is_empty() {
+            // TODO: Not sure why the double dereference ** is needed here... it just works?
+            //       I really just need to grab the Input inside the Arc but not sure how else to do it.
+            for (outpoint, input, value) in self.foreign_utxos.iter() {
+                let input_new: Input = (**input).clone();
+                tx_builder.add_foreign_utxo(outpoint.into(), input_new.into(), *value as usize)?;
+            }
+
+            // let bdk_foreign_utxos: Vec<(OutPoint, Arc<Input>, u64)> = self
+            //     .foreign_utxos.iter().map(|(outpoint, input, value)| {
+            //         (outpoint, input.clone(), *value)
+            //     }
+            // ).collect();
+            // let foreign_utxos: Vec<(OutPoint, Arc<Input>, u64)> = bdk_foreign_utxos;
+            // for (outpoint, input, value) in foreign_utxos.iter() {
+
+            // foreign_utxos.forEach(|(outpoint, input, value)| {
+            //     tx_builder.add_foreign_utxo(outpoint, input, value)?;
+            // });
         }
         if !self.unspendable.is_empty() {
             let bdk_unspendable: Vec<BdkOutPoint> =

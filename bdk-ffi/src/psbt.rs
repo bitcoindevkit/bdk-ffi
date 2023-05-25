@@ -79,9 +79,8 @@ impl PartiallySignedTransaction {
     }
 }
 
-/// A key-value map for an input of the corresponding index in the unsigned
-/// transaction.
-#[derive(Debug)]
+/// A key-value map for an input of the corresponding index in the unsigned transaction.
+#[derive(Clone, Debug)]
 pub(crate) struct Input {
     inner: BdkInput,
 }
@@ -103,6 +102,12 @@ impl Input {
 impl From<BdkInput> for Input {
     fn from(input: BdkInput) -> Self {
         Input { inner: input }
+    }
+}
+
+impl From<Input> for BdkInput {
+    fn from(input: Input) -> Self {
+        input.inner
     }
 }
 
