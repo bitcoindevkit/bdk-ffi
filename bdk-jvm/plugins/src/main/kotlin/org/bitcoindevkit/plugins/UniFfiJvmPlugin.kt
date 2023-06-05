@@ -27,15 +27,14 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
                     val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "aarch64-apple-darwin")
                     args(cargoArgs)
                 }
-            } else if(operatingSystem == OS.LINUX) {
+            } else if (operatingSystem == OS.LINUX) {
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
                     val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-unknown-linux-gnu")
                     args(cargoArgs)
                 }
-            }
-            else if(operatingSystem == OS.WINDOWS) {
+            } else if (operatingSystem == OS.WINDOWS) {
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
@@ -88,13 +87,8 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
                 )
             }
             val libName = when (operatingSystem) {
-                OS.WINDOWS -> {
-                    "bdkffi"
-                }
-
-                else -> {
-                    "libbdkffi"
-                }
+                OS.WINDOWS -> "bdkffi"
+                else       -> "libbdkffi"
             }
 
             libsToCopy.forEach {
