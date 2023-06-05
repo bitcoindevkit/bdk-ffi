@@ -1,5 +1,5 @@
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
-use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Sequence, Txid};
+use bdk::bitcoin::{Address as BdkAddress, OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::database::any::AnyDatabase;
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
@@ -7,6 +7,7 @@ use bdk::{
     FeeRate, LocalUtxo as BdkLocalUtxo, SignOptions as BdkSignOptions,
     SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
+use bitcoin_ffi::Network;
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::str::FromStr;

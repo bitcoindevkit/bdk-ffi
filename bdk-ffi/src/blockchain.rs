@@ -1,6 +1,6 @@
 // use crate::BlockchainConfig;
 use crate::{BdkError, Transaction};
-use bdk::bitcoin::Network;
+use bitcoin_ffi::Network;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::rpc::Auth as BdkAuth;
 use bdk::blockchain::rpc::RpcSyncParams as BdkRpcSyncParams;

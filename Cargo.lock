@@ -151,6 +151,7 @@ version = "0.28.0"
 dependencies = [
  "assert_matches",
  "bdk",
+ "bitcoin-ffi",
  "uniffi",
 ]
 
@@ -202,6 +203,14 @@ dependencies = [
  "bitcoin_hashes",
  "secp256k1",
  "serde",
+]
+
+[[package]]
+name = "bitcoin-ffi"
+version = "0.1.0"
+dependencies = [
+ "bitcoin",
+ "uniffi",
 ]
 
 [[package]]

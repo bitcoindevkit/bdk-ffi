@@ -22,7 +22,7 @@ use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::psbt::serialize::Serialize;
 use bdk::bitcoin::util::address::{Payload as BdkPayload, WitnessVersion};
 use bdk::bitcoin::{
-    Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid,
+    Address as BdkAddress, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid,
 };
 use bdk::blockchain::Progress as BdkProgress;
 use bdk::database::any::{SledDbConfiguration, SqliteDbConfiguration};
@@ -32,6 +32,7 @@ use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::LocalUtxo as BdkLocalUtxo;
 use bdk::TransactionDetails as BdkTransactionDetails;
 use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
+use bitcoin_ffi::Network;
 use std::convert::From;
 use std::fmt;
 use std::fmt::Debug;

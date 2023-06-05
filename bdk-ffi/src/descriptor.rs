@@ -1,7 +1,7 @@
 use crate::{BdkError, DescriptorPublicKey, DescriptorSecretKey};
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::Fingerprint;
-use bdk::bitcoin::Network;
+use bitcoin_ffi::Network;
 use bdk::descriptor::{ExtendedDescriptor, IntoWalletDescriptor, KeyMap};
 use bdk::keys::{
     DescriptorPublicKey as BdkDescriptorPublicKey, DescriptorSecretKey as BdkDescriptorSecretKey,

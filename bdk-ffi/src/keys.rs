@@ -2,7 +2,7 @@ use crate::BdkError;
 
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;
-use bdk::bitcoin::Network;
+use bitcoin_ffi::Network;
 use bdk::descriptor::DescriptorXKey;
 use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic, WordCount};
 use bdk::keys::{

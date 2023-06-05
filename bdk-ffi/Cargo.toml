@@ -20,6 +20,7 @@ default = ["uniffi/cli"]
 
 [dependencies]
 bdk = { version = "0.28", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
+bitcoin-ffi = { version = "0.1.0", path = "../../bitcoin-ffi" }
 uniffi = { version = "0.23.0" }
 
 [build-dependencies]

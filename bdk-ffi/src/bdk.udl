@@ -62,13 +62,6 @@ interface AddressIndex {
   Reset(u32 index);
 };
 
-enum Network {
-  "Bitcoin",
-  "Testnet",
-  "Signet",
-  "Regtest",
-};
-
 dictionary SledDbConfiguration {
   string path;
   string tree_name;
@@ -497,3 +490,8 @@ enum WitnessVersion {
 interface Script {
   constructor(sequence<u8> raw_output_script);
 };
+
+// Types defined in bitcoin-ffi (https://github.com/tnull/bitcoin-ffi)
+
+[External="bitcoin_ffi"]
+typedef extern Network;
