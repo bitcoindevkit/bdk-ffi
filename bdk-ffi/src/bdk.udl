@@ -475,6 +475,9 @@ interface Descriptor {
   [Name=new_bip84_public]
   constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
+  [Throws=BdkError]
+  u32 max_satisfaction_weight();
+
   string as_string();
 
   string as_string_private();

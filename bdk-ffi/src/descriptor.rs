@@ -10,6 +10,7 @@ use bdk::template::{
     Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate,
 };
 use bdk::KeychainKind;
+use std::convert::TryFrom;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -181,6 +182,22 @@ impl Descriptor {
                 unreachable!()
             }
         }
+    }
+
+    /// Computes an upper bound on the weight of a satisfying witness to the
+    /// transaction.
+    ///
+    /// Assumes all ec-signatures are 73 bytes, including push opcode and
+    /// sighash suffix. Includes the weight of the VarInts encoding the
+    /// scriptSig and witness stack length.
+    ///
+    /// # Errors
+    /// When the descriptor is impossible to satisfy (ex: sh(OP_FALSE)).
+    pub(crate) fn max_satisfaction_weight(&self) -> Result<u32, BdkError> {
+        self.extended_descriptor
+            .max_satisfaction_weight()
+            .map(|w| u32::try_from(w).unwrap())
+            .map_err(BdkError::Miniscript)
     }
 
     pub(crate) fn as_string_private(&self) -> String {
