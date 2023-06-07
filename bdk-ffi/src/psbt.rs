@@ -83,7 +83,13 @@ impl PartiallySignedTransaction {
 /// transaction.
 #[derive(Debug)]
 pub(crate) struct Input {
-    inner: BdkInput,
+    _inner: BdkInput,
+}
+
+impl From<BdkInput> for Input {
+    fn from(input: BdkInput) -> Self {
+        Input { _inner: input }
+    }
 }
 
 /// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
@@ -106,6 +112,12 @@ impl PsbtSighashType {
         PsbtSighashType {
             inner: BdkPsbtSighashType::from(schnorr_hash_ty),
         }
+    }
+}
+
+impl From<&PsbtSighashType> for BdkPsbtSighashType {
+    fn from(psbt_hash_ty: &PsbtSighashType) -> Self {
+        psbt_hash_ty.inner
     }
 }
 

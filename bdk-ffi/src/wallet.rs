@@ -15,7 +15,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use crate::blockchain::Blockchain;
 use crate::database::DatabaseConfig;
 use crate::descriptor::Descriptor;
-use crate::psbt::PartiallySignedTransaction;
+use crate::psbt::{Input, PartiallySignedTransaction, PsbtSighashType};
 use crate::{
     AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, OutPoint, Progress, ProgressHolder,
     RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
@@ -155,6 +155,22 @@ impl Wallet {
     pub(crate) fn list_unspent(&self) -> Result<Vec<LocalUtxo>, BdkError> {
         let unspents: Vec<BdkLocalUtxo> = self.get_wallet().list_unspent()?;
         Ok(unspents.into_iter().map(LocalUtxo::from).collect())
+    }
+
+    /// Get the corresponding PSBT Input for a LocalUtxo.
+    pub(crate) fn get_psbt_input(
+        &self,
+        utxo: LocalUtxo,
+        sighash_type: Option<Arc<PsbtSighashType>>,
+        only_witness_utxo: bool,
+    ) -> Result<Arc<Input>, BdkError> {
+        self.get_wallet()
+            .get_psbt_input(
+                utxo.into(),
+                sighash_type.map(|s| s.deref().into()),
+                only_witness_utxo,
+            )
+            .map(|i| Arc::new(i.into()))
     }
 }
 

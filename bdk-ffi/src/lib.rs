@@ -164,6 +164,15 @@ impl From<&OutPoint> for BdkOutPoint {
     }
 }
 
+impl From<OutPoint> for BdkOutPoint {
+    fn from(outpoint: OutPoint) -> Self {
+        BdkOutPoint {
+            txid: Txid::from_str(&outpoint.txid).unwrap(),
+            vout: outpoint.vout,
+        }
+    }
+}
+
 pub struct Balance {
     // All coinbase outputs not yet matured
     pub immature: u64,
@@ -212,6 +221,15 @@ impl From<&BdkTxOut> for TxOut {
     }
 }
 
+impl From<TxOut> for BdkTxOut {
+    fn from(tx_out: TxOut) -> Self {
+        BdkTxOut {
+            value: tx_out.value,
+            script_pubkey: tx_out.script_pubkey.script.clone(),
+        }
+    }
+}
+
 pub struct LocalUtxo {
     outpoint: OutPoint,
     txout: TxOut,
@@ -232,6 +250,17 @@ impl From<BdkLocalUtxo> for LocalUtxo {
                     script: local_utxo.txout.script_pubkey,
                 }),
             },
+            keychain: local_utxo.keychain,
+            is_spent: local_utxo.is_spent,
+        }
+    }
+}
+
+impl From<LocalUtxo> for BdkLocalUtxo {
+    fn from(local_utxo: LocalUtxo) -> Self {
+        BdkLocalUtxo {
+            outpoint: local_utxo.outpoint.into(),
+            txout: local_utxo.txout.into(),
             keychain: local_utxo.keychain,
             is_spent: local_utxo.is_spent,
         }

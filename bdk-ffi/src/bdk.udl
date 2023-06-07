@@ -236,6 +236,9 @@ interface Wallet {
   sequence<LocalUtxo> list_unspent();
 
   [Throws=BdkError]
+  Input get_psbt_input(LocalUtxo utxo, PsbtSighashType? sighash_type, boolean only_witness_utxo);
+
+  [Throws=BdkError]
   sequence<TransactionDetails> list_transactions(boolean include_raw);
 
   [Throws=BdkError]
