@@ -521,6 +521,9 @@ class Wallet(
 
     /** Return the list of unspent outputs of this wallet. Note that this method only operates on the internal database, which first needs to be [Wallet.sync] manually. */
     fun listUnspent(): List<LocalUtxo> {}
+
+    /** Get the corresponding PSBT Input for a LocalUtxo. */
+    fun getPsbtInput(utxo: LocalUtxo, sighashType: PsbtSighashType?, onlyWitnessUtxo: Boolean): Input {}
 }
 
 /**
@@ -716,6 +719,72 @@ class DescriptorSecretKey(network: Network, mnemonic: Mnemonic, password: String
 }
 
 /**
+ * A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
+ * type can be either [`EcdsaSighashType`] or [`SchnorrSighashType`] but it is not possible to know
+ * directly which signature hash type the user is dealing with. Therefore, the user is responsible
+ * for converting to/from [`PsbtSighashType`] from/to the desired signature hash type they need.
+ *
+ */
+class PsbtSighashType() {
+
+    companion object {
+        fun `fromEcdsa`(`ecdsaHashTy`: EcdsaSighashType): PsbtSighashType
+        fun `fromSchnorr`(`schnorrHashTy`: SchnorrSighashType): PsbtSighashType
+    }
+}
+
+/**
+ * Hashtype of an input's signature, encoded in the last byte of the signature.
+ * Fixed values so they can be cast as integer types for encoding (see also
+ * `SchnorrSighashType`).
+ */
+enum class EcdsaSighashType {
+    /** 0x1: Sign all outputs. */
+    ALL,
+    /** 0x2: Sign no outputs --- anyone can choose the destination. */
+    NONE,
+    /**
+     * 0x3: Sign the output whose index matches this input's index. If none exists,
+     * sign the hash `0000000000000000000000000000000000000000000000000000000000000001`.
+     * (This rule is probably an unintentional C++ism, but it's consensus so we have
+     * to follow it.)
+     */
+    SINGLE,
+    /** 0x81: Sign all outputs but only this input. */
+    ALL_PLUS_ANYONE_CAN_PAY,
+    /** 0x82: Sign no outputs and only this input. */
+    NONE_PLUS_ANYONE_CAN_PAY,
+    /** 0x83: Sign one output and only this input (see `Single` for what "one output" means). */
+    SINGLE_PLUS_ANYONE_CAN_PAY;
+}
+
+/**
+ * Hashtype of an input's signature, encoded in the last byte of the signature.
+ * Fixed values so they can be cast as integer types for encoding.
+ */
+enum class SchnorrSighashType {
+    /** 0x0: Used when not explicitly specified, defaults to [`SchnorrSighashType::All`] */
+    DEFAULT,
+    /** 0x1: Sign all outputs. */
+    ALL,
+    /** 0x2: Sign no outputs --- anyone can choose the destination. */
+    NONE,
+    /**
+     * 0x3: Sign the output whose index matches this input's index. If none exists,
+     * sign the hash `0000000000000000000000000000000000000000000000000000000000000001`.
+     * (This rule is probably an unintentional C++ism, but it's consensus so we have
+     * to follow it.)
+     */
+    SINGLE,
+    /** 0x81: Sign all outputs but only this input. */
+    ALL_PLUS_ANYONE_CAN_PAY,
+    /** 0x82: Sign no outputs and only this input. */
+    NONE_PLUS_ANYONE_CAN_PAY,
+    /** 0x83: Sign one output and only this input (see `Single` for what "one output" means). */
+    SINGLE_PLUS_ANYONE_CAN_PAY;
+}
+
+/**
  * An extended public key.
  *
  * @param network The network this DescriptorPublicKey is to be used on.
@@ -784,6 +853,21 @@ class Descriptor(descriptor: String, network: Network) {
      * This template requires the parent fingerprint to populate correctly the metadata of PSBTs.
      */
     fun newBip84Public(publicKey: DescriptorPublicKey, fingerprint: String, keychain: KeychainKind, network: Network) {}
+
+    /**
+     * Computes an upper bound on the weight of a satisfying witness to the
+     * transaction.
+     *
+     * Assumes all ec-signatures are 73 bytes, including push opcode and
+     * sighash suffix. Includes the weight of the VarInts encoding the
+     * scriptSig and witness stack length.
+     *
+     * # Errors
+     * When the descriptor is impossible to satisfy (ex: sh(OP_FALSE)).
+     *
+     * @return max satisfaction weight
+     */
+    fun maxSatisfactionWeight(): UInt {}
 
     /** Return the public version of the output descriptor. */
     fun asString(): String {}
@@ -894,6 +978,11 @@ sealed class Payload {
 enum class WitnessVersion {
     V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16
 }
+
+/**
+ * A key-value map for an input of the corresponding index in the unsigned transaction.
+ */
+class Input() {}
 
 /**
  * Mnemonic phrases are a human-readable version of the private keys. Supported number of words are 12, 15, 18, 21 and 24.
