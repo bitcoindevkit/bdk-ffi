@@ -12,7 +12,9 @@ use crate::database::DatabaseConfig;
 use crate::descriptor::Descriptor;
 use crate::keys::DerivationPath;
 use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
+use crate::psbt::Input;
 use crate::psbt::PartiallySignedTransaction;
+use crate::psbt::PsbtSighashType;
 use crate::wallet::SignOptions;
 use crate::wallet::{BumpFeeTxBuilder, TxBuilder, Wallet};
 use bdk::bitcoin::blockdata::script::Script as BdkScript;
@@ -24,6 +26,7 @@ use bdk::bitcoin::util::address::{Payload as BdkPayload, WitnessVersion};
 use bdk::bitcoin::{
     Address as BdkAddress, Network, OutPoint as BdkOutPoint, Transaction as BdkTransaction, Txid,
 };
+use bdk::bitcoin::{EcdsaSighashType, SchnorrSighashType};
 use bdk::blockchain::Progress as BdkProgress;
 use bdk::database::any::{SledDbConfiguration, SqliteDbConfiguration};
 use bdk::keys::bip39::WordCount;

@@ -314,6 +314,36 @@ interface PartiallySignedTransaction {
   string json_serialize();
 };
 
+interface Input {
+};
+
+interface PsbtSighashType {
+  [Name=from_ecdsa]
+  constructor(EcdsaSighashType ecdsa_hash_ty);
+
+  [Name=from_schnorr]
+  constructor(SchnorrSighashType schnorr_hash_ty);
+};
+
+enum EcdsaSighashType {
+  "All",
+  "None",
+  "Single",
+  "AllPlusAnyoneCanPay",
+  "NonePlusAnyoneCanPay",
+  "SinglePlusAnyoneCanPay",
+};
+
+enum SchnorrSighashType {
+  "Default",
+  "All",
+  "None",
+  "Single",
+  "AllPlusAnyoneCanPay",
+  "NonePlusAnyoneCanPay",
+  "SinglePlusAnyoneCanPay",
+};
+
 dictionary TxBuilderResult {
   PartiallySignedTransaction psbt;
   TransactionDetails transaction_details;

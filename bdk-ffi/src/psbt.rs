@@ -1,5 +1,8 @@
 use bdk::bitcoin::hashes::hex::ToHex;
+use bdk::bitcoin::util::psbt::Input as BdkInput;
 use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
+use bdk::bitcoin::util::psbt::PsbtSighashType as BdkPsbtSighashType;
+use bdk::bitcoin::{EcdsaSighashType, SchnorrSighashType};
 use bdk::bitcoincore_rpc::jsonrpc::serde_json;
 use bdk::psbt::PsbtUtils;
 use std::ops::Deref;
@@ -73,6 +76,36 @@ impl PartiallySignedTransaction {
     pub(crate) fn json_serialize(&self) -> String {
         let psbt = self.internal.lock().unwrap();
         serde_json::to_string(psbt.deref()).unwrap()
+    }
+}
+
+/// A key-value map for an input of the corresponding index in the unsigned
+/// transaction.
+#[derive(Debug)]
+pub(crate) struct Input {
+    inner: BdkInput,
+}
+
+/// A Signature hash type for the corresponding input. As of taproot upgrade, the signature hash
+/// type can be either [`EcdsaSighashType`] or [`SchnorrSighashType`] but it is not possible to know
+/// directly which signature hash type the user is dealing with. Therefore, the user is responsible
+/// for converting to/from [`PsbtSighashType`] from/to the desired signature hash type they need.
+#[derive(Debug)]
+pub(crate) struct PsbtSighashType {
+    inner: BdkPsbtSighashType,
+}
+
+impl PsbtSighashType {
+    pub(crate) fn from_ecdsa(ecdsa_hash_ty: EcdsaSighashType) -> Self {
+        PsbtSighashType {
+            inner: BdkPsbtSighashType::from(ecdsa_hash_ty),
+        }
+    }
+
+    pub(crate) fn from_schnorr(schnorr_hash_ty: SchnorrSighashType) -> Self {
+        PsbtSighashType {
+            inner: BdkPsbtSighashType::from(schnorr_hash_ty),
+        }
     }
 }
 
