@@ -318,6 +318,10 @@ interface PartiallySignedTransaction {
 };
 
 interface Input {
+  [Name=from_json,Throws=BdkError]
+  constructor(string input_json);
+
+  string json_serialize();
 };
 
 interface PsbtSighashType {

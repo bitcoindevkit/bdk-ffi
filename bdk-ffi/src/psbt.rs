@@ -83,12 +83,26 @@ impl PartiallySignedTransaction {
 /// transaction.
 #[derive(Debug)]
 pub(crate) struct Input {
-    _inner: BdkInput,
+    inner: BdkInput,
+}
+
+impl Input {
+    /// Create a new PSBT Input from a JSON String.
+    pub(crate) fn from_json(input_json: String) -> Result<Self, BdkError> {
+        let input = serde_json::from_str(input_json.as_str())?;
+        Ok(Self { inner: input })
+    }
+
+    /// Serialize the PSBT Input data structure as a JSON String.
+    pub(crate) fn json_serialize(&self) -> String {
+        let input = &self.inner;
+        serde_json::to_string(input).unwrap()
+    }
 }
 
 impl From<BdkInput> for Input {
     fn from(input: BdkInput) -> Self {
-        Input { _inner: input }
+        Input { inner: input }
     }
 }
 

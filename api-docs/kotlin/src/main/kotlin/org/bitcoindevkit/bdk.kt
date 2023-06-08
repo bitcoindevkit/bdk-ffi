@@ -981,8 +981,17 @@ enum class WitnessVersion {
 
 /**
  * A key-value map for an input of the corresponding index in the unsigned transaction.
+ *
+ *  @constructor Create a new PSBT Input from a JSON String.
  */
-class Input() {}
+class Input(inputJson: String) {
+
+    /**
+     * Serialize the PSBT Input data structure as a JSON String.
+     *
+     */
+    fun jsonSerialize(): String;
+}
 
 /**
  * Mnemonic phrases are a human-readable version of the private keys. Supported number of words are 12, 15, 18, 21 and 24.
