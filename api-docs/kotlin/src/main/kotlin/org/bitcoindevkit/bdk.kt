@@ -561,6 +561,43 @@ class TxBuilder() {
     fun addUtxo(outpoint: OutPoint): TxBuilder {}
 
     /**
+     * Add a foreign UTXO i.e. a UTXO not owned by this wallet.
+     * At a minimum to add a foreign UTXO we need:
+     *     outpoint: To add it to the raw transaction.
+     *     psbt_input: To know the value.
+     *     satisfaction_weight: To know how much weight/vbytes the input will add to the transaction for fee calculation.
+     *
+     * There are several security concerns about adding foreign UTXOs that application developers should consider.
+     * First, how do you know the value of the input is correct? If a non_witness_utxo is provided in the
+     * psbt_input then this method implicitly verifies the value by checking it against the transaction.
+     * If only a witness_utxo is provided then this method does not verify the value but just takes it as a
+     * given – it is up to you to check that whoever sent you the input_psbt was not lying!
+     *
+     * Secondly, you must somehow provide satisfaction_weight of the input. Depending on your application
+     * it may be important that this be known precisely. If not, a malicious counterparty may fool you into putting in
+     * a value that is too low, giving the transaction a lower than expected feerate. They could also fool you
+     * into putting a value that is too high causing you to pay a fee that is too high. The party who is broadcasting
+     * the transaction can of course check the real input weight matches the expected weight prior to broadcasting.
+     *
+     * To guarantee the satisfaction_weight is correct, you can require the party providing the psbt_input provide
+     * a miniscript descriptor for the input so you can check it against the script_pubkey and then ask it for the
+     * max_satisfaction_weight.
+     *
+     * Errors
+     * This method returns errors in the following circumstances:
+     * The psbt_input does not contain a witness_utxo or non_witness_utxo.
+     * The data in non_witness_utxo does not match what is in outpoint.
+     *
+     * Note unless you set only_witness_utxo any non-taproot psbt_input you pass to this method must
+     * have non_witness_utxo set otherwise you will get an error when finish is called.
+     *
+     * @param outpoint The outpoint of the UTXO to add.
+     * @param input The PSBT input that contains the value of the UTXO.
+     * @param satisfactionWeight how much weight/vbytes the input will add to the transaction for fee calculation.
+     */
+    fun addForeignUtxo(outpoint: OutPoint, input: Input, satisfactionWeight: ULong): TxBuilder {}
+
+    /**
      * Add the list of outpoints to the internal list of UTXOs that must be spent. If an error
      * occurs while adding any of the UTXOs then none of them are added and the error is returned.
      * These have priority over the "unspendable" utxos, meaning that if a utxo is present both
