@@ -438,6 +438,10 @@ impl Script {
         let script: BdkScript = BdkScript::from(raw_output_script);
         Script { script }
     }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        self.script.to_bytes()
+    }
 }
 
 impl From<BdkScript> for Script {

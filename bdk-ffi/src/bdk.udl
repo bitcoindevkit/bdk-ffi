@@ -496,4 +496,6 @@ enum WitnessVersion {
 
 interface Script {
   constructor(sequence<u8> raw_output_script);
+
+  sequence<u8> to_bytes();
 };
