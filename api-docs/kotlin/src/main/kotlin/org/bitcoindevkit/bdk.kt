@@ -829,7 +829,10 @@ data class TxBuilderResult (
 /**
  * A bitcoin script.
  */
-class Script(rawOutputScript: List<UByte>)
+class Script(rawOutputScript: List<UByte>) {
+    /** Return the script as bytes. */
+    fun toBytes(): List<UByte> {}
+}
 
 /**
  * A bitcoin address.
