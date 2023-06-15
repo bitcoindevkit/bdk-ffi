@@ -1,4 +1,4 @@
-# bdk-android
+# bdk-jvm
 This project builds a .jar package for the JVM platform that provide Kotlin language bindings for the [`bdk`] library. The Kotlin language bindings are created by the `bdk-ffi` project which is included in the root of this repository.
 
 ## How to Use
@@ -43,21 +43,21 @@ dependencies {
 }
 ```
 
-
 ## Example Projects
 * [Tatooine Faucet](https://github.com/thunderbiscuit/tatooine)
 
 ## How to build
 _Note that Kotlin version `1.6.10` or later is required to build the library._
-1. Install JDK 11. It must be JDK 11 (not 17), otherwise it won't build. For example, with SDKMAN!:
+1. Install JDK 11. It must be version 11 (not 17), otherwise it won't build. For example, with SDKMAN!:
 ```shell
 curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install java 11.0.19-tem
 ```
-2. Install rust:
+2. Install Rust (note that we are currently building using Rust 1.67.0):
 ```shell
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup default 1.67.0
 ```
 3. Clone this repository.
 ```shell
@@ -68,10 +68,9 @@ git clone https://github.com/bitcoindevkit/bdk-ffi
 rustup target add x86_64-apple-darwin aarch64-apple-darwin
 ```
 5. Build kotlin bindings
- ```sh
- # build JVM library
- ./gradlew buildJvmLib
- ```
+```sh
+./gradlew buildJvmLib
+```
 
 ## How to publish to your local Maven repo
 ```shell
