@@ -1,14 +1,12 @@
 [package]
 name = "bdk-ffi"
-version = "0.28.0"
+version = "0.29.0"
 authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
 
 [lib]
 crate-type = ["lib", "staticlib", "cdylib"]
-#crate-type = ["staticlib", "cdylib"]
-#crate-type = ["cdylib"]
 name = "bdkffi"
 
 [[bin]]
