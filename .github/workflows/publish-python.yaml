@@ -54,7 +54,7 @@ jobs:
 
   build-macos-universal-wheel:
     name: "Build macOS universal wheel"
-    runs-on: macos-12
+    runs-on: macos-13
     defaults:
       run:
         working-directory: bdk-python
@@ -85,7 +85,7 @@ jobs:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
         # Specifying the plat-name argument is necessary to build a wheel with the correct name,
         # see issue #350 for more information
-        run: python3 setup.py bdist_wheel --plat-name macosx_12_0_universal2 --verbose
+        run: python3 setup.py bdist_wheel --plat-name macosx_13_0_universal2 --verbose
 
       - uses: actions/upload-artifact@v2
         with:
