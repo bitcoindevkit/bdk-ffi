@@ -4,6 +4,21 @@ Changelog information can also be found in each release's git tag (which can be 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0]
+This release has a number of new APIs, and adds support for Windows in bdk-jvm.
+
+Changelog
+- Add support for Windows in bdk-jvm [#336]
+- Add support for older version of Linux distros in bdk-jvm [#345]
+- APIs added
+  - Expose `is_mine()` method on the `Wallet` type [#355]
+  - Expose `to_bytes()` method on the `Script` type [#369]
+
+[#336]: https://github.com/bitcoindevkit/bdk-ffi/pull/336
+[#345]: https://github.com/bitcoindevkit/bdk-ffi/pull/345
+[#355]: https://github.com/bitcoindevkit/bdk-ffi/pull/355
+[#369]: https://github.com/bitcoindevkit/bdk-ffi/pull/369
+
 ## [v0.28.0]
 - Update BDK to version 0.28.0 [#341]
 - Drop support of pypy releases of Python libraries [#351]
@@ -200,6 +215,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v0.29.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.28.0...v0.29.0
 [v0.28.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.27.1...v0.28.0
 [v0.27.1]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.26.0...v0.27.1
 [v0.26.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.25.0...v0.26.0
