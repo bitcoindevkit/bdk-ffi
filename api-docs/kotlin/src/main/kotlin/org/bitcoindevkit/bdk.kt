@@ -489,6 +489,9 @@ class Wallet(
      */
     fun getInternalAddress(addressIndex: AddressIndex): AddressInfo {}
 
+    /** Return whether or not a script is part of this wallet (either internal or external). */
+    fun isMine(script: Script): Boolean {}
+
     /** Return the wallet's balance, across different categories. See [Balance] for the categories. Note that this method only operates on the internal database, which first needs to be [Wallet.sync] manually. */
     fun getBalance(): Balance {}
 
@@ -826,7 +829,10 @@ data class TxBuilderResult (
 /**
  * A bitcoin script.
  */
-class Script(rawOutputScript: List<UByte>)
+class Script(rawOutputScript: List<UByte>) {
+    /** Return the script as bytes. */
+    fun toBytes(): List<UByte> {}
+}
 
 /**
  * A bitcoin address.

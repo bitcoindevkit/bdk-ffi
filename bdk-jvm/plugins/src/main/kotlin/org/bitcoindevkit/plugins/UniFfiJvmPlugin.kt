@@ -27,11 +27,18 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
                     val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "aarch64-apple-darwin")
                     args(cargoArgs)
                 }
-            } else if(operatingSystem == OS.LINUX) {
+            } else if (operatingSystem == OS.LINUX) {
                 exec {
                     workingDir("${project.projectDir}/../../bdk-ffi")
                     executable("cargo")
                     val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-unknown-linux-gnu")
+                    args(cargoArgs)
+                }
+            } else if (operatingSystem == OS.WINDOWS) {
+                exec {
+                    workingDir("${project.projectDir}/../../bdk-ffi")
+                    executable("cargo")
+                    val cargoArgs: List<String> = listOf("build", "--profile", "release-smaller", "--target", "x86_64-pc-windows-msvc")
                     args(cargoArgs)
                 }
             }
@@ -70,13 +77,25 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
                         ext = "so"
                     )
                 )
+            } else if (operatingSystem == OS.WINDOWS) {
+                libsToCopy.add(
+                    CopyMetadata(
+                        targetDir = "x86_64-pc-windows-msvc",
+                        resDir = "win32-x86-64",
+                        ext = "dll"
+                    )
+                )
+            }
+            val libName = when (operatingSystem) {
+                OS.WINDOWS -> "bdkffi"
+                else       -> "libbdkffi"
             }
 
             libsToCopy.forEach {
                 doFirst {
                     copy {
                         with(it) {
-                            from("${project.projectDir}/../../target/${this.targetDir}/release-smaller/libbdkffi.${this.ext}")
+                            from("${project.projectDir}/../../target/${this.targetDir}/release-smaller/${libName}.${this.ext}")
                             into("${project.projectDir}/../../bdk-jvm/lib/src/main/resources/${this.resDir}/")
                         }
                     }

@@ -9,7 +9,7 @@ on: [workflow_dispatch]
 jobs:
   build-manylinux2014-x86_64-wheel:
     name: "Build Manylinux 2014 x86_64 wheel"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python
@@ -21,13 +21,9 @@ jobs:
     strategy:
       matrix:
         python: # Update this list whenever the docker image is updated (check /opt/python/)
-          - cp36-cp36m
-          - cp37-cp37m
           - cp38-cp38
           - cp39-cp39
           - cp310-cp310
-          - pp37-pypy37_pp73
-          - pp38-pypy38_pp73
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -37,14 +33,19 @@ jobs:
         with:
           toolchain: stable
 
+      - name: "Set default Rust version to 1.67.0"
+        run: rustup default 1.67.0
+
       - name: "Install requirements"
         run: ${PYBIN}/pip install -r requirements.txt
 
-      - name: "Generate bdk.py"
+      - name: "Generate bdk.py and binaries"
         run: bash generate.sh
 
       - name: "Build wheel"
-        run: ${PYBIN}/python setup.py bdist_wheel --verbose
+        # Specifying the plat-name argument is necessary to build a wheel with the correct name,
+        # see issue #350 for more information
+        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_17_x86_64 --verbose
 
       - uses: actions/upload-artifact@v2
         with:
@@ -60,10 +61,9 @@ jobs:
     strategy:
       matrix:
         python:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -73,7 +73,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: "Generate bdk.py"
+      - name: "Generate bdk.py and binaries"
         run: |
           python3 --version
           rustup target add aarch64-apple-darwin
@@ -83,7 +83,9 @@ jobs:
       - name: "Build wheel"
         env:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
-        run: python3 setup.py bdist_wheel --verbose
+        # Specifying the plat-name argument is necessary to build a wheel with the correct name,
+        # see issue #350 for more information
+        run: python3 setup.py bdist_wheel --plat-name macosx_12_0_universal2 --verbose
 
       - uses: actions/upload-artifact@v2
         with:
@@ -91,7 +93,7 @@ jobs:
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-windows-wheel:
-    name: "Build windows wheel"
+    name: "Build Windows wheel"
     runs-on: windows-2022
     defaults:
       run:
@@ -99,10 +101,9 @@ jobs:
     strategy:
       matrix:
         python:
-          - '3.7'
-          - '3.8'
-          - '3.9'
-          - '3.10'
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -112,7 +113,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: "Generate bdk.py"
+      - name: "Generate bdk.py and binaries"
         run: |
           python --version
           pip install --user -r requirements.txt
@@ -128,7 +129,7 @@ jobs:
 
   publish-pypi:
     name: "Publish on PyPI"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python

@@ -51,7 +51,7 @@ print(f"Wallet balance is: {balance.total}")
 
 setup(
     name="bdkpython",
-    version="0.28.0.dev0",
+    version="0.30.0.dev0",
     description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
@@ -62,4 +62,7 @@ setup(
     url="https://github.com/bitcoindevkit/bdk-ffi",
     author="Alekos Filini <alekos.filini@gmail.com>, Steve Myers <steve@notmandatory.org>",
     license="MIT or Apache 2.0",
+    # This is required to ensure the library name includes the python version, abi, and platform tags
+    # See issue #350 for more information
+    has_ext_modules=lambda: True,
 )

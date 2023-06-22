@@ -1,5 +1,6 @@
 name: Test Python
 on:
+  workflow_dispatch:
   push:
     paths:
       - "bdk-ffi/**"
@@ -17,7 +18,7 @@ on:
 jobs:
   build-manylinux2014-x86_64-wheel:
     name: "Build and test Manylinux 2014 x86_64 wheels"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python
@@ -29,10 +30,8 @@ jobs:
     strategy:
       matrix:
         python:
-          # - cp36-cp36m
-          # - cp37-cp37m
-          # - cp38-cp38
-          # - cp39-cp39
+          - cp38-cp38
+          - cp39-cp39
           - cp310-cp310
     steps:
       - name: "Checkout"
@@ -43,14 +42,19 @@ jobs:
         with:
           toolchain: stable
 
+      - name: "Set default Rust version to 1.67.0"
+        run: rustup default 1.67.0
+
       - name: "Install requirements"
         run: ${PYBIN}/pip install -r requirements.txt
 
-      - name: "Generate bdk.py"
+      - name: "Generate bdk.py and binaries"
         run: bash generate.sh
 
       - name: "Build wheel"
-        run: ${PYBIN}/python setup.py bdist_wheel --verbose
+        # Specifying the plat-name argument is necessary to build a wheel with the correct name,
+        # see issue #350 for more information
+        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_17_x86_64 --verbose
 
       - name: "Install wheel"
         run: ${PYBIN}/pip install ./dist/*.whl
@@ -73,10 +77,11 @@ jobs:
     strategy:
       matrix:
         python:
-          # - '3.7'
-          # - '3.8'
-          # - '3.9'
-          - '3.10'
+          # 3.8 returns an error for the macos-12 image when we try to install the wheel:
+          # bdkpython-0.28.0.dev0-cp38-cp38-macosx_12_0_universal2.whl is not a supported wheel on this platform.
+          # - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -86,7 +91,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: "Generate bdk.py"
+      - name: "Generate bdk.py and binaries"
         run: | 
           python3 --version
           rustup target add aarch64-apple-darwin
@@ -96,7 +101,7 @@ jobs:
       - name: "Build wheel"
         env:
           ARCHFLAGS: "-arch x86_64 -arch arm64"
-        run: python3 setup.py bdist_wheel --verbose
+        run: python3 setup.py bdist_wheel --plat-name macosx_12_0_universal2 --verbose
 
       - name: "Install wheel"
         run: pip3 install ./dist/*.whl
@@ -113,10 +118,9 @@ jobs:
     strategy:
       matrix:
         python:
-          # - '3.7'
-          # - '3.8'
-          # - '3.9'
-          - '3.10'
+          - "3.8"
+          - "3.9"
+          - "3.10"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
@@ -135,12 +139,11 @@ jobs:
       - name: "Build wheel"
         run: python setup.py bdist_wheel --verbose
 
-      # TODO: On Windows the pip install ./dist/*.whl step fails with the following error:
-      # Run pip install ./dist/*.whl
-      # WARNING: Requirement './dist/*.whl' looks like a filename, but the file does not exist
-      # ERROR: *.whl is not a valid wheel filename.*.whl is not a valid wheel name
-      # So we skip the installing and the tests and simply test that the wheel builds
-
+# TODO: On Windows the pip install ./dist/*.whl step fails with the following error:
+# Run pip install ./dist/*.whl
+# WARNING: Requirement './dist/*.whl' looks like a filename, but the file does not exist
+# ERROR: *.whl is not a valid wheel filename.*.whl is not a valid wheel name
+# So we skip the installing and the tests and simply test that the wheel builds
       # - name: Install wheel
       #   run: pip install ./dist/*.whl
       # - name: Run tests

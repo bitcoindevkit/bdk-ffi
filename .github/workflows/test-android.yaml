@@ -1,5 +1,6 @@
 name: Test Android
 on:
+  workflow_dispatch:
   push:
     paths:
       - "bdk-ffi/**"
@@ -18,7 +19,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     steps:
       - name: "Install Android NDK 21.4.7075529"
         run: |
@@ -45,8 +46,16 @@ jobs:
           distribution: temurin
           java-version: 11
 
+      - name: "Set default Rust version to 1.67.0"
+        run: rustup default 1.67.0
+
       - name: "Install Rust Android targets"
         run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
+
+      - name: "Build Android library"
+        run: |
+          cd bdk-android
+          ./gradlew buildAndroidLib
 
 # There are currently no unit tests for bdk-android and the integration tests require the macOS image
 # which is not working with the older NDK version we are using, so for now we just make sure that the library builds.

@@ -19,8 +19,8 @@ import org.bitcoindevkit.*
 
 // ...
 
-val externalDescriptor = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)"
-val internalDescriptor = "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)"
+val externalDescriptor = Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)", Network.TESTNET)
+val internalDescriptor = Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)", Network.TESTNET)
 
 val databaseConfig = DatabaseConfig.Memory
 
@@ -54,19 +54,23 @@ _Note that Kotlin version `1.6.10` or later is required to build the library._
 ```shell
 git clone https://github.com/bitcoindevkit/bdk-ffi
 ```
-2. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions.
-3. If building on macOS install required intel and m1 jvm targets
+2. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions. 
+3. Install Rust (note that we are currently building using Rust 1.67.0):
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+rustup default 1.67.0
+```
 4. Install required targets
- ```sh
- rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
- ```
+```sh
+rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
+```
 5. Install Android SDK and Build-Tools for API level 30+
 6. Setup `$ANDROID_SDK_ROOT` and `$ANDROID_NDK_ROOT` path variables (which are required by the
-   build tool), for example (NDK major version 21 is required):
- ```shell
- export ANDROID_SDK_ROOT=~/Android/Sdk
- export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/21.<NDK_VERSION>
- ```
+   build tool), for example (note that currently, NDK version 21.4.7075529 is required):
+```shell
+export ANDROID_SDK_ROOT=~/Android/Sdk
+export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/21.4.7075529
+```
 7. Build kotlin bindings
  ```sh
  # build Android library
