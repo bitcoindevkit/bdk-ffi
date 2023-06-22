@@ -17,7 +17,7 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { version = "0.28", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
+bdk = { version = "0.28", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc", "compact_filters"] }
 uniffi = { version = "0.23.0" }
 
 [build-dependencies]

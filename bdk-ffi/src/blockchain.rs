@@ -8,6 +8,7 @@ use bdk::blockchain::Blockchain as BdkBlockchain;
 use bdk::blockchain::GetBlockHash;
 use bdk::blockchain::GetHeight;
 use bdk::blockchain::{
+    compact_filters::BitcoinPeerConfig, compact_filters::CompactFiltersBlockchainConfig,
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
     rpc::RpcConfig as BdkRpcConfig, ConfigurableBlockchain,
 };
@@ -40,6 +41,27 @@ impl Blockchain {
                     concurrency: config.concurrency,
                     stop_gap: usize::try_from(config.stop_gap).unwrap(),
                     timeout: config.timeout,
+                })
+            }
+            BlockchainConfig::CompactFilters { config } => {
+                let mut peers = Vec::new();
+                for address in config.addresses {
+                    // TODO: the full BitcoinPeerConfig vector should be configurable in python https://github.com/thunderbiscuit/bdk-ffi/pull/6/files#r1182860942
+                    peers.push(BitcoinPeerConfig {
+                        address,
+                        socks5: None,
+                        socks5_credentials: None,
+                    });
+                }
+
+                AnyBlockchainConfig::CompactFilters(CompactFiltersBlockchainConfig {
+                    peers,
+                    network: config.network,
+                    storage_dir: config.storage_dir,
+                    skip_blocks: match usize::try_from(config.skip_blocks) {
+                        Ok(value) => Some(value),
+                        Err(_) => None,
+                    },
                 })
             }
             BlockchainConfig::Rpc { config } => AnyBlockchainConfig::Rpc(BdkRpcConfig {
@@ -190,6 +212,18 @@ pub struct RpcConfig {
     pub sync_params: Option<RpcSyncParams>,
 }
 
+// Configuration for a CompactFiltersBlockchain
+pub struct CompactFiltersConfig {
+    // List of addresses of peers to try to connect to for asking headers and filters
+    pub addresses: Vec<String>,
+    // Network used
+    pub network: Network,
+    // Storage dir to save partially downloaded headers and full blocks. Should be a separate directory per descriptor. Consider using crate::wallet::wallet_name_from_descriptor for this.
+    pub storage_dir: String,
+    // Optionally skip initial skip_blocks blocks (default: 0)
+    pub skip_blocks: u32,
+}
+
 /// Type that can contain any of the blockchain configurations defined by the library.
 pub enum BlockchainConfig {
     /// Electrum client
@@ -198,4 +232,6 @@ pub enum BlockchainConfig {
     Esplora { config: EsploraConfig },
     /// Bitcoin Core RPC client
     Rpc { config: RpcConfig },
+    /// CompactFilters
+    CompactFilters { config: CompactFiltersConfig },
 }
