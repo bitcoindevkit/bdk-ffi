@@ -16,7 +16,4 @@ cargo build --profile release-smaller --target x86_64-pc-windows-msvc
 echo "Copying libraries bdkffi.dll..."
 cp ../target/x86_64-pc-windows-msvc/release-smaller/bdkffi.dll ../bdk-python/src/bdkpython/bdkffi.dll
 
-echo "Printing the content of the bdkpython directory..."
-ls -la ../bdk-python/src/bdkpython/
-
 echo "All done!"
