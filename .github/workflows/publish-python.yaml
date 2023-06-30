@@ -7,7 +7,7 @@ on: [workflow_dispatch]
 # tries to load glibc and fails because it requires a more recent version.
 
 jobs:
-  build-manylinux2014-x86_64-wheel:
+  build-manylinux2014-x86_64-wheels:
     name: "Build Manylinux 2014 x86_64 wheel"
     runs-on: ubuntu-20.04
     defaults:
@@ -33,14 +33,8 @@ jobs:
         with:
           toolchain: stable
 
-      - name: "Set default Rust version to 1.67.0"
-        run: rustup default 1.67.0
-
-      - name: "Install requirements"
-        run: ${PYBIN}/pip install -r requirements.txt
-
       - name: "Generate bdk.py and binaries"
-        run: bash generate.sh
+        run: bash ./scripts/generate-linux.sh
 
       - name: "Build wheel"
         # Specifying the plat-name argument is necessary to build a wheel with the correct name,
@@ -52,8 +46,8 @@ jobs:
           name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
           path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
-  build-macos-universal-wheel:
-    name: "Build macOS universal wheel"
+  build-macos-arm64-wheels:
+    name: "Build macOS arm64 wheel"
     runs-on: macos-13
     defaults:
       run:
@@ -69,30 +63,63 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-      - uses: actions/setup-python@v2
+
+      - name: "Install Python"
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python }}
 
       - name: "Generate bdk.py and binaries"
-        run: |
-          python3 --version
-          rustup target add aarch64-apple-darwin
-          pip3 install --user -r requirements.txt
-          bash generate.sh
+        run: bash ./scripts/generate-macos-arm64.sh
 
       - name: "Build wheel"
-        env:
-          ARCHFLAGS: "-arch x86_64 -arch arm64"
         # Specifying the plat-name argument is necessary to build a wheel with the correct name,
         # see issue #350 for more information
-        run: python3 setup.py bdist_wheel --plat-name macosx_13_0_universal2 --verbose
+        run: python3 setup.py bdist_wheel --plat-name macosx_11_0_arm64 --verbose
+
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: bdkpython-macos-arm64-${{ matrix.python }}
+          path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
+
+  build-macos-x86_64-wheels:
+    name: "Build macOS x86_64 wheel"
+    runs-on: macos-13
+    defaults:
+      run:
+        working-directory: bdk-python
+    strategy:
+      matrix:
+        python:
+          - "3.8"
+          - "3.9"
+          - "3.10"
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: "Install Python"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: "Generate bdk.py and binaries"
+        run: bash ./scripts/generate-macos-x86_64.sh
+
+      - name: "Build wheel"
+        # Specifying the plat-name argument is necessary to build a wheel with the correct name,
+        # see issue #350 for more information
+        run: python3 setup.py bdist_wheel --plat-name macosx_11_0_x86_64 --verbose
 
       - uses: actions/upload-artifact@v2
         with:
-          name: bdkpython-macos-${{ matrix.python }}
+          name: bdkpython-macos-x86_64-${{ matrix.python }}
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
-  build-windows-wheel:
+  build-windows-wheels:
     name: "Build Windows wheel"
     runs-on: windows-2022
     defaults:
@@ -114,15 +141,13 @@ jobs:
           python-version: ${{ matrix.python }}
 
       - name: "Generate bdk.py and binaries"
-        run: |
-          python --version
-          pip install --user -r requirements.txt
-          bash generate.sh
+        run: bash ./scripts/generate-windows.sh
 
       - name: "Build wheel"
         run: python setup.py bdist_wheel --verbose
 
-      - uses: actions/upload-artifact@v2
+      - name: "Upload artifacts"
+        uses: actions/upload-artifact@v2
         with:
           name: bdkpython-win-${{ matrix.python }}
           path: D:\a\bdk-ffi\bdk-ffi\bdk-python\dist\*.whl
@@ -133,7 +158,7 @@ jobs:
     defaults:
       run:
         working-directory: bdk-python
-    needs: [build-manylinux2014-x86_64-wheel, build-macos-universal-wheel, build-windows-wheel]
+    needs: [build-manylinux2014-x86_64-wheels, build-macos-arm64-wheels, build-macos-x86_64-wheels, build-windows-wheels]
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
