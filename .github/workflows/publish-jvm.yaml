@@ -2,14 +2,14 @@ name: Publish bdk-jvm to Maven Central
 on: [workflow_dispatch]
 
 jobs:
-  build-jvm-macOS-M1-native-lib:
+  build-macOS-native-libs:
     name: "Create M1 and x86_64 JVM native binaries"
     runs-on: macos-12
     steps:
       - name: "Checkout publishing branch"
         uses: actions/checkout@v2
 
-      - name: Cache
+      - name: "Cache"
         uses: actions/cache@v3
         with:
           path: |
@@ -18,7 +18,7 @@ jobs:
             ./target
           key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
-      - name: Set up JDK
+      - name: "Set up JDK"
         uses: actions/setup-java@v2
         with:
           distribution: temurin
@@ -27,45 +27,28 @@ jobs:
       - name: "Set default Rust version to 1.67.0"
         run: rustup default 1.67.0
 
-      - name: Install aarch64 Rust target
+      - name: "Install aarch64 Rust target"
         run: rustup target add aarch64-apple-darwin
 
-      - name: Build bdk-jvm library
+      - name: "Build bdk-jvm library"
         run: |
           cd bdk-jvm
           ./gradlew buildJvmLib
 
-      # build aarch64 + x86_64 native libraries and upload
-      - name: Upload macOS native libraries for reuse in publishing job
+      - name: "Upload macOS native libraries for reuse in publishing job"
         uses: actions/upload-artifact@v3
         with:
-          # name: no name is required because we upload the entire directory
-          # the default name "artifact" will be used
+          name: artifact-macos
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-jvm/lib/src/main/resources/
 
-  build-jvm-full-library:
-    name: Create full bdk-jvm library
-    needs: [build-jvm-macOS-M1-native-lib]
-    runs-on: ubuntu-20.04
+  build-windows-native-lib:
+    name: "Create Windows-compatible JVM native binaries"
+    runs-on: windows-2022
     steps:
-      - name: Checkout publishing branch
+      - name: "Checkout publishing branch"
         uses: actions/checkout@v2
 
-      - name: Update bdk-ffi git submodule
-        run: |
-          git submodule set-url bdk-ffi https://github.com/bitcoindevkit/bdk-ffi.git
-          git submodule update --init bdk-ffi
-
-      - name: Cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ./target
-          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
-
-      - name: Set up JDK
+      - name: "Set up JDK"
         uses: actions/setup-java@v2
         with:
           distribution: temurin
@@ -74,20 +57,68 @@ jobs:
       - name: "Set default Rust version to 1.67.0"
         run: rustup default 1.67.0
 
-      - name: Build bdk-jvm library
+      - name: "Install x86_64-pc-windows-msvc Rust target"
+        run: rustup target add x86_64-pc-windows-msvc
+
+      - name: "Build bdk-jvm library"
         run: |
           cd bdk-jvm
           ./gradlew buildJvmLib
 
-      - name: Download macOS native libraries from previous job
+      - name: "Upload Windows native libraries for reuse in publishing job"
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifact-windows
+          path: D:\a\bdk-ffi\bdk-ffi\bdk-jvm\lib\src\main\resources\
+
+  build-full-library:
+    name: Create full bdk-jvm library
+    needs: [build-macOS-native-libs, build-windows-native-lib]
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Checkout publishing branch"
+        uses: actions/checkout@v2
+
+      - name: "Cache"
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ./target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+
+      - name: "Set up JDK"
+        uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: "Set default Rust version to 1.67.0"
+        run: rustup default 1.67.0
+
+      - name: "Build bdk-jvm library"
+        run: |
+          cd bdk-jvm
+          ./gradlew buildJvmLib
+
+      - name: "Download macOS native libraries from previous job"
         uses: actions/download-artifact@v3
         id: download
         with:
-          # download the artifact created in the prior job (named "artifact")
-          name: artifact
+          # Download the macOS artifacts created in the prior job
+          name: artifact-macos
           path: ./bdk-jvm/lib/src/main/resources/
 
-      - name: Publish to Maven Central
+      - name: "Download Windows native libraries from previous job"
+        uses: actions/download-artifact@v3
+        id: download
+        with:
+          # Download the Windows artifacts created in the prior job
+          name: artifact-windows
+          path: ./bdk-jvm/lib/src/main/resources/
+
+      - name: "Publish to Maven Central"
         env:
           ORG_GRADLE_PROJECT_signingKeyId: ${{ secrets.PGP_KEY_ID }}
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.PGP_SECRET_KEY }}
