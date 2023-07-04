@@ -3,7 +3,7 @@ on: [workflow_dispatch]
 
 jobs:
   build-macOS-native-libs:
-    name: "Create M1 and x86_64 JVM native binaries"
+    name: "Create M1 and x86_64 native binaries"
     runs-on: macos-12
     steps:
       - name: "Checkout publishing branch"
@@ -42,7 +42,7 @@ jobs:
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-jvm/lib/src/main/resources/
 
   build-windows-native-lib:
-    name: "Create Windows-compatible JVM native binaries"
+    name: "Create Windows native binaries"
     runs-on: windows-2022
     steps:
       - name: "Checkout publishing branch"
@@ -102,21 +102,23 @@ jobs:
           cd bdk-jvm
           ./gradlew buildJvmLib
 
-      - name: "Download macOS native libraries from previous job"
+      - name: "Download macOS native binaries from previous job"
         uses: actions/download-artifact@v3
-        id: download
         with:
-          # Download the macOS artifacts created in the prior job
           name: artifact-macos
           path: ./bdk-jvm/lib/src/main/resources/
 
       - name: "Download Windows native libraries from previous job"
         uses: actions/download-artifact@v3
-        id: download
         with:
-          # Download the Windows artifacts created in the prior job
           name: artifact-windows
           path: ./bdk-jvm/lib/src/main/resources/
+
+      - name: "Upload library code and binaries"
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifact-full
+          path: ./bdk-jvm/lib/
 
       - name: "Publish to Maven Central"
         env:
