@@ -35,7 +35,7 @@ jobs:
           - cp310-cp310
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
       - uses: actions-rs/toolchain@v1
@@ -57,7 +57,7 @@ jobs:
         run: ${PYBIN}/python -m unittest tests/test_bdk.py --verbose
 
       - name: "Upload artifact test"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
           path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
@@ -76,12 +76,12 @@ jobs:
           - "3.10"
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
 
       - name: "Install Python"
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
 
@@ -100,7 +100,7 @@ jobs:
       #     python3 -m unittest tests/test_bdk.py --verbose
 
       - name: "Upload artifact test"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: bdkpython-macos-arm64-${{ matrix.python }}
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
@@ -119,10 +119,10 @@ jobs:
           - "3.10"
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
 
@@ -141,7 +141,7 @@ jobs:
         run: python3 -m unittest tests/test_bdk.py --verbose
 
       - name: "Upload artifact test"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: bdkpython-macos-x86_64-${{ matrix.python }}
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
@@ -160,12 +160,12 @@ jobs:
           - "3.10"
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
 
       - name: "Install Python"
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
 
@@ -176,7 +176,7 @@ jobs:
         run: python setup.py bdist_wheel --verbose
 
       - name: "Upload artifact test"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: bdkpython-windows-${{ matrix.python }}
           path: D:\a\bdk-ffi\bdk-ffi\bdk-python\dist\*.whl

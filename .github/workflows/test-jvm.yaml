@@ -14,11 +14,11 @@ jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-      - name: Check out PR branch
-        uses: actions/checkout@v2
+      - name: "Check out PR branch"
+        uses: actions/checkout@v3
 
-      - name: Cache
-        uses: actions/cache@v2
+      - name: "Cache"
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
@@ -26,8 +26,8 @@ jobs:
             ./target
           key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
-      - name: Set up JDK
-        uses: actions/setup-java@v2
+      - name: "Set up JDK"
+        uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 11
@@ -35,7 +35,7 @@ jobs:
       - name: "Set default Rust version to 1.67.0"
         run: rustup default 1.67.0
 
-      - name: Run JVM tests
+      - name: "Run JVM tests"
         run: |
           cd bdk-jvm
-          ./gradlew test --console=rich
+          ./gradlew test
