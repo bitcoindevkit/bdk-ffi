@@ -22,6 +22,19 @@ The below directories (a separate repository in the case of bdk-swift) include i
 | Swift    | iOS, macOS            | [bdk-swift (GitHub)]          | [Readme bdk-swift]     |                       |
 | Python   | linux, macOS, Windows | [bdk-python (PyPI)]           | [Readme bdk-python]    |                       |
 
+## Minimum Supported Rust Version (MSRV)
+
+This library should compile with any combination of features with Rust 1.61.0.
+
+To build with the MSRV you will need to pin dependencies as follows:
+
+```shell
+# required for sqlite feature, hashlink 0.8.2 has MSRV 1.61.0
+cargo update -p hashlink --precise "0.8.1"
+# tokio 1.30.0 has MSRV 1.63.0
+cargo update -p tokio --precise "1.29.1"
+```
+
 ## Contributing
 
 ### Adding new structs and functions
