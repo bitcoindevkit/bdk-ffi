@@ -442,6 +442,12 @@ interface Descriptor {
   [Name=new_bip84_public]
   constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
+  [Name=new_bip86]
+  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+
+  [Name=new_bip86_public]
+  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+
   string as_string();
 
   string as_string_private();

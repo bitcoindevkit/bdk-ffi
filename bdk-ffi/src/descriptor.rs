@@ -7,7 +7,8 @@ use bdk::keys::{
     DescriptorPublicKey as BdkDescriptorPublicKey, DescriptorSecretKey as BdkDescriptorSecretKey,
 };
 use bdk::template::{
-    Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, DescriptorTemplate,
+    Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, Bip86, Bip86Public,
+    DescriptorTemplate,
 };
 use bdk::KeychainKind;
 use std::ops::Deref;
@@ -183,6 +184,57 @@ impl Descriptor {
         }
     }
 
+    pub(crate) fn new_bip86(
+        secret_key: Arc<DescriptorSecretKey>,
+        keychain_kind: KeychainKind,
+        network: Network,
+    ) -> Self {
+        let derivable_key = secret_key.descriptor_secret_key_mutex.lock().unwrap();
+
+        match derivable_key.deref() {
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
+                let derivable_key = descriptor_x_key.xkey;
+                let (extended_descriptor, key_map, _) =
+                    Bip86(derivable_key, keychain_kind).build(network).unwrap();
+                Self {
+                    extended_descriptor,
+                    key_map,
+                }
+            }
+            BdkDescriptorSecretKey::Single(_) => {
+                unreachable!()
+            }
+        }
+    }
+
+    pub(crate) fn new_bip86_public(
+        public_key: Arc<DescriptorPublicKey>,
+        fingerprint: String,
+        keychain_kind: KeychainKind,
+        network: Network,
+    ) -> Self {
+        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
+        let derivable_key = public_key.descriptor_public_key_mutex.lock().unwrap();
+
+        match derivable_key.deref() {
+            BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
+                let derivable_key = descriptor_x_key.xkey;
+                let (extended_descriptor, key_map, _) =
+                    Bip86Public(derivable_key, fingerprint, keychain_kind)
+                        .build(network)
+                        .unwrap();
+
+                Self {
+                    extended_descriptor,
+                    key_map,
+                }
+            }
+            BdkDescriptorPublicKey::Single(_) => {
+                unreachable!()
+            }
+        }
+    }
+
     pub(crate) fn as_string_private(&self) -> String {
         let descriptor = &self.extended_descriptor;
         let key_map = &self.key_map;
@@ -239,17 +291,27 @@ mod test {
             .as_public();
         println!("Public 84: {}", handmade_public_84.as_string());
         // Public 84: [d1d04177/84'/1'/0']tpubDDNxbq17egjFk2edjv8oLnzxk52zny9aAYNv9CMqTzA4mQDiQq818sEkNe9Gzmd4QU8558zftqbfoVBDQorG3E4Wq26tB2JeE4KUoahLkx6/*
+        let handmade_public_86 = master
+            .derive(Arc::new(
+                DerivationPath::new("m/86h/1h/0h".to_string()).unwrap(),
+            ))
+            .unwrap()
+            .as_public();
+        println!("Public 86: {}", handmade_public_86.as_string());
+        // Public 86: [d1d04177/86'/1'/0']tpubDCJzjbcGbdEfXMWaL6QmgVmuSfXkrue7m2YNoacWwyc7a2XjXaKojRqNEbo41CFL3PyYmKdhwg2fkGpLX4SQCbQjCGxAkWHJTw9WEeenrJb/*
         let template_private_44 =
             Descriptor::new_bip44(master.clone(), KeychainKind::External, Network::Testnet);
         let template_private_49 =
             Descriptor::new_bip49(master.clone(), KeychainKind::External, Network::Testnet);
         let template_private_84 =
-            Descriptor::new_bip84(master, KeychainKind::External, Network::Testnet);
+            Descriptor::new_bip84(master.clone(), KeychainKind::External, Network::Testnet);
+        let template_private_86 =
+            Descriptor::new_bip86(master, KeychainKind::External, Network::Testnet);
         // the extended public keys are the same when creating them manually as they are with the templates
         println!("Template 49: {}", template_private_49.as_string());
         println!("Template 44: {}", template_private_44.as_string());
         println!("Template 84: {}", template_private_84.as_string());
-        // for the public versions of the templates these are incorrect, bug report and fix in bitcoindevkit/bdk#817 and bitcoindevkit/bdk#818
+        println!("Template 86: {}", template_private_86.as_string());
         let template_public_44 = Descriptor::new_bip44_public(
             handmade_public_44,
             "d1d04177".to_string(),
@@ -268,9 +330,16 @@ mod test {
             KeychainKind::External,
             Network::Testnet,
         );
+        let template_public_86 = Descriptor::new_bip86_public(
+            handmade_public_86,
+            "d1d04177".to_string(),
+            KeychainKind::External,
+            Network::Testnet,
+        );
         println!("Template public 49: {}", template_public_49.as_string());
         println!("Template public 44: {}", template_public_44.as_string());
         println!("Template public 84: {}", template_public_84.as_string());
+        println!("Template public 86: {}", template_public_86.as_string());
         // when using a public key, both as_string and as_string_private return the same string
         assert_eq!(
             template_public_44.as_string_private(),
@@ -284,6 +353,10 @@ mod test {
             template_public_84.as_string_private(),
             template_public_84.as_string()
         );
+        assert_eq!(
+            template_public_86.as_string_private(),
+            template_public_86.as_string()
+        );
         // when using as_string on a private key, we get the same result as when using it on a public key
         assert_eq!(
             template_private_44.as_string(),
@@ -296,6 +369,10 @@ mod test {
         assert_eq!(
             template_private_84.as_string(),
             template_public_84.as_string()
+        );
+        assert_eq!(
+            template_private_86.as_string(),
+            template_public_86.as_string()
         );
     }
     #[test]
