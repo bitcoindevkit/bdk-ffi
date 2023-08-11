@@ -145,7 +145,7 @@ impl DescriptorSecretKey {
         let secp = Secp256k1::new();
         let descriptor_public_key = self.inner_mutex.lock().unwrap().to_public(&secp).unwrap();
         Arc::new(DescriptorPublicKey {
-            inner_mutex: Mutex::new(descriptor_public_key),
+            inner: descriptor_public_key,
         })
     }
 
@@ -171,7 +171,7 @@ impl DescriptorSecretKey {
 
 #[derive(Debug)]
 pub(crate) struct DescriptorPublicKey {
-    pub(crate) inner_mutex: Mutex<BdkDescriptorPublicKey>,
+    pub(crate) inner: BdkDescriptorPublicKey,
 }
 
 impl DescriptorPublicKey {
@@ -179,13 +179,13 @@ impl DescriptorPublicKey {
         let descriptor_public_key = BdkDescriptorPublicKey::from_str(public_key.as_str())
             .map_err(|e| BdkError::Generic(e.to_string()))?;
         Ok(Self {
-            inner_mutex: Mutex::new(descriptor_public_key),
+            inner: descriptor_public_key,
         })
     }
 
     pub(crate) fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let secp = Secp256k1::new();
-        let descriptor_public_key = self.inner_mutex.lock().unwrap();
+        let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
 
         match descriptor_public_key.deref() {
@@ -202,7 +202,7 @@ impl DescriptorPublicKey {
                     wildcard: descriptor_x_key.wildcard,
                 });
                 Ok(Arc::new(Self {
-                    inner_mutex: Mutex::new(derived_descriptor_public_key),
+                    inner: derived_descriptor_public_key,
                 }))
             }
             BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
@@ -212,7 +212,7 @@ impl DescriptorPublicKey {
     }
 
     pub(crate) fn extend(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
-        let descriptor_public_key = self.inner_mutex.lock().unwrap();
+        let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_public_key.deref() {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
@@ -224,7 +224,7 @@ impl DescriptorPublicKey {
                     wildcard: descriptor_x_key.wildcard,
                 });
                 Ok(Arc::new(Self {
-                    inner_mutex: Mutex::new(extended_descriptor_public_key),
+                    inner: extended_descriptor_public_key,
                 }))
             }
             BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
@@ -234,7 +234,7 @@ impl DescriptorPublicKey {
     }
 
     pub(crate) fn as_string(&self) -> String {
-        self.inner_mutex.lock().unwrap().to_string()
+        self.inner.to_string()
     }
 }
 

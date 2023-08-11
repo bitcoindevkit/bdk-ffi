@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use crate::{BdkError, DescriptorPublicKey, DescriptorSecretKey};
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::Fingerprint;
@@ -11,7 +12,6 @@ use bdk::template::{
     DescriptorTemplate,
 };
 use bdk::KeychainKind;
-use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -61,9 +61,9 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = public_key.inner_mutex.lock().unwrap();
+        let derivable_key = &public_key.inner;
 
-        match derivable_key.deref() {
+        match derivable_key {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
@@ -112,9 +112,9 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = public_key.inner_mutex.lock().unwrap();
+        let derivable_key = &public_key.inner;
 
-        match derivable_key.deref() {
+        match derivable_key {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
@@ -163,9 +163,9 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = public_key.inner_mutex.lock().unwrap();
+        let derivable_key = &public_key.inner;
 
-        match derivable_key.deref() {
+        match derivable_key {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
@@ -214,9 +214,9 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = public_key.inner_mutex.lock().unwrap();
+        let derivable_key = &public_key.inner;
 
-        match derivable_key.deref() {
+        match derivable_key {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
