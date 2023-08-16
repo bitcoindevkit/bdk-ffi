@@ -203,7 +203,7 @@ impl From<&BdkTxOut> for TxOut {
         TxOut {
             value: tx_out.value,
             script_pubkey: Arc::new(Script {
-                script: tx_out.script_pubkey.clone(),
+                inner: tx_out.script_pubkey.clone(),
             }),
         }
     }
@@ -226,7 +226,7 @@ impl From<BdkLocalUtxo> for LocalUtxo {
             txout: TxOut {
                 value: local_utxo.txout.value,
                 script_pubkey: Arc::new(Script {
-                    script: local_utxo.txout.script_pubkey,
+                    inner: local_utxo.txout.script_pubkey,
                 }),
             },
             keychain: local_utxo.keychain,
@@ -275,7 +275,7 @@ impl From<&BdkTxIn> for TxIn {
                 vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script {
-                script: tx_in.script_sig.clone(),
+                inner: tx_in.script_sig.clone(),
             }),
             sequence: tx_in.sequence.0,
             witness: tx_in.witness.to_vec(),
@@ -286,93 +286,93 @@ impl From<&BdkTxIn> for TxIn {
 /// A Bitcoin transaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
-    internal: BdkTransaction,
+    inner: BdkTransaction,
 }
 
 impl Transaction {
     fn new(transaction_bytes: Vec<u8>) -> Result<Self, BdkError> {
         let mut decoder = Cursor::new(transaction_bytes);
         let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
-        Ok(Transaction { internal: tx })
+        Ok(Transaction { inner: tx })
     }
 
     fn txid(&self) -> String {
-        self.internal.txid().to_string()
+        self.inner.txid().to_string()
     }
 
     fn weight(&self) -> u64 {
-        self.internal.weight() as u64
+        self.inner.weight() as u64
     }
 
     fn size(&self) -> u64 {
-        self.internal.size() as u64
+        self.inner.size() as u64
     }
 
     fn vsize(&self) -> u64 {
-        self.internal.vsize() as u64
+        self.inner.vsize() as u64
     }
 
     fn serialize(&self) -> Vec<u8> {
-        self.internal.serialize()
+        self.inner.serialize()
     }
 
     fn is_coin_base(&self) -> bool {
-        self.internal.is_coin_base()
+        self.inner.is_coin_base()
     }
 
     fn is_explicitly_rbf(&self) -> bool {
-        self.internal.is_explicitly_rbf()
+        self.inner.is_explicitly_rbf()
     }
 
     fn is_lock_time_enabled(&self) -> bool {
-        self.internal.is_lock_time_enabled()
+        self.inner.is_lock_time_enabled()
     }
 
     fn version(&self) -> i32 {
-        self.internal.version
+        self.inner.version
     }
 
     fn lock_time(&self) -> u32 {
-        self.internal.lock_time.0
+        self.inner.lock_time.0
     }
 
     fn input(&self) -> Vec<TxIn> {
-        self.internal.input.iter().map(|x| x.into()).collect()
+        self.inner.input.iter().map(|x| x.into()).collect()
     }
 
     fn output(&self) -> Vec<TxOut> {
-        self.internal.output.iter().map(|x| x.into()).collect()
+        self.inner.output.iter().map(|x| x.into()).collect()
     }
 }
 
 impl From<BdkTransaction> for Transaction {
     fn from(tx: BdkTransaction) -> Self {
-        Transaction { internal: tx }
+        Transaction { inner: tx }
     }
 }
 
 /// A Bitcoin address.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Address {
-    address: BdkAddress,
+    inner: BdkAddress,
 }
 
 impl Address {
     fn new(address: String) -> Result<Self, BdkError> {
         BdkAddress::from_str(address.as_str())
-            .map(|a| Address { address: a })
+            .map(|a| Address { inner: a })
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
     /// alternative constructor
     fn from_script(script: Arc<Script>, network: Network) -> Result<Self, BdkError> {
-        BdkAddress::from_script(&script.script, network)
-            .map(|a| Address { address: a })
+        BdkAddress::from_script(&script.inner, network)
+            .map(|a| Address { inner: a })
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
     fn payload(&self) -> Payload {
-        match &self.address.payload.clone() {
+        match &self.inner.payload.clone() {
             BdkPayload::PubkeyHash(pubkey_hash) => Payload::PubkeyHash {
                 pubkey_hash: pubkey_hash.to_vec(),
             },
@@ -387,27 +387,27 @@ impl Address {
     }
 
     fn network(&self) -> Network {
-        self.address.network
+        self.inner.network
     }
 
     fn script_pubkey(&self) -> Arc<Script> {
         Arc::new(Script {
-            script: self.address.script_pubkey(),
+            inner: self.inner.script_pubkey(),
         })
     }
 
     fn to_qr_uri(&self) -> String {
-        self.address.to_qr_uri()
+        self.inner.to_qr_uri()
     }
 
     fn as_string(&self) -> String {
-        self.address.to_string()
+        self.inner.to_string()
     }
 }
 
 impl From<BdkAddress> for Address {
     fn from(address: BdkAddress) -> Self {
-        Address { address }
+        Address { inner: address }
     }
 }
 
@@ -430,23 +430,23 @@ pub enum Payload {
 /// A Bitcoin script.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Script {
-    script: BdkScript,
+    inner: BdkScript,
 }
 
 impl Script {
     fn new(raw_output_script: Vec<u8>) -> Self {
         let script: BdkScript = BdkScript::from(raw_output_script);
-        Script { script }
+        Script { inner: script }
     }
 
     fn to_bytes(&self) -> Vec<u8> {
-        self.script.to_bytes()
+        self.inner.to_bytes()
     }
 }
 
 impl From<BdkScript> for Script {
     fn from(bdk_script: BdkScript) -> Self {
-        Script { script: bdk_script }
+        Script { inner: bdk_script }
     }
 }
 

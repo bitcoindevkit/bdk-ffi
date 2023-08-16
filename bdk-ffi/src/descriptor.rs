@@ -36,7 +36,7 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = secret_key.descriptor_secret_key_mutex.lock().unwrap();
+        let derivable_key = secret_key.inner_mutex.lock().unwrap();
 
         match derivable_key.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
@@ -61,7 +61,7 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = public_key.descriptor_public_key_mutex.lock().unwrap();
+        let derivable_key = public_key.inner_mutex.lock().unwrap();
 
         match derivable_key.deref() {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
@@ -87,7 +87,7 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = secret_key.descriptor_secret_key_mutex.lock().unwrap();
+        let derivable_key = secret_key.inner_mutex.lock().unwrap();
 
         match derivable_key.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
@@ -112,7 +112,7 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = public_key.descriptor_public_key_mutex.lock().unwrap();
+        let derivable_key = public_key.inner_mutex.lock().unwrap();
 
         match derivable_key.deref() {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
@@ -138,7 +138,7 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = secret_key.descriptor_secret_key_mutex.lock().unwrap();
+        let derivable_key = secret_key.inner_mutex.lock().unwrap();
 
         match derivable_key.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
@@ -163,7 +163,7 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = public_key.descriptor_public_key_mutex.lock().unwrap();
+        let derivable_key = public_key.inner_mutex.lock().unwrap();
 
         match derivable_key.deref() {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
@@ -189,7 +189,7 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = secret_key.descriptor_secret_key_mutex.lock().unwrap();
+        let derivable_key = secret_key.inner_mutex.lock().unwrap();
 
         match derivable_key.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
@@ -214,7 +214,7 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = public_key.descriptor_public_key_mutex.lock().unwrap();
+        let derivable_key = public_key.inner_mutex.lock().unwrap();
 
         match derivable_key.deref() {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {

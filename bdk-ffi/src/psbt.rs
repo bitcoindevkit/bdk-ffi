@@ -10,7 +10,7 @@ use crate::{BdkError, FeeRate, Transaction};
 
 #[derive(Debug)]
 pub(crate) struct PartiallySignedTransaction {
-    pub(crate) internal: Mutex<BdkPartiallySignedTransaction>,
+    pub(crate) inner: Mutex<BdkPartiallySignedTransaction>,
 }
 
 impl PartiallySignedTransaction {
@@ -18,24 +18,24 @@ impl PartiallySignedTransaction {
         let psbt: BdkPartiallySignedTransaction =
             BdkPartiallySignedTransaction::from_str(&psbt_base64)?;
         Ok(PartiallySignedTransaction {
-            internal: Mutex::new(psbt),
+            inner: Mutex::new(psbt),
         })
     }
 
     pub(crate) fn serialize(&self) -> String {
-        let psbt = self.internal.lock().unwrap().clone();
+        let psbt = self.inner.lock().unwrap().clone();
         psbt.to_string()
     }
 
     pub(crate) fn txid(&self) -> String {
-        let tx = self.internal.lock().unwrap().clone().extract_tx();
+        let tx = self.inner.lock().unwrap().clone().extract_tx();
         let txid = tx.txid();
         txid.to_hex()
     }
 
     /// Return the transaction.
     pub(crate) fn extract_tx(&self) -> Arc<Transaction> {
-        let tx = self.internal.lock().unwrap().clone().extract_tx();
+        let tx = self.inner.lock().unwrap().clone().extract_tx();
         Arc::new(tx.into())
     }
 
@@ -46,19 +46,19 @@ impl PartiallySignedTransaction {
         &self,
         other: Arc<PartiallySignedTransaction>,
     ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
-        let other_psbt = other.internal.lock().unwrap().clone();
-        let mut original_psbt = self.internal.lock().unwrap().clone();
+        let other_psbt = other.inner.lock().unwrap().clone();
+        let mut original_psbt = self.inner.lock().unwrap().clone();
 
         original_psbt.combine(other_psbt)?;
         Ok(Arc::new(PartiallySignedTransaction {
-            internal: Mutex::new(original_psbt),
+            inner: Mutex::new(original_psbt),
         }))
     }
 
     /// The total transaction fee amount, sum of input amounts minus sum of output amounts, in Sats.
     /// If the PSBT is missing a TxOut for an input returns None.
     pub(crate) fn fee_amount(&self) -> Option<u64> {
-        self.internal.lock().unwrap().fee_amount()
+        self.inner.lock().unwrap().fee_amount()
     }
 
     /// The transaction's fee rate. This value will only be accurate if calculated AFTER the
@@ -66,12 +66,12 @@ impl PartiallySignedTransaction {
     /// transaction.
     /// If the PSBT is missing a TxOut for an input returns None.
     pub(crate) fn fee_rate(&self) -> Option<Arc<FeeRate>> {
-        self.internal.lock().unwrap().fee_rate().map(Arc::new)
+        self.inner.lock().unwrap().fee_rate().map(Arc::new)
     }
 
     /// Serialize the PSBT data structure as a String of JSON.
     pub(crate) fn json_serialize(&self) -> String {
-        let psbt = self.internal.lock().unwrap();
+        let psbt = self.inner.lock().unwrap();
         serde_json::to_string(psbt.deref()).unwrap()
     }
 }
@@ -90,7 +90,7 @@ mod test {
         let test_wpkh = "wpkh(cVpPVruEDdmutPzisEsYvtST1usBR3ntr8pXSyt6D2YYqXRyPcFW)";
         let (funded_wallet, _, _) = get_funded_wallet(test_wpkh);
         let test_wallet = Wallet {
-            wallet_mutex: Mutex::new(funded_wallet),
+            inner_mutex: Mutex::new(funded_wallet),
         };
         let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
         let drain_to_script = crate::Address::new(drain_to_address)
@@ -103,7 +103,7 @@ mod test {
             .drain_to(drain_to_script.clone());
         //dbg!(&tx_builder);
         assert!(tx_builder.drain_wallet);
-        assert_eq!(tx_builder.drain_to, Some(drain_to_script.script.clone()));
+        assert_eq!(tx_builder.drain_to, Some(drain_to_script.inner.clone()));
 
         let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
 

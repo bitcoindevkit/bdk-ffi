@@ -17,7 +17,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub(crate) struct Blockchain {
-    blockchain_mutex: Mutex<AnyBlockchain>,
+    inner_mutex: Mutex<AnyBlockchain>,
 }
 
 impl Blockchain {
@@ -52,16 +52,16 @@ impl Blockchain {
         };
         let blockchain = AnyBlockchain::from_config(&any_blockchain_config)?;
         Ok(Self {
-            blockchain_mutex: Mutex::new(blockchain),
+            inner_mutex: Mutex::new(blockchain),
         })
     }
 
     pub(crate) fn get_blockchain(&self) -> MutexGuard<AnyBlockchain> {
-        self.blockchain_mutex.lock().expect("blockchain")
+        self.inner_mutex.lock().expect("blockchain")
     }
 
     pub(crate) fn broadcast(&self, transaction: &Transaction) -> Result<(), BdkError> {
-        let tx = &transaction.internal;
+        let tx = &transaction.inner;
         self.get_blockchain().broadcast(tx)
     }
 

@@ -23,7 +23,7 @@ use crate::{
 
 #[derive(Debug)]
 pub(crate) struct Wallet {
-    pub(crate) wallet_mutex: Mutex<BdkWallet<AnyDatabase>>,
+    pub(crate) inner_mutex: Mutex<BdkWallet<AnyDatabase>>,
 }
 
 /// A Bitcoin wallet.
@@ -53,11 +53,13 @@ impl Wallet {
             network,
             database,
         )?);
-        Ok(Wallet { wallet_mutex })
+        Ok(Wallet {
+            inner_mutex: wallet_mutex,
+        })
     }
 
     pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyDatabase>> {
-        self.wallet_mutex.lock().expect("wallet")
+        self.inner_mutex.lock().expect("wallet")
     }
 
     /// Get the Bitcoin network the wallet is using.
@@ -67,7 +69,7 @@ impl Wallet {
 
     /// Return whether or not a script is part of this wallet (either internal or external).
     pub(crate) fn is_mine(&self, script: Arc<Script>) -> Result<bool, BdkError> {
-        self.get_wallet().is_mine(&script.script)
+        self.get_wallet().is_mine(&script.inner)
     }
 
     /// Sync the internal database with the blockchain.
@@ -131,7 +133,7 @@ impl Wallet {
         psbt: &PartiallySignedTransaction,
         sign_options: Option<SignOptions>,
     ) -> Result<bool, BdkError> {
-        let mut psbt = psbt.internal.lock().unwrap();
+        let mut psbt = psbt.inner.lock().unwrap();
         self.get_wallet().sign(
             &mut psbt,
             sign_options.map(SignOptions::into).unwrap_or_default(),
@@ -271,7 +273,7 @@ impl TxBuilder {
     /// Add a recipient to the internal list.
     pub(crate) fn add_recipient(&self, script: Arc<Script>, amount: u64) -> Arc<Self> {
         let mut recipients: Vec<(BdkScript, u64)> = self.recipients.clone();
-        recipients.append(&mut vec![(script.script.clone(), amount)]);
+        recipients.append(&mut vec![(script.inner.clone(), amount)]);
         Arc::new(TxBuilder {
             recipients,
             ..self.clone()
@@ -281,7 +283,7 @@ impl TxBuilder {
     pub(crate) fn set_recipients(&self, recipients: Vec<ScriptAmount>) -> Arc<Self> {
         let recipients = recipients
             .iter()
-            .map(|script_amount| (script_amount.script.script.clone(), script_amount.amount))
+            .map(|script_amount| (script_amount.script.inner.clone(), script_amount.amount))
             .collect();
         Arc::new(TxBuilder {
             recipients,
@@ -386,7 +388,7 @@ impl TxBuilder {
     /// to allow this output to be reduced to pay for the extra fees.
     pub(crate) fn drain_to(&self, script: Arc<Script>) -> Arc<Self> {
         Arc::new(TxBuilder {
-            drain_to: Some(script.script.clone()),
+            drain_to: Some(script.inner.clone()),
             ..self.clone()
         })
     }
@@ -468,7 +470,7 @@ impl TxBuilder {
             .finish()
             .map(|(psbt, tx_details)| TxBuilderResult {
                 psbt: Arc::new(PartiallySignedTransaction {
-                    internal: Mutex::new(psbt),
+                    inner: Mutex::new(psbt),
                 }),
                 transaction_details: TransactionDetails::from(tx_details),
             })
@@ -552,7 +554,7 @@ impl BumpFeeTxBuilder {
         tx_builder
             .finish()
             .map(|(psbt, _)| PartiallySignedTransaction {
-                internal: Mutex::new(psbt),
+                inner: Mutex::new(psbt),
             })
             .map(Arc::new)
     }
@@ -580,7 +582,7 @@ mod test {
         let test_wpkh = "wpkh(cVpPVruEDdmutPzisEsYvtST1usBR3ntr8pXSyt6D2YYqXRyPcFW)";
         let (funded_wallet, _, _) = get_funded_wallet(test_wpkh);
         let test_wallet = Wallet {
-            wallet_mutex: Mutex::new(funded_wallet),
+            inner_mutex: Mutex::new(funded_wallet),
         };
         let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
         let drain_to_script = crate::Address::new(drain_to_address)
@@ -590,10 +592,10 @@ mod test {
             .drain_wallet()
             .drain_to(drain_to_script.clone());
         assert!(tx_builder.drain_wallet);
-        assert_eq!(tx_builder.drain_to, Some(drain_to_script.script.clone()));
+        assert_eq!(tx_builder.drain_to, Some(drain_to_script.inner.clone()));
 
         let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
-        let psbt = tx_builder_result.psbt.internal.lock().unwrap().clone();
+        let psbt = tx_builder_result.psbt.inner.lock().unwrap().clone();
         let tx_details = tx_builder_result.transaction_details;
 
         // confirm one input with 50,000 sats
