@@ -1,4 +1,3 @@
-use std::ops::Deref;
 use crate::{BdkError, DescriptorPublicKey, DescriptorSecretKey};
 use bdk::bitcoin::secp256k1::Secp256k1;
 use bdk::bitcoin::util::bip32::Fingerprint;
@@ -36,9 +35,9 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = secret_key.inner_mutex.lock().unwrap();
+        let derivable_key = &secret_key.inner;
 
-        match derivable_key.deref() {
+        match derivable_key {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
@@ -87,9 +86,9 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = secret_key.inner_mutex.lock().unwrap();
+        let derivable_key = &secret_key.inner;
 
-        match derivable_key.deref() {
+        match derivable_key {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
@@ -138,9 +137,9 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = secret_key.inner_mutex.lock().unwrap();
+        let derivable_key = &secret_key.inner;
 
-        match derivable_key.deref() {
+        match derivable_key {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
@@ -189,9 +188,9 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = secret_key.inner_mutex.lock().unwrap();
+        let derivable_key = &secret_key.inner;
 
-        match derivable_key.deref() {
+        match derivable_key {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =

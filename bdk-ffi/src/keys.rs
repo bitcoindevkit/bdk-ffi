@@ -66,37 +66,37 @@ impl DerivationPath {
 
 #[derive(Debug)]
 pub(crate) struct DescriptorSecretKey {
-    pub(crate) inner_mutex: Mutex<BdkDescriptorSecretKey>,
+    pub(crate) inner: BdkDescriptorSecretKey,
 }
 
 impl DescriptorSecretKey {
     pub(crate) fn new(network: Network, mnemonic: Arc<Mnemonic>, password: Option<String>) -> Self {
         let mnemonic = mnemonic.inner.clone();
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key().unwrap();
-        let inner = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
+        let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
             origin: None,
             xkey: xkey.into_xprv(network).unwrap(),
             derivation_path: BdkDerivationPath::master(),
             wildcard: bdk::descriptor::Wildcard::Unhardened,
         });
         Self {
-            inner_mutex: Mutex::new(inner),
+            inner: descriptor_secret_key,
         }
     }
 
     pub(crate) fn from_string(private_key: String) -> Result<Self, BdkError> {
-        let inner = BdkDescriptorSecretKey::from_str(private_key.as_str())
+        let descriptor_secret_key = BdkDescriptorSecretKey::from_str(private_key.as_str())
             .map_err(|e| BdkError::Generic(e.to_string()))?;
         Ok(Self {
-            inner_mutex: Mutex::new(inner),
+            inner: descriptor_secret_key,
         })
     }
 
     pub(crate) fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let secp = Secp256k1::new();
-        let descriptor_secret_key = self.inner_mutex.lock().unwrap();
+        let descriptor_secret_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
-        match descriptor_secret_key.deref() {
+        match descriptor_secret_key {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derived_xprv = descriptor_x_key.xkey.derive_priv(&secp, &path)?;
                 let key_source = match descriptor_x_key.origin.clone() {
@@ -110,7 +110,7 @@ impl DescriptorSecretKey {
                     wildcard: descriptor_x_key.wildcard,
                 });
                 Ok(Arc::new(Self {
-                    inner_mutex: Mutex::new(derived_descriptor_secret_key),
+                    inner: derived_descriptor_secret_key,
                 }))
             }
             BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
@@ -120,19 +120,19 @@ impl DescriptorSecretKey {
     }
 
     pub(crate) fn extend(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
-        let inner = self.inner_mutex.lock().unwrap();
+        let descriptor_secret_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
-        match inner.deref() {
+        match descriptor_secret_key {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let extended_path = descriptor_x_key.derivation_path.extend(path);
-                let extended_inner = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
+                let extended_descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
                     origin: descriptor_x_key.origin.clone(),
                     xkey: descriptor_x_key.xkey,
                     derivation_path: extended_path,
                     wildcard: descriptor_x_key.wildcard,
                 });
                 Ok(Arc::new(Self {
-                    inner_mutex: Mutex::new(extended_inner),
+                    inner: extended_descriptor_secret_key,
                 }))
             }
             BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
@@ -143,7 +143,7 @@ impl DescriptorSecretKey {
 
     pub(crate) fn as_public(&self) -> Arc<DescriptorPublicKey> {
         let secp = Secp256k1::new();
-        let descriptor_public_key = self.inner_mutex.lock().unwrap().to_public(&secp).unwrap();
+        let descriptor_public_key = self.inner.to_public(&secp).unwrap();
         Arc::new(DescriptorPublicKey {
             inner: descriptor_public_key,
         })
@@ -151,7 +151,7 @@ impl DescriptorSecretKey {
 
     /// Get the private key as bytes.
     pub(crate) fn secret_bytes(&self) -> Vec<u8> {
-        let inner = self.inner_mutex.lock().unwrap();
+        let inner = &self.inner;
         let secret_bytes: Vec<u8> = match inner.deref() {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 descriptor_x_key.xkey.private_key.secret_bytes().to_vec()
@@ -165,7 +165,7 @@ impl DescriptorSecretKey {
     }
 
     pub(crate) fn as_string(&self) -> String {
-        self.inner_mutex.lock().unwrap().to_string()
+        self.inner.to_string()
     }
 }
 
