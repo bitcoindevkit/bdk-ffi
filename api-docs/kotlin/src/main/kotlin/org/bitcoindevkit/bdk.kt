@@ -785,6 +785,19 @@ class Descriptor(descriptor: String, network: Network) {
      */
     fun newBip84Public(publicKey: DescriptorPublicKey, fingerprint: String, keychain: KeychainKind, network: Network) {}
 
+    /**
+     * BIP86 template. Expands to wpkh(key/86'/{0,1}'/0'/{0,1}/\*)
+     * Since there are hardened derivation steps, this template requires a private derivable key (generally a xprv/tprv).
+     */
+    fun newBip86(secretKey: DescriptorSecretKey, keychain: KeychainKind, network: Network) {}
+
+    /**
+     * BIP86 public template. Expands to wpkh(key/{0,1}/\*)
+     * This assumes that the key used has already been derived with m/86'/0'/0' for Mainnet or m/86'/1'/0' for Testnet.
+     * This template requires the parent fingerprint to populate correctly the metadata of PSBTs.
+     */
+    fun newBip86Public(publicKey: DescriptorPublicKey, fingerprint: String, keychain: KeychainKind, network: Network) {}
+
     /** Return the public version of the output descriptor. */
     fun asString(): String {}
 
