@@ -25,8 +25,8 @@ val internalDescriptor = Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8
 val databaseConfig = DatabaseConfig.Memory
 
 val blockchainConfig = BlockchainConfig.Electrum(
-        ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u, true)
-    )
+    ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u, true)
+)
 val wallet = Wallet(externalDescriptor, internalDescriptor, Network.TESTNET, databaseConfig, blockchainConfig)
 val newAddress = wallet.getAddress(AddressIndex.LastUnused)
 ```
@@ -38,8 +38,8 @@ repositories {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 }
 
-dependencies {
-  implementation("org.bitcoindevkit:bdk-jvm:<version-SNAPSHOT>")
+dependencies { 
+    implementation("org.bitcoindevkit:bdk-jvm:<version-SNAPSHOT>")
 }
 ```
 

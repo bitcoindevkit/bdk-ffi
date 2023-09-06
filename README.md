@@ -33,6 +33,8 @@ To build with the MSRV you will need to pin dependencies as follows:
 cargo update -p hashlink --precise "0.8.1"
 # tokio 1.30.0 has MSRV 1.63.0
 cargo update -p tokio --precise "1.29.1"
+# flate2 1.0.27 and up do not work with Rust 1.61.0, but 1.0.26 does
+cargo update -p flate2 --precise "1.0.26"
 ```
 
 ## Contributing
@@ -62,8 +64,8 @@ See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
 repositories {
     mavenCentral()
 }
-dependencies {
-  implementation("org.bitcoindevkit:bdk-android:<version>")
+dependencies { 
+    implementation("org.bitcoindevkit:bdk-android:<version>")
 }
 ```
 
@@ -73,8 +75,8 @@ dependencies {
 repositories {
     mavenCentral()
 }
-dependencies {
-  implementation("org.bitcoindevkit:bdk-jvm:<version>")
+dependencies { 
+    implementation("org.bitcoindevkit:bdk-jvm:<version>")
 }
 ```
 
