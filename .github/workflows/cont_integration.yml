@@ -51,6 +51,7 @@ jobs:
         run: |
           cargo update -p hashlink --precise "0.8.1"
           cargo update -p tokio --precise "1.29.1"
+          cargo update -p flate2 --precise "1.0.26"
       - name: Build
         run: cargo build
 
