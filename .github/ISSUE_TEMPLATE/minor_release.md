@@ -47,7 +47,7 @@ swift test
 ```shell
 cd ./bdk-python/
 pip3 install --requirement requirements.txt
-bash ./generate.sh
+bash ./scripts/generate-macos-arm64.sh # run the script for your particular platform
 python3 setup.py --verbose bdist_wheel
 ```
 15. - [ ] Run the tests and adjust if necessary
