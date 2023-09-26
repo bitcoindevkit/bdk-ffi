@@ -16,4 +16,8 @@ final class BitcoinDevKitTests: XCTestCase {
         let message = BitcoinDevKit.helloWorld()
         XCTAssertEqual(message, "Hello World")
     }
+    func testNetwork() {
+        let signetNetwork = Network.signet
+        XCTAssertEqual(signetNetwork, Network.signet)
+    }
 }
