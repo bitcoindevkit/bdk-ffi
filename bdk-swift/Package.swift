@@ -29,8 +29,8 @@ let package = Package(
         .binaryTarget(name: "bdkFFI", path: "./bdkFFI.xcframework"),
         .target(
             name: "BitcoinDevKit",
-            dependencies: ["bdkFFI"],
-            swiftSettings: [.unsafeFlags(["-suppress-warnings"])]
+            dependencies: ["bdkFFI"]//,
+            // swiftSettings: [.unsafeFlags(["-suppress-warnings"])]
         ),
         .testTarget(
             name: "BitcoinDevKitTests",

@@ -1,3 +1,9 @@
+uniffi::include_scaffolding!("bdk");
+
+pub fn hello_world() -> String {
+    String::from("Hello World")
+}
+
 // mod blockchain;
 // mod database;
 // mod descriptor;
