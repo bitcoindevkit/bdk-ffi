@@ -1,6 +1,6 @@
 [package]
 name = "bdk-ffi"
-version = "0.30.0"
+version = "1.0.0-alpha.1"
 authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -17,7 +17,7 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { version = "0.28.2", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
+bdk = { git = "https://github.com/bitcoindevkit/bdk.git", rev = "59fc1b341ba94212b2ea3e888e51fb6fcd00589f" }
 uniffi = { version = "0.23.0" }
 
 [build-dependencies]
