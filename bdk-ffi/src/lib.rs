@@ -40,12 +40,12 @@ impl From<BdkNetwork> for Network {
     }
 }
 
-// mod blockchain;
-// mod database;
-// mod descriptor;
-// mod keys;
-// mod psbt;
-// mod wallet;
+mod blockchain;
+mod database;
+mod descriptor;
+mod keys;
+mod psbt;
+mod wallet;
 //
 // use crate::blockchain::{
 //     Auth, Blockchain, BlockchainConfig, ElectrumConfig, EsploraConfig, RpcConfig, RpcSyncParams,
@@ -74,6 +74,7 @@ impl From<BdkNetwork> for Network {
 // use bdk::LocalUtxo as BdkLocalUtxo;
 // use bdk::TransactionDetails as BdkTransactionDetails;
 // use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
+use bdk::Error as BdkError;
 // use std::convert::From;
 // use std::fmt;
 // use std::fmt::Debug;

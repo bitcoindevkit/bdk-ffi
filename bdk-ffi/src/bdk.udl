@@ -8,3 +8,33 @@ enum Network {
   "Signet",
   "Regtest",
 };
+
+[Error]
+enum BdkError {
+  "Generic",
+  "NoRecipients",
+  "NoUtxosSelected",
+  "OutputBelowDustLimit",
+  "InsufficientFunds",
+  "BnBTotalTriesExceeded",
+  "BnBNoExactMatch",
+  "UnknownUtxo",
+  "TransactionNotFound",
+  "TransactionConfirmed",
+  "IrreplaceableTransaction",
+  "FeeRateTooLow",
+  "FeeTooLow",
+  "FeeRateUnavailable",
+  "MissingKeyOrigin",
+  "Key",
+  "ChecksumMismatch",
+  "SpendingPolicyRequired",
+  "InvalidPolicyPathError",
+  "Signer",
+  "InvalidOutpoint",
+  "Descriptor",
+  "Miniscript",
+  "MiniscriptPsbt",
+  "Bip32",
+  "Psbt",
+};

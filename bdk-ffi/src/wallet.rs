@@ -21,6 +21,7 @@
 //     RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
 // };
 //
+use crate::BdkError;
 // #[derive(Debug)]
 // pub(crate) struct Wallet {
 //     pub(crate) inner_mutex: Mutex<BdkWallet<AnyDatabase>>,

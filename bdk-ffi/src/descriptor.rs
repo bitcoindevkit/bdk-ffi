@@ -1,4 +1,5 @@
 // use crate::{BdkError, DescriptorPublicKey, DescriptorSecretKey};
+use crate::BdkError;
 // use bdk::bitcoin::secp256k1::Secp256k1;
 // use bdk::bitcoin::util::bip32::Fingerprint;
 // use bdk::bitcoin::Network;
