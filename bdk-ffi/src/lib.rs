@@ -75,7 +75,8 @@ use bdk::keys::bip39::WordCount;
 // use bdk::TransactionDetails as BdkTransactionDetails;
 // use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
 use bdk::Error as BdkError;
-
+use bdk::KeychainKind;
+use crate::descriptor::Descriptor;
 use crate::keys::Mnemonic;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;

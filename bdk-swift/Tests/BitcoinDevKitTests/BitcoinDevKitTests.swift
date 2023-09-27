@@ -20,4 +20,9 @@ final class BitcoinDevKitTests: XCTestCase {
         let signetNetwork = Network.signet
         XCTAssertEqual(signetNetwork, Network.signet)
     }
+    func testDescriptor() {
+        let mnemonic = Mnemonic(wordCount: WordCount.words12)
+        let descriptorSecretKey = DescriptorSecretKey(network: Network.testnet, mnemonic: mnemonic, password: nil)
+        let descriptor = Descriptor.newBip86(secretKey: descriptorSecretKey, keychain: KeychainKind.external, network: Network.testnet)
+    }
 }

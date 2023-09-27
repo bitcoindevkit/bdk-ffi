@@ -95,3 +95,41 @@ interface DescriptorPublicKey {
 
   string as_string();
 };
+
+enum KeychainKind {
+  "External",
+  "Internal",
+};
+
+interface Descriptor {
+  [Throws=BdkError]
+  constructor(string descriptor, Network network);
+
+  [Name=new_bip44]
+  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+
+  [Name=new_bip44_public]
+  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+
+  [Name=new_bip49]
+  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+
+  [Name=new_bip49_public]
+  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+
+  [Name=new_bip84]
+  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+
+  [Name=new_bip84_public]
+  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+
+  [Name=new_bip86]
+  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+
+  [Name=new_bip86_public]
+  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+
+  string as_string();
+
+  string as_string_private();
+};
