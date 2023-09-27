@@ -1,4 +1,25 @@
-use crate::BdkError;
+// use crate::BdkError;
+
+use std::str::FromStr;
+use std::sync::Mutex;
+use bdk::Error as BdkError;
+use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
+
+pub(crate) struct DerivationPath {
+    inner_mutex: Mutex<BdkDerivationPath>,
+}
+
+impl DerivationPath {
+    pub(crate) fn new(path: String) -> Result<Self, BdkError> {
+        BdkDerivationPath::from_str(&path)
+            .map(|x| DerivationPath {
+                inner_mutex: Mutex::new(x),
+            })
+            .map_err(|e| BdkError::Generic(e.to_string()))
+    }
+}
+
+
 //
 // use bdk::bitcoin::secp256k1::Secp256k1;
 // use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;

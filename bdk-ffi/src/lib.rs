@@ -52,7 +52,7 @@ mod wallet;
 // };
 // use crate::database::DatabaseConfig;
 // use crate::descriptor::Descriptor;
-// use crate::keys::DerivationPath;
+use crate::keys::DerivationPath;
 // use crate::keys::{DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 // use crate::psbt::PartiallySignedTransaction;
 // use crate::wallet::SignOptions;

@@ -38,3 +38,8 @@ enum BdkError {
   "Bip32",
   "Psbt",
 };
+
+interface DerivationPath {
+  [Throws=BdkError]
+  constructor(string path);
+};
