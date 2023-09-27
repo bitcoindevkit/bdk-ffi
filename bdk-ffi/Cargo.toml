@@ -17,7 +17,7 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { git = "https://github.com/bitcoindevkit/bdk.git", rev = "59fc1b341ba94212b2ea3e888e51fb6fcd00589f" }
+bdk = { git = "https://github.com/bitcoindevkit/bdk.git", rev = "59fc1b341ba94212b2ea3e888e51fb6fcd00589f", features = ["keys-bip39"] }
 uniffi = { version = "0.23.0" }
 
 [build-dependencies]

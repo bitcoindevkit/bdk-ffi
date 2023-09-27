@@ -68,7 +68,7 @@ use crate::keys::DerivationPath;
 // };
 // use bdk::blockchain::Progress as BdkProgress;
 // use bdk::database::any::{SledDbConfiguration, SqliteDbConfiguration};
-// use bdk::keys::bip39::WordCount;
+use bdk::keys::bip39::WordCount;
 // use bdk::wallet::AddressIndex as BdkAddressIndex;
 // use bdk::wallet::AddressInfo as BdkAddressInfo;
 // use bdk::LocalUtxo as BdkLocalUtxo;
