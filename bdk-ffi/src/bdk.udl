@@ -51,3 +51,47 @@ enum WordCount {
   "Words21",
   "Words24",
 };
+
+interface Mnemonic {
+  constructor(WordCount word_count);
+
+  [Name=from_string, Throws=BdkError]
+  constructor(string mnemonic);
+
+  [Name=from_entropy, Throws=BdkError]
+  constructor(sequence<u8> entropy);
+
+  string as_string();
+};
+
+interface DescriptorSecretKey {
+  constructor(Network network, Mnemonic mnemonic, string? password);
+
+  [Name=from_string, Throws=BdkError]
+  constructor(string secret_key);
+
+  [Throws=BdkError]
+  DescriptorSecretKey derive(DerivationPath path);
+
+  [Throws=BdkError]
+  DescriptorSecretKey extend(DerivationPath path);
+
+  DescriptorPublicKey as_public();
+
+  sequence<u8> secret_bytes();
+
+  string as_string();
+};
+
+interface DescriptorPublicKey {
+  [Name=from_string, Throws=BdkError]
+  constructor(string public_key);
+
+  [Throws=BdkError]
+  DescriptorPublicKey derive(DerivationPath path);
+
+  [Throws=BdkError]
+  DescriptorPublicKey extend(DerivationPath path);
+
+  string as_string();
+};
