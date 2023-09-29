@@ -21,7 +21,6 @@
 //     RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
 // };
 //
-use crate::BdkError;
 // #[derive(Debug)]
 // pub(crate) struct Wallet {
 //     pub(crate) inner_mutex: Mutex<BdkWallet<AnyDatabase>>,
@@ -858,3 +857,55 @@ use crate::BdkError;
 //         assert_matches!(is_mine_2, false);
 //     }
 // }
+use std::sync::{Arc, Mutex, MutexGuard};
+use bdk::Wallet as BdkWallet;
+use crate::descriptor::Descriptor;
+use crate::{AddressIndex, AddressInfo, Network};
+use bdk::wallet::AddressIndex as BdkAddressIndex;
+use bdk::Error as BdkError;
+pub enum WalletType {
+    Memory,
+    FlatFile,
+}
+
+pub(crate) struct Wallet {
+    pub(crate) inner_mutex: Mutex<BdkWallet>,
+}
+
+impl Wallet {
+    pub fn new(
+        descriptor: Arc<Descriptor>,
+        change_descriptor: Option<Arc<Descriptor>>,
+        network: Network,
+        wallet_type: WalletType,
+    ) -> Result<Self, BdkError> {
+        let descriptor = descriptor.as_string_private();
+        let change_descriptor = change_descriptor.map(|d| d.as_string_private());
+
+        match wallet_type {
+            WalletType::Memory => {
+                let wallet = BdkWallet::new_no_persist(
+                    &descriptor,
+                    change_descriptor.as_ref(),
+                    network.into(),
+                )?;
+                Ok(Wallet {
+                    inner_mutex: Mutex::new(wallet),
+                })
+            }
+            WalletType::FlatFile => {
+                panic!("FlatFile wallet type not yet implemented")
+            }
+        }
+    }
+
+    pub fn get_address(&self, address_index: AddressIndex) -> AddressInfo {
+        self.get_wallet().get_address(address_index.into()).into()
+    }
+
+    // TODO 10: Do we need this mutex
+    pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
+        self.inner_mutex.lock().expect("wallet")
+    }
+
+}

@@ -406,6 +406,106 @@ use crate::keys::DescriptorSecretKey;
 //     inner: BdkAddress,
 // }
 //
+
+use std::sync::Arc;
+
+use bdk::bitcoin::Address as BdkAddress;
+use bdk::wallet::AddressIndex as BdkAddressIndex;
+use bdk::wallet::AddressInfo as BdkAddressInfo;
+use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
+use crate::wallet::Wallet;
+use crate::wallet::WalletType;
+/// A derived address and the index it was found at.
+pub struct AddressInfo {
+    /// Child index of this address.
+    pub index: u32,
+    /// Address.
+    pub address: Arc<Address>,
+    /// Type of keychain.
+    pub keychain: KeychainKind,
+}
+
+
+impl From<BdkAddressInfo> for AddressInfo {
+    fn from(address_info: BdkAddressInfo) -> Self {
+        AddressInfo {
+            index: address_info.index,
+            address: Arc::new(address_info.address.into()),
+            keychain: address_info.keychain,
+        }
+    }
+}
+
+/// The address index selection strategy to use to derived an address from the wallet's external
+/// descriptor.
+pub enum AddressIndex {
+    /// Return a new address after incrementing the current descriptor index.
+    New,
+    /// Return the address for the current descriptor index if it has not been used in a received
+    /// transaction. Otherwise return a new address as with AddressIndex::New.
+    /// Use with caution, if the wallet has not yet detected an address has been used it could
+    /// return an already used address. This function is primarily meant for situations where the
+    /// caller is untrusted; for example when deriving donation addresses on-demand for a public
+    /// web page.
+    LastUnused,
+    /// Return the address for a specific descriptor index. Does not change the current descriptor
+    /// index used by `AddressIndex::New` and `AddressIndex::LastUsed`.
+    /// Use with caution, if an index is given that is less than the current descriptor index
+    /// then the returned address may have already been used.
+    Peek { index: u32 },
+}
+
+impl From<AddressIndex> for BdkAddressIndex {
+    fn from(address_index: AddressIndex) -> Self {
+        match address_index {
+            AddressIndex::New => BdkAddressIndex::New,
+            AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
+            AddressIndex::Peek { index } => BdkAddressIndex::Peek(index),
+        }
+    }
+}
+
+/// A Bitcoin address.
+#[derive(Debug, PartialEq, Eq)]
+pub struct Address {
+    inner: BdkAddress<NetworkChecked>,
+}
+
+
+impl Address {
+    fn new(
+        address: String,
+        network: Network,
+    ) -> Result<Self, BdkError> {
+        Ok(Address {
+            inner: address
+                .parse::<bdk::bitcoin::Address<NetworkUnchecked>>()
+                .unwrap() // TODO 7: Handle error correctly by rethrowing it as a BdkError
+                .require_network(network.into())
+                .map_err(|e| BdkError::Generic(e.to_string()))?,
+        })
+    }
+    fn to_qr_uri(&self) -> String {
+        self.inner.to_qr_uri()
+    }
+
+    fn as_string(&self) -> String {
+        self.inner.to_string()
+    }
+}
+
+impl From<BdkAddress> for Address {
+    fn from(address: BdkAddress) -> Self {
+        Address { inner: address }
+    }
+}
+
+impl From<Address> for BdkAddress {
+    fn from(address: Address) -> Self {
+        address.inner
+    }
+}
+
 // impl Address {
 //     fn new(address: String) -> Result<Self, BdkError> {
 //         BdkAddress::from_str(address.as_str())

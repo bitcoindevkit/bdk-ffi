@@ -133,3 +133,36 @@ interface Descriptor {
 
   string as_string_private();
 };
+
+
+interface Wallet {
+  [Throws=BdkError]
+  constructor(Descriptor descriptor, Descriptor? change_descriptor, Network network, WalletType wallet_type);
+
+  AddressInfo get_address(AddressIndex address_index);
+};
+
+enum WalletType {
+  "Memory",
+  "FlatFile",
+};
+
+interface Address {
+  [Throws=BdkError]
+  constructor(string address, Network network);
+
+  string as_string();
+};
+
+dictionary AddressInfo {
+  u32 index;
+  Address address;
+  KeychainKind keychain;
+};
+
+[Enum]
+interface AddressIndex {
+  New();
+  LastUnused();
+  Peek(u32 index);
+};
