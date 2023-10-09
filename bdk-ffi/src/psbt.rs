@@ -7,7 +7,7 @@
 // use std::sync::{Arc, Mutex};
 //
 // use crate::{BdkError, FeeRate, Transaction};
-use crate::BdkError;
+// use crate::BdkError;
 //
 // #[derive(Debug)]
 // pub(crate) struct PartiallySignedTransaction {

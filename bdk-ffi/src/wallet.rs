@@ -861,7 +861,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use bdk::Wallet as BdkWallet;
 use crate::descriptor::Descriptor;
 use crate::{AddressIndex, AddressInfo, Network};
-use bdk::wallet::AddressIndex as BdkAddressIndex;
+// use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::Error as BdkError;
 pub enum WalletType {
     Memory,

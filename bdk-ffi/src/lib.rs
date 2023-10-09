@@ -485,9 +485,9 @@ impl Address {
                 .map_err(|e| BdkError::Generic(e.to_string()))?,
         })
     }
-    fn to_qr_uri(&self) -> String {
-        self.inner.to_qr_uri()
-    }
+    // fn to_qr_uri(&self) -> String {
+    //     self.inner.to_qr_uri()
+    // }
 
     fn as_string(&self) -> String {
         self.inner.to_string()
