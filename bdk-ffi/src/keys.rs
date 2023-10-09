@@ -1,9 +1,9 @@
 // use crate::BdkError;
 
+use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
+use bdk::Error as BdkError;
 use std::str::FromStr;
 use std::sync::Mutex;
-use bdk::Error as BdkError;
-use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 
 pub(crate) struct DerivationPath {
     inner_mutex: Mutex<BdkDerivationPath>,
@@ -23,18 +23,13 @@ use bdk::bitcoin::key::Secp256k1;
 use bdk::bitcoin::secp256k1::rand;
 use bdk::bitcoin::secp256k1::rand::Rng;
 // use bdk::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, GeneratableKey, GeneratedKey};
-use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic};
 use bdk::keys::bip39::WordCount;
-use bdk::miniscript::BareCtx;
+use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic};
 use bdk::keys::{
-    DerivableKey,
-    DescriptorSecretKey as BdkDescriptorSecretKey,
-    DescriptorPublicKey as BdkDescriptorPublicKey,
-    ExtendedKey,
-    GeneratableKey,
-    GeneratedKey
+    DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
+    DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
 };
-
+use bdk::miniscript::BareCtx;
 
 use bdk::miniscript::descriptor::{DescriptorXKey, Wildcard};
 
@@ -52,10 +47,8 @@ impl Mnemonic {
         let mut entropy = [0u8; 32];
         rng.fill(&mut entropy);
 
-        let generated_key: GeneratedKey<_, BareCtx> = BdkMnemonic::generate_with_entropy(
-            (word_count, Language::English),
-            entropy
-        ).unwrap();
+        let generated_key: GeneratedKey<_, BareCtx> =
+            BdkMnemonic::generate_with_entropy((word_count, Language::English), entropy).unwrap();
         let mnemonic = BdkMnemonic::parse_in(Language::English, generated_key.to_string()).unwrap();
         Mnemonic { inner: mnemonic }
     }
@@ -135,7 +128,7 @@ impl DescriptorSecretKey {
             }
             BdkDescriptorSecretKey::MultiXPrv(_) => Err(BdkError::Generic(
                 "Cannot derive from a multi key".to_string(),
-            ))
+            )),
         }
     }
 
@@ -157,10 +150,10 @@ impl DescriptorSecretKey {
                 Ok(Arc::new(Self {
                     inner: extended_descriptor_secret_key,
                 }))
-            },
+            }
             BdkDescriptorSecretKey::MultiXPrv(_) => Err(BdkError::Generic(
                 "Cannot derive from a multi key".to_string(),
-            ))
+            )),
         }
     }
 
@@ -233,10 +226,10 @@ impl DescriptorPublicKey {
                 Ok(Arc::new(Self {
                     inner: derived_descriptor_public_key,
                 }))
-            },
+            }
             BdkDescriptorPublicKey::MultiXPub(_) => Err(BdkError::Generic(
                 "Cannot derive from a multi xpub".to_string(),
-            ))
+            )),
         }
     }
 
@@ -258,10 +251,10 @@ impl DescriptorPublicKey {
                 Ok(Arc::new(Self {
                     inner: extended_descriptor_public_key,
                 }))
-            },
+            }
             BdkDescriptorPublicKey::MultiXPub(_) => Err(BdkError::Generic(
                 "Cannot derive from a multi xpub".to_string(),
-            ))
+            )),
         }
     }
 
@@ -269,7 +262,6 @@ impl DescriptorPublicKey {
         self.inner.to_string()
     }
 }
-
 
 //
 // use bdk::bitcoin::secp256k1::Secp256k1;

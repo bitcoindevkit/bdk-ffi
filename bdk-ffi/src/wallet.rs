@@ -857,10 +857,10 @@
 //         assert_matches!(is_mine_2, false);
 //     }
 // }
-use std::sync::{Arc, Mutex, MutexGuard};
-use bdk::Wallet as BdkWallet;
 use crate::descriptor::Descriptor;
 use crate::{AddressIndex, AddressInfo, Network};
+use bdk::Wallet as BdkWallet;
+use std::sync::{Arc, Mutex, MutexGuard};
 // use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::Error as BdkError;
 pub enum WalletType {
@@ -907,5 +907,4 @@ impl Wallet {
     pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
         self.inner_mutex.lock().expect("wallet")
     }
-
 }

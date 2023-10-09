@@ -1,19 +1,21 @@
 // use crate::{BdkError, DescriptorPublicKey, DescriptorSecretKey};
 use crate::BdkError;
-use std::str::FromStr;
-use std::sync::Arc;
+use bdk::bitcoin::bip32::Fingerprint;
 use bdk::bitcoin::key::Secp256k1;
 use bdk::descriptor::{ExtendedDescriptor, IntoWalletDescriptor};
-use bdk::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, KeyMap};
 use bdk::keys::DescriptorPublicKey as BdkDescriptorPublicKey;
-use bdk::bitcoin::bip32::Fingerprint;
+use bdk::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, KeyMap};
+use bdk::template::{
+    Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, Bip86, Bip86Public,
+    DescriptorTemplate,
+};
 use bdk::KeychainKind;
-use bdk::template::{Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, Bip86, Bip86Public, DescriptorTemplate};
+use std::str::FromStr;
+use std::sync::Arc;
 
-use crate::keys::DescriptorSecretKey;
 use crate::keys::DescriptorPublicKey;
+use crate::keys::DescriptorSecretKey;
 use crate::Network;
-
 
 #[derive(Debug)]
 pub(crate) struct Descriptor {
@@ -24,7 +26,8 @@ pub(crate) struct Descriptor {
 impl Descriptor {
     pub(crate) fn new(descriptor: String, network: Network) -> Result<Self, BdkError> {
         let secp = Secp256k1::new();
-        let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network.into())?;
+        let (extended_descriptor, key_map) =
+            descriptor.into_wallet_descriptor(&secp, network.into())?;
         Ok(Self {
             extended_descriptor,
             key_map,
@@ -44,7 +47,9 @@ impl Descriptor {
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip44(derivable_key, keychain_kind).build(network.into()).unwrap();
+                let (extended_descriptor, key_map, _) = Bip44(derivable_key, keychain_kind)
+                    .build(network.into())
+                    .unwrap();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -100,8 +105,9 @@ impl Descriptor {
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) =
-                    Bip49(derivable_key, keychain_kind).build(network.into()).unwrap();
+                let (extended_descriptor, key_map, _) = Bip49(derivable_key, keychain_kind)
+                    .build(network.into())
+                    .unwrap();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -157,8 +163,9 @@ impl Descriptor {
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) =
-                    Bip84(derivable_key, keychain_kind).build(network.into()).unwrap();
+                let (extended_descriptor, key_map, _) = Bip84(derivable_key, keychain_kind)
+                    .build(network.into())
+                    .unwrap();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -214,8 +221,9 @@ impl Descriptor {
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) =
-                    Bip86(derivable_key, keychain_kind).build(network.into()).unwrap();
+                let (extended_descriptor, key_map, _) = Bip86(derivable_key, keychain_kind)
+                    .build(network.into())
+                    .unwrap();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -268,8 +276,6 @@ impl Descriptor {
         self.extended_descriptor.to_string()
     }
 }
-
-
 
 // use bdk::bitcoin::secp256k1::Secp256k1;
 // use bdk::bitcoin::util::bip32::Fingerprint;

@@ -22,7 +22,7 @@ impl From<Network> for BdkNetwork {
         match network {
             Network::Bitcoin => BdkNetwork::Bitcoin,
             Network::Testnet => BdkNetwork::Testnet,
-            Network::Signet  => BdkNetwork::Signet,
+            Network::Signet => BdkNetwork::Signet,
             Network::Regtest => BdkNetwork::Regtest,
         }
     }
@@ -33,9 +33,9 @@ impl From<BdkNetwork> for Network {
         match network {
             BdkNetwork::Bitcoin => Network::Bitcoin,
             BdkNetwork::Testnet => Network::Testnet,
-            BdkNetwork::Signet  => Network::Signet,
+            BdkNetwork::Signet => Network::Signet,
             BdkNetwork::Regtest => Network::Regtest,
-            _                    => panic!("Network {} not supported", network),
+            _ => panic!("Network {} not supported", network),
         }
     }
 }
@@ -74,12 +74,12 @@ use bdk::keys::bip39::WordCount;
 // use bdk::LocalUtxo as BdkLocalUtxo;
 // use bdk::TransactionDetails as BdkTransactionDetails;
 // use bdk::{Balance as BdkBalance, BlockTime, Error as BdkError, FeeRate, KeychainKind};
-use bdk::Error as BdkError;
-use bdk::KeychainKind;
 use crate::descriptor::Descriptor;
-use crate::keys::Mnemonic;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
+use crate::keys::Mnemonic;
+use bdk::Error as BdkError;
+use bdk::KeychainKind;
 
 // use std::convert::From;
 // use std::fmt;
@@ -409,12 +409,12 @@ use crate::keys::DescriptorSecretKey;
 
 use std::sync::Arc;
 
+use crate::wallet::Wallet;
+use crate::wallet::WalletType;
+use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::Address as BdkAddress;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
-use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
-use crate::wallet::Wallet;
-use crate::wallet::WalletType;
 /// A derived address and the index it was found at.
 pub struct AddressInfo {
     /// Child index of this address.
@@ -424,7 +424,6 @@ pub struct AddressInfo {
     /// Type of keychain.
     pub keychain: KeychainKind,
 }
-
 
 impl From<BdkAddressInfo> for AddressInfo {
     fn from(address_info: BdkAddressInfo) -> Self {
@@ -471,12 +470,8 @@ pub struct Address {
     inner: BdkAddress<NetworkChecked>,
 }
 
-
 impl Address {
-    fn new(
-        address: String,
-        network: Network,
-    ) -> Result<Self, BdkError> {
+    fn new(address: String, network: Network) -> Result<Self, BdkError> {
         Ok(Address {
             inner: address
                 .parse::<bdk::bitcoin::Address<NetworkUnchecked>>()
