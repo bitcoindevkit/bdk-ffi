@@ -142,6 +142,8 @@ interface Wallet {
   AddressInfo get_address(AddressIndex address_index);
 
   Balance get_balance();
+
+  Network network();
 };
 
 enum WalletType {
@@ -154,6 +156,8 @@ interface Address {
   constructor(string address, Network network);
 
   string as_string();
+
+  Network network();
 };
 
 dictionary AddressInfo {

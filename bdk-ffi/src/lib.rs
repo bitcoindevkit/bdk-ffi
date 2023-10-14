@@ -524,6 +524,10 @@ impl Address {
     fn as_string(&self) -> String {
         self.inner.to_string()
     }
+
+    fn network(&self) -> Network {
+        self.inner.network.into()
+    }
 }
 
 impl From<BdkAddress> for Address {

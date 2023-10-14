@@ -916,4 +916,8 @@ impl Wallet {
         let balance = Balance { inner: bdk_balance };
         Arc::new(balance)
     }
+
+    pub fn network(&self) -> Network {
+        self.get_wallet().network().into()
+    }
 }
