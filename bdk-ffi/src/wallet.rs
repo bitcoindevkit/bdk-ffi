@@ -858,6 +858,7 @@
 //     }
 // }
 use crate::descriptor::Descriptor;
+use crate::Balance;
 use crate::{AddressIndex, AddressInfo, Network};
 use bdk::Wallet as BdkWallet;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -903,8 +904,16 @@ impl Wallet {
         self.get_wallet().get_address(address_index.into()).into()
     }
 
-    // TODO 10: Do we need this mutex
+    // TODO: Do we need this mutex
     pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
         self.inner_mutex.lock().expect("wallet")
+    }
+
+    // TODO: Why is the Arc required here?
+    pub fn get_balance(&self) -> Arc<Balance> {
+        // Arc::new(self.get_wallet().get_balance().into())
+        let bdk_balance = self.get_wallet().get_balance();
+        let balance = Balance { inner: bdk_balance };
+        Arc::new(balance)
     }
 }
