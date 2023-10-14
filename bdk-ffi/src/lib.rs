@@ -211,8 +211,6 @@ use bdk::KeychainKind;
 //     }
 // }
 
-
-
 pub struct Balance {
     pub inner: BdkBalance,
 }
@@ -248,7 +246,6 @@ impl Balance {
         self.inner.total()
     }
 }
-
 
 // pub struct Balance {
 //     // All coinbase outputs not yet matured
