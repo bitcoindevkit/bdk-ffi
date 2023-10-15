@@ -173,7 +173,6 @@ interface AddressIndex {
   Peek(u32 index);
 };
 
-
 interface Balance {
   u64 immature();
   u64 trusted_pending();
