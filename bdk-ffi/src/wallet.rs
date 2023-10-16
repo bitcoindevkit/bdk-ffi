@@ -298,6 +298,7 @@
 use crate::descriptor::Descriptor;
 use crate::Balance;
 use crate::{AddressIndex, AddressInfo, Network};
+use bdk::wallet::Update as BdkUpdate;
 use bdk::Error as BdkError;
 use bdk::Wallet as BdkWallet;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -306,8 +307,8 @@ pub enum WalletType {
     FlatFile,
 }
 
-pub(crate) struct Wallet {
-    pub(crate) inner_mutex: Mutex<BdkWallet>,
+pub struct Wallet {
+    pub inner_mutex: Mutex<BdkWallet>,
 }
 
 impl Wallet {
@@ -357,4 +358,13 @@ impl Wallet {
     pub fn network(&self) -> Network {
         self.get_wallet().network().into()
     }
+
+    pub fn apply_update(&self, update: Arc<Update>) -> Result<(), BdkError> {
+        // self.get_wallet(). .apply_update(update.0).map_err(|e| BdkError::Generic(e.to_string()))
+        self.get_wallet()
+            .apply_update(update.0.clone())
+            .map_err(|e| BdkError::Generic(e.to_string()))
+    }
 }
+
+pub struct Update(pub(crate) BdkUpdate);

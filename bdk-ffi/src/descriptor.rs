@@ -17,7 +17,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 #[derive(Debug)]
-pub(crate) struct Descriptor {
+pub struct Descriptor {
     pub extended_descriptor: ExtendedDescriptor,
     pub key_map: KeyMap,
 }

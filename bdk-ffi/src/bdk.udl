@@ -134,6 +134,12 @@ interface Descriptor {
   string as_string_private();
 };
 
+interface EsploraClient {
+  constructor(string url);
+
+  [Throws=BdkError]
+  Update scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
+};
 
 interface Wallet {
   [Throws=BdkError]
@@ -144,12 +150,17 @@ interface Wallet {
   Balance get_balance();
 
   Network network();
+
+  [Throws=BdkError]
+  void apply_update(Update update);
 };
 
 enum WalletType {
   "Memory",
   "FlatFile",
 };
+
+interface Update {};
 
 interface Address {
   [Throws=BdkError]

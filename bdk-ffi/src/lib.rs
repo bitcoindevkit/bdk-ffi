@@ -48,11 +48,15 @@ mod keys;
 mod psbt;
 mod wallet;
 
+mod esplora;
+
 use crate::descriptor::Descriptor;
 use crate::keys::DerivationPath;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
+use crate::esplora::EsploraClient;
+use crate::wallet::Update;
 use bdk::keys::bip39::WordCount;
 use bdk::Error as BdkError;
 use bdk::KeychainKind;
