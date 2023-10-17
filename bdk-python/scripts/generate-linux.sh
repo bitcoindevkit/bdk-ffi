@@ -13,6 +13,6 @@ rustup default 1.67.0
 cargo build --profile release-smaller
 
 echo "Copying linux libbdkffi.so..."
-cp ../target/release-smaller/libbdkffi.so ../bdk-python/src/bdkpython/libbdkffi.so
+cp ./target/release-smaller/libbdkffi.so ../bdk-python/src/bdkpython/libbdkffi.so
 
 echo "All done!"

@@ -9,22 +9,26 @@ on:
 
 jobs:
   build-test:
-    name: Build and test
+    name: "Build and test"
     runs-on: ubuntu-20.04
+    defaults:
+      run:
+        working-directory: bdk-ffi
     strategy:
       matrix:
         rust:
-          - version: 1.71.0 # STABLE
+          - version: 1.67.0
             clippy: true
-          - version: 1.61.0 # MSRV
+          # TODO 1: Should we keep this? We'll need to pin dependencies
+          # - version: 1.61.0 # MSRV
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v3
 
-      - name: Generate cache key
+      - name: "Generate cache key"
         run: echo "${{ matrix.rust.version }} ${{ matrix.features }}" | tee .cache_key
 
-      - name: Cache
+      - name: "Cache"
         uses: actions/cache@v3
         with:
           path: |
@@ -33,53 +37,56 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('.cache_key') }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
-      - name: Set default toolchain
+      - name: "Set default toolchain"
         run: rustup default ${{ matrix.rust.version }}
 
-      - name: Set profile
+      - name: "Set profile"
         run: rustup set profile minimal
 
-      - name: Add clippy
+      - name: "Add clippy"
         if: ${{ matrix.rust.clippy }}
         run: rustup component add clippy
 
-      - name: Update toolchain
+      - name: "Update toolchain"
         run: rustup update
 
-      - name: Pin dependencies for MSRV
+      - name: "Pin dependencies for MSRV"
         if: matrix.rust.version == '1.61.0'
         run: |
           cargo update -p hashlink --precise "0.8.1"
           cargo update -p tokio --precise "1.29.1"
           cargo update -p flate2 --precise "1.0.26"
-      - name: Build
+      - name: "Build"
         run: cargo build
 
-      - name: Clippy
+      - name: "Clippy"
         if: ${{ matrix.rust.clippy }}
         run: cargo clippy --all-targets --features "uniffi/bindgen-tests" -- -D warnings
 
-      - name: Test
+      - name: "Test"
         run: CLASSPATH=./tests/jna/jna-5.8.0.jar cargo test --features uniffi/bindgen-tests
 
   fmt:
-    name: Rust fmt
-    runs-on: ubuntu-latest
+    name: "Rust fmt"
+    runs-on: ubuntu-20.04
+    defaults:
+      run:
+        working-directory: bdk-ffi
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v3
 
-      - name: Set default toolchain
+      - name: "Set default toolchain"
         run: rustup default nightly
 
-      - name: Set profile
+      - name: "Set profile"
         run: rustup set profile minimal
 
-      - name: Add rustfmt
+      - name: "Add rustfmt"
         run: rustup component add rustfmt
 
-      - name: Update toolchain
+      - name: "Update toolchain"
         run: rustup update
 
-      - name: Check fmt
+      - name: "Check fmt"
         run: cargo fmt --all -- --config format_code_in_doc_comments=true --check

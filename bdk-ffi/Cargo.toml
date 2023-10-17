@@ -1,6 +1,6 @@
 [package]
 name = "bdk-ffi"
-version = "0.30.0"
+version = "1.0.0-alpha.2"
 authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -17,12 +17,30 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { version = "0.28.2", features = ["all-keys", "use-esplora-ureq", "sqlite-bundled", "rpc"] }
-uniffi = { version = "0.23.0" }
+bdk = { version = "1.0.0-alpha.2", features = ["all-keys", "keys-bip39"] }
+
+# TODO 22: The bdk_esplora crate uses esplora_client which uses reqwest for async. By default it uses the system
+#          openssl library, which is creating problems for cross-compilation. I'd rather use rustls, but it's hidden
+#          behind a feature flag. We need to look into whether openssl-sys is really required by bdk or if using rustls
+#          would work just as well. This here is a temporary workaround which removes the async feature on the bdk_esplora crate.
+#          See PR #1179 https://github.com/bitcoindevkit/bdk/pull/1179 for the fix in bdk.
+# bdk = { git = "https://github.com/thunderbiscuit/bdk.git", branch = "test-rust-tls", version = "1.0.0-alpha.2", features = ["all-keys", "keys-bip39"] }
+# bdk_esplora = { git = "https://github.com/thunderbiscuit/bdk.git", branch = "test-rust-tls", version = "0.4.0", package = "bdk_esplora", default-features = false, features = ["std", "blocking", "async-https-rustls"] }
+
+bdk_esplora = { version = "0.4.0", default-features = false, features = ["std", "blocking"] }
+uniffi = { version = "=0.23.0" }
 
 [build-dependencies]
-uniffi = { version = "0.23.0", features = ["build"] }
+uniffi = { version = "=0.23.0", features = ["build"] }
 
 [dev-dependencies]
-uniffi = { version = "0.23.0", features = ["bindgen-tests"] }
+uniffi = { version = "=0.23.0", features = ["bindgen-tests"] }
 assert_matches = "1.5.0"
+
+[profile.release-smaller]
+inherits = "release"
+opt-level = 'z'     # Optimize for size.
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
+panic = "abort"     # Abort on panic
+strip = "debuginfo" # Partially strip symbols from binary

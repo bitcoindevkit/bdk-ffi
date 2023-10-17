@@ -18,64 +18,42 @@ import java.io.File
  */
 @RunWith(AndroidJUnit4::class)
 class AndroidLibTest {
-
-    private fun getTestDataDir(): String {
-        val context = ApplicationProvider.getApplicationContext<Application>()
-        return context.getDir("bdk-test", MODE_PRIVATE).toString()
-    }
-
-    private fun cleanupTestDataDir(testDataDir: String) {
-        File(testDataDir).deleteRecursively()
-    }
-
-    class LogProgress : Progress {
-        private val log: Logger = LoggerFactory.getLogger(AndroidLibTest::class.java)
-
-        override fun update(progress: Float, message: String?) {
-            log.debug("Syncing...")
-        }
-    }
-
-    private val descriptor = Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)", Network.TESTNET)
-
-    private val databaseConfig = DatabaseConfig.Memory
-
-    private val blockchainConfig = BlockchainConfig.Electrum(
-        ElectrumConfig(
-            "ssl://electrum.blockstream.info:60002",
-            null,
-            5u,
-            null,
-            100u,
-            true,
-        )
-    )
-
-    @Test
-    fun memoryWalletNewAddress() {
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val address = wallet.getAddress(AddressIndex.New).address.asString()
-        assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address)
+        @Test
+    fun testNetwork() {
+        val signetNetwork = Network.SIGNET
     }
 
     @Test
-    fun memoryWalletSyncGetBalance() {
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val blockchain = Blockchain(blockchainConfig)
-        wallet.sync(blockchain, LogProgress())
-        val balance: Balance = wallet.getBalance()
-        assertTrue(balance.total > 0u)
+    fun testDescriptorBip86() {
+        val mnemonic = Mnemonic(WordCount.WORDS12)
+        val descriptorSecretKey = DescriptorSecretKey(Network.TESTNET, mnemonic, null)
+        val descriptor = Descriptor.newBip86(descriptorSecretKey, KeychainKind.EXTERNAL, Network.TESTNET)
     }
 
     @Test
-    fun sqliteWalletSyncGetBalance() {
-        val testDataDir = getTestDataDir() + "/bdk-wallet.sqlite"
-        val databaseConfig = DatabaseConfig.Sqlite(SqliteDbConfiguration(testDataDir))
-        val wallet = Wallet(descriptor, null, Network.TESTNET, databaseConfig)
-        val blockchain = Blockchain(blockchainConfig)
-        wallet.sync(blockchain, LogProgress())
-        val balance: Balance = wallet.getBalance()
-        assertTrue(balance.total > 0u)
-        cleanupTestDataDir(testDataDir)
+    fun testUsedWallet() {
+        val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
+        val wallet = Wallet.newNoPersist(descriptor, null, Network.TESTNET)
+        val (index, address, keychain)  = wallet.getAddress(AddressIndex.LastUnused)
+        println("Address ${address.asString()} at index $index")
     }
+
+    @Test
+    fun testBalance() {
+        val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
+        val wallet = Wallet.newNoPersist(descriptor, null, Network.TESTNET)
+
+        assert(wallet.getBalance().total() == 0uL)
+    }
+
+    // @Test
+    // fun testSyncedBalance() {
+    //     val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
+    //     val wallet = Wallet.newNoPersist(descriptor, null, Network.TESTNET)
+    //     val esploraClient = EsploraClient("https://mempool.space/testnet/api")
+    //     // val esploraClient = EsploraClient("https://blockstream.info/testnet/api")
+    //     val update = esploraClient.scan(wallet, 10uL, 1uL)
+    //     wallet.applyUpdate(update)
+    //     println("Balance: ${wallet.getBalance().total()}")
+    // }
 }

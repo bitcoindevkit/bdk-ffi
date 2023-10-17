@@ -14,6 +14,6 @@ rustup target add aarch64-apple-darwin
 cargo build --profile release-smaller --target aarch64-apple-darwin
 
 echo "Copying libraries libbdkffi.dylib..."
-cp ../target/aarch64-apple-darwin/release-smaller/libbdkffi.dylib ../bdk-python/src/bdkpython/libbdkffi.dylib
+cp ./target/aarch64-apple-darwin/release-smaller/libbdkffi.dylib ../bdk-python/src/bdkpython/libbdkffi.dylib
 
 echo "All done!"

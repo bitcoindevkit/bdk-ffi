@@ -8,6 +8,8 @@ import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.register
 
+// TODO 18: Migrate hard coded strings to constants all in the same location so they're at least easy
+//          to find and reason about.
 internal class UniFfiJvmPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = target.run {
 
@@ -95,7 +97,7 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
                 doFirst {
                     copy {
                         with(it) {
-                            from("${project.projectDir}/../../target/${this.targetDir}/release-smaller/${libName}.${this.ext}")
+                            from("${project.projectDir}/../../bdk-ffi/target/${this.targetDir}/release-smaller/${libName}.${this.ext}")
                             into("${project.projectDir}/../../bdk-jvm/lib/src/main/resources/${this.resDir}/")
                         }
                     }
@@ -108,9 +110,22 @@ internal class UniFfiJvmPlugin : Plugin<Project> {
 
             dependsOn(moveNativeJvmLibs)
 
-            workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--out-dir", "../bdk-jvm/lib/src/main/kotlin", "--no-format")
+            // TODO 2: Is the Windows name the correct one?
+            // TODO 3: This will not work on mac Intel (x86_64 architecture)
+            // val libraryPath = when (operatingSystem) {
+            //     OS.LINUX   -> "./target/x86_64-unknown-linux-gnu/release-smaller/libbdkffi.so"
+            //     OS.MAC     -> "./target/aarch64-apple-darwin/release-smaller/libbdkffi.dylib"
+            //     OS.WINDOWS -> "./target/x86_64-pc-windows-msvc/release-smaller/bdkffi.dll"
+            //     else       -> throw Exception("Unsupported OS")
+            // }
 
+            // workingDir("${project.projectDir}/../../bdk-ffi/")
+            // val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "--library", libraryPath, "--language", "kotlin", "--out-dir", "../bdk-jvm/lib/src/main/kotlin/", "--no-format")
+
+            // The code above was for the migration to uniffi 0.24.3 using the --library flag
+            // The code below works with uniffi 0.23.0
+            workingDir("${project.projectDir}/../../bdk-ffi/")
+            val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--out-dir", "../bdk-jvm/lib/src/main/kotlin", "--no-format")
             executable("cargo")
             args(cargoArgs)
 

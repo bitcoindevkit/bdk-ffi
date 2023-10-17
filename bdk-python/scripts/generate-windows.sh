@@ -14,6 +14,6 @@ rustup target add x86_64-pc-windows-msvc
 cargo build --profile release-smaller --target x86_64-pc-windows-msvc
 
 echo "Copying libraries bdkffi.dll..."
-cp ../target/x86_64-pc-windows-msvc/release-smaller/bdkffi.dll ../bdk-python/src/bdkpython/bdkffi.dll
+cp ./target/x86_64-pc-windows-msvc/release-smaller/bdkffi.dll ../bdk-python/src/bdkpython/bdkffi.dll
 
 echo "All done!"
