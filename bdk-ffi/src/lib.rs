@@ -6,6 +6,7 @@ mod psbt;
 mod wallet;
 
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
+use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::Address as BdkAddress;
 use bdk::bitcoin::Network as BdkNetwork;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
@@ -23,6 +24,7 @@ use crate::keys::DerivationPath;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
+use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
 use bdk::keys::bip39::WordCount;
@@ -453,11 +455,11 @@ impl Address {
         self.inner.network.into()
     }
 
-    // fn script_pubkey(&self) -> Arc<Script> {
-    //     Arc::new(Script {
-    //         inner: self.inner.script_pubkey(),
-    //     })
-    // }
+    fn script_pubkey(&self) -> Arc<Script> {
+        Arc::new(Script {
+            inner: self.inner.script_pubkey(),
+        })
+    }
 
     fn to_qr_uri(&self) -> String {
         self.inner.to_qr_uri()
@@ -495,24 +497,24 @@ impl From<Address> for BdkAddress {
 //         program: Vec<u8>,
 //     },
 // }
-//
-// /// A Bitcoin script.
-// #[derive(Clone, Debug, PartialEq, Eq)]
-// pub struct Script {
-//     inner: BdkScript,
-// }
-//
-// impl Script {
-//     fn new(raw_output_script: Vec<u8>) -> Self {
-//         let script: BdkScript = BdkScript::from(raw_output_script);
-//         Script { inner: script }
-//     }
-//
-//     fn to_bytes(&self) -> Vec<u8> {
-//         self.inner.to_bytes()
-//     }
-// }
-//
+
+/// A Bitcoin script.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Script {
+    inner: BdkScriptBuf,
+}
+
+impl Script {
+    fn new(raw_output_script: Vec<u8>) -> Self {
+        let script: BdkScriptBuf = BdkScriptBuf::from(raw_output_script);
+        Script { inner: script }
+    }
+
+    fn to_bytes(&self) -> Vec<u8> {
+        self.inner.to_bytes()
+    }
+}
+
 // impl From<BdkScript> for Script {
 //     fn from(bdk_script: BdkScript) -> Self {
 //         Script { inner: bdk_script }

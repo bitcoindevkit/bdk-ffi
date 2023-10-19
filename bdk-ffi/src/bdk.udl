@@ -1,7 +1,7 @@
 namespace bdk {};
 
 // ------------------------------------------------------------------------
-// bdk crate
+// bdk crate - root module
 // ------------------------------------------------------------------------
 
 enum KeychainKind {
@@ -85,6 +85,17 @@ interface Wallet {
 };
 
 interface Update {};
+
+interface TxBuilder {
+  constructor();
+
+  TxBuilder add_recipient(Script script, u64 amount);
+
+  TxBuilder fee_rate(float sat_per_vbyte);
+
+  [Throws=BdkError]
+  string finish([ByRef] Wallet wallet);
+};
 
 // ------------------------------------------------------------------------
 // bdk crate - descriptor module
