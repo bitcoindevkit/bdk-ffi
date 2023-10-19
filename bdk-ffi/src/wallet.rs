@@ -1,11 +1,14 @@
+use crate::bitcoin::PartiallySignedTransaction;
 use crate::descriptor::Descriptor;
 use crate::{AddressIndex, AddressInfo, Network};
 use crate::{Balance, Script};
+
+use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::wallet::Update as BdkUpdate;
 use bdk::Wallet as BdkWallet;
 use bdk::{Error as BdkError, FeeRate};
+
 use std::sync::{Arc, Mutex, MutexGuard};
-use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 
 #[derive(Debug)]
 pub struct Wallet {
@@ -353,7 +356,7 @@ impl TxBuilder {
     /// Add a recipient to the internal list.
     pub(crate) fn add_recipient(&self, script: Arc<Script>, amount: u64) -> Arc<Self> {
         let mut recipients: Vec<(BdkScriptBuf, u64)> = self.recipients.clone();
-        recipients.append(&mut vec![(script.inner.clone(), amount)]);
+        recipients.append(&mut vec![(script.0.clone(), amount)]);
 
         Arc::new(TxBuilder {
             recipients,
@@ -502,7 +505,10 @@ impl TxBuilder {
     //
     /// Finish building the transaction. Returns the BIP174 PSBT.
     /// TODO: The TxBuilder in bdk returns a Psbt type
-    pub(crate) fn finish(&self, wallet: &Wallet) -> Result<String, BdkError> {
+    pub(crate) fn finish(
+        &self,
+        wallet: &Wallet,
+    ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
@@ -551,7 +557,11 @@ impl TxBuilder {
         //     tx_builder.add_data(self.data.as_slice());
         // }
 
-        tx_builder.finish().map(|psbt| psbt.serialize_hex())
+        // tx_builder.finish().map(|psbt| psbt.serialize_hex())
+        // tx_builder.finish().into()
+        let psbt = tx_builder.finish()?;
+
+        Ok(Arc::new(psbt.into()))
     }
 }
 //

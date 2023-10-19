@@ -2,22 +2,14 @@ mod bitcoin;
 mod descriptor;
 mod esplora;
 mod keys;
-mod psbt;
 mod wallet;
 
-use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
-use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
-use bdk::bitcoin::Address as BdkAddress;
-use bdk::bitcoin::Network as BdkNetwork;
-use bdk::wallet::AddressIndex as BdkAddressIndex;
-use bdk::wallet::AddressInfo as BdkAddressInfo;
-use bdk::wallet::Balance as BdkBalance;
-use bdk::Error as BdkError;
-use bdk::KeychainKind;
-use std::sync::Arc;
-
 // TODO 6: Why are these imports required?
+use crate::bitcoin::Address;
+use crate::bitcoin::Network;
+use crate::bitcoin::PartiallySignedTransaction;
 use crate::bitcoin::Script;
+use crate::bitcoin::Transaction;
 use crate::descriptor::Descriptor;
 use crate::esplora::EsploraClient;
 use crate::keys::DerivationPath;
@@ -27,50 +19,24 @@ use crate::keys::Mnemonic;
 use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
+
 use bdk::keys::bip39::WordCount;
+use bdk::wallet::AddressIndex as BdkAddressIndex;
+use bdk::wallet::AddressInfo as BdkAddressInfo;
+use bdk::wallet::Balance as BdkBalance;
+use bdk::Error as BdkError;
+use bdk::KeychainKind;
+
+use std::sync::Arc;
 
 uniffi::include_scaffolding!("bdk");
 
-pub enum Network {
-    /// Mainnet Bitcoin.
-    Bitcoin,
-    /// Bitcoin's testnet network.
-    Testnet,
-    /// Bitcoin's signet network.
-    Signet,
-    /// Bitcoin's regtest network.
-    Regtest,
-}
-
-impl From<Network> for BdkNetwork {
-    fn from(network: Network) -> Self {
-        match network {
-            Network::Bitcoin => BdkNetwork::Bitcoin,
-            Network::Testnet => BdkNetwork::Testnet,
-            Network::Signet => BdkNetwork::Signet,
-            Network::Regtest => BdkNetwork::Regtest,
-        }
-    }
-}
-
-impl From<BdkNetwork> for Network {
-    fn from(network: BdkNetwork) -> Self {
-        match network {
-            BdkNetwork::Bitcoin => Network::Bitcoin,
-            BdkNetwork::Testnet => Network::Testnet,
-            BdkNetwork::Signet => Network::Signet,
-            BdkNetwork::Regtest => Network::Regtest,
-            _ => panic!("Network {} not supported", network),
-        }
-    }
-}
-
-// /// A output script and an amount of satoshis.
+/// A output script and an amount of satoshis.
 // pub struct ScriptAmount {
 //     pub script: Arc<Script>,
 //     pub amount: u64,
 // }
-//
+
 /// A derived address and the index it was found at.
 pub struct AddressInfo {
     /// Child index of this address.
@@ -343,144 +309,6 @@ impl Balance {
 //         }
 //     }
 // }
-//
-// /// A Bitcoin transaction.
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// pub struct Transaction {
-//     inner: BdkTransaction,
-// }
-//
-// impl Transaction {
-//     fn new(transaction_bytes: Vec<u8>) -> Result<Self, BdkError> {
-//         let mut decoder = Cursor::new(transaction_bytes);
-//         let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
-//         Ok(Transaction { inner: tx })
-//     }
-//
-//     fn txid(&self) -> String {
-//         self.inner.txid().to_string()
-//     }
-//
-//     fn weight(&self) -> u64 {
-//         self.inner.weight() as u64
-//     }
-//
-//     fn size(&self) -> u64 {
-//         self.inner.size() as u64
-//     }
-//
-//     fn vsize(&self) -> u64 {
-//         self.inner.vsize() as u64
-//     }
-//
-//     fn serialize(&self) -> Vec<u8> {
-//         self.inner.serialize()
-//     }
-//
-//     fn is_coin_base(&self) -> bool {
-//         self.inner.is_coin_base()
-//     }
-//
-//     fn is_explicitly_rbf(&self) -> bool {
-//         self.inner.is_explicitly_rbf()
-//     }
-//
-//     fn is_lock_time_enabled(&self) -> bool {
-//         self.inner.is_lock_time_enabled()
-//     }
-//
-//     fn version(&self) -> i32 {
-//         self.inner.version
-//     }
-//
-//     fn lock_time(&self) -> u32 {
-//         self.inner.lock_time.0
-//     }
-//
-//     fn input(&self) -> Vec<TxIn> {
-//         self.inner.input.iter().map(|x| x.into()).collect()
-//     }
-//
-//     fn output(&self) -> Vec<TxOut> {
-//         self.inner.output.iter().map(|x| x.into()).collect()
-//     }
-// }
-
-// impl From<BdkTransaction> for Transaction {
-//     fn from(tx: BdkTransaction) -> Self {
-//         Transaction { inner: tx }
-//     }
-// }
-
-/// A Bitcoin address.
-#[derive(Debug, PartialEq, Eq)]
-pub struct Address {
-    inner: BdkAddress<NetworkChecked>,
-}
-
-impl Address {
-    fn new(address: String, network: Network) -> Result<Self, BdkError> {
-        Ok(Address {
-            inner: address
-                .parse::<bdk::bitcoin::Address<NetworkUnchecked>>()
-                .unwrap() // TODO 11: Handle error correctly by rethrowing it as a BdkError
-                .require_network(network.into())
-                .map_err(|e| BdkError::Generic(e.to_string()))?,
-        })
-    }
-
-    /// alternative constructor
-    // fn from_script(script: Arc<Script>, network: Network) -> Result<Self, BdkError> {
-    //     BdkAddress::from_script(&script.inner, network)
-    //         .map(|a| Address { inner: a })
-    //         .map_err(|e| BdkError::Generic(e.to_string()))
-    // }
-    //
-    // fn payload(&self) -> Payload {
-    //     match &self.inner.payload.clone() {
-    //         BdkPayload::PubkeyHash(pubkey_hash) => Payload::PubkeyHash {
-    //             pubkey_hash: pubkey_hash.to_vec(),
-    //         },
-    //         BdkPayload::ScriptHash(script_hash) => Payload::ScriptHash {
-    //             script_hash: script_hash.to_vec(),
-    //         },
-    //         BdkPayload::WitnessProgram { version, program } => Payload::WitnessProgram {
-    //             version: *version,
-    //             program: program.clone(),
-    //         },
-    //     }
-    // }
-
-    fn network(&self) -> Network {
-        self.inner.network.into()
-    }
-
-    fn script_pubkey(&self) -> Arc<Script> {
-        Arc::new(Script {
-            inner: self.inner.script_pubkey(),
-        })
-    }
-
-    fn to_qr_uri(&self) -> String {
-        self.inner.to_qr_uri()
-    }
-
-    fn as_string(&self) -> String {
-        self.inner.to_string()
-    }
-}
-
-impl From<BdkAddress> for Address {
-    fn from(address: BdkAddress) -> Self {
-        Address { inner: address }
-    }
-}
-
-impl From<Address> for BdkAddress {
-    fn from(address: Address) -> Self {
-        address.inner
-    }
-}
 
 // /// The method used to produce an address.
 // #[derive(Debug)]
@@ -497,23 +325,6 @@ impl From<Address> for BdkAddress {
 //         program: Vec<u8>,
 //     },
 // }
-
-/// A Bitcoin script.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Script {
-    inner: BdkScriptBuf,
-}
-
-impl Script {
-    fn new(raw_output_script: Vec<u8>) -> Self {
-        let script: BdkScriptBuf = BdkScriptBuf::from(raw_output_script);
-        Script { inner: script }
-    }
-
-    fn to_bytes(&self) -> Vec<u8> {
-        self.inner.to_bytes()
-    }
-}
 
 // impl From<BdkScript> for Script {
 //     fn from(bdk_script: BdkScript) -> Self {

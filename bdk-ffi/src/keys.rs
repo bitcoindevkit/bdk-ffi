@@ -1,3 +1,5 @@
+use crate::Network;
+
 use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::key::Secp256k1;
 use bdk::bitcoin::secp256k1::rand;
@@ -11,14 +13,13 @@ use bdk::keys::{
 use bdk::miniscript::descriptor::{DescriptorXKey, Wildcard};
 use bdk::miniscript::BareCtx;
 use bdk::Error as BdkError;
+
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-use crate::Network;
-
-// /// Mnemonic phrases are a human-readable version of the private keys.
-// /// Supported number of words are 12, 15, 18, 21 and 24.
+/// Mnemonic phrases are a human-readable version of the private keys.
+/// Supported number of words are 12, 15, 18, 21 and 24.
 pub(crate) struct Mnemonic {
     inner: BdkMnemonic,
 }

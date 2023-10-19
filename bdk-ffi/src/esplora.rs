@@ -1,8 +1,10 @@
 use crate::wallet::{Update, Wallet};
+
 use bdk::wallet::Update as BdkUpdate;
 use bdk::Error as BdkError;
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
+
 use std::sync::Arc;
 
 pub struct EsploraClient(BlockingClient);

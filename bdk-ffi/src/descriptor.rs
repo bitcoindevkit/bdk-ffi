@@ -1,3 +1,7 @@
+use crate::keys::DescriptorPublicKey;
+use crate::keys::DescriptorSecretKey;
+use crate::Network;
+
 use bdk::bitcoin::bip32::Fingerprint;
 use bdk::bitcoin::key::Secp256k1;
 use bdk::descriptor::{ExtendedDescriptor, IntoWalletDescriptor};
@@ -9,12 +13,9 @@ use bdk::template::{
 };
 use bdk::Error as BdkError;
 use bdk::KeychainKind;
+
 use std::str::FromStr;
 use std::sync::Arc;
-
-use crate::keys::DescriptorPublicKey;
-use crate::keys::DescriptorSecretKey;
-use crate::Network;
 
 #[derive(Debug)]
 pub struct Descriptor {
