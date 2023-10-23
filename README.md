@@ -7,6 +7,10 @@
     <a href="https://discord.gg/d7NkDKm"><img alt="Chat on Discord" src="https://img.shields.io/discord/753336465005608961?logo=discord"></a>
 </p>
 
+## 🚨 Warning 🚨
+The `master` branch of this repository is being migrated to the [bdk 1.0 API](https://github.com/bitcoindevkit/bdk) and is incomplete. For production-ready libraries, use the [`0.30.X`](https://github.com/bitcoindevkit/bdk-ffi/tree/release/0.30) releases.
+
+## Readme
 The workspace in this repository creates the `libbdkffi` multi-language library for the Rust-based 
 [bdk] library from the [Bitcoin Dev Kit] project.
 
