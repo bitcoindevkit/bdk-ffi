@@ -1,3 +1,4 @@
+mod bitcoin;
 mod descriptor;
 mod esplora;
 mod keys;
@@ -15,6 +16,7 @@ use bdk::KeychainKind;
 use std::sync::Arc;
 
 // TODO 6: Why are these imports required?
+use crate::bitcoin::Script;
 use crate::descriptor::Descriptor;
 use crate::esplora::EsploraClient;
 use crate::keys::DerivationPath;
@@ -24,7 +26,6 @@ use crate::keys::Mnemonic;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
 use bdk::keys::bip39::WordCount;
-// use bdk_esplora::EsploraExt;
 
 uniffi::include_scaffolding!("bdk");
 

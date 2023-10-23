@@ -62,7 +62,6 @@ impl Wallet {
     }
 
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), BdkError> {
-        // self.get_wallet(). .apply_update(update.0).map_err(|e| BdkError::Generic(e.to_string()))
         self.get_wallet()
             .apply_update(update.0.clone())
             .map_err(|e| BdkError::Generic(e.to_string()))
@@ -639,7 +638,7 @@ pub struct Update(pub(crate) BdkUpdate);
 //             .map(Arc::new)
 //     }
 // }
-//
+
 // // The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.
 // // These tests should not be used to verify `bdk` behavior that is already tested in the `bdk`
 // // crate.

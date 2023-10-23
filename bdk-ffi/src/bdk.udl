@@ -87,36 +87,6 @@ interface Wallet {
 interface Update {};
 
 // ------------------------------------------------------------------------
-// bdk crate - bitcoin reexports
-// ------------------------------------------------------------------------
-
-enum Network {
-  "Bitcoin",
-  "Testnet",
-  "Signet",
-  "Regtest",
-};
-
-enum WordCount {
-  "Words12",
-  "Words15",
-  "Words18",
-  "Words21",
-  "Words24",
-};
-
-interface Address {
-  [Throws=BdkError]
-  constructor(string address, Network network);
-
-  Network network();
-
-  string to_qr_uri();
-
-  string as_string();
-};
-
-// ------------------------------------------------------------------------
 // bdk crate - descriptor module
 // ------------------------------------------------------------------------
 
@@ -208,4 +178,43 @@ interface Descriptor {
 
 interface EsploraClient {
   constructor(string url);
+
+  [Throws=BdkError]
+  Update scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
+};
+
+// ------------------------------------------------------------------------
+// bdk crate - bitcoin re-exports
+// ------------------------------------------------------------------------
+
+interface Script {
+  constructor(sequence<u8> raw_output_script);
+
+  sequence<u8> to_bytes();
+};
+
+enum Network {
+  "Bitcoin",
+  "Testnet",
+  "Signet",
+  "Regtest",
+};
+
+enum WordCount {
+  "Words12",
+  "Words15",
+  "Words18",
+  "Words21",
+  "Words24",
+};
+
+interface Address {
+  [Throws=BdkError]
+  constructor(string address, Network network);
+
+  Network network();
+
+  string to_qr_uri();
+
+  string as_string();
 };
