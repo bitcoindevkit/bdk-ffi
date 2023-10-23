@@ -3,6 +3,7 @@ mod esplora;
 mod keys;
 mod psbt;
 mod wallet;
+mod bitcoin;
 
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::Address as BdkAddress;
@@ -24,7 +25,8 @@ use crate::keys::Mnemonic;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
 use bdk::keys::bip39::WordCount;
-// use bdk_esplora::EsploraExt;
+use crate::bitcoin::Script;
+use crate::wallet::IndexedScript;
 
 uniffi::include_scaffolding!("bdk");
 

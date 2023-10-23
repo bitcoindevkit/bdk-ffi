@@ -1,10 +1,12 @@
+use std::collections::HashMap;
 use crate::descriptor::Descriptor;
 use crate::Balance;
 use crate::{AddressIndex, AddressInfo, Network};
 use bdk::wallet::Update as BdkUpdate;
-use bdk::Error as BdkError;
+use bdk::{Error as BdkError, KeychainKind};
 use bdk::Wallet as BdkWallet;
 use std::sync::{Arc, Mutex, MutexGuard};
+use crate::bitcoin::Script;
 
 #[derive(Debug)]
 pub struct Wallet {
@@ -68,11 +70,38 @@ impl Wallet {
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
+    pub fn get_all_spks(&self) -> HashMap<KeychainKind, Vec<IndexedScript>> {
+        self
+            .get_wallet()
+            .spks_of_all_keychains()
+            .into_iter()
+            .fold(
+                HashMap::new(),
+                |mut map, (keychain, iter)| {
+                    dbg!();
+                    let vec = iter.map(|(index, scriptbuf)| {
+                        dbg!();
+                        let script: Arc<Script> = Arc::new(scriptbuf.into());
+                        IndexedScript { index, script }
+                    }).collect();
+                    dbg!(&vec);
+                    map.insert(keychain, vec);
+                    map
+                }
+            )
+    }
+
     // pub fn commit(&self) -> Result<(), BdkError> {}
 
     // fn is_mine(&self, script: Arc<Script>) -> bool {
     //     self.get_wallet().is_mine(&script.inner)
     // }
+}
+
+#[derive(Debug)]
+pub struct IndexedScript {
+    pub index: u32,
+    pub script: Arc<Script>
 }
 
 pub struct Update(pub(crate) BdkUpdate);
@@ -639,7 +668,29 @@ pub struct Update(pub(crate) BdkUpdate);
 //             .map(Arc::new)
 //     }
 // }
-//
+
+#[cfg(test)]
+mod test {
+    use std::sync::Arc;
+    use crate::descriptor::Descriptor;
+    use crate::Network;
+    use crate::wallet::Wallet;
+
+    #[test]
+    fn test_get_spks() {
+        let descriptor = Descriptor::new(
+            "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)".to_string(),
+            Network::Testnet
+        ).unwrap();
+        let wallet = Wallet::new_no_persist(
+            Arc::new(descriptor),
+            None,
+            Network::Testnet
+        ).unwrap();
+        let spks = wallet.get_all_spks();
+    }
+}
+
 // // The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.
 // // These tests should not be used to verify `bdk` behavior that is already tested in the `bdk`
 // // crate.
