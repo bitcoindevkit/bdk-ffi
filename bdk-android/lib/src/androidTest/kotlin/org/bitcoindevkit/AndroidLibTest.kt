@@ -1,15 +1,10 @@
 package org.bitcoindevkit
 
-import org.junit.Assert.*
-import org.junit.Test
-import android.app.Application
-import android.content.Context.MODE_PRIVATE
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.runner.RunWith
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import java.io.File
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -17,43 +12,46 @@ import java.io.File
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 @RunWith(AndroidJUnit4::class)
-class AndroidLibTest {
-        @Test
-    fun testNetwork() {
-        val signetNetwork = Network.SIGNET
-    }
+class WalletTest {
 
     @Test
     fun testDescriptorBip86() {
-        val mnemonic = Mnemonic(WordCount.WORDS12)
-        val descriptorSecretKey = DescriptorSecretKey(Network.TESTNET, mnemonic, null)
-        val descriptor = Descriptor.newBip86(descriptorSecretKey, KeychainKind.EXTERNAL, Network.TESTNET)
+        val mnemonic: Mnemonic = Mnemonic(WordCount.WORDS12)
+        val descriptorSecretKey: DescriptorSecretKey = DescriptorSecretKey(Network.TESTNET, mnemonic, null)
+        val descriptor: Descriptor = Descriptor.newBip86(descriptorSecretKey, KeychainKind.EXTERNAL, Network.TESTNET)
+
+        assertTrue(descriptor.asString().startsWith("tr"), "Bip86 Descriptor does not start with 'tr'")
     }
 
-    @Test
-    fun testUsedWallet() {
-        val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
-        val wallet = Wallet.newNoPersist(descriptor, null, Network.TESTNET)
-        val (index, address, keychain)  = wallet.getAddress(AddressIndex.LastUnused)
-        println("Address ${address.asString()} at index $index")
+   @Test
+    fun testNewAddress() {
+        val descriptor: Descriptor = Descriptor(
+            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
+            Network.TESTNET
+        )
+        val wallet: Wallet = Wallet.newNoPersist(
+            descriptor,
+            null,
+            Network.TESTNET
+        )
+        val addressInfo: AddressInfo = wallet.getAddress(AddressIndex.New)
+
+        assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", addressInfo.address.asString())
     }
 
     @Test
     fun testBalance() {
-        val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
-        val wallet = Wallet.newNoPersist(descriptor, null, Network.TESTNET)
+        val descriptor: Descriptor = Descriptor(
+            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
+            Network.TESTNET
+        )
+        val wallet: Wallet = Wallet.newNoPersist(
+            descriptor,
+            null,
+            Network.TESTNET
+        )
 
-        assert(wallet.getBalance().total() == 0uL)
+        assertEquals(0uL, wallet.getBalance().total())
     }
 
-    // @Test
-    // fun testSyncedBalance() {
-    //     val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
-    //     val wallet = Wallet.newNoPersist(descriptor, null, Network.TESTNET)
-    //     val esploraClient = EsploraClient("https://mempool.space/testnet/api")
-    //     // val esploraClient = EsploraClient("https://blockstream.info/testnet/api")
-    //     val update = esploraClient.scan(wallet, 10uL, 1uL)
-    //     wallet.applyUpdate(update)
-    //     println("Balance: ${wallet.getBalance().total()}")
-    // }
 }

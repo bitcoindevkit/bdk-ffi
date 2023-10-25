@@ -2,32 +2,67 @@ import XCTest
 @testable import BitcoinDevKit
 
 final class BitcoinDevKitTests: XCTestCase {
-    func testMemoryWalletNewAddress() throws {
-        let desc = try Descriptor(
-            descriptor: "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
-            network: Network.regtest
+    
+    func testDescriptorBip86() {
+        let mnemonic: Mnemonic = Mnemonic(wordCount: WordCount.words12)
+        let descriptorSecretKey: DescriptorSecretKey = DescriptorSecretKey(
+            network: Network.testnet,
+            mnemonic: mnemonic,
+            password: nil
         )
-        let wallet = try Wallet.newNoPersist(descriptor: desc, changeDescriptor: nil, network: .testnet)
-        let addressInfo = wallet.getAddress(addressIndex: AddressIndex.lastUnused)
+        let descriptor: Descriptor = Descriptor.newBip86(
+            secretKey: descriptorSecretKey,
+            keychain: KeychainKind.external,
+            network: Network.testnet
+        )
+
+        XCTAssertTrue(descriptor.asString().hasPrefix("tr"), "Bip86 Descriptor does not start with 'tr'")
+    }
+    
+    func testNewAddress() throws {
+        let descriptor: Descriptor = try Descriptor(
+            descriptor: "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
+            network: Network.testnet
+        )
+        let wallet: Wallet = try Wallet.newNoPersist(
+            descriptor: descriptor,
+            changeDescriptor: nil,
+            network: .testnet
+        )
+        let addressInfo: AddressInfo = wallet.getAddress(addressIndex: AddressIndex.new)
+        
         XCTAssertEqual(addressInfo.address.asString(), "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e")
     }
+    
+    func testBalance() throws {
+        let descriptor: Descriptor = try Descriptor(
+            descriptor: "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
+            network: Network.testnet
+        )
+        let wallet: Wallet = try Wallet.newNoPersist(
+            descriptor: descriptor,
+            changeDescriptor: nil,
+            network: .testnet
+        )
 
-//     func testConnectedWalletBalance() throws {
-//         let descriptor = try Descriptor(
-//             descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
-//             network: Network.testnet
-//         )
-//         let wallet = try Wallet.newNoPersist(
-//             descriptor: descriptor,
-//             changeDescriptor: nil,
-//             network: .testnet
-//         )
+        XCTAssertEqual(wallet.getBalance().total(), 0)
+    }
+
+//    func testSyncedBalance() throws {
+//        let descriptor = try Descriptor(
+//            descriptor: "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
+//            network: Network.testnet
+//        )
+//        let wallet = try Wallet.newNoPersist(
+//            descriptor: descriptor,
+//            changeDescriptor: nil,
+//            network: .testnet
+//        )
+//        let esploraClient = EsploraClient("https://mempool.space/testnet/api")
+//        let update = esploraClient.scan(wallet, 10, 1)
+//        wallet.applyUpdate(update)
 //
-//         let esploraClient = EsploraClient(url: "https://mempool.space/testnet/api")
-//         // val esploraClient = EsploraClient("https://blockstream.info/testnet/api")
-//         let update = try esploraClient.scan(wallet: wallet, stopGap: 10, parallelRequests: 1)
-//         try wallet.applyUpdate(update: update)
-//
-//         print("Balance: \(wallet.getBalance().total())")
-//     }
+//        XCTAssertEqual(wallet.getBalance().total(), 0)
+//    }
+
 }

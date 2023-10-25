@@ -26,15 +26,21 @@ java {
     withJavadocJar()
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+testing {
+    suites {
+        val test by getting(JvmTestSuite::class) {
+            useKotlinTest("1.6.10")
+        }
+    }
+}
 
+tasks.withType<Test> {
     testLogging {
         events(PASSED, SKIPPED, FAILED, STANDARD_OUT, STANDARD_ERROR)
         exceptionFormat = FULL
         showExceptions = true
-        showCauses = true
         showStackTraces = true
+        showCauses = true
     }
 }
 

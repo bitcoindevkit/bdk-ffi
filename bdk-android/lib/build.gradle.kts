@@ -53,7 +53,8 @@ dependencies {
     androidTestImplementation("com.github.tony19:logback-android:2.0.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
-    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.1")
+    androidTestImplementation("org.jetbrains.kotlin:kotlin-test:1.6.10")
+    androidTestImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.6.10")
 }
 
 afterEvaluate {
