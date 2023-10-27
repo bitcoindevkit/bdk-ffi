@@ -3,13 +3,6 @@ import unittest
 
 class TestSimpleWallet(unittest.TestCase):
 
-    def test_descriptor_bip86(self):
-        mnemonic: bdk.Mnemonic = bdk.Mnemonic(bdk.WordCount.WORDS12)
-        descriptor_secret_key: bdk.DescriptorSecretKey = bdk.DescriptorSecretKey(bdk.Network.TESTNET, mnemonic, None)
-        descriptor: bdk.Descriptor = bdk.Descriptor.new_bip86(descriptor_secret_key, bdk.KeychainKind.EXTERNAL, bdk.Network.TESTNET)
-
-        self.assertTrue(descriptor.as_string().startswith("tr"), "Bip86 Descriptor does not start with 'tr'")
-
     def test_new_address(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(
             "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
@@ -29,7 +22,7 @@ class TestSimpleWallet(unittest.TestCase):
             "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
             bdk.Network.TESTNET
         )
-        wallet: Wallet = bdk.Wallet.new_no_persist(
+        wallet: bdk.Wallet = bdk.Wallet.new_no_persist(
             descriptor,
             None,
             bdk.Network.TESTNET

@@ -38,28 +38,22 @@ impl Wallet {
         self.inner_mutex.lock().expect("wallet")
     }
 
-    // pub fn get_address(&self, address_index: AddressIndex) -> Result<AddressInfo, BdkError> {
     pub fn get_address(&self, address_index: AddressIndex) -> AddressInfo {
         self.get_wallet().get_address(address_index.into()).into()
-        // NOTE: I prefer this:
-        // AddressInfo::from(
-        //     self.get_wallet().get_address(address_index.into())
-        // )
     }
 
     pub fn network(&self) -> Network {
         self.get_wallet().network().into()
     }
 
-    // fn get_internal_address(&mut self, address_index: AddressIndex) -> AddressInfo {
-    //     self.get_wallet()
-    //         .get_internal_address(address_index.into())
-    //         .into()
-    // }
+    pub fn get_internal_address(&self, address_index: AddressIndex) -> AddressInfo {
+        self.get_wallet()
+            .get_internal_address(address_index.into())
+            .into()
+    }
 
     // TODO 16: Why is the Arc required here?
     pub fn get_balance(&self) -> Arc<Balance> {
-        // Arc::new(self.get_wallet().get_balance().into())
         let bdk_balance = self.get_wallet().get_balance();
         let balance = Balance { inner: bdk_balance };
         Arc::new(balance)
@@ -71,11 +65,11 @@ impl Wallet {
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
-    // pub fn commit(&self) -> Result<(), BdkError> {}
-
-    // fn is_mine(&self, script: Arc<Script>) -> bool {
-    //     self.get_wallet().is_mine(&script.inner)
-    // }
+    pub fn is_mine(&self, script: Arc<Script>) -> bool {
+        // TODO: Both of the following lines work. Which is better?
+        self.get_wallet().is_mine(&script.0)
+        // self.get_wallet().is_mine(script.0.clone().as_script())
+    }
 }
 
 pub struct Update(pub(crate) BdkUpdate);
@@ -98,63 +92,6 @@ pub struct Update(pub(crate) BdkUpdate);
 //     }
 // }
 
-// impl Wallet {
-//     // pub(crate) fn new(
-//     //     descriptor: Arc<Descriptor>,
-//     //     change_descriptor: Option<Arc<Descriptor>>,
-//     //     db: PersistBackend<ChangeSet>,
-//     //     network: Network,
-//     // ) -> Result<Self, BdkError> {
-//     //     let any_database_config = match database_config {
-//     //         DatabaseConfig::Memory => AnyDatabaseConfig::Memory(()),
-//     //         DatabaseConfig::Sled { config } => AnyDatabaseConfig::Sled(config),
-//     //         DatabaseConfig::Sqlite { config } => AnyDatabaseConfig::Sqlite(config),
-//     //     };
-//     //     let database = AnyDatabase::from_config(&any_database_config)?;
-//     //     let descriptor: String = descriptor.as_string_private();
-//     //     let change_descriptor: Option<String> = change_descriptor.map(|d| d.as_string_private());
-//     //
-//     //     let wallet_mutex = Mutex::new(BdkWallet::new(
-//     //         &descriptor,
-//     //         change_descriptor.as_ref(),
-//     //         network,
-//     //         database,
-//     //     )?);
-//     //     Ok(Wallet {
-//     //         inner_mutex: wallet_mutex,
-//     //     })
-//     // }
-//
-//     pub(crate) fn new_no_persist(
-//         descriptor: Arc<Descriptor>,
-//         change_descriptor: Option<Arc<Descriptor>>,
-//         network: Network,
-//     ) -> Result<Self, BdkError> {
-//         let descriptor: String = descriptor.as_string_private();
-//         let change_descriptor: Option<String> = change_descriptor.map(|d| d.as_string_private());
-//
-//         let wallet = BdkWallet::new_no_persist(
-//             &descriptor,
-//             change_descriptor.as_ref(),
-//             network,
-//         )?;
-//
-//         Ok(Wallet {
-//             inner: wallet,
-//         })
-//     }
-//
-//     // MIGRATION 1.0: This function is no longer needed right? If I remove the mutex on the wallet,
-//     //                I can just access the wallet directly without causing trouble me thinks.
-//     pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet<AnyDatabase>> {
-//         self.inner_mutex.lock().expect("wallet")
-//     }
-//
-//     /// Get the Bitcoin network the wallet is using.
-//     pub(crate) fn network(&self) -> Network {
-//         self.inner.network()
-//     }
-//
 //     /// Return whether or not a script is part of this wallet (either internal or external).
 //     pub(crate) fn is_mine(&self, script: Arc<Script>) -> bool {
 //         self.inner.is_mine(&script.inner)

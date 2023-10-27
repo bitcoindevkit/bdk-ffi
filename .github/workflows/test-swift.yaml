@@ -23,4 +23,4 @@ jobs:
 
       - name: "Run Swift tests"
         working-directory: bdk-swift
-        run: swift test
+        run: swift test --skip LiveWalletTests --skip LiveTxBuilderTests

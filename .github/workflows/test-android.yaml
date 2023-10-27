@@ -55,11 +55,12 @@ jobs:
       - name: "Build Android library"
         run: |
           cd bdk-android
-          ./gradlew buildAndroidLib
+          ./gradlew buildAndroidLib --console=plain
 
-# There are currently no unit tests for bdk-android and the integration tests require the macOS image
-# which is not working with the older NDK version we are using, so for now we just make sure that the library builds.
-#      - name: "Run Android unit tests"
+# There are currently no unit tests for bdk-android (see the tests in bdk-jvm instead) and the 
+# integration tests require the macOS image which is not working with the older NDK version we
+# are using, so for now we just make sure that the library builds and omit the connectedTest
+#      - name: "Run Android connected tests"
 #        run: |
 #          cd bdk-android
-#          ./gradlew test --console=rich
+#          ./gradlew connectedAndroidTest --console=plain

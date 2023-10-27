@@ -76,9 +76,13 @@ interface Wallet {
 
   AddressInfo get_address(AddressIndex address_index);
 
+  AddressInfo get_internal_address(AddressIndex address_index);
+
   Network network();
 
   Balance get_balance();
+
+  boolean is_mine(Script script);
 
   [Throws=BdkError]
   void apply_update(Update update);

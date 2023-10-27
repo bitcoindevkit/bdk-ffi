@@ -54,7 +54,7 @@ jobs:
         run: ${PYBIN}/pip install ./dist/*.whl
 
       - name: "Run tests"
-        run: ${PYBIN}/python -m unittest tests/test_bdk.py --verbose
+        run: ${PYBIN}/python -m unittest discover --start "./tests/" --pattern "test_offline_*.py" --verbose
 
       - name: "Upload artifact test"
         uses: actions/upload-artifact@v3
@@ -97,7 +97,7 @@ jobs:
       # - name: "Install wheel and run tests"
       #   run: |
       #     pip3 install ./dist/*.whl
-      #     python3 -m unittest tests/test_bdk.py --verbose
+      #     python3 -m unittest discover --start "./tests/" --pattern "test_offline_*.py" --verbose
 
       - name: "Upload artifact test"
         uses: actions/upload-artifact@v3
@@ -138,7 +138,7 @@ jobs:
         run: pip3 install ./dist/*.whl
 
       - name: "Run tests"
-        run: python3 -m unittest tests/test_bdk.py --verbose
+        run: python3 -m unittest discover --start "./tests/" --pattern "test_offline_*.py" --verbose
 
       - name: "Upload artifact test"
         uses: actions/upload-artifact@v3
@@ -186,4 +186,4 @@ jobs:
         shell: powershell
 
       - name: "Run tests"
-        run: python -m unittest tests/test_bdk.py --verbose
+        run: python -m unittest discover --start "./tests/" --pattern "test_offline_*.py" --verbose

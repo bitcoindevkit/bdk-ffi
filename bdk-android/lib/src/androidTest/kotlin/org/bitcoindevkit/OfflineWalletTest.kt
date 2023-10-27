@@ -1,19 +1,13 @@
 package org.bitcoindevkit
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.runner.RunWith
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.runner.RunWith
 
-/**
- * Instrumented test, which will execute on an Android device.
- *
- * See [testing documentation](http://d.android.com/tools/testing).
- */
 @RunWith(AndroidJUnit4::class)
-class WalletTest {
-
+class OfflineWalletTest {
     @Test
     fun testDescriptorBip86() {
         val mnemonic: Mnemonic = Mnemonic(WordCount.WORDS12)
@@ -36,7 +30,10 @@ class WalletTest {
         )
         val addressInfo: AddressInfo = wallet.getAddress(AddressIndex.New)
 
-        assertEquals("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", addressInfo.address.asString())
+        assertEquals(
+            expected = "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e",
+            actual = addressInfo.address.asString()
+        )
     }
 
     @Test
@@ -51,7 +48,9 @@ class WalletTest {
             Network.TESTNET
         )
 
-        assertEquals(0uL, wallet.getBalance().total())
+        assertEquals(
+            expected = 0uL,
+            actual = wallet.getBalance().total()
+        )
     }
-
 }

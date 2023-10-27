@@ -26,6 +26,18 @@ java {
     withJavadocJar()
 }
 
+// This block ensures that the tests that require access to a blockchain are not
+// run if the -P excludeConnectedTests flag is passed to gradle.
+// This ensures our CI runs are not fickle by not requiring access to testnet.
+// This is a workaround until we have a proper regtest setup for the CI.
+// Note that the command in the CI is ./gradlew test -P excludeConnectedTests
+tasks.test {
+    if (project.hasProperty("excludeConnectedTests")) {
+        exclude("**/LiveWalletTest.class")
+        exclude("**/LiveTxBuilderTest.class")
+    }
+}
+
 testing {
     suites {
         val test by getting(JvmTestSuite::class) {
