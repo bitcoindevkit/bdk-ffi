@@ -1,0 +1,93 @@
+name: Run All Live Tests
+on: 
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0' # Once per week
+
+jobs:
+  jvm-tests:
+    name: "Build and test JVM library on Linux"
+    runs-on: ubuntu-20.04
+    steps:
+      - name: "Checkout publishing branch"
+        uses: actions/checkout@v3
+
+      - name: "Cache"
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ./target
+          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+
+      - name: "Set up JDK"
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: "Set default Rust version to 1.67.0"
+        run: rustup default 1.67.0
+
+      - name: "Build bdk-jvm library"
+        run: |
+          cd bdk-jvm
+          ./gradlew buildJvmLib
+
+      - name: "Run live JVM tests"
+        run: |
+          cd bdk-jvm
+          ./gradlew test
+
+  swift-tests:
+    name: "Build and test iOS library on macOS"
+    runs-on: macos-12
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+
+      - name: "Build Swift package"
+        run: bash ./bdk-swift/build-local-swift.sh
+
+      - name: "Run live Swift tests"
+        working-directory: bdk-swift
+        run: swift test
+
+  python-tests:
+    name: "Build and test Python library on Linux"
+    runs-on: ubuntu-20.04
+    defaults:
+      run:
+        working-directory: bdk-python
+    container:
+      image: quay.io/pypa/manylinux2014_x86_64
+      env:
+        PLAT: manylinux2014_x86_64
+        PYBIN: "/opt/python/${{ matrix.python }}/bin"
+    strategy:
+      matrix:
+        python:
+          - cp310-cp310
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: "Generate bdk.py and binaries"
+        run: bash ./scripts/generate-linux.sh
+
+      - name: "Build wheel"
+        # Specifying the plat-name argument is necessary to build a wheel with the correct name,
+        # see issue #350 for more information
+        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_17_x86_64 --verbose
+
+      - name: "Install wheel"
+        run: ${PYBIN}/pip install ./dist/*.whl
+
+      - name: "Run live Python tests"
+        run: ${PYBIN}/python -m unittest --verbose
