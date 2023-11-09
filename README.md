@@ -28,18 +28,7 @@ The below directories (a separate repository in the case of bdk-swift) include i
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should compile with any combination of features with Rust 1.61.0.
-
-To build with the MSRV you will need to pin dependencies as follows:
-
-```shell
-# required for sqlite feature, hashlink 0.8.2 has MSRV 1.61.0
-cargo update -p hashlink --precise "0.8.1"
-# tokio 1.30.0 has MSRV 1.63.0
-cargo update -p tokio --precise "1.29.1"
-# flate2 1.0.27 and up do not work with Rust 1.61.0, but 1.0.26 does
-cargo update -p flate2 --precise "1.0.26"
-```
+This library should compile with any combination of features with Rust 1.73.0.
 
 ## Contributing
 
