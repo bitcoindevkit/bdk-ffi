@@ -1,9 +1,9 @@
 package org.bitcoindevkit
 
 import kotlin.test.Test
-import kotlin.test.assertTrue
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.runner.RunWith
+import kotlin.test.assertEquals
 
 @RunWith(AndroidJUnit4::class)
 class OfflineDescriptorTest {

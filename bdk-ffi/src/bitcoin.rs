@@ -203,7 +203,7 @@ impl From<BdkTransaction> for Transaction {
     }
 }
 
-pub(crate) struct PartiallySignedTransaction {
+pub struct PartiallySignedTransaction {
     pub(crate) inner: Mutex<BdkPartiallySignedTransaction>,
 }
 

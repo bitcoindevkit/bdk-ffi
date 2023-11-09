@@ -167,7 +167,7 @@ impl DescriptorSecretKey {
     /// Get the private key as bytes.
     pub(crate) fn secret_bytes(&self) -> Vec<u8> {
         let inner = &self.inner;
-        let secret_bytes: Vec<u8> = match inner.deref() {
+        let secret_bytes: Vec<u8> = match inner {
             BdkDescriptorSecretKey::Single(_) => {
                 unreachable!()
             }
@@ -206,7 +206,7 @@ impl DescriptorPublicKey {
         let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
 
-        match descriptor_public_key.deref() {
+        match descriptor_public_key {
             BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
                 "Cannot derive from a single key".to_string(),
             )),
@@ -235,7 +235,7 @@ impl DescriptorPublicKey {
     pub(crate) fn extend(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
-        match descriptor_public_key.deref() {
+        match descriptor_public_key {
             BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
                 "Cannot extend from a single key".to_string(),
             )),

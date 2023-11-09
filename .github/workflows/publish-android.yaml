@@ -2,23 +2,11 @@ name: Publish bdk-android to Maven Central
 on: [workflow_dispatch]
 
 # The default Android NDK on the ubuntu-22.04 image is 25.2.9519653
-# We replace the default environment variable ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/25.2.9519653
-# with an older version of the NDK (21.4.7075529) using the fix proposed here: https://github.com/actions/runner-images/issues/5930
-# For information on why this is needed at the moment see issues #242 and #243, and PR #282
-env:
-  ANDROID_NDK_ROOT: /usr/local/lib/android/sdk/ndk/21.4.7075529
 
 jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-      - name: "Install Android NDK 21.4.7075529"
-        run: |
-          ANDROID_ROOT=/usr/local/lib/android
-          ANDROID_SDK_ROOT=${ANDROID_ROOT}/sdk
-          SDKMANAGER=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager
-          echo "y" | $SDKMANAGER "ndk;21.4.7075529"
-
       - name: "Check out PR branch"
         uses: actions/checkout@v3
 
@@ -37,8 +25,8 @@ jobs:
           distribution: temurin
           java-version: 11
 
-      - name: "Set default Rust version to 1.67.0"
-        run: rustup default 1.67.0
+      - name: "Set default Rust version to 1.73.0"
+        run: rustup default 1.73.0
 
       - name: "Install Rust Android targets"
         run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi

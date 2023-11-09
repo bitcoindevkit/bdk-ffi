@@ -259,7 +259,7 @@ pub struct Update(pub(crate) BdkUpdate);
 /// After creating the TxBuilder, you set options on it until finally calling finish to consume the builder and generate the transaction.
 /// Each method on the TxBuilder returns an instance of a new TxBuilder with the option set/added.
 #[derive(Clone, Debug)]
-pub(crate) struct TxBuilder {
+pub struct TxBuilder {
     pub(crate) recipients: Vec<(BdkScriptBuf, u64)>,
     // pub(crate) utxos: Vec<OutPoint>,
     // pub(crate) unspendable: HashSet<OutPoint>,
