@@ -5,10 +5,10 @@
 
 # Run the script from the repo root directory, ie: ./bdk-swift/build-local-swift.sh
 
-rustup install nightly-2023-04-10
-rustup component add rust-src --toolchain nightly-2023-04-10
+rustup install 1.73.0
+rustup component add rust-src
 rustup target add aarch64-apple-ios x86_64-apple-ios
-rustup target add aarch64-apple-ios-sim --toolchain nightly-2023-04-10
+rustup target add aarch64-apple-ios-sim
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
 pushd bdk-ffi
@@ -19,7 +19,7 @@ cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-da
 cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-darwin
 cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-ios
 cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-ios
-cargo +nightly-2023-04-10 build --package bdk-ffi --profile release-smaller --target aarch64-apple-ios-sim
+cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-ios-sim
 
 mkdir -p target/lipo-ios-sim/release-smaller
 lipo target/aarch64-apple-ios-sim/release-smaller/libbdkffi.a target/x86_64-apple-ios/release-smaller/libbdkffi.a -create -output target/lipo-ios-sim/release-smaller/libbdkffi.a
