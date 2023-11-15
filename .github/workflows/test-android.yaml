@@ -10,11 +10,11 @@ on:
       - "bdk-ffi/**"
       - "bdk-android/**"
 
-# The default Android NDK on the ubuntu-22.04 image is 25.2.9519653
+# The default Android NDK on the macos-12 image is 25.2.9519653
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: macos-12
     steps:
       - name: "Show default version of NDK"
         run: echo $ANDROID_NDK_ROOT
@@ -48,10 +48,10 @@ jobs:
           cd bdk-android
           ./gradlew buildAndroidLib --console=plain
 
-# There are currently no unit tests for bdk-android (see the tests in bdk-jvm instead) and the 
-# integration tests require the macOS image which is not working with the older NDK version we
-# are using, so for now we just make sure that the library builds and omit the connectedTest
-#      - name: "Run Android connected tests"
-#        run: |
-#          cd bdk-android
-#          ./gradlew connectedAndroidTest --console=plain
+      - name: "Run connected tests"
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          target: google_apis
+          arch: x86_64
+          script: ./gradlew connectedAndroidTest --console=plain
