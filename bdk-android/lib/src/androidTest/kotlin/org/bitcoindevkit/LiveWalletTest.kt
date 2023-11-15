@@ -15,6 +15,8 @@ class LiveWalletTest {
         val update = esploraClient.scan(wallet, 10uL, 1uL)
         wallet.applyUpdate(update)
         println("Balance: ${wallet.getBalance().total()}")
+        val balance: Balance = wallet.getBalance()
+        println("Balance: $balance")
 
         assert(wallet.getBalance().total() > 0uL)
     }

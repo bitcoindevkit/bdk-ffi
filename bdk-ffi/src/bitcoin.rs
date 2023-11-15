@@ -4,7 +4,9 @@ use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::network::constants::Network as BdkNetwork;
 use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::bitcoin::Address as BdkAddress;
+use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::bitcoin::Transaction as BdkTransaction;
+use bdk::bitcoin::Txid;
 use bdk::Error as BdkError;
 
 use std::io::Cursor;
@@ -280,6 +282,24 @@ impl From<BdkPartiallySignedTransaction> for PartiallySignedTransaction {
     fn from(psbt: BdkPartiallySignedTransaction) -> Self {
         PartiallySignedTransaction {
             inner: Mutex::new(psbt),
+        }
+    }
+}
+
+/// A reference to a transaction output.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct OutPoint {
+    /// The referenced transaction's txid.
+    pub txid: String,
+    /// The index of the referenced output in its transaction's vout.
+    pub vout: u32,
+}
+
+impl From<&OutPoint> for BdkOutPoint {
+    fn from(outpoint: &OutPoint) -> Self {
+        BdkOutPoint {
+            txid: Txid::from_str(&outpoint.txid).unwrap(),
+            vout: outpoint.vout,
         }
     }
 }

@@ -43,6 +43,12 @@ enum BdkError {
   "Psbt",
 };
 
+enum ChangeSpendPolicy {
+  "ChangeAllowed",
+  "OnlyChange",
+  "ChangeForbidden"
+};
+
 interface Balance {
   u64 immature();
 
@@ -95,7 +101,23 @@ interface TxBuilder {
 
   TxBuilder add_recipient(Script script, u64 amount);
 
+  TxBuilder set_recipients(sequence<ScriptAmount> script_amount);
+
+  TxBuilder add_unspendable(OutPoint unspendable);
+
+  TxBuilder add_utxo(OutPoint outpoint);
+
+  TxBuilder change_policy(ChangeSpendPolicy change_policy);
+
+  TxBuilder do_not_spend_change();
+
+  TxBuilder only_spend_change();
+
+  TxBuilder manually_selected_only();
+
   TxBuilder fee_rate(float sat_per_vbyte);
+
+  TxBuilder drain_wallet();
 
   [Throws=BdkError]
   PartiallySignedTransaction finish([ByRef] Wallet wallet);
@@ -199,6 +221,15 @@ interface EsploraClient {
 };
 
 // ------------------------------------------------------------------------
+// bdk-ffi-defined types
+// ------------------------------------------------------------------------
+
+dictionary ScriptAmount {
+  Script script;
+  u64 amount;
+};
+
+// ------------------------------------------------------------------------
 // bdk crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 
@@ -262,4 +293,9 @@ interface PartiallySignedTransaction {
   string serialize();
 
   Transaction extract_tx();
+};
+
+dictionary OutPoint {
+  string txid;
+  u32 vout;
 };

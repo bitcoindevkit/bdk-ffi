@@ -1,13 +1,16 @@
-use crate::bitcoin::PartiallySignedTransaction;
+use crate::bitcoin::{OutPoint, PartiallySignedTransaction};
 use crate::descriptor::Descriptor;
-use crate::{AddressIndex, AddressInfo, Network};
+use crate::{AddressIndex, AddressInfo, Network, ScriptAmount};
 use crate::{Balance, Script};
+use std::collections::HashSet;
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
+use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::wallet::Update as BdkUpdate;
 use bdk::Wallet as BdkWallet;
 use bdk::{Error as BdkError, FeeRate};
 
+use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 #[derive(Debug)]
@@ -261,13 +264,13 @@ pub struct Update(pub(crate) BdkUpdate);
 #[derive(Clone, Debug)]
 pub struct TxBuilder {
     pub(crate) recipients: Vec<(BdkScriptBuf, u64)>,
-    // pub(crate) utxos: Vec<OutPoint>,
-    // pub(crate) unspendable: HashSet<OutPoint>,
-    // pub(crate) change_policy: ChangeSpendPolicy,
-    // pub(crate) manually_selected_only: bool,
+    pub(crate) utxos: Vec<OutPoint>,
+    pub(crate) unspendable: HashSet<OutPoint>,
+    pub(crate) change_policy: ChangeSpendPolicy,
+    pub(crate) manually_selected_only: bool,
     pub(crate) fee_rate: Option<f32>,
     // pub(crate) fee_absolute: Option<u64>,
-    // pub(crate) drain_wallet: bool,
+    pub(crate) drain_wallet: bool,
     // pub(crate) drain_to: Option<BdkScript>,
     // pub(crate) rbf: Option<RbfValue>,
     // pub(crate) data: Vec<u8>,
@@ -277,13 +280,13 @@ impl TxBuilder {
     pub(crate) fn new() -> Self {
         TxBuilder {
             recipients: Vec::new(),
-            // utxos: Vec::new(),
-            // unspendable: HashSet::new(),
-            // change_policy: ChangeSpendPolicy::ChangeAllowed,
-            // manually_selected_only: false,
+            utxos: Vec::new(),
+            unspendable: HashSet::new(),
+            change_policy: ChangeSpendPolicy::ChangeAllowed,
+            manually_selected_only: false,
             fee_rate: None,
             // fee_absolute: None,
-            // drain_wallet: false,
+            drain_wallet: false,
             // drain_to: None,
             // rbf: None,
             // data: Vec::new(),
@@ -301,71 +304,78 @@ impl TxBuilder {
         })
     }
 
-    // pub(crate) fn set_recipients(&self, recipients: Vec<ScriptAmount>) -> Arc<Self> {
-    //     let recipients = recipients
-    //         .iter()
-    //         .map(|script_amount| (script_amount.script.inner.clone(), script_amount.amount))
-    //         .collect();
-    //     Arc::new(TxBuilder {
-    //         recipients,
-    //         ..self.clone()
-    //     })
-    // }
+    pub(crate) fn set_recipients(&self, recipients: Vec<ScriptAmount>) -> Arc<Self> {
+        let recipients = recipients
+            .iter()
+            .map(|script_amount| (script_amount.script.0.clone(), script_amount.amount))
+            .collect();
+        Arc::new(TxBuilder {
+            recipients,
+            ..self.clone()
+        })
+    }
 
-    //     /// Add a utxo to the internal list of unspendable utxos. It’s important to note that the "must-be-spent"
-    //     /// utxos added with [TxBuilder.addUtxo] have priority over this. See the Rust docs of the two linked methods for more details.
-    //     pub(crate) fn add_unspendable(&self, unspendable: OutPoint) -> Arc<Self> {
-    //         let mut unspendable_hash_set = self.unspendable.clone();
-    //         unspendable_hash_set.insert(unspendable);
-    //         Arc::new(TxBuilder {
-    //             unspendable: unspendable_hash_set,
-    //             ..self.clone()
-    //         })
-    //     }
-    //
-    //     /// Add an outpoint to the internal list of UTXOs that must be spent. These have priority over the "unspendable"
-    //     /// utxos, meaning that if a utxo is present both in the "utxos" and the "unspendable" list, it will be spent.
-    //     pub(crate) fn add_utxo(&self, outpoint: OutPoint) -> Arc<Self> {
-    //         self.add_utxos(vec![outpoint])
-    //     }
-    //
-    //     /// Add the list of outpoints to the internal list of UTXOs that must be spent. If an error occurs while adding
-    //     /// any of the UTXOs then none of them are added and the error is returned. These have priority over the "unspendable"
-    //     /// utxos, meaning that if a utxo is present both in the "utxos" and the "unspendable" list, it will be spent.
-    //     pub(crate) fn add_utxos(&self, mut outpoints: Vec<OutPoint>) -> Arc<Self> {
-    //         let mut utxos = self.utxos.to_vec();
-    //         utxos.append(&mut outpoints);
-    //         Arc::new(TxBuilder {
-    //             utxos,
-    //             ..self.clone()
-    //         })
-    //     }
-    //
-    //     /// Do not spend change outputs. This effectively adds all the change outputs to the "unspendable" list. See TxBuilder.unspendable.
-    //     pub(crate) fn do_not_spend_change(&self) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             change_policy: ChangeSpendPolicy::ChangeForbidden,
-    //             ..self.clone()
-    //         })
-    //     }
-    //
-    //     /// Only spend utxos added by [add_utxo]. The wallet will not add additional utxos to the transaction even if they are
-    //     /// needed to make the transaction valid.
-    //     pub(crate) fn manually_selected_only(&self) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             manually_selected_only: true,
-    //             ..self.clone()
-    //         })
-    //     }
-    //
-    //     /// Only spend change outputs. This effectively adds all the non-change outputs to the "unspendable" list. See TxBuilder.unspendable.
-    //     pub(crate) fn only_spend_change(&self) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             change_policy: ChangeSpendPolicy::OnlyChange,
-    //             ..self.clone()
-    //         })
-    //     }
-    //
+    /// Add a utxo to the internal list of unspendable utxos. It’s important to note that the "must-be-spent"
+    /// utxos added with [TxBuilder.addUtxo] have priority over this. See the Rust docs of the two linked methods for more details.
+    pub(crate) fn add_unspendable(&self, unspendable: OutPoint) -> Arc<Self> {
+        let mut unspendable_hash_set = self.unspendable.clone();
+        unspendable_hash_set.insert(unspendable);
+        Arc::new(TxBuilder {
+            unspendable: unspendable_hash_set,
+            ..self.clone()
+        })
+    }
+
+    /// Add an outpoint to the internal list of UTXOs that must be spent. These have priority over the "unspendable"
+    /// utxos, meaning that if a utxo is present both in the "utxos" and the "unspendable" list, it will be spent.
+    pub(crate) fn add_utxo(&self, outpoint: OutPoint) -> Arc<Self> {
+        self.add_utxos(vec![outpoint])
+    }
+
+    /// Add the list of outpoints to the internal list of UTXOs that must be spent. If an error occurs while adding
+    /// any of the UTXOs then none of them are added and the error is returned. These have priority over the "unspendable"
+    /// utxos, meaning that if a utxo is present both in the "utxos" and the "unspendable" list, it will be spent.
+    pub(crate) fn add_utxos(&self, mut outpoints: Vec<OutPoint>) -> Arc<Self> {
+        let mut utxos = self.utxos.to_vec();
+        utxos.append(&mut outpoints);
+        Arc::new(TxBuilder {
+            utxos,
+            ..self.clone()
+        })
+    }
+
+    pub(crate) fn change_policy(&self, change_policy: ChangeSpendPolicy) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            change_policy,
+            ..self.clone()
+        })
+    }
+
+    /// Do not spend change outputs. This effectively adds all the change outputs to the "unspendable" list. See TxBuilder.unspendable.
+    pub(crate) fn do_not_spend_change(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            change_policy: ChangeSpendPolicy::ChangeForbidden,
+            ..self.clone()
+        })
+    }
+
+    /// Only spend change outputs. This effectively adds all the non-change outputs to the "unspendable" list. See TxBuilder.unspendable.
+    pub(crate) fn only_spend_change(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            change_policy: ChangeSpendPolicy::OnlyChange,
+            ..self.clone()
+        })
+    }
+
+    /// Only spend utxos added by [add_utxo]. The wallet will not add additional utxos to the transaction even if they are
+    /// needed to make the transaction valid.
+    pub(crate) fn manually_selected_only(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            manually_selected_only: true,
+            ..self.clone()
+        })
+    }
+
     //     /// Replace the internal list of unspendable utxos with a new list. It’s important to note that the "must-be-spent" utxos added with
     //     /// TxBuilder.addUtxo have priority over these. See the Rust docs of the two linked methods for more details.
     //     pub(crate) fn unspendable(&self, unspendable: Vec<OutPoint>) -> Arc<Self> {
@@ -374,7 +384,7 @@ impl TxBuilder {
     //             ..self.clone()
     //         })
     //     }
-    //
+
     /// Set a custom fee rate.
     pub(crate) fn fee_rate(&self, sat_per_vb: f32) -> Arc<Self> {
         Arc::new(TxBuilder {
@@ -382,7 +392,7 @@ impl TxBuilder {
             ..self.clone()
         })
     }
-    //
+
     //     /// Set an absolute fee.
     //     pub(crate) fn fee_absolute(&self, fee_amount: u64) -> Arc<Self> {
     //         Arc::new(TxBuilder {
@@ -390,15 +400,15 @@ impl TxBuilder {
     //             ..self.clone()
     //         })
     //     }
-    //
-    //     /// Spend all the available inputs. This respects filters like TxBuilder.unspendable and the change policy.
-    //     pub(crate) fn drain_wallet(&self) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             drain_wallet: true,
-    //             ..self.clone()
-    //         })
-    //     }
-    //
+
+    /// Spend all the available inputs. This respects filters like TxBuilder.unspendable and the change policy.
+    pub(crate) fn drain_wallet(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            drain_wallet: true,
+            ..self.clone()
+        })
+    }
+
     //     /// Sets the address to drain excess coins to. Usually, when there are excess coins they are sent to a change address
     //     /// generated by the wallet. This option replaces the usual change address with an arbitrary ScriptPubKey of your choosing.
     //     /// Just as with a change output, if the drain output is not needed (the excess coins are too small) it will not be included
@@ -431,17 +441,16 @@ impl TxBuilder {
     //             ..self.clone()
     //         })
     //     }
-    //
-    //     /// Add data as an output using OP_RETURN.
-    //     pub(crate) fn add_data(&self, data: Vec<u8>) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             data,
-    //             ..self.clone()
-    //         })
-    //     }
-    //
+
+    /// Add data as an output using OP_RETURN.
+    // pub(crate) fn add_data(&self, data: Vec<u8>) -> Arc<Self> {
+    //     Arc::new(TxBuilder {
+    //         data,
+    //         ..self.clone()
+    //     })
+    // }
+
     /// Finish building the transaction. Returns the BIP174 PSBT.
-    /// TODO: The TxBuilder in bdk returns a Psbt type
     pub(crate) fn finish(
         &self,
         wallet: &Wallet,
@@ -449,34 +458,32 @@ impl TxBuilder {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
-        // TODO: I'm not yet clear on the Script/ScriptBuf differences and whether this is the best
-        //       way to do this.
         for (script, amount) in &self.recipients {
             tx_builder.add_recipient(script.clone(), *amount);
         }
-        // tx_builder.change_policy(self.change_policy);
-        // if !self.utxos.is_empty() {
-        //     let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
-        //     let utxos: &[BdkOutPoint] = &bdk_utxos;
-        //     tx_builder.add_utxos(utxos)?;
-        // }
+        tx_builder.change_policy(self.change_policy);
+        if !self.utxos.is_empty() {
+            let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
+            let utxos: &[BdkOutPoint] = &bdk_utxos;
+            tx_builder.add_utxos(utxos)?;
+        }
         // if !self.unspendable.is_empty() {
         //     let bdk_unspendable: Vec<BdkOutPoint> =
         //         self.unspendable.iter().map(BdkOutPoint::from).collect();
         //     tx_builder.unspendable(bdk_unspendable);
         // }
-        // if self.manually_selected_only {
-        //     tx_builder.manually_selected_only();
-        // }
+        if self.manually_selected_only {
+            tx_builder.manually_selected_only();
+        }
         if let Some(sat_per_vb) = self.fee_rate {
             tx_builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
         }
         // if let Some(fee_amount) = self.fee_absolute {
         //     tx_builder.fee_absolute(fee_amount);
         // }
-        // if self.drain_wallet {
-        //     tx_builder.drain_wallet();
-        // }
+        if self.drain_wallet {
+            tx_builder.drain_wallet();
+        }
         // if let Some(script) = &self.drain_to {
         //     tx_builder.drain_to(script.clone());
         // }
@@ -501,7 +508,7 @@ impl TxBuilder {
         Ok(Arc::new(psbt.into()))
     }
 }
-//
+
 // /// The BumpFeeTxBuilder is used to bump the fee on a transaction that has been broadcast and has its RBF flag set to true.
 // #[derive(Clone)]
 // pub(crate) struct BumpFeeTxBuilder {

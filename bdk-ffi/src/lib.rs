@@ -7,6 +7,7 @@ mod wallet;
 // TODO 6: Why are these imports required?
 use crate::bitcoin::Address;
 use crate::bitcoin::Network;
+use crate::bitcoin::OutPoint;
 use crate::bitcoin::PartiallySignedTransaction;
 use crate::bitcoin::Script;
 use crate::bitcoin::Transaction;
@@ -21,6 +22,7 @@ use crate::wallet::Update;
 use crate::wallet::Wallet;
 
 use bdk::keys::bip39::WordCount;
+use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::wallet::Balance as BdkBalance;
@@ -32,10 +34,10 @@ use std::sync::Arc;
 uniffi::include_scaffolding!("bdk");
 
 /// A output script and an amount of satoshis.
-// pub struct ScriptAmount {
-//     pub script: Arc<Script>,
-//     pub amount: u64,
-// }
+pub struct ScriptAmount {
+    pub script: Arc<Script>,
+    pub amount: u64,
+}
 
 /// A derived address and the index it was found at.
 pub struct AddressInfo {
