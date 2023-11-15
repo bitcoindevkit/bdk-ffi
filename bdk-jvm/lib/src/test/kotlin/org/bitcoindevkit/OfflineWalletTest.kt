@@ -47,7 +47,7 @@ class OfflineWalletTest {
 
         assertEquals(
             expected = 0uL,
-            actual = wallet.getBalance().total()
+            actual = wallet.getBalance().total
         )
     }
 }

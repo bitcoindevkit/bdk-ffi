@@ -20,7 +20,7 @@ final class LiveWalletTests: XCTestCase {
         )
         try wallet.applyUpdate(update: update)
 
-        XCTAssertGreaterThan(wallet.getBalance().total(), UInt64(0))
+        XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0))
     }
     
     func testBroadcastTransaction() throws {
@@ -41,9 +41,9 @@ final class LiveWalletTests: XCTestCase {
         )
         try wallet.applyUpdate(update: update)
 
-        XCTAssertGreaterThan(wallet.getBalance().total(), UInt64(0), "Wallet must have positive balance, please add funds")
+        XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
         
-        print("Balance: \(wallet.getBalance().total())")
+        print("Balance: \(wallet.getBalance().total)")
 
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .testnet)
         let psbt: PartiallySignedTransaction = try

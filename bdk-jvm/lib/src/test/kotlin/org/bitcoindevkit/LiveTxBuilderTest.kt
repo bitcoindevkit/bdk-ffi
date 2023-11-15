@@ -12,9 +12,9 @@ class LiveTxBuilderTest {
         val esploraClient = EsploraClient("https://mempool.space/testnet/api")
         val update = esploraClient.scan(wallet, 10uL, 1uL)
         wallet.applyUpdate(update)
-        println("Balance: ${wallet.getBalance().total()}")
+        println("Balance: ${wallet.getBalance().total}")
 
-        assert(wallet.getBalance().total() > 0uL)
+        assert(wallet.getBalance().total > 0uL)
 
         val recipient: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.TESTNET)
         val psbt: PartiallySignedTransaction = TxBuilder()

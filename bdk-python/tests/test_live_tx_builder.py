@@ -21,7 +21,7 @@ class TestLiveTxBuilder(unittest.TestCase):
         )
         wallet.apply_update(update)
 
-        self.assertGreater(wallet.get_balance().total(), 0)
+        self.assertGreater(wallet.get_balance().total, 0)
 
         recipient = bdk.Address(
             address = "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989",

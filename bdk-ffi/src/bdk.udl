@@ -49,18 +49,18 @@ enum ChangeSpendPolicy {
   "ChangeForbidden"
 };
 
-interface Balance {
-  u64 immature();
+dictionary Balance {
+  u64 immature;
 
-  u64 trusted_pending();
+  u64 trusted_pending;
 
-  u64 untrusted_pending();
+  u64 untrusted_pending;
 
-  u64 confirmed();
+  u64 confirmed;
 
-  u64 trusted_spendable();
+  u64 trusted_spendable;
 
-  u64 total();
+  u64 total;
 };
 
 dictionary AddressInfo {

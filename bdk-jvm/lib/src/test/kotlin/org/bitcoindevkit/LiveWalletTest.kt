@@ -12,9 +12,9 @@ class LiveWalletTest {
         // val esploraClient = EsploraClient("https://blockstream.info/testnet/api")
         val update = esploraClient.scan(wallet, 10uL, 1uL)
         wallet.applyUpdate(update)
-        println("Balance: ${wallet.getBalance().total()}")
+        println("Balance: ${wallet.getBalance().total}")
 
-        assert(wallet.getBalance().total() > 0uL)
+        assert(wallet.getBalance().total > 0uL)
     }
 
     @Test
@@ -25,10 +25,10 @@ class LiveWalletTest {
         val update = esploraClient.scan(wallet, 10uL, 1uL)
 
         wallet.applyUpdate(update)
-        println("Balance: ${wallet.getBalance().total()}")
+        println("Balance: ${wallet.getBalance().total}")
         println("New address: ${wallet.getAddress(AddressIndex.New).address.asString()}")
 
-        assert(wallet.getBalance().total() > 0uL) {
+        assert(wallet.getBalance().total > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.getAddress(AddressIndex.New).address} and try again."
         }
 

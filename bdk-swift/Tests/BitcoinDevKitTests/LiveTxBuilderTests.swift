@@ -20,7 +20,7 @@ final class LiveTxBuilderTests: XCTestCase {
         )
         try wallet.applyUpdate(update: update)
 
-        XCTAssertGreaterThan(wallet.getBalance().total(), UInt64(0), "Wallet must have positive balance, please add funds")
+        XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
 
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .testnet)
         let psbt: PartiallySignedTransaction = try TxBuilder()

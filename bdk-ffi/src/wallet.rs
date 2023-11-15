@@ -55,11 +55,9 @@ impl Wallet {
             .into()
     }
 
-    // TODO 16: Why is the Arc required here?
-    pub fn get_balance(&self) -> Arc<Balance> {
-        let bdk_balance = self.get_wallet().get_balance();
-        let balance = Balance { inner: bdk_balance };
-        Arc::new(balance)
+    pub fn get_balance(&self) -> Balance {
+        let bdk_balance: bdk::wallet::Balance = self.get_wallet().get_balance();
+        Balance::from(bdk_balance)
     }
 
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), BdkError> {

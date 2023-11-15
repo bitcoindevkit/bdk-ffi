@@ -28,7 +28,7 @@ class TestSimpleWallet(unittest.TestCase):
             bdk.Network.TESTNET
         )
 
-        self.assertEqual(wallet.get_balance().total(), 0)
+        self.assertEqual(wallet.get_balance().total, 0)
 
 if __name__ == '__main__':
     unittest.main()

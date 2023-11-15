@@ -21,7 +21,7 @@ class TestLiveWallet(unittest.TestCase):
         )
         wallet.apply_update(update)
 
-        self.assertGreater(wallet.get_balance().total(), 0)
+        self.assertGreater(wallet.get_balance().total, 0)
 
     def test_broadcast_transaction(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(
