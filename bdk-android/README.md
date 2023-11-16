@@ -44,6 +44,7 @@ dependencies {
 ```
 
 ### Example Projects
+* [bdk-kotlin-example-wallet](https://github.com/bitcoindevkit/bdk-kotlin-example-wallet)
 * [Devkit Wallet](https://github.com/thunderbiscuit/devkit-wallet)
 * [Padawan Wallet](https://github.com/thunderbiscuit/padawan-wallet)
 
