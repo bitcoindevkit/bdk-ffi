@@ -74,12 +74,16 @@ pub struct Address {
 
 impl Address {
     pub fn new(address: String, network: Network) -> Result<Self, BdkError> {
+        let parsed_address = address
+            .parse::<bdk::bitcoin::Address<NetworkUnchecked>>()
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
+
+        let network_checked_address = parsed_address
+            .require_network(network.into())
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
+
         Ok(Address {
-            inner: address
-                .parse::<bdk::bitcoin::Address<NetworkUnchecked>>()
-                .unwrap() // TODO 11: Handle error correctly by rethrowing it as a BdkError
-                .require_network(network.into())
-                .map_err(|e| BdkError::Generic(e.to_string()))?,
+            inner: network_checked_address,
         })
     }
 
