@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::wallet::Update as BdkUpdate;
-use bdk::Wallet as BdkWallet;
+use bdk::{SignOptions, Wallet as BdkWallet};
 use bdk::{Error as BdkError, FeeRate};
 
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
@@ -72,6 +72,26 @@ impl Wallet {
         // TODO: Both of the following lines work. Which is better?
         self.get_wallet().is_mine(&script.0)
         // self.get_wallet().is_mine(script.0.clone().as_script())
+    }
+
+    /// Sign a transaction with all the wallet's signers, in the order specified by every signer's
+    /// [`SignerOrdering`]. This function returns the `Result` type with an encapsulated `bool` that
+    /// has the value true if the PSBT was finalized, or false otherwise.
+    ///
+    /// The [`SignOptions`] can be used to tweak the behavior of the software signers, and the way
+    /// the transaction is finalized at the end. Note that it can't be guaranteed that *every*
+    /// signers will follow the options, but the "software signers" (WIF keys and `xprv`) defined
+    /// in this library will.
+    pub(crate) fn sign(
+        &self,
+        psbt: Arc<PartiallySignedTransaction>,
+        // sign_options: Option<SignOptions>,
+    ) -> Result<bool, BdkError> {
+        let mut psbt = psbt.inner.lock().unwrap();
+        self.get_wallet().sign(
+            &mut psbt,
+            SignOptions::default(),
+        ).map_err(|e| BdkError::Generic(e.to_string()))
     }
 }
 

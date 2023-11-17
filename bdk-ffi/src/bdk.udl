@@ -92,6 +92,9 @@ interface Wallet {
 
   [Throws=BdkError]
   void apply_update(Update update);
+
+  [Throws=BdkError]
+  boolean sign(PartiallySignedTransaction psbt);
 };
 
 interface Update {};
