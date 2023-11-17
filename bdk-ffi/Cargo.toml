@@ -1,7 +1,8 @@
 [package]
 name = "bdk-ffi"
 version = "1.0.0-alpha.2"
-authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
+homepage = "https://bitcoindevkit.org"
+repository = "https://github.com/bitcoindevkit/bdk"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 

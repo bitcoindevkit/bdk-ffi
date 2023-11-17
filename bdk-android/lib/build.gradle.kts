@@ -80,18 +80,6 @@ afterEvaluate {
                             url.set("https://github.com/bitcoindevkit/bdk/blob/master/LICENSE-MIT")
                         }
                     }
-                    developers {
-                        developer {
-                            id.set("notmandatory")
-                            name.set("Steve Myers")
-                            email.set("notmandatory@noreply.github.org")
-                        }
-                        developer {
-                            id.set("artfuldev")
-                            name.set("Sudarsan Balaji")
-                            email.set("sudarsan.balaji@artfuldev.com")
-                        }
-                    }
                     scm {
                         connection.set("scm:git:github.com/bitcoindevkit/bdk-ffi.git")
                         developerConnection.set("scm:git:ssh://github.com/bitcoindevkit/bdk-ffi.git")
