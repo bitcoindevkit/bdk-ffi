@@ -15,7 +15,7 @@ pip install --requirement requirements.txt
 bash ./scripts/generate-linux.sh # here you should run the script appropriate for your platform
 python setup.py bdist_wheel --verbose
 pip install ./dist/bdkpython-<yourversion>.whl --force-reinstall
-python -m unittest --verbose tests/test_bdk.py
+python -m unittest --verbose
 ```
 
 ## Build the package
