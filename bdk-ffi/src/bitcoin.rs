@@ -209,6 +209,12 @@ impl From<BdkTransaction> for Transaction {
     }
 }
 
+impl From<Transaction> for BdkTransaction {
+    fn from(tx: Transaction) -> Self {
+        tx.inner
+    }
+}
+
 pub struct PartiallySignedTransaction {
     pub(crate) inner: Mutex<BdkPartiallySignedTransaction>,
 }

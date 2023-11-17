@@ -221,6 +221,9 @@ interface EsploraClient {
 
   [Throws=BdkError]
   Update scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
+
+  [Throws=BdkError]
+  void broadcast(Transaction transaction);
 };
 
 // ------------------------------------------------------------------------

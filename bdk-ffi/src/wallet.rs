@@ -7,8 +7,8 @@ use std::collections::HashSet;
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::wallet::Update as BdkUpdate;
-use bdk::{SignOptions, Wallet as BdkWallet};
 use bdk::{Error as BdkError, FeeRate};
+use bdk::{SignOptions, Wallet as BdkWallet};
 
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -88,10 +88,9 @@ impl Wallet {
         // sign_options: Option<SignOptions>,
     ) -> Result<bool, BdkError> {
         let mut psbt = psbt.inner.lock().unwrap();
-        self.get_wallet().sign(
-            &mut psbt,
-            SignOptions::default(),
-        ).map_err(|e| BdkError::Generic(e.to_string()))
+        self.get_wallet()
+            .sign(&mut psbt, SignOptions::default())
+            .map_err(|e| BdkError::Generic(e.to_string()))
     }
 }
 

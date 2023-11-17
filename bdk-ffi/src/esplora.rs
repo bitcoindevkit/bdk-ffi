@@ -1,4 +1,5 @@
 use crate::wallet::{Update, Wallet};
+use std::ops::Deref;
 
 use bdk::wallet::Update as BdkUpdate;
 use bdk::Error as BdkError;
@@ -56,7 +57,12 @@ impl EsploraClient {
 
     // pub fn sync();
 
-    // pub fn broadcast();
+    pub fn broadcast(&self, transaction: Arc<crate::bitcoin::Transaction>) -> Result<(), BdkError> {
+        let bdk_transaction: bdk::bitcoin::Transaction = transaction.deref().clone().into();
+        self.0
+            .broadcast(&bdk_transaction)
+            .map_err(|e| BdkError::Generic(e.to_string()))
+    }
 
     // pub fn estimate_fee();
 }

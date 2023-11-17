@@ -18,7 +18,7 @@ bdk.kt
 
 # Swift related
 /.build
-/.swiftpm
+.swiftpm
 /Packages
 /*.xcodeproj
 xcuserdata/
