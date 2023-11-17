@@ -13,7 +13,7 @@ dependencies {
 }
 ```
 
-You may then import and use the `org.bitcoindevkit` library in your Kotlin code. For example:
+You may then import and use the `org.bitcoindevkit` library in your Kotlin code like so. Note that this example is for the `0.30.0` release. For examples of the 1.0 API in the alpha releases, take a look at the tests [here](https://github.com/bitcoindevkit/bdk-ffi/tree/master/bdk-android/lib/src/androidTest/kotlin/org/bitcoindevkit).
 ```kotlin
 import org.bitcoindevkit.*
 
