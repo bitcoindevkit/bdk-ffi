@@ -17,7 +17,7 @@ import bdkpython as bdk
 
 setup(
     name="bdkpython",
-    version="0.31.0.dev0",
+    version="1.0.0a2.dev0",
     description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
@@ -26,6 +26,7 @@ setup(
     packages=["bdkpython"],
     package_dir={"bdkpython": "./src/bdkpython"},
     url="https://github.com/bitcoindevkit/bdk-ffi",
+    author="Bitcoin Dev Kit Developers <dev@bitcoindevkit.org>",
     license="MIT or Apache 2.0",
     # This is required to ensure the library name includes the python version, abi, and platform tags
     # See issue #350 for more information
