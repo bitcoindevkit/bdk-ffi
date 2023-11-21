@@ -1,8 +1,15 @@
 # Changelog
 Changelog information can also be found in each release's git tag (which can be viewed with `git tag -ln100 "v*"`), as well as on the [GitHub releases](https://github.com/bitcoindevkit/bdk-ffi/releases) page. See [DEVELOPMENT_CYCLE.md](DEVELOPMENT_CYCLE.md) for more details.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.0-alpha.2a]
+This release is the first alpha release of the 1.0 API for the bindings libraries. Here is what is now available:
+- Create and recover wallets using descriptors, including the four descriptor templates
+- Sync a wallet using a blocking Esplora client
+- Query the wallet for balance and addresses
+- Create and sign transactions using the transaction builder
+- Broadcast transactions
 
 ## [0.30.0]
 This release has a new API and a few internal optimizations and refactorings.
