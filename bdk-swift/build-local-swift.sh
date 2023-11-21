@@ -7,9 +7,11 @@
 
 rustup install 1.73.0
 rustup component add rust-src
-rustup target add aarch64-apple-ios x86_64-apple-ios
-rustup target add aarch64-apple-ios-sim
-rustup target add aarch64-apple-darwin x86_64-apple-darwin
+rustup target add aarch64-apple-ios      # iOS ARM64
+rustup target add x86_64-apple-ios       # iOS x86_64
+rustup target add aarch64-apple-ios-sim  # simulator mac M1
+rustup target add aarch64-apple-darwin   # mac M1
+rustup target add x86_64-apple-darwin    # mac x86_64
 
 pushd bdk-ffi
 mkdir -p Sources/BitcoinDevKit
