@@ -107,6 +107,8 @@ interface Wallet {
 
   [Throws=BdkError]
   boolean sign(PartiallySignedTransaction psbt);
+
+  SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
 };
 
 interface Update {};
@@ -245,6 +247,11 @@ interface EsploraClient {
 dictionary ScriptAmount {
   Script script;
   u64 amount;
+};
+
+dictionary SentAndReceivedValues {
+    u64 sent;
+    u64 received;
 };
 
 // ------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-use crate::bitcoin::{OutPoint, PartiallySignedTransaction};
+use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
 use crate::types::Balance;
 use crate::types::ScriptAmount;
@@ -93,6 +93,16 @@ impl Wallet {
             .sign(&mut psbt, SignOptions::default())
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
+
+    pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
+        let (sent, received): (u64, u64) = self.get_wallet().sent_and_received(&tx.clone().into());
+        SentAndReceivedValues { sent, received }
+    }
+}
+
+pub struct SentAndReceivedValues {
+    pub sent: u64,
+    pub received: u64,
 }
 
 pub struct Update(pub(crate) BdkUpdate);
