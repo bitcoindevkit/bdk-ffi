@@ -1,12 +1,51 @@
 namespace bdk {};
 
 // ------------------------------------------------------------------------
-// bdk crate - root module
+// bdk crate - types module
 // ------------------------------------------------------------------------
 
 enum KeychainKind {
   "External",
   "Internal",
+};
+
+dictionary AddressInfo {
+  u32 index;
+  Address address;
+  KeychainKind keychain;
+};
+
+[Enum]
+interface AddressIndex {
+  New();
+  LastUnused();
+  Peek(u32 index);
+};
+
+dictionary Balance {
+  u64 immature;
+
+  u64 trusted_pending;
+
+  u64 untrusted_pending;
+
+  u64 confirmed;
+
+  u64 trusted_spendable;
+
+  u64 total;
+};
+
+dictionary LocalUtxo {
+  OutPoint outpoint;
+  TxOut txout;
+  KeychainKind keychain;
+  boolean is_spent;
+};
+
+dictionary TxOut {
+  u64 value;
+  Script script_pubkey;
 };
 
 // ------------------------------------------------------------------------
@@ -47,33 +86,6 @@ enum ChangeSpendPolicy {
   "ChangeAllowed",
   "OnlyChange",
   "ChangeForbidden"
-};
-
-dictionary Balance {
-  u64 immature;
-
-  u64 trusted_pending;
-
-  u64 untrusted_pending;
-
-  u64 confirmed;
-
-  u64 trusted_spendable;
-
-  u64 total;
-};
-
-dictionary AddressInfo {
-  u32 index;
-  Address address;
-  KeychainKind keychain;
-};
-
-[Enum]
-interface AddressIndex {
-  New();
-  LastUnused();
-  Peek(u32 index);
 };
 
 interface Wallet {

@@ -284,8 +284,11 @@ impl Descriptor {
 mod test {
     use crate::*;
     use assert_matches::assert_matches;
+
     use bdk::descriptor::DescriptorError::Key;
     use bdk::keys::KeyError::InvalidNetwork;
+
+    use std::sync::Arc;
 
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();

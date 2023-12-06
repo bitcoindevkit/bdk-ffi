@@ -1,7 +1,9 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction};
 use crate::descriptor::Descriptor;
-use crate::{AddressIndex, AddressInfo, Network, ScriptAmount};
-use crate::{Balance, Script};
+use crate::types::Balance;
+use crate::types::ScriptAmount;
+use crate::Script;
+use crate::{AddressIndex, AddressInfo, Network};
 use std::collections::HashSet;
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
@@ -11,6 +13,7 @@ use bdk::{Error as BdkError, FeeRate};
 use bdk::{SignOptions, Wallet as BdkWallet};
 
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
+
 use std::sync::{Arc, Mutex, MutexGuard};
 
 #[derive(Debug)]
@@ -607,6 +610,12 @@ impl TxBuilder {
 //             })
 //             .map(Arc::new)
 //     }
+// }
+
+// #[derive(Clone, Debug)]
+// enum RbfValue {
+//     Default,
+//     Value(u32),
 // }
 
 // // The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.

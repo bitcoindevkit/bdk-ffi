@@ -1,5 +1,6 @@
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
+use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::network::constants::Network as BdkNetwork;
 use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
@@ -306,6 +307,24 @@ impl From<&OutPoint> for BdkOutPoint {
         BdkOutPoint {
             txid: Txid::from_str(&outpoint.txid).unwrap(),
             vout: outpoint.vout,
+        }
+    }
+}
+
+/// A transaction output, which defines new coins to be created from old ones.
+#[derive(Debug, Clone)]
+pub struct TxOut {
+    /// The value of the output, in satoshis.
+    pub value: u64,
+    /// The address of the output.
+    pub script_pubkey: Arc<Script>,
+}
+
+impl From<&BdkTxOut> for TxOut {
+    fn from(tx_out: &BdkTxOut) -> Self {
+        TxOut {
+            value: tx_out.value,
+            script_pubkey: Arc::new(Script(tx_out.script_pubkey.clone())),
         }
     }
 }
