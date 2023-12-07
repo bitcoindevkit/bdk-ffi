@@ -21,6 +21,15 @@ final class LiveWalletTests: XCTestCase {
         try wallet.applyUpdate(update: update)
 
         XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0))
+
+        print("Transactions count: \(wallet.transactions().count)")
+        let transactions = wallet.transactions().prefix(3)
+        for tx in transactions {
+            let sentAndReceived = wallet.sentAndReceived(tx: tx)
+            print("Transaction: \(tx.txid())")
+            print("Sent \(sentAndReceived.sent)")
+            print("Received \(sentAndReceived.received)")
+        }
     }
     
     func testBroadcastTransaction() throws {

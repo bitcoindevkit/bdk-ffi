@@ -99,6 +99,13 @@ impl Wallet {
         let (sent, received): (u64, u64) = self.get_wallet().sent_and_received(&tx.clone().into());
         SentAndReceivedValues { sent, received }
     }
+
+    pub fn transactions(&self) -> Vec<Arc<Transaction>> {
+        self.get_wallet()
+            .transactions()
+            .map(|tx| Arc::new(tx.tx_node.tx.clone().into()))
+            .collect()
+    }
 }
 
 pub struct SentAndReceivedValues {

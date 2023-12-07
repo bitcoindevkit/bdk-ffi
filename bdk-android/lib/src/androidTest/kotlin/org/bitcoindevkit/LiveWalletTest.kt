@@ -19,6 +19,15 @@ class LiveWalletTest {
         println("Balance: $balance")
 
         assert(wallet.getBalance().total > 0uL)
+
+        println("Transactions count: ${wallet.transactions().count()}")
+        val transactions = wallet.transactions().take(3)
+        for (tx in transactions) {
+            val sentAndReceived = wallet.sentAndReceived(tx)
+            println("Transaction: ${tx.txid()}")
+            println("Sent ${sentAndReceived.sent}")
+            println("Received ${sentAndReceived.received}")
+        }
     }
 
     @Test

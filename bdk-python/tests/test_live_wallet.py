@@ -5,7 +5,7 @@ class TestLiveWallet(unittest.TestCase):
 
     def test_synced_balance(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(
-            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
+            "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
             bdk.Network.TESTNET
         )
         wallet: bdk.Wallet = bdk.Wallet.new_no_persist(
@@ -22,6 +22,15 @@ class TestLiveWallet(unittest.TestCase):
         wallet.apply_update(update)
 
         self.assertGreater(wallet.get_balance().total, 0)
+
+        print(f"Transactions count: {len(wallet.transactions())}")
+        transactions = wallet.transactions()[:3]
+        for tx in transactions:
+            sent_and_received = wallet.sent_and_received(tx)
+            print(f"Transaction: {tx.txid()}")
+            print(f"Sent {sent_and_received.sent}")
+            print(f"Received {sent_and_received.received}")
+
 
     def test_broadcast_transaction(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(

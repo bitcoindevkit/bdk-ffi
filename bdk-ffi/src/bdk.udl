@@ -109,6 +109,8 @@ interface Wallet {
   boolean sign(PartiallySignedTransaction psbt);
 
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
+
+  sequence<Transaction> transactions();
 };
 
 interface Update {};
