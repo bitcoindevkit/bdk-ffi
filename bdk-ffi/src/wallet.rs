@@ -1,16 +1,16 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
-use crate::types::{Balance, RbfValue};
 use crate::types::ScriptAmount;
+use crate::types::{Balance, RbfValue};
 use crate::Script;
 use crate::{AddressIndex, AddressInfo, Network};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence};
+use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::Update as BdkUpdate;
 use bdk::{Error as BdkError, FeeRate};
 use bdk::{SignOptions, Wallet as BdkWallet};
-use bdk::wallet::tx_builder::ChangeSpendPolicy;
 
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -461,15 +461,15 @@ impl TxBuilder {
         })
     }
 
-    //     /// Enable signaling RBF with a specific nSequence value. This can cause conflicts if the wallet's descriptors contain an
-    //     /// "older" (OP_CSV) operator and the given `nsequence` is lower than the CSV value. If the `nsequence` is higher than `0xFFFFFFFD`
-    //     /// an error will be thrown, since it would not be a valid nSequence to signal RBF.
-    //     pub(crate) fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             rbf: Some(RbfValue::Value(nsequence)),
-    //             ..self.clone()
-    //         })
-    //     }
+    /// Enable signaling RBF with a specific nSequence value. This can cause conflicts if the wallet's descriptors contain an
+    /// "older" (OP_CSV) operator and the given `nsequence` is lower than the CSV value. If the `nsequence` is higher than `0xFFFFFFFD`
+    /// an error will be thrown, since it would not be a valid nSequence to signal RBF.
+    pub(crate) fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            rbf: Some(RbfValue::Value(nsequence)),
+            ..self.clone()
+        })
+    }
 
     /// Add data as an output using OP_RETURN.
     // pub(crate) fn add_data(&self, data: Vec<u8>) -> Arc<Self> {

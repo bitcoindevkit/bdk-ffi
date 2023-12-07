@@ -144,6 +144,8 @@ interface TxBuilder {
 
   TxBuilder enable_rbf();
 
+  TxBuilder enable_rbf_with_sequence(u32 nsequence);
+
   [Throws=BdkError]
   PartiallySignedTransaction finish([ByRef] Wallet wallet);
 };
