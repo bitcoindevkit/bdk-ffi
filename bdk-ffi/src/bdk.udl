@@ -140,6 +140,8 @@ interface TxBuilder {
 
   TxBuilder drain_wallet();
 
+  TxBuilder drain_to(Script script);
+
   [Throws=BdkError]
   PartiallySignedTransaction finish([ByRef] Wallet wallet);
 };
