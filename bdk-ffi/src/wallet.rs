@@ -356,6 +356,15 @@ impl TxBuilder {
         })
     }
 
+    /// Replace the internal list of unspendable utxos with a new list. It’s important to note that the "must-be-spent" utxos added with
+    /// TxBuilder.addUtxo have priority over these. See the Rust docs of the two linked methods for more details.
+    pub(crate) fn unspendable(&self, unspendable: Vec<OutPoint>) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            unspendable: unspendable.into_iter().collect(),
+            ..self.clone()
+        })
+    }
+
     /// Add an outpoint to the internal list of UTXOs that must be spent. These have priority over the "unspendable"
     /// utxos, meaning that if a utxo is present both in the "utxos" and the "unspendable" list, it will be spent.
     pub(crate) fn add_utxo(&self, outpoint: OutPoint) -> Arc<Self> {
@@ -405,15 +414,6 @@ impl TxBuilder {
             ..self.clone()
         })
     }
-
-    //     /// Replace the internal list of unspendable utxos with a new list. It’s important to note that the "must-be-spent" utxos added with
-    //     /// TxBuilder.addUtxo have priority over these. See the Rust docs of the two linked methods for more details.
-    //     pub(crate) fn unspendable(&self, unspendable: Vec<OutPoint>) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             unspendable: unspendable.into_iter().collect(),
-    //             ..self.clone()
-    //         })
-    //     }
 
     /// Set a custom fee rate.
     pub(crate) fn fee_rate(&self, sat_per_vb: f32) -> Arc<Self> {
@@ -497,11 +497,11 @@ impl TxBuilder {
             let utxos: &[BdkOutPoint] = &bdk_utxos;
             tx_builder.add_utxos(utxos)?;
         }
-        // if !self.unspendable.is_empty() {
-        //     let bdk_unspendable: Vec<BdkOutPoint> =
-        //         self.unspendable.iter().map(BdkOutPoint::from).collect();
-        //     tx_builder.unspendable(bdk_unspendable);
-        // }
+        if !self.unspendable.is_empty() {
+            let bdk_unspendable: Vec<BdkOutPoint> =
+                self.unspendable.iter().map(BdkOutPoint::from).collect();
+            tx_builder.unspendable(bdk_unspendable);
+        }
         if self.manually_selected_only {
             tx_builder.manually_selected_only();
         }

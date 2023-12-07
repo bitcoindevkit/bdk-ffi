@@ -122,6 +122,8 @@ interface TxBuilder {
 
   TxBuilder add_unspendable(OutPoint unspendable);
 
+  TxBuilder unspendable(sequence<OutPoint> unspendable);
+
   TxBuilder add_utxo(OutPoint outpoint);
 
   TxBuilder change_policy(ChangeSpendPolicy change_policy);
