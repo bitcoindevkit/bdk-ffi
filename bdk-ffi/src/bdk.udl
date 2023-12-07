@@ -134,6 +134,8 @@ interface TxBuilder {
 
   TxBuilder fee_rate(float sat_per_vbyte);
 
+  TxBuilder fee_absolute(u64 fee);
+
   TxBuilder drain_wallet();
 
   [Throws=BdkError]

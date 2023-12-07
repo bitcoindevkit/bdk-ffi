@@ -299,7 +299,7 @@ pub struct TxBuilder {
     pub(crate) change_policy: ChangeSpendPolicy,
     pub(crate) manually_selected_only: bool,
     pub(crate) fee_rate: Option<f32>,
-    // pub(crate) fee_absolute: Option<u64>,
+    pub(crate) fee_absolute: Option<u64>,
     pub(crate) drain_wallet: bool,
     // pub(crate) drain_to: Option<BdkScript>,
     // pub(crate) rbf: Option<RbfValue>,
@@ -315,7 +315,7 @@ impl TxBuilder {
             change_policy: ChangeSpendPolicy::ChangeAllowed,
             manually_selected_only: false,
             fee_rate: None,
-            // fee_absolute: None,
+            fee_absolute: None,
             drain_wallet: false,
             // drain_to: None,
             // rbf: None,
@@ -423,13 +423,13 @@ impl TxBuilder {
         })
     }
 
-    //     /// Set an absolute fee.
-    //     pub(crate) fn fee_absolute(&self, fee_amount: u64) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             fee_absolute: Some(fee_amount),
-    //             ..self.clone()
-    //         })
-    //     }
+    /// Set an absolute fee.
+    pub(crate) fn fee_absolute(&self, fee_amount: u64) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            fee_absolute: Some(fee_amount),
+            ..self.clone()
+        })
+    }
 
     /// Spend all the available inputs. This respects filters like TxBuilder.unspendable and the change policy.
     pub(crate) fn drain_wallet(&self) -> Arc<Self> {
@@ -508,9 +508,9 @@ impl TxBuilder {
         if let Some(sat_per_vb) = self.fee_rate {
             tx_builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
         }
-        // if let Some(fee_amount) = self.fee_absolute {
-        //     tx_builder.fee_absolute(fee_amount);
-        // }
+        if let Some(fee_amount) = self.fee_absolute {
+            tx_builder.fee_absolute(fee_amount);
+        }
         if self.drain_wallet {
             tx_builder.drain_wallet();
         }
