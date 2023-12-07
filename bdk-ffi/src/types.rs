@@ -146,9 +146,3 @@ impl From<BdkLocalUtxo> for LocalUtxo {
         }
     }
 }
-
-#[derive(Clone, Debug)]
-pub enum RbfValue {
-    Default,
-    Value(u32),
-}

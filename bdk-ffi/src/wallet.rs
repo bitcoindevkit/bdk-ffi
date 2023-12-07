@@ -1,18 +1,20 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
+use crate::types::Balance;
 use crate::types::ScriptAmount;
-use crate::types::{Balance, RbfValue};
 use crate::Script;
 use crate::{AddressIndex, AddressInfo, Network};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
-use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence};
+use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
+use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::Update as BdkUpdate;
 use bdk::{Error as BdkError, FeeRate};
 use bdk::{SignOptions, Wallet as BdkWallet};
 
 use std::collections::HashSet;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 #[derive(Debug)]
@@ -530,8 +532,6 @@ impl TxBuilder {
         //     tx_builder.add_data(self.data.as_slice());
         // }
 
-        // tx_builder.finish().map(|psbt| psbt.serialize_hex())
-        // tx_builder.finish().into()
         let psbt = tx_builder.finish()?;
 
         Ok(Arc::new(psbt.into()))
@@ -539,93 +539,90 @@ impl TxBuilder {
 }
 
 // /// The BumpFeeTxBuilder is used to bump the fee on a transaction that has been broadcast and has its RBF flag set to true.
-// #[derive(Clone)]
-// pub(crate) struct BumpFeeTxBuilder {
-//     pub(crate) txid: String,
-//     pub(crate) fee_rate: f32,
-//     pub(crate) allow_shrinking: Option<String>,
-//     pub(crate) rbf: Option<RbfValue>,
-// }
-//
-// impl BumpFeeTxBuilder {
-//     pub(crate) fn new(txid: String, fee_rate: f32) -> Self {
-//         Self {
-//             txid,
-//             fee_rate,
-//             allow_shrinking: None,
-//             rbf: None,
-//         }
-//     }
-//
-//     /// Explicitly tells the wallet that it is allowed to reduce the amount of the output matching this script_pubkey
-//     /// in order to bump the transaction fee. Without specifying this the wallet will attempt to find a change output to
-//     /// shrink instead. Note that the output may shrink to below the dust limit and therefore be removed. If it is preserved
-//     /// then it is currently not guaranteed to be in the same position as it was originally. Returns an error if script_pubkey
-//     /// can’t be found among the recipients of the transaction we are bumping.
-//     pub(crate) fn allow_shrinking(&self, address: String) -> Arc<Self> {
-//         Arc::new(Self {
-//             allow_shrinking: Some(address),
-//             ..self.clone()
-//         })
-//     }
-//
-//     /// Enable signaling RBF. This will use the default `nsequence` value of `0xFFFFFFFD`.
-//     pub(crate) fn enable_rbf(&self) -> Arc<Self> {
-//         Arc::new(Self {
-//             rbf: Some(RbfValue::Default),
-//             ..self.clone()
-//         })
-//     }
-//
-//     /// Enable signaling RBF with a specific nSequence value. This can cause conflicts if the wallet's descriptors contain an
-//     /// "older" (OP_CSV) operator and the given `nsequence` is lower than the CSV value. If the `nsequence` is higher than `0xFFFFFFFD`
-//     /// an error will be thrown, since it would not be a valid nSequence to signal RBF.
-//     pub(crate) fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
-//         Arc::new(Self {
-//             rbf: Some(RbfValue::Value(nsequence)),
-//             ..self.clone()
-//         })
-//     }
-//
-//     /// Finish building the transaction. Returns the BIP174 PSBT.
-//     pub(crate) fn finish(
-//         &self,
-//         wallet: &Wallet,
-//     ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
-//         let wallet = wallet.get_wallet();
-//         let txid = Txid::from_str(self.txid.as_str())?;
-//         let mut tx_builder = wallet.build_fee_bump(txid)?;
-//         tx_builder.fee_rate(FeeRate::from_sat_per_vb(self.fee_rate));
-//         if let Some(allow_shrinking) = &self.allow_shrinking {
-//             let address = BdkAddress::from_str(allow_shrinking)
-//                 .map_err(|e| BdkError::Generic(e.to_string()))?;
-//             let script = address.script_pubkey();
-//             tx_builder.allow_shrinking(script)?;
-//         }
-//         if let Some(rbf) = &self.rbf {
-//             match *rbf {
-//                 RbfValue::Default => {
-//                     tx_builder.enable_rbf();
-//                 }
-//                 RbfValue::Value(nsequence) => {
-//                     tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
-//                 }
-//             }
-//         }
-//         tx_builder
-//             .finish()
-//             .map(|(psbt, _)| PartiallySignedTransaction {
-//                 inner: Mutex::new(psbt),
-//             })
-//             .map(Arc::new)
-//     }
-// }
+#[derive(Clone)]
+pub(crate) struct BumpFeeTxBuilder {
+    pub(crate) txid: String,
+    pub(crate) fee_rate: f32,
+    pub(crate) allow_shrinking: Option<Arc<Script>>,
+    pub(crate) rbf: Option<RbfValue>,
+}
 
-// #[derive(Clone, Debug)]
-// enum RbfValue {
-//     Default,
-//     Value(u32),
-// }
+impl BumpFeeTxBuilder {
+    pub(crate) fn new(txid: String, fee_rate: f32) -> Self {
+        Self {
+            txid,
+            fee_rate,
+            allow_shrinking: None,
+            rbf: None,
+        }
+    }
+
+    /// Explicitly tells the wallet that it is allowed to reduce the amount of the output matching this script_pubkey
+    /// in order to bump the transaction fee. Without specifying this the wallet will attempt to find a change output to
+    /// shrink instead. Note that the output may shrink to below the dust limit and therefore be removed. If it is preserved
+    /// then it is currently not guaranteed to be in the same position as it was originally. Returns an error if script_pubkey
+    /// can’t be found among the recipients of the transaction we are bumping.
+    pub(crate) fn allow_shrinking(&self, script_pubkey: Arc<Script>) -> Arc<Self> {
+        Arc::new(Self {
+            allow_shrinking: Some(script_pubkey),
+            ..self.clone()
+        })
+    }
+
+    /// Enable signaling RBF. This will use the default `nsequence` value of `0xFFFFFFFD`.
+    pub(crate) fn enable_rbf(&self) -> Arc<Self> {
+        Arc::new(Self {
+            rbf: Some(RbfValue::Default),
+            ..self.clone()
+        })
+    }
+
+    /// Enable signaling RBF with a specific nSequence value. This can cause conflicts if the wallet's descriptors contain an
+    /// "older" (OP_CSV) operator and the given `nsequence` is lower than the CSV value. If the `nsequence` is higher than `0xFFFFFFFD`
+    /// an error will be thrown, since it would not be a valid nSequence to signal RBF.
+    pub(crate) fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
+        Arc::new(Self {
+            rbf: Some(RbfValue::Value(nsequence)),
+            ..self.clone()
+        })
+    }
+
+    /// Finish building the transaction. Returns the BIP174 PSBT.
+    pub(crate) fn finish(
+        &self,
+        wallet: &Wallet,
+    ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
+        let txid =
+            Txid::from_str(self.txid.as_str()).map_err(|e| BdkError::Generic(e.to_string()))?;
+        let mut wallet = wallet.get_wallet();
+        let mut tx_builder = wallet.build_fee_bump(txid)?;
+        tx_builder.fee_rate(FeeRate::from_sat_per_vb(self.fee_rate));
+        if let Some(allow_shrinking) = &self.allow_shrinking {
+            tx_builder.allow_shrinking(allow_shrinking.0.clone())?;
+        }
+        if let Some(rbf) = &self.rbf {
+            match *rbf {
+                RbfValue::Default => {
+                    tx_builder.enable_rbf();
+                }
+                RbfValue::Value(nsequence) => {
+                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
+                }
+            }
+        }
+        let psbt: BdkPartiallySignedTransaction = tx_builder
+            .finish()
+            .map_err(|e| BdkError::Generic(e.to_string()))?;
+
+        Ok(Arc::new(psbt.into()))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum RbfValue {
+    Default,
+    Value(u32),
+}
 
 // // The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.
 // // These tests should not be used to verify `bdk` behavior that is already tested in the `bdk`

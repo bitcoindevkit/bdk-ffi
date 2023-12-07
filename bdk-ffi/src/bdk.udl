@@ -150,6 +150,19 @@ interface TxBuilder {
   PartiallySignedTransaction finish([ByRef] Wallet wallet);
 };
 
+interface BumpFeeTxBuilder {
+  constructor(string txid, f32 fee_rate);
+
+  BumpFeeTxBuilder allow_shrinking(Script script_pubkey);
+
+  BumpFeeTxBuilder enable_rbf();
+
+  BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
+
+  [Throws=BdkError]
+  PartiallySignedTransaction finish([ByRef] Wallet wallet);
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - descriptor module
 // ------------------------------------------------------------------------

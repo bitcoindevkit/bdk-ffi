@@ -23,6 +23,7 @@ use crate::types::AddressInfo;
 use crate::types::Balance;
 use crate::types::LocalUtxo;
 use crate::types::ScriptAmount;
+use crate::wallet::BumpFeeTxBuilder;
 use crate::wallet::SentAndReceivedValues;
 use crate::wallet::TxBuilder;
 use crate::wallet::Update;
