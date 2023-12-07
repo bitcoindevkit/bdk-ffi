@@ -1,19 +1,18 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
-use crate::types::Balance;
+use crate::types::{Balance, RbfValue};
 use crate::types::ScriptAmount;
 use crate::Script;
 use crate::{AddressIndex, AddressInfo, Network};
-use std::collections::HashSet;
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
-use bdk::bitcoin::OutPoint as BdkOutPoint;
+use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence};
 use bdk::wallet::Update as BdkUpdate;
 use bdk::{Error as BdkError, FeeRate};
 use bdk::{SignOptions, Wallet as BdkWallet};
-
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 
+use std::collections::HashSet;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 #[derive(Debug)]
@@ -302,7 +301,7 @@ pub struct TxBuilder {
     pub(crate) fee_absolute: Option<u64>,
     pub(crate) drain_wallet: bool,
     pub(crate) drain_to: Option<BdkScriptBuf>,
-    // pub(crate) rbf: Option<RbfValue>,
+    pub(crate) rbf: Option<RbfValue>,
     // pub(crate) data: Vec<u8>,
 }
 
@@ -318,7 +317,7 @@ impl TxBuilder {
             fee_absolute: None,
             drain_wallet: false,
             drain_to: None,
-            // rbf: None,
+            rbf: None,
             // data: Vec::new(),
         }
     }
@@ -453,15 +452,15 @@ impl TxBuilder {
             ..self.clone()
         })
     }
-    //
-    //     /// Enable signaling RBF. This will use the default `nsequence` value of `0xFFFFFFFD`.
-    //     pub(crate) fn enable_rbf(&self) -> Arc<Self> {
-    //         Arc::new(TxBuilder {
-    //             rbf: Some(RbfValue::Default),
-    //             ..self.clone()
-    //         })
-    //     }
-    //
+
+    /// Enable signaling RBF. This will use the default `nsequence` value of `0xFFFFFFFD`.
+    pub(crate) fn enable_rbf(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            rbf: Some(RbfValue::Default),
+            ..self.clone()
+        })
+    }
+
     //     /// Enable signaling RBF with a specific nSequence value. This can cause conflicts if the wallet's descriptors contain an
     //     /// "older" (OP_CSV) operator and the given `nsequence` is lower than the CSV value. If the `nsequence` is higher than `0xFFFFFFFD`
     //     /// an error will be thrown, since it would not be a valid nSequence to signal RBF.
@@ -517,16 +516,16 @@ impl TxBuilder {
         if let Some(script) = &self.drain_to {
             tx_builder.drain_to(script.clone());
         }
-        // if let Some(rbf) = &self.rbf {
-        //     match *rbf {
-        //         RbfValue::Default => {
-        //             tx_builder.enable_rbf();
-        //         }
-        //         RbfValue::Value(nsequence) => {
-        //             tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
-        //         }
-        //     }
-        // }
+        if let Some(rbf) = &self.rbf {
+            match *rbf {
+                RbfValue::Default => {
+                    tx_builder.enable_rbf();
+                }
+                RbfValue::Value(nsequence) => {
+                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
+                }
+            }
+        }
         // if !&self.data.is_empty() {
         //     tx_builder.add_data(self.data.as_slice());
         // }

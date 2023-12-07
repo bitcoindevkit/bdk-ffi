@@ -142,6 +142,8 @@ interface TxBuilder {
 
   TxBuilder drain_to(Script script);
 
+  TxBuilder enable_rbf();
+
   [Throws=BdkError]
   PartiallySignedTransaction finish([ByRef] Wallet wallet);
 };
