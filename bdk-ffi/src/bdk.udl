@@ -118,7 +118,7 @@ interface TxBuilder {
 
   TxBuilder add_recipient(Script script, u64 amount);
 
-  TxBuilder set_recipients(sequence<ScriptAmount> script_amount);
+  TxBuilder set_recipients(sequence<ScriptAmount> recipients);
 
   TxBuilder add_unspendable(OutPoint unspendable);
 
