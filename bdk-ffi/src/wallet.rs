@@ -70,7 +70,7 @@ impl Wallet {
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
-    pub fn is_mine(&self, script: Arc<Script>) -> bool {
+    pub fn is_mine(&self, script: &Script) -> bool {
         // TODO: Both of the following lines work. Which is better?
         self.get_wallet().is_mine(&script.0)
         // self.get_wallet().is_mine(script.0.clone().as_script())
@@ -332,7 +332,7 @@ impl TxBuilder {
     }
 
     /// Add a recipient to the internal list.
-    pub(crate) fn add_recipient(&self, script: Arc<Script>, amount: u64) -> Arc<Self> {
+    pub(crate) fn add_recipient(&self, script: &Script, amount: u64) -> Arc<Self> {
         let mut recipients: Vec<(BdkScriptBuf, u64)> = self.recipients.clone();
         recipients.append(&mut vec![(script.0.clone(), amount)]);
 
@@ -455,7 +455,7 @@ impl TxBuilder {
     /// either provide the utxos that the transaction should spend via add_utxos, or set drain_wallet to spend all of them.
     /// When bumping the fees of a transaction made with this option, you probably want to use BumpFeeTxBuilder.allow_shrinking
     /// to allow this output to be reduced to pay for the extra fees.
-    pub(crate) fn drain_to(&self, script: Arc<Script>) -> Arc<Self> {
+    pub(crate) fn drain_to(&self, script: &Script) -> Arc<Self> {
         Arc::new(TxBuilder {
             drain_to: Some(script.0.clone()),
             ..self.clone()

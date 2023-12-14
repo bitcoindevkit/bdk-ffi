@@ -15,7 +15,6 @@ use bdk::Error as BdkError;
 use bdk::KeychainKind;
 
 use std::str::FromStr;
-use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Descriptor {
@@ -35,7 +34,7 @@ impl Descriptor {
     }
 
     pub(crate) fn new_bip44(
-        secret_key: Arc<DescriptorSecretKey>,
+        secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
@@ -62,7 +61,7 @@ impl Descriptor {
     }
 
     pub(crate) fn new_bip44_public(
-        public_key: Arc<DescriptorPublicKey>,
+        public_key: &DescriptorPublicKey,
         fingerprint: String,
         keychain_kind: KeychainKind,
         network: Network,
@@ -93,7 +92,7 @@ impl Descriptor {
     }
 
     pub(crate) fn new_bip49(
-        secret_key: Arc<DescriptorSecretKey>,
+        secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
@@ -120,7 +119,7 @@ impl Descriptor {
     }
 
     pub(crate) fn new_bip49_public(
-        public_key: Arc<DescriptorPublicKey>,
+        public_key: &DescriptorPublicKey,
         fingerprint: String,
         keychain_kind: KeychainKind,
         network: Network,
@@ -151,7 +150,7 @@ impl Descriptor {
     }
 
     pub(crate) fn new_bip84(
-        secret_key: Arc<DescriptorSecretKey>,
+        secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
@@ -178,7 +177,7 @@ impl Descriptor {
     }
 
     pub(crate) fn new_bip84_public(
-        public_key: Arc<DescriptorPublicKey>,
+        public_key: &DescriptorPublicKey,
         fingerprint: String,
         keychain_kind: KeychainKind,
         network: Network,
@@ -209,7 +208,7 @@ impl Descriptor {
     }
 
     pub(crate) fn new_bip86(
-        secret_key: Arc<DescriptorSecretKey>,
+        secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
@@ -236,7 +235,7 @@ impl Descriptor {
     }
 
     pub(crate) fn new_bip86_public(
-        public_key: Arc<DescriptorPublicKey>,
+        public_key: &DescriptorPublicKey,
         fingerprint: String,
         keychain_kind: KeychainKind,
         network: Network,
@@ -288,83 +287,73 @@ mod test {
     use bdk::descriptor::DescriptorError::Key;
     use bdk::keys::KeyError::InvalidNetwork;
 
-    use std::sync::Arc;
-
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
-        DescriptorSecretKey::new(Network::Testnet, Arc::new(mnemonic), None)
+        DescriptorSecretKey::new(Network::Testnet, &mnemonic, None)
     }
 
     #[test]
     fn test_descriptor_templates() {
-        let master: Arc<DescriptorSecretKey> = Arc::new(get_descriptor_secret_key());
+        let master: DescriptorSecretKey = get_descriptor_secret_key();
         println!("Master: {:?}", master.as_string());
         // tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h
         let handmade_public_44 = master
-            .derive(Arc::new(
-                DerivationPath::new("m/44h/1h/0h".to_string()).unwrap(),
-            ))
+            .derive(&DerivationPath::new("m/44h/1h/0h".to_string()).unwrap())
             .unwrap()
             .as_public();
         println!("Public 44: {}", handmade_public_44.as_string());
         // Public 44: [d1d04177/44'/1'/0']tpubDCoPjomfTqh1e7o1WgGpQtARWtkueXQAepTeNpWiitS3Sdv8RKJ1yvTrGHcwjDXp2SKyMrTEca4LoN7gEUiGCWboyWe2rz99Kf4jK4m2Zmx/*
         let handmade_public_49 = master
-            .derive(Arc::new(
-                DerivationPath::new("m/49h/1h/0h".to_string()).unwrap(),
-            ))
+            .derive(&DerivationPath::new("m/49h/1h/0h".to_string()).unwrap())
             .unwrap()
             .as_public();
         println!("Public 49: {}", handmade_public_49.as_string());
         // Public 49: [d1d04177/49'/1'/0']tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR/*
         let handmade_public_84 = master
-            .derive(Arc::new(
-                DerivationPath::new("m/84h/1h/0h".to_string()).unwrap(),
-            ))
+            .derive(&DerivationPath::new("m/84h/1h/0h".to_string()).unwrap())
             .unwrap()
             .as_public();
         println!("Public 84: {}", handmade_public_84.as_string());
         // Public 84: [d1d04177/84'/1'/0']tpubDDNxbq17egjFk2edjv8oLnzxk52zny9aAYNv9CMqTzA4mQDiQq818sEkNe9Gzmd4QU8558zftqbfoVBDQorG3E4Wq26tB2JeE4KUoahLkx6/*
         let handmade_public_86 = master
-            .derive(Arc::new(
-                DerivationPath::new("m/86h/1h/0h".to_string()).unwrap(),
-            ))
+            .derive(&DerivationPath::new("m/86h/1h/0h".to_string()).unwrap())
             .unwrap()
             .as_public();
         println!("Public 86: {}", handmade_public_86.as_string());
         // Public 86: [d1d04177/86'/1'/0']tpubDCJzjbcGbdEfXMWaL6QmgVmuSfXkrue7m2YNoacWwyc7a2XjXaKojRqNEbo41CFL3PyYmKdhwg2fkGpLX4SQCbQjCGxAkWHJTw9WEeenrJb/*
         let template_private_44 =
-            Descriptor::new_bip44(master.clone(), KeychainKind::External, Network::Testnet);
+            Descriptor::new_bip44(&master, KeychainKind::External, Network::Testnet);
         let template_private_49 =
-            Descriptor::new_bip49(master.clone(), KeychainKind::External, Network::Testnet);
+            Descriptor::new_bip49(&master, KeychainKind::External, Network::Testnet);
         let template_private_84 =
-            Descriptor::new_bip84(master.clone(), KeychainKind::External, Network::Testnet);
+            Descriptor::new_bip84(&master, KeychainKind::External, Network::Testnet);
         let template_private_86 =
-            Descriptor::new_bip86(master, KeychainKind::External, Network::Testnet);
+            Descriptor::new_bip86(&master, KeychainKind::External, Network::Testnet);
         // the extended public keys are the same when creating them manually as they are with the templates
         println!("Template 49: {}", template_private_49.as_string());
         println!("Template 44: {}", template_private_44.as_string());
         println!("Template 84: {}", template_private_84.as_string());
         println!("Template 86: {}", template_private_86.as_string());
         let template_public_44 = Descriptor::new_bip44_public(
-            handmade_public_44,
+            &handmade_public_44,
             "d1d04177".to_string(),
             KeychainKind::External,
             Network::Testnet,
         );
         let template_public_49 = Descriptor::new_bip49_public(
-            handmade_public_49,
+            &handmade_public_49,
             "d1d04177".to_string(),
             KeychainKind::External,
             Network::Testnet,
         );
         let template_public_84 = Descriptor::new_bip84_public(
-            handmade_public_84,
+            &handmade_public_84,
             "d1d04177".to_string(),
             KeychainKind::External,
             Network::Testnet,
         );
         let template_public_86 = Descriptor::new_bip86_public(
-            handmade_public_86,
+            &handmade_public_86,
             "d1d04177".to_string(),
             KeychainKind::External,
             Network::Testnet,

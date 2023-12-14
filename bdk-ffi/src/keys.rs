@@ -79,7 +79,7 @@ pub struct DescriptorSecretKey {
 }
 
 impl DescriptorSecretKey {
-    pub(crate) fn new(network: Network, mnemonic: Arc<Mnemonic>, password: Option<String>) -> Self {
+    pub(crate) fn new(network: Network, mnemonic: &Mnemonic, password: Option<String>) -> Self {
         let mnemonic = mnemonic.inner.clone();
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key().unwrap();
         let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
@@ -101,7 +101,7 @@ impl DescriptorSecretKey {
         })
     }
 
-    pub(crate) fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
+    pub(crate) fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, BdkError> {
         let secp = Secp256k1::new();
         let descriptor_secret_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
@@ -131,7 +131,7 @@ impl DescriptorSecretKey {
         }
     }
 
-    pub(crate) fn extend(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
+    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, BdkError> {
         let descriptor_secret_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_secret_key {
@@ -201,7 +201,7 @@ impl DescriptorPublicKey {
         })
     }
 
-    pub(crate) fn derive(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
+    pub(crate) fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, BdkError> {
         let secp = Secp256k1::new();
         let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
@@ -232,7 +232,7 @@ impl DescriptorPublicKey {
         }
     }
 
-    pub(crate) fn extend(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
+    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, BdkError> {
         let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_public_key {
@@ -261,7 +261,7 @@ impl DescriptorPublicKey {
         self.inner.to_string()
     }
 }
-//
+
 // // The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.
 // // These tests should not be used to verify `bdk` behavior that is already tested in the `bdk`
 // // crate.
@@ -275,39 +275,39 @@ mod test {
 
     fn get_inner() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
-        DescriptorSecretKey::new(Network::Testnet.into(), Arc::new(mnemonic), None)
+        DescriptorSecretKey::new(Network::Testnet.into(), &mnemonic, None)
     }
 
     fn derive_dsk(
         key: &DescriptorSecretKey,
         path: &str,
     ) -> Result<Arc<DescriptorSecretKey>, BdkError> {
-        let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
-        key.derive(path)
+        let path = DerivationPath::new(path.to_string()).unwrap();
+        key.derive(&path)
     }
 
     fn extend_dsk(
         key: &DescriptorSecretKey,
         path: &str,
     ) -> Result<Arc<DescriptorSecretKey>, BdkError> {
-        let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
-        key.extend(path)
+        let path = DerivationPath::new(path.to_string()).unwrap();
+        key.extend(&path)
     }
 
     fn derive_dpk(
         key: &DescriptorPublicKey,
         path: &str,
     ) -> Result<Arc<DescriptorPublicKey>, BdkError> {
-        let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
-        key.derive(path)
+        let path = DerivationPath::new(path.to_string()).unwrap();
+        key.derive(&path)
     }
 
     fn extend_dpk(
         key: &DescriptorPublicKey,
         path: &str,
     ) -> Result<Arc<DescriptorPublicKey>, BdkError> {
-        let path = Arc::new(DerivationPath::new(path.to_string()).unwrap());
-        key.extend(path)
+        let path = DerivationPath::new(path.to_string()).unwrap();
+        key.extend(&path)
     }
 
     #[test]
@@ -347,7 +347,7 @@ mod test {
         assert_eq!(extended_dpk.as_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/0/*");
         let wif = "L2wTu6hQrnDMiFNWA5na6jB12ErGQqtXwqpSL7aWquJaZG8Ai3ch";
         let extended_key = DescriptorSecretKey::from_string(wif.to_string()).unwrap();
-        let result = extended_key.derive(Arc::new(DerivationPath::new("m/0".to_string()).unwrap()));
+        let result = extended_key.derive(&DerivationPath::new("m/0".to_string()).unwrap());
         dbg!(&result);
         assert!(result.is_err());
     }

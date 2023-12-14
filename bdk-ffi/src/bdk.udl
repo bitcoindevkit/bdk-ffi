@@ -100,7 +100,7 @@ interface Wallet {
 
   Balance get_balance();
 
-  boolean is_mine(Script script);
+  boolean is_mine([ByRef] Script script);
 
   [Throws=BdkError]
   void apply_update(Update update);
@@ -118,7 +118,7 @@ interface Update {};
 interface TxBuilder {
   constructor();
 
-  TxBuilder add_recipient(Script script, u64 amount);
+  TxBuilder add_recipient([ByRef] Script script, u64 amount);
 
   TxBuilder set_recipients(sequence<ScriptAmount> recipients);
 
@@ -142,7 +142,7 @@ interface TxBuilder {
 
   TxBuilder drain_wallet();
 
-  TxBuilder drain_to(Script script);
+  TxBuilder drain_to([ByRef] Script script);
 
   TxBuilder enable_rbf();
 
@@ -187,16 +187,16 @@ interface DerivationPath {
 };
 
 interface DescriptorSecretKey {
-  constructor(Network network, Mnemonic mnemonic, string? password);
+  constructor(Network network, [ByRef] Mnemonic mnemonic, string? password);
 
   [Name=from_string, Throws=BdkError]
   constructor(string secret_key);
 
   [Throws=BdkError]
-  DescriptorSecretKey derive(DerivationPath path);
+  DescriptorSecretKey derive([ByRef] DerivationPath path);
 
   [Throws=BdkError]
-  DescriptorSecretKey extend(DerivationPath path);
+  DescriptorSecretKey extend([ByRef] DerivationPath path);
 
   DescriptorPublicKey as_public();
 
@@ -210,10 +210,10 @@ interface DescriptorPublicKey {
   constructor(string public_key);
 
   [Throws=BdkError]
-  DescriptorPublicKey derive(DerivationPath path);
+  DescriptorPublicKey derive([ByRef] DerivationPath path);
 
   [Throws=BdkError]
-  DescriptorPublicKey extend(DerivationPath path);
+  DescriptorPublicKey extend([ByRef] DerivationPath path);
 
   string as_string();
 };
@@ -223,28 +223,28 @@ interface Descriptor {
   constructor(string descriptor, Network network);
 
   [Name=new_bip44]
-  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+  constructor([ByRef] DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
 
   [Name=new_bip44_public]
-  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+  constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
   [Name=new_bip49]
-  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+  constructor([ByRef] DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
 
   [Name=new_bip49_public]
-  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+  constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
   [Name=new_bip84]
-  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+  constructor([ByRef] DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
 
   [Name=new_bip84_public]
-  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+  constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
   [Name=new_bip86]
-  constructor(DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
+  constructor([ByRef] DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
 
   [Name=new_bip86_public]
-  constructor(DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
+  constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
   string as_string();
 
@@ -262,7 +262,7 @@ interface EsploraClient {
   Update scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
 
   [Throws=BdkError]
-  void broadcast(Transaction transaction);
+  void broadcast([ByRef] Transaction transaction);
 };
 
 // ------------------------------------------------------------------------
