@@ -276,9 +276,6 @@ impl Descriptor {
     }
 }
 
-// // The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.
-// // These tests should not be used to verify `bdk` behavior that is already tested in the `bdk`
-// // crate.
 #[cfg(test)]
 mod test {
     use crate::*;

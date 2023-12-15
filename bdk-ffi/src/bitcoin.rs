@@ -14,7 +14,6 @@ use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-/// A Bitcoin script.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Script(pub(crate) BdkScriptBuf);
 
@@ -36,13 +35,9 @@ impl From<BdkScriptBuf> for Script {
 }
 
 pub enum Network {
-    /// Mainnet Bitcoin.
     Bitcoin,
-    /// Bitcoin's testnet network.
     Testnet,
-    /// Bitcoin's signet network.
     Signet,
-    /// Bitcoin's regtest network.
     Regtest,
 }
 
@@ -69,7 +64,6 @@ impl From<BdkNetwork> for Network {
     }
 }
 
-/// A Bitcoin address.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Address {
     inner: BdkAddress<NetworkChecked>,
@@ -141,7 +135,6 @@ impl From<BdkAddress> for Address {
     }
 }
 
-/// A Bitcoin transaction.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction {
     inner: BdkTransaction,
@@ -242,7 +235,6 @@ impl PartiallySignedTransaction {
     //     txid.to_hex()
     // }
 
-    /// Return the transaction.
     pub(crate) fn extract_tx(&self) -> Arc<Transaction> {
         let tx = self.inner.lock().unwrap().clone().extract_tx();
         Arc::new(tx.into())
@@ -293,12 +285,9 @@ impl From<BdkPartiallySignedTransaction> for PartiallySignedTransaction {
     }
 }
 
-/// A reference to a transaction output.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct OutPoint {
-    /// The referenced transaction's txid.
     pub txid: String,
-    /// The index of the referenced output in its transaction's vout.
     pub vout: u32,
 }
 
@@ -311,12 +300,9 @@ impl From<&OutPoint> for BdkOutPoint {
     }
 }
 
-/// A transaction output, which defines new coins to be created from old ones.
 #[derive(Debug, Clone)]
 pub struct TxOut {
-    /// The value of the output, in satoshis.
     pub value: u64,
-    /// The address of the output.
     pub script_pubkey: Arc<Script>,
 }
 

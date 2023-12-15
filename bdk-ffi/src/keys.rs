@@ -18,14 +18,11 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-/// Mnemonic phrases are a human-readable version of the private keys.
-/// Supported number of words are 12, 15, 18, 21 and 24.
 pub(crate) struct Mnemonic {
     inner: BdkMnemonic,
 }
 
 impl Mnemonic {
-    /// Generates Mnemonic with a random entropy
     pub(crate) fn new(word_count: WordCount) -> Self {
         // TODO 4: I DON'T KNOW IF THIS IS A DECENT WAY TO GENERATE ENTROPY PLEASE CONFIRM
         let mut rng = rand::thread_rng();
@@ -38,22 +35,18 @@ impl Mnemonic {
         Mnemonic { inner: mnemonic }
     }
 
-    /// Parse a Mnemonic with given string
     pub(crate) fn from_string(mnemonic: String) -> Result<Self, BdkError> {
         BdkMnemonic::from_str(&mnemonic)
             .map(|m| Mnemonic { inner: m })
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
-    /// Create a new Mnemonic in the specified language from the given entropy.
-    /// Entropy must be a multiple of 32 bits (4 bytes) and 128-256 bits in length.
     pub(crate) fn from_entropy(entropy: Vec<u8>) -> Result<Self, BdkError> {
         BdkMnemonic::from_entropy(entropy.as_slice())
             .map(|m| Mnemonic { inner: m })
             .map_err(|e| BdkError::Generic(e.to_string()))
     }
 
-    /// Returns Mnemonic as string
     pub(crate) fn as_string(&self) -> String {
         self.inner.to_string()
     }
@@ -164,7 +157,6 @@ impl DescriptorSecretKey {
         })
     }
 
-    /// Get the private key as bytes.
     pub(crate) fn secret_bytes(&self) -> Vec<u8> {
         let inner = &self.inner;
         let secret_bytes: Vec<u8> = match inner {
@@ -262,9 +254,6 @@ impl DescriptorPublicKey {
     }
 }
 
-// // The goal of these tests to to ensure `bdk-ffi` intermediate code correctly calls `bdk` APIs.
-// // These tests should not be used to verify `bdk` behavior that is already tested in the `bdk`
-// // crate.
 #[cfg(test)]
 mod test {
     use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
