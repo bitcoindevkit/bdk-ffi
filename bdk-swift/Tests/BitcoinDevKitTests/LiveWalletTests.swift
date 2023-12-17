@@ -69,6 +69,11 @@ final class LiveWalletTests: XCTestCase {
         
         let tx: Transaction = psbt.extractTx()
         print(tx.txid())
+        let fee: UInt64 = try wallet.calculateFee(tx: tx)
+        print("Transaction Fee: \(fee)")
+        let feeRate: FeeRate = try wallet.calculateFeeRate(tx: tx)
+        print("Transaction Fee Rate: \(feeRate.asSatPerVb()) sat/vB")
+        
         try esploraClient.broadcast(transaction: tx)
     }
 }

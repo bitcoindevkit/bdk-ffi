@@ -59,7 +59,7 @@ impl EsploraClient {
     // pub fn sync();
 
     pub fn broadcast(&self, transaction: &Transaction) -> Result<(), BdkError> {
-        let bdk_transaction: BdkTransaction = transaction.clone().into();
+        let bdk_transaction: BdkTransaction = transaction.into();
         self.0
             .broadcast(&bdk_transaction)
             .map_err(|e| BdkError::Generic(e.to_string()))

@@ -1,7 +1,8 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
-use crate::types::Balance;
+use crate::error::CalculateFeeError;
 use crate::types::ScriptAmount;
+use crate::types::{Balance, FeeRate};
 use crate::Script;
 use crate::{AddressIndex, AddressInfo, Network};
 
@@ -10,7 +11,7 @@ use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransact
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::Update as BdkUpdate;
-use bdk::{Error as BdkError, FeeRate};
+use bdk::{Error as BdkError, FeeRate as BdkFeeRate};
 use bdk::{SignOptions, Wallet as BdkWallet};
 
 use std::collections::HashSet;
@@ -88,15 +89,28 @@ impl Wallet {
     }
 
     pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
-        let (sent, received): (u64, u64) = self.get_wallet().sent_and_received(&tx.clone().into());
+        let (sent, received): (u64, u64) = self.get_wallet().sent_and_received(&tx.into());
         SentAndReceivedValues { sent, received }
     }
 
     pub fn transactions(&self) -> Vec<Arc<Transaction>> {
         self.get_wallet()
             .transactions()
-            .map(|tx| Arc::new(tx.tx_node.tx.clone().into()))
+            .map(|tx| Arc::new(tx.tx_node.tx.into()))
             .collect()
+    }
+
+    pub fn calculate_fee(&self, tx: &Transaction) -> Result<u64, CalculateFeeError> {
+        self.get_wallet()
+            .calculate_fee(&tx.into())
+            .map_err(|e| e.into())
+    }
+
+    pub fn calculate_fee_rate(&self, tx: &Transaction) -> Result<Arc<FeeRate>, CalculateFeeError> {
+        self.get_wallet()
+            .calculate_fee_rate(&tx.into())
+            .map(|bdk_fee_rate| Arc::new(FeeRate(bdk_fee_rate)))
+            .map_err(|e| e.into())
     }
 }
 
@@ -473,7 +487,7 @@ impl TxBuilder {
             tx_builder.manually_selected_only();
         }
         if let Some(sat_per_vb) = self.fee_rate {
-            tx_builder.fee_rate(FeeRate::from_sat_per_vb(sat_per_vb));
+            tx_builder.fee_rate(BdkFeeRate::from_sat_per_vb(sat_per_vb));
         }
         if let Some(fee_amount) = self.fee_absolute {
             tx_builder.fee_absolute(fee_amount);
@@ -551,7 +565,7 @@ impl BumpFeeTxBuilder {
             Txid::from_str(self.txid.as_str()).map_err(|e| BdkError::Generic(e.to_string()))?;
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_fee_bump(txid)?;
-        tx_builder.fee_rate(FeeRate::from_sat_per_vb(self.fee_rate));
+        tx_builder.fee_rate(BdkFeeRate::from_sat_per_vb(self.fee_rate));
         if let Some(allow_shrinking) = &self.allow_shrinking {
             tx_builder.allow_shrinking(allow_shrinking.0.clone())?;
         }

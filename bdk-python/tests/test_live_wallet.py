@@ -64,6 +64,11 @@ class TestLiveWallet(unittest.TestCase):
         walletDidSign = wallet.sign(psbt)
         self.assertTrue(walletDidSign)
         tx = psbt.extract_tx()
+        print(f"Transaction Id: {tx.txid}")
+        fee = wallet.calculate_fee(tx)
+        print(f"Transaction Fee: {fee}")
+        fee_rate = wallet.calculate_fee_rate(tx)
+        print(f"Transaction Fee Rate: {fee_rate.as_sat_per_vb()} sat/vB")
         
         esploraClient.broadcast(tx)
     

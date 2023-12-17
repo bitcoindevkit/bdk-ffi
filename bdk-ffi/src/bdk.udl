@@ -82,6 +82,17 @@ enum BdkError {
   "Psbt",
 };
 
+[Error]
+interface CalculateFeeError {
+  MissingTxOut(sequence<OutPoint> out_points);
+  NegativeFee(i64 fee);
+};
+
+interface FeeRate {
+  f32 as_sat_per_vb();
+  f32 sat_per_kwu();
+};
+
 enum ChangeSpendPolicy {
   "ChangeAllowed",
   "OnlyChange",
@@ -111,6 +122,12 @@ interface Wallet {
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
 
   sequence<Transaction> transactions();
+
+  [Throws=CalculateFeeError]
+  u64 calculate_fee([ByRef] Transaction tx);
+
+  [Throws=CalculateFeeError]
+  FeeRate calculate_fee_rate([ByRef] Transaction tx);
 };
 
 interface Update {};

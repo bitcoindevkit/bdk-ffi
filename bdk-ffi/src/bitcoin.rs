@@ -213,9 +213,15 @@ impl From<BdkTransaction> for Transaction {
     }
 }
 
-impl From<Transaction> for BdkTransaction {
-    fn from(tx: Transaction) -> Self {
-        tx.inner
+impl From<&BdkTransaction> for Transaction {
+    fn from(tx: &BdkTransaction) -> Self {
+        Transaction { inner: tx.clone() }
+    }
+}
+
+impl From<&Transaction> for BdkTransaction {
+    fn from(tx: &Transaction) -> Self {
+        tx.inner.clone()
     }
 }
 
@@ -305,6 +311,15 @@ impl From<&OutPoint> for BdkOutPoint {
     fn from(outpoint: &OutPoint) -> Self {
         BdkOutPoint {
             txid: Txid::from_str(&outpoint.txid).unwrap(),
+            vout: outpoint.vout,
+        }
+    }
+}
+
+impl From<&BdkOutPoint> for OutPoint {
+    fn from(outpoint: &BdkOutPoint) -> Self {
+        OutPoint {
+            txid: outpoint.txid.to_string(),
             vout: outpoint.vout,
         }
     }

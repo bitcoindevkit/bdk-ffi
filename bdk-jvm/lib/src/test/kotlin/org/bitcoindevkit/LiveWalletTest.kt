@@ -55,8 +55,14 @@ class LiveWalletTest {
         assertTrue(walletDidSign)
 
         val tx: Transaction = psbt.extractTx()
-
         println("Txid is: ${tx.txid()}")
+
+        val txFee: ULong = wallet.calculateFee(tx)
+        println("Tx fee is: ${txFee}")
+
+        val feeRate: FeeRate = wallet.calculateFeeRate(tx)
+        println("Tx fee rate is: ${feeRate.asSatPerVb()} sat/vB")
+
         esploraClient.broadcast(tx)
     }
 }

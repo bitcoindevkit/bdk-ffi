@@ -7,7 +7,21 @@ use bdk::KeychainKind;
 
 use bdk::LocalUtxo as BdkLocalUtxo;
 
+use bdk::FeeRate as BdkFeeRate;
+
 use std::sync::Arc;
+
+pub struct FeeRate(pub BdkFeeRate);
+
+impl FeeRate {
+    pub fn as_sat_per_vb(&self) -> f32 {
+        self.0.as_sat_per_vb()
+    }
+
+    pub fn sat_per_kwu(&self) -> f32 {
+        self.0.sat_per_kwu()
+    }
+}
 
 pub struct ScriptAmount {
     pub script: Arc<Script>,
