@@ -3,6 +3,7 @@ package org.bitcoindevkit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 class OfflineWalletTest {
     @Test
@@ -26,6 +27,11 @@ class OfflineWalletTest {
             Network.TESTNET
         )
         val addressInfo: AddressInfo = wallet.getAddress(AddressIndex.New)
+
+        assertTrue(addressInfo.address.isValidForNetwork(Network.TESTNET), "Address is not valid for testnet network")
+        assertTrue(addressInfo.address.isValidForNetwork(Network.SIGNET), "Address is not valid for signet network")
+        assertFalse(addressInfo.address.isValidForNetwork(Network.REGTEST), "Address is valid for regtest network, but it shouldn't be")
+        assertFalse(addressInfo.address.isValidForNetwork(Network.BITCOIN), "Address is valid for bitcoin network, but it shouldn't be")
 
         assertEquals(
             expected = "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e",

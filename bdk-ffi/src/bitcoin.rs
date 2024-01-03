@@ -34,6 +34,7 @@ impl From<BdkScriptBuf> for Script {
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub enum Network {
     Bitcoin,
     Testnet,
@@ -120,6 +121,15 @@ impl Address {
 
     pub fn as_string(&self) -> String {
         self.inner.to_string()
+    }
+
+    pub fn is_valid_for_network(&self, network: Network) -> bool {
+        let address_str = self.inner.to_string();
+        if let Ok(unchecked_address) = address_str.parse::<BdkAddress<NetworkUnchecked>>() {
+            unchecked_address.is_valid_for_network(network.into())
+        } else {
+            false
+        }
     }
 }
 
@@ -312,5 +322,356 @@ impl From<&BdkTxOut> for TxOut {
             value: tx_out.value,
             script_pubkey: Arc::new(Script(tx_out.script_pubkey.clone())),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::bitcoin::Address;
+    use crate::bitcoin::Network;
+
+    #[test]
+    fn test_is_valid_for_network() {
+        // ====Docs tests====
+        // https://docs.rs/bitcoin/0.29.2/src/bitcoin/util/address.rs.html#798-802
+
+        let docs_address_testnet_str = "2N83imGV3gPwBzKJQvWJ7cRUY2SpUyU6A5e";
+        let docs_address_testnet =
+            Address::new(docs_address_testnet_str.to_string(), Network::Testnet).unwrap();
+        assert!(
+            docs_address_testnet.is_valid_for_network(Network::Testnet),
+            "Address should be valid for Testnet"
+        );
+        assert!(
+            docs_address_testnet.is_valid_for_network(Network::Signet),
+            "Address should be valid for Signet"
+        );
+        assert!(
+            docs_address_testnet.is_valid_for_network(Network::Regtest),
+            "Address should be valid for Regtest"
+        );
+        assert_ne!(
+            docs_address_testnet.network(),
+            Network::Bitcoin,
+            "Address should not be parsed as Bitcoin"
+        );
+
+        let docs_address_mainnet_str = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf";
+        let docs_address_mainnet =
+            Address::new(docs_address_mainnet_str.to_string(), Network::Bitcoin).unwrap();
+        assert!(
+            docs_address_mainnet.is_valid_for_network(Network::Bitcoin),
+            "Address should be valid for Bitcoin"
+        );
+        assert_ne!(
+            docs_address_mainnet.network(),
+            Network::Testnet,
+            "Address should not be valid for Testnet"
+        );
+        assert_ne!(
+            docs_address_mainnet.network(),
+            Network::Signet,
+            "Address should not be valid for Signet"
+        );
+        assert_ne!(
+            docs_address_mainnet.network(),
+            Network::Regtest,
+            "Address should not be valid for Regtest"
+        );
+
+        // ====Bech32====
+
+        //     | Network         | Prefix  | Address Type |
+        //     |-----------------|---------|--------------|
+        //     | Bitcoin Mainnet | `bc1`   | Bech32       |
+        //     | Bitcoin Testnet | `tb1`   | Bech32       |
+        //     | Bitcoin Signet  | `tb1`   | Bech32       |
+        //     | Bitcoin Regtest | `bcrt1` | Bech32       |
+
+        // Bech32 - Bitcoin
+        // Valid for:
+        // - Bitcoin
+        // Not valid for:
+        // - Testnet
+        // - Signet
+        // - Regtest
+        let bitcoin_mainnet_bech32_address_str = "bc1qxhmdufsvnuaaaer4ynz88fspdsxq2h9e9cetdj";
+        let bitcoin_mainnet_bech32_address = Address::new(
+            bitcoin_mainnet_bech32_address_str.to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        assert!(
+            bitcoin_mainnet_bech32_address.is_valid_for_network(Network::Bitcoin),
+            "Address should be valid for Bitcoin"
+        );
+        assert!(
+            !bitcoin_mainnet_bech32_address.is_valid_for_network(Network::Testnet),
+            "Address should not be valid for Testnet"
+        );
+        assert!(
+            !bitcoin_mainnet_bech32_address.is_valid_for_network(Network::Signet),
+            "Address should not be valid for Signet"
+        );
+        assert!(
+            !bitcoin_mainnet_bech32_address.is_valid_for_network(Network::Regtest),
+            "Address should not be valid for Regtest"
+        );
+
+        // Bech32 - Testnet
+        // Valid for:
+        // - Testnet
+        // - Regtest
+        // Not valid for:
+        // - Bitcoin
+        // - Regtest
+        let bitcoin_testnet_bech32_address_str =
+            "tb1p4nel7wkc34raczk8c4jwk5cf9d47u2284rxn98rsjrs4w3p2sheqvjmfdh";
+        let bitcoin_testnet_bech32_address = Address::new(
+            bitcoin_testnet_bech32_address_str.to_string(),
+            Network::Testnet,
+        )
+        .unwrap();
+        assert!(
+            !bitcoin_testnet_bech32_address.is_valid_for_network(Network::Bitcoin),
+            "Address should not be valid for Bitcoin"
+        );
+        assert!(
+            bitcoin_testnet_bech32_address.is_valid_for_network(Network::Testnet),
+            "Address should be valid for Testnet"
+        );
+        assert!(
+            bitcoin_testnet_bech32_address.is_valid_for_network(Network::Signet),
+            "Address should be valid for Signet"
+        );
+        assert!(
+            !bitcoin_testnet_bech32_address.is_valid_for_network(Network::Regtest),
+            "Address should not not be valid for Regtest"
+        );
+
+        // Bech32 - Signet
+        // Valid for:
+        // - Signet
+        // - Testnet
+        // Not valid for:
+        // - Bitcoin
+        // - Regtest
+        let bitcoin_signet_bech32_address_str =
+            "tb1pwzv7fv35yl7ypwj8w7al2t8apd6yf4568cs772qjwper74xqc99sk8x7tk";
+        let bitcoin_signet_bech32_address = Address::new(
+            bitcoin_signet_bech32_address_str.to_string(),
+            Network::Signet,
+        )
+        .unwrap();
+        assert!(
+            !bitcoin_signet_bech32_address.is_valid_for_network(Network::Bitcoin),
+            "Address should not be valid for Bitcoin"
+        );
+        assert!(
+            bitcoin_signet_bech32_address.is_valid_for_network(Network::Testnet),
+            "Address should be valid for Testnet"
+        );
+        assert!(
+            bitcoin_signet_bech32_address.is_valid_for_network(Network::Signet),
+            "Address should be valid for Signet"
+        );
+        assert!(
+            !bitcoin_signet_bech32_address.is_valid_for_network(Network::Regtest),
+            "Address should not not be valid for Regtest"
+        );
+
+        // Bech32 - Regtest
+        // Valid for:
+        // - Regtest
+        // Not valid for:
+        // - Bitcoin
+        // - Testnet
+        // - Signet
+        let bitcoin_regtest_bech32_address_str = "bcrt1q39c0vrwpgfjkhasu5mfke9wnym45nydfwaeems";
+        let bitcoin_regtest_bech32_address = Address::new(
+            bitcoin_regtest_bech32_address_str.to_string(),
+            Network::Regtest,
+        )
+        .unwrap();
+        assert!(
+            !bitcoin_regtest_bech32_address.is_valid_for_network(Network::Bitcoin),
+            "Address should not be valid for Bitcoin"
+        );
+        assert!(
+            !bitcoin_regtest_bech32_address.is_valid_for_network(Network::Testnet),
+            "Address should not be valid for Testnet"
+        );
+        assert!(
+            !bitcoin_regtest_bech32_address.is_valid_for_network(Network::Signet),
+            "Address should not be valid for Signet"
+        );
+        assert!(
+            bitcoin_regtest_bech32_address.is_valid_for_network(Network::Regtest),
+            "Address should be valid for Regtest"
+        );
+
+        // ====P2PKH====
+
+        //     | Network                            | Prefix for P2PKH | Prefix for P2SH |
+        //     |------------------------------------|------------------|-----------------|
+        //     | Bitcoin Mainnet                    | `1`              | `3`             |
+        //     | Bitcoin Testnet, Regtest, Signet   | `m` or `n`       | `2`             |
+
+        // P2PKH - Bitcoin
+        // Valid for:
+        // - Bitcoin
+        // Not valid for:
+        // - Testnet
+        // - Regtest
+        let bitcoin_mainnet_p2pkh_address_str = "1FfmbHfnpaZjKFvyi1okTjJJusN455paPH";
+        let bitcoin_mainnet_p2pkh_address = Address::new(
+            bitcoin_mainnet_p2pkh_address_str.to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        assert!(
+            bitcoin_mainnet_p2pkh_address.is_valid_for_network(Network::Bitcoin),
+            "Address should be valid for Bitcoin"
+        );
+        assert!(
+            !bitcoin_mainnet_p2pkh_address.is_valid_for_network(Network::Testnet),
+            "Address should not be valid for Testnet"
+        );
+        assert!(
+            !bitcoin_mainnet_p2pkh_address.is_valid_for_network(Network::Regtest),
+            "Address should not be valid for Regtest"
+        );
+
+        // P2PKH - Testnet
+        // Valid for:
+        // - Testnet
+        // - Regtest
+        // Not valid for:
+        // - Bitcoin
+        let bitcoin_testnet_p2pkh_address_str = "mucFNhKMYoBQYUAEsrFVscQ1YaFQPekBpg";
+        let bitcoin_testnet_p2pkh_address = Address::new(
+            bitcoin_testnet_p2pkh_address_str.to_string(),
+            Network::Testnet,
+        )
+        .unwrap();
+        assert!(
+            !bitcoin_testnet_p2pkh_address.is_valid_for_network(Network::Bitcoin),
+            "Address should not be valid for Bitcoin"
+        );
+        assert!(
+            bitcoin_testnet_p2pkh_address.is_valid_for_network(Network::Testnet),
+            "Address should be valid for Testnet"
+        );
+        assert!(
+            bitcoin_testnet_p2pkh_address.is_valid_for_network(Network::Regtest),
+            "Address should be valid for Regtest"
+        );
+
+        // P2PKH - Regtest
+        // Valid for:
+        // - Testnet
+        // - Regtest
+        // Not valid for:
+        // - Bitcoin
+        let bitcoin_regtest_p2pkh_address_str = "msiGFK1PjCk8E6FXeoGkQPTscmcpyBdkgS";
+        let bitcoin_regtest_p2pkh_address = Address::new(
+            bitcoin_regtest_p2pkh_address_str.to_string(),
+            Network::Regtest,
+        )
+        .unwrap();
+        assert!(
+            !bitcoin_regtest_p2pkh_address.is_valid_for_network(Network::Bitcoin),
+            "Address should not be valid for Bitcoin"
+        );
+        assert!(
+            bitcoin_regtest_p2pkh_address.is_valid_for_network(Network::Testnet),
+            "Address should be valid for Testnet"
+        );
+        assert!(
+            bitcoin_regtest_p2pkh_address.is_valid_for_network(Network::Regtest),
+            "Address should be valid for Regtest"
+        );
+
+        // ====P2SH====
+
+        //     | Network                            | Prefix for P2PKH | Prefix for P2SH |
+        //     |------------------------------------|------------------|-----------------|
+        //     | Bitcoin Mainnet                    | `1`              | `3`             |
+        //     | Bitcoin Testnet, Regtest, Signet   | `m` or `n`       | `2`             |
+
+        // P2SH - Bitcoin
+        // Valid for:
+        // - Bitcoin
+        // Not valid for:
+        // - Testnet
+        // - Regtest
+        let bitcoin_mainnet_p2sh_address_str = "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy";
+        let bitcoin_mainnet_p2sh_address = Address::new(
+            bitcoin_mainnet_p2sh_address_str.to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        assert!(
+            bitcoin_mainnet_p2sh_address.is_valid_for_network(Network::Bitcoin),
+            "Address should be valid for Bitcoin"
+        );
+        assert!(
+            !bitcoin_mainnet_p2sh_address.is_valid_for_network(Network::Testnet),
+            "Address should not be valid for Testnet"
+        );
+        assert!(
+            !bitcoin_mainnet_p2sh_address.is_valid_for_network(Network::Regtest),
+            "Address should not be valid for Regtest"
+        );
+
+        // P2SH - Testnet
+        // Valid for:
+        // - Testnet
+        // - Regtest
+        // Not valid for:
+        // - Bitcoin
+        let bitcoin_testnet_p2sh_address_str = "2NFUBBRcTJbYc1D4HSCbJhKZp6YCV4PQFpQ";
+        let bitcoin_testnet_p2sh_address = Address::new(
+            bitcoin_testnet_p2sh_address_str.to_string(),
+            Network::Testnet,
+        )
+        .unwrap();
+        assert!(
+            !bitcoin_testnet_p2sh_address.is_valid_for_network(Network::Bitcoin),
+            "Address should not be valid for Bitcoin"
+        );
+        assert!(
+            bitcoin_testnet_p2sh_address.is_valid_for_network(Network::Testnet),
+            "Address should be valid for Testnet"
+        );
+        assert!(
+            bitcoin_testnet_p2sh_address.is_valid_for_network(Network::Regtest),
+            "Address should be valid for Regtest"
+        );
+
+        // P2SH - Regtest
+        // Valid for:
+        // - Testnet
+        // - Regtest
+        // Not valid for:
+        // - Bitcoin
+        let bitcoin_regtest_p2sh_address_str = "2NEb8N5B9jhPUCBchz16BB7bkJk8VCZQjf3";
+        let bitcoin_regtest_p2sh_address = Address::new(
+            bitcoin_regtest_p2sh_address_str.to_string(),
+            Network::Regtest,
+        )
+        .unwrap();
+        assert!(
+            !bitcoin_regtest_p2sh_address.is_valid_for_network(Network::Bitcoin),
+            "Address should not be valid for Bitcoin"
+        );
+        assert!(
+            bitcoin_regtest_p2sh_address.is_valid_for_network(Network::Testnet),
+            "Address should be valid for Testnet"
+        );
+        assert!(
+            bitcoin_regtest_p2sh_address.is_valid_for_network(Network::Regtest),
+            "Address should be valid for Regtest"
+        );
     }
 }
