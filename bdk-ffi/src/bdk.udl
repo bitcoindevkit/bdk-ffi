@@ -1,6 +1,21 @@
 namespace bdk {};
 
 // ------------------------------------------------------------------------
+// bdk crate - error module
+// ------------------------------------------------------------------------
+
+[Error]
+enum Alpha3Error {
+  "Generic"
+};
+
+[Error]
+interface CalculateFeeError {
+  MissingTxOut(sequence<OutPoint> out_points);
+  NegativeFee(i64 fee);
+};
+
+// ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
 
@@ -36,7 +51,7 @@ dictionary Balance {
   u64 total;
 };
 
-dictionary LocalUtxo {
+dictionary LocalOutput {
   OutPoint outpoint;
   TxOut txout;
   KeychainKind keychain;
@@ -52,42 +67,6 @@ dictionary TxOut {
 // bdk crate - wallet module
 // ------------------------------------------------------------------------
 
-[Error]
-enum BdkError {
-  "Generic",
-  "NoRecipients",
-  "NoUtxosSelected",
-  "OutputBelowDustLimit",
-  "InsufficientFunds",
-  "BnBTotalTriesExceeded",
-  "BnBNoExactMatch",
-  "UnknownUtxo",
-  "TransactionNotFound",
-  "TransactionConfirmed",
-  "IrreplaceableTransaction",
-  "FeeRateTooLow",
-  "FeeTooLow",
-  "FeeRateUnavailable",
-  "MissingKeyOrigin",
-  "Key",
-  "ChecksumMismatch",
-  "SpendingPolicyRequired",
-  "InvalidPolicyPathError",
-  "Signer",
-  "InvalidOutpoint",
-  "Descriptor",
-  "Miniscript",
-  "MiniscriptPsbt",
-  "Bip32",
-  "Psbt",
-};
-
-[Error]
-interface CalculateFeeError {
-  MissingTxOut(sequence<OutPoint> out_points);
-  NegativeFee(i64 fee);
-};
-
 interface FeeRate {
   f32 as_sat_per_vb();
   f32 sat_per_kwu();
@@ -100,7 +79,7 @@ enum ChangeSpendPolicy {
 };
 
 interface Wallet {
-  [Name=new_no_persist, Throws=BdkError]
+  [Name=new_no_persist, Throws=Alpha3Error]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, Network network);
 
   AddressInfo get_address(AddressIndex address_index);
@@ -113,10 +92,10 @@ interface Wallet {
 
   boolean is_mine([ByRef] Script script);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   void apply_update(Update update);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   boolean sign(PartiallySignedTransaction psbt);
 
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
@@ -165,7 +144,7 @@ interface TxBuilder {
 
   TxBuilder enable_rbf_with_sequence(u32 nsequence);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   PartiallySignedTransaction finish([ByRef] Wallet wallet);
 };
 
@@ -178,7 +157,7 @@ interface BumpFeeTxBuilder {
 
   BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   PartiallySignedTransaction finish([ByRef] Wallet wallet);
 };
 
@@ -189,30 +168,30 @@ interface BumpFeeTxBuilder {
 interface Mnemonic {
   constructor(WordCount word_count);
 
-  [Name=from_string, Throws=BdkError]
+  [Name=from_string, Throws=Alpha3Error]
   constructor(string mnemonic);
 
-  [Name=from_entropy, Throws=BdkError]
+  [Name=from_entropy, Throws=Alpha3Error]
   constructor(sequence<u8> entropy);
 
   string as_string();
 };
 
 interface DerivationPath {
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   constructor(string path);
 };
 
 interface DescriptorSecretKey {
   constructor(Network network, [ByRef] Mnemonic mnemonic, string? password);
 
-  [Name=from_string, Throws=BdkError]
+  [Name=from_string, Throws=Alpha3Error]
   constructor(string secret_key);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   DescriptorSecretKey derive([ByRef] DerivationPath path);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   DescriptorSecretKey extend([ByRef] DerivationPath path);
 
   DescriptorPublicKey as_public();
@@ -223,20 +202,20 @@ interface DescriptorSecretKey {
 };
 
 interface DescriptorPublicKey {
-  [Name=from_string, Throws=BdkError]
+  [Name=from_string, Throws=Alpha3Error]
   constructor(string public_key);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   DescriptorPublicKey derive([ByRef] DerivationPath path);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   DescriptorPublicKey extend([ByRef] DerivationPath path);
 
   string as_string();
 };
 
 interface Descriptor {
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   constructor(string descriptor, Network network);
 
   [Name=new_bip44]
@@ -275,10 +254,10 @@ interface Descriptor {
 interface EsploraClient {
   constructor(string url);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   Update scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
 
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   void broadcast([ByRef] Transaction transaction);
 };
 
@@ -322,7 +301,7 @@ enum WordCount {
 };
 
 interface Address {
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   constructor(string address, Network network);
 
   Network network();
@@ -337,7 +316,7 @@ interface Address {
 };
 
 interface Transaction {
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   constructor(sequence<u8> transaction_bytes);
 
   string txid();
@@ -356,7 +335,7 @@ interface Transaction {
 };
 
 interface PartiallySignedTransaction {
-  [Throws=BdkError]
+  [Throws=Alpha3Error]
   constructor(string psbt_base64);
 
   string serialize();

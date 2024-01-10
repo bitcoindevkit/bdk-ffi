@@ -1,6 +1,6 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
-use crate::error::CalculateFeeError;
+use crate::error::{Alpha3Error, CalculateFeeError};
 use crate::types::ScriptAmount;
 use crate::types::{Balance, FeeRate};
 use crate::Script;
@@ -11,7 +11,7 @@ use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransact
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::Update as BdkUpdate;
-use bdk::{Error as BdkError, FeeRate as BdkFeeRate};
+use bdk::{FeeRate as BdkFeeRate};
 use bdk::{SignOptions, Wallet as BdkWallet};
 
 use std::collections::HashSet;
@@ -29,7 +29,7 @@ impl Wallet {
         descriptor: Arc<Descriptor>,
         change_descriptor: Option<Arc<Descriptor>>,
         network: Network,
-    ) -> Result<Self, BdkError> {
+    ) -> Result<Self, Alpha3Error> {
         let descriptor = descriptor.as_string_private();
         let change_descriptor = change_descriptor.map(|d| d.as_string_private());
 
@@ -65,10 +65,10 @@ impl Wallet {
         Balance::from(bdk_balance)
     }
 
-    pub fn apply_update(&self, update: Arc<Update>) -> Result<(), BdkError> {
+    pub fn apply_update(&self, update: Arc<Update>) -> Result<(), Alpha3Error> {
         self.get_wallet()
             .apply_update(update.0.clone())
-            .map_err(|e| BdkError::Generic(e.to_string()))
+            .map_err(|e| Alpha3Error::Generic)
     }
 
     pub fn is_mine(&self, script: &Script) -> bool {
@@ -81,11 +81,11 @@ impl Wallet {
         &self,
         psbt: Arc<PartiallySignedTransaction>,
         // sign_options: Option<SignOptions>,
-    ) -> Result<bool, BdkError> {
+    ) -> Result<bool, Alpha3Error> {
         let mut psbt = psbt.inner.lock().unwrap();
         self.get_wallet()
             .sign(&mut psbt, SignOptions::default())
-            .map_err(|e| BdkError::Generic(e.to_string()))
+            .map_err(|e| Alpha3Error::Generic)
     }
 
     pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
@@ -465,7 +465,7 @@ impl TxBuilder {
     pub(crate) fn finish(
         &self,
         wallet: &Wallet,
-    ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
+    ) -> Result<Arc<PartiallySignedTransaction>, Alpha3Error> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
@@ -560,9 +560,9 @@ impl BumpFeeTxBuilder {
     pub(crate) fn finish(
         &self,
         wallet: &Wallet,
-    ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
+    ) -> Result<Arc<PartiallySignedTransaction>, Alpha3Error> {
         let txid =
-            Txid::from_str(self.txid.as_str()).map_err(|e| BdkError::Generic(e.to_string()))?;
+            Txid::from_str(self.txid.as_str()).map_err(|e| Alpha3Error::Generic)?;
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_fee_bump(txid)?;
         tx_builder.fee_rate(BdkFeeRate::from_sat_per_vb(self.fee_rate));
@@ -581,7 +581,7 @@ impl BumpFeeTxBuilder {
         }
         let psbt: BdkPartiallySignedTransaction = tx_builder
             .finish()
-            .map_err(|e| BdkError::Generic(e.to_string()))?;
+            .map_err(|e| Alpha3Error::Generic)?;
 
         Ok(Arc::new(psbt.into()))
     }

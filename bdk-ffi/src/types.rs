@@ -5,7 +5,7 @@ use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::wallet::Balance as BdkBalance;
 use bdk::KeychainKind;
 
-use bdk::LocalUtxo as BdkLocalUtxo;
+use bdk::LocalOutput as BdkLocalOutput;
 
 use bdk::FeeRate as BdkFeeRate;
 
@@ -113,16 +113,16 @@ impl From<BdkBalance> for Balance {
     }
 }
 
-pub struct LocalUtxo {
+pub struct LocalOutput {
     pub outpoint: OutPoint,
     pub txout: TxOut,
     pub keychain: KeychainKind,
     pub is_spent: bool,
 }
 
-impl From<BdkLocalUtxo> for LocalUtxo {
-    fn from(local_utxo: BdkLocalUtxo) -> Self {
-        LocalUtxo {
+impl From<BdkLocalOutput> for LocalOutput {
+    fn from(local_utxo: BdkLocalOutput) -> Self {
+        LocalOutput {
             outpoint: OutPoint {
                 txid: local_utxo.outpoint.txid.to_string(),
                 vout: local_utxo.outpoint.vout,

@@ -1,8 +1,8 @@
 use crate::wallet::{Update, Wallet};
+use crate::error::Alpha3Error;
 
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::wallet::Update as BdkUpdate;
-use bdk::Error as BdkError;
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
 
@@ -24,7 +24,7 @@ impl EsploraClient {
         wallet: Arc<Wallet>,
         stop_gap: u64,
         parallel_requests: u64,
-    ) -> Result<Arc<Update>, BdkError> {
+    ) -> Result<Arc<Update>, Alpha3Error> {
         let wallet = wallet.get_wallet();
 
         let previous_tip = wallet.latest_checkpoint();
@@ -32,10 +32,8 @@ impl EsploraClient {
 
         let (update_graph, last_active_indices) = self
             .0
-            .scan_txs_with_keychains(
+            .full_scan(
                 keychain_spks,
-                None,
-                None,
                 stop_gap as usize,
                 parallel_requests as usize,
             )
@@ -58,11 +56,11 @@ impl EsploraClient {
 
     // pub fn sync();
 
-    pub fn broadcast(&self, transaction: &Transaction) -> Result<(), BdkError> {
+    pub fn broadcast(&self, transaction: &Transaction) -> Result<(), Alpha3Error> {
         let bdk_transaction: BdkTransaction = transaction.into();
         self.0
             .broadcast(&bdk_transaction)
-            .map_err(|e| BdkError::Generic(e.to_string()))
+            .map_err(|e| Alpha3Error::Generic)
     }
 
     // pub fn estimate_fee();

@@ -1,4 +1,5 @@
 use crate::Network;
+use crate::error::Alpha3Error;
 
 use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::key::Secp256k1;
@@ -12,7 +13,6 @@ use bdk::keys::{
 };
 use bdk::miniscript::descriptor::{DescriptorXKey, Wildcard};
 use bdk::miniscript::BareCtx;
-use bdk::Error as BdkError;
 
 use std::ops::Deref;
 use std::str::FromStr;
@@ -35,16 +35,16 @@ impl Mnemonic {
         Mnemonic { inner: mnemonic }
     }
 
-    pub(crate) fn from_string(mnemonic: String) -> Result<Self, BdkError> {
+    pub(crate) fn from_string(mnemonic: String) -> Result<Self, Alpha3Error> {
         BdkMnemonic::from_str(&mnemonic)
             .map(|m| Mnemonic { inner: m })
-            .map_err(|e| BdkError::Generic(e.to_string()))
+            .map_err(|e| Alpha3Error::Generic)
     }
 
-    pub(crate) fn from_entropy(entropy: Vec<u8>) -> Result<Self, BdkError> {
+    pub(crate) fn from_entropy(entropy: Vec<u8>) -> Result<Self, Alpha3Error> {
         BdkMnemonic::from_entropy(entropy.as_slice())
             .map(|m| Mnemonic { inner: m })
-            .map_err(|e| BdkError::Generic(e.to_string()))
+            .map_err(|e| Alpha3Error::Generic)
     }
 
     pub(crate) fn as_string(&self) -> String {
@@ -57,12 +57,12 @@ pub(crate) struct DerivationPath {
 }
 
 impl DerivationPath {
-    pub(crate) fn new(path: String) -> Result<Self, BdkError> {
+    pub(crate) fn new(path: String) -> Result<Self, Alpha3Error> {
         BdkDerivationPath::from_str(&path)
             .map(|x| DerivationPath {
                 inner_mutex: Mutex::new(x),
             })
-            .map_err(|e| BdkError::Generic(e.to_string()))
+            .map_err(|e| Alpha3Error::Generic)
     }
 }
 
@@ -86,22 +86,20 @@ impl DescriptorSecretKey {
         }
     }
 
-    pub(crate) fn from_string(private_key: String) -> Result<Self, BdkError> {
+    pub(crate) fn from_string(private_key: String) -> Result<Self, Alpha3Error> {
         let descriptor_secret_key = BdkDescriptorSecretKey::from_str(private_key.as_str())
-            .map_err(|e| BdkError::Generic(e.to_string()))?;
+            .map_err(|e| Alpha3Error::Generic)?;
         Ok(Self {
             inner: descriptor_secret_key,
         })
     }
 
-    pub(crate) fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, BdkError> {
+    pub(crate) fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, Alpha3Error> {
         let secp = Secp256k1::new();
         let descriptor_secret_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_secret_key {
-            BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
-                "Cannot derive from a single key".to_string(),
-            )),
+            BdkDescriptorSecretKey::Single(_) => Err(Alpha3Error::Generic),
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derived_xprv = descriptor_x_key.xkey.derive_priv(&secp, &path)?;
                 let key_source = match descriptor_x_key.origin.clone() {
@@ -118,19 +116,15 @@ impl DescriptorSecretKey {
                     inner: derived_descriptor_secret_key,
                 }))
             }
-            BdkDescriptorSecretKey::MultiXPrv(_) => Err(BdkError::Generic(
-                "Cannot derive from a multi key".to_string(),
-            )),
+            BdkDescriptorSecretKey::MultiXPrv(_) => Err(Alpha3Error::Generic),
         }
     }
 
-    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, BdkError> {
+    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, Alpha3Error> {
         let descriptor_secret_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_secret_key {
-            BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
-                "Cannot extend from a single key".to_string(),
-            )),
+            BdkDescriptorSecretKey::Single(_) => Err(Alpha3Error::Generic),
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let extended_path = descriptor_x_key.derivation_path.extend(path);
                 let extended_descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
@@ -143,9 +137,7 @@ impl DescriptorSecretKey {
                     inner: extended_descriptor_secret_key,
                 }))
             }
-            BdkDescriptorSecretKey::MultiXPrv(_) => Err(BdkError::Generic(
-                "Cannot derive from a multi key".to_string(),
-            )),
+            BdkDescriptorSecretKey::MultiXPrv(_) => Err(Alpha3Error::Generic),
         }
     }
 
@@ -185,23 +177,21 @@ pub struct DescriptorPublicKey {
 }
 
 impl DescriptorPublicKey {
-    pub(crate) fn from_string(public_key: String) -> Result<Self, BdkError> {
+    pub(crate) fn from_string(public_key: String) -> Result<Self, Alpha3Error> {
         let descriptor_public_key = BdkDescriptorPublicKey::from_str(public_key.as_str())
-            .map_err(|e| BdkError::Generic(e.to_string()))?;
+            .map_err(|e| Alpha3Error::Generic)?;
         Ok(Self {
             inner: descriptor_public_key,
         })
     }
 
-    pub(crate) fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, BdkError> {
+    pub(crate) fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, Alpha3Error> {
         let secp = Secp256k1::new();
         let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
 
         match descriptor_public_key {
-            BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
-                "Cannot derive from a single key".to_string(),
-            )),
+            BdkDescriptorPublicKey::Single(_) => Err(Alpha3Error::Generic),
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derived_xpub = descriptor_x_key.xkey.derive_pub(&secp, &path)?;
                 let key_source = match descriptor_x_key.origin.clone() {
@@ -218,19 +208,15 @@ impl DescriptorPublicKey {
                     inner: derived_descriptor_public_key,
                 }))
             }
-            BdkDescriptorPublicKey::MultiXPub(_) => Err(BdkError::Generic(
-                "Cannot derive from a multi xpub".to_string(),
-            )),
+            BdkDescriptorPublicKey::MultiXPub(_) => Err(Alpha3Error::Generic),
         }
     }
 
-    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, BdkError> {
+    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, Alpha3Error> {
         let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_public_key {
-            BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
-                "Cannot extend from a single key".to_string(),
-            )),
+            BdkDescriptorPublicKey::Single(_) => Err(Alpha3Error::Generic),
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let extended_path = descriptor_x_key.derivation_path.extend(path);
                 let extended_descriptor_public_key = BdkDescriptorPublicKey::XPub(DescriptorXKey {
@@ -243,9 +229,7 @@ impl DescriptorPublicKey {
                     inner: extended_descriptor_public_key,
                 }))
             }
-            BdkDescriptorPublicKey::MultiXPub(_) => Err(BdkError::Generic(
-                "Cannot derive from a multi xpub".to_string(),
-            )),
+            BdkDescriptorPublicKey::MultiXPub(_) => Err(Alpha3Error::Generic),
         }
     }
 
@@ -257,10 +241,10 @@ impl DescriptorPublicKey {
 #[cfg(test)]
 mod test {
     use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
-    use crate::BdkError;
     // use bdk::bitcoin::hashes::hex::ToHex;
     use bdk::bitcoin::Network;
     use std::sync::Arc;
+    use crate::error::Alpha3Error;
 
     fn get_inner() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
@@ -270,7 +254,7 @@ mod test {
     fn derive_dsk(
         key: &DescriptorSecretKey,
         path: &str,
-    ) -> Result<Arc<DescriptorSecretKey>, BdkError> {
+    ) -> Result<Arc<DescriptorSecretKey>, Alpha3Error> {
         let path = DerivationPath::new(path.to_string()).unwrap();
         key.derive(&path)
     }
@@ -278,7 +262,7 @@ mod test {
     fn extend_dsk(
         key: &DescriptorSecretKey,
         path: &str,
-    ) -> Result<Arc<DescriptorSecretKey>, BdkError> {
+    ) -> Result<Arc<DescriptorSecretKey>, Alpha3Error> {
         let path = DerivationPath::new(path.to_string()).unwrap();
         key.extend(&path)
     }
@@ -286,7 +270,7 @@ mod test {
     fn derive_dpk(
         key: &DescriptorPublicKey,
         path: &str,
-    ) -> Result<Arc<DescriptorPublicKey>, BdkError> {
+    ) -> Result<Arc<DescriptorPublicKey>, Alpha3Error> {
         let path = DerivationPath::new(path.to_string()).unwrap();
         key.derive(&path)
     }
@@ -294,7 +278,7 @@ mod test {
     fn extend_dpk(
         key: &DescriptorPublicKey,
         path: &str,
-    ) -> Result<Arc<DescriptorPublicKey>, BdkError> {
+    ) -> Result<Arc<DescriptorPublicKey>, Alpha3Error> {
         let path = DerivationPath::new(path.to_string()).unwrap();
         key.extend(&path)
     }

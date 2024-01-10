@@ -1,6 +1,7 @@
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::Network;
+use crate::error::Alpha3Error;
 
 use bdk::bitcoin::bip32::Fingerprint;
 use bdk::bitcoin::key::Secp256k1;
@@ -11,7 +12,6 @@ use bdk::template::{
     Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, Bip86, Bip86Public,
     DescriptorTemplate,
 };
-use bdk::Error as BdkError;
 use bdk::KeychainKind;
 
 use std::str::FromStr;
@@ -23,7 +23,7 @@ pub struct Descriptor {
 }
 
 impl Descriptor {
-    pub(crate) fn new(descriptor: String, network: Network) -> Result<Self, BdkError> {
+    pub(crate) fn new(descriptor: String, network: Network) -> Result<Self, Alpha3Error> {
         let secp = Secp256k1::new();
         let (extended_descriptor, key_map) =
             descriptor.into_wallet_descriptor(&secp, network.into())?;

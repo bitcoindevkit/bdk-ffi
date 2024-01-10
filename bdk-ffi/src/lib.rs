@@ -22,9 +22,10 @@ use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
 use crate::types::AddressIndex;
 use crate::types::AddressInfo;
+use crate::error::Alpha3Error;
 use crate::types::Balance;
 use crate::types::FeeRate;
-use crate::types::LocalUtxo;
+use crate::types::LocalOutput;
 use crate::types::ScriptAmount;
 use crate::wallet::BumpFeeTxBuilder;
 use crate::wallet::SentAndReceivedValues;
@@ -34,7 +35,6 @@ use crate::wallet::Wallet;
 
 use bdk::keys::bip39::WordCount;
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
-use bdk::Error as BdkError;
 use bdk::KeychainKind;
 
 uniffi::include_scaffolding!("bdk");

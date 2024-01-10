@@ -4,6 +4,83 @@ use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 
 use std::fmt;
 
+use bdk::descriptor::DescriptorError;
+use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
+use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
+use bdk::wallet::{NewError, NewOrLoadError};
+use std::convert::Infallible;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Alpha3Error {
+    Generic,
+}
+
+impl fmt::Display for Alpha3Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Error in FFI")
+    }
+}
+
+impl From<DescriptorError> for Alpha3Error {
+    fn from(_: DescriptorError) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+impl From<AllowShrinkingError> for Alpha3Error {
+    fn from(_: AllowShrinkingError) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+impl From<BuildFeeBumpError> for Alpha3Error {
+    fn from(_: BuildFeeBumpError) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+impl From<CreateTxError<Infallible>> for Alpha3Error {
+    fn from(_: CreateTxError<Infallible>) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+impl From<AddUtxoError> for Alpha3Error {
+    fn from(_: AddUtxoError) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+impl From<bdk::bitcoin::bip32::Error> for Alpha3Error {
+    fn from(_: bdk::bitcoin::bip32::Error) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+// impl From<FileError<'_>> for TempFfiError {
+//     fn from(_: FileError<'_>) -> Self {
+//         TempFfiError::FfiError
+//     }
+// }
+
+impl From<NewError<std::io::Error>> for Alpha3Error {
+    fn from(_: NewError<std::io::Error>) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+// impl From<NewOrLoadError<std::io::Error, IterError>> for Alpha3Error {
+//     fn from(_: NewOrLoadError<std::io::Error, IterError>) -> Self {
+//         Alpha3Error::Alpha3Error
+//     }
+// }
+
+impl From<CreateTxError<std::io::Error>> for Alpha3Error {
+    fn from(_: CreateTxError<std::io::Error>) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
 #[derive(Debug)]
 pub enum CalculateFeeError {
     MissingTxOut { out_points: Vec<OutPoint> },
