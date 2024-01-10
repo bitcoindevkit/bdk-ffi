@@ -18,7 +18,7 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { version = "1.0.0-alpha.2", features = ["all-keys", "keys-bip39"] }
+bdk = { version = "1.0.0-alpha.3", features = ["all-keys", "keys-bip39"] }
 
 # TODO 22: The bdk_esplora crate uses esplora_client which uses reqwest for async. By default it uses the system
 #          openssl library, which is creating problems for cross-compilation. I'd rather use rustls, but it's hidden
@@ -28,7 +28,7 @@ bdk = { version = "1.0.0-alpha.2", features = ["all-keys", "keys-bip39"] }
 # bdk = { git = "https://github.com/thunderbiscuit/bdk.git", branch = "test-rust-tls", version = "1.0.0-alpha.2", features = ["all-keys", "keys-bip39"] }
 # bdk_esplora = { git = "https://github.com/thunderbiscuit/bdk.git", branch = "test-rust-tls", version = "0.4.0", package = "bdk_esplora", default-features = false, features = ["std", "blocking", "async-https-rustls"] }
 
-bdk_esplora = { version = "0.4.0", default-features = false, features = ["std", "blocking"] }
+bdk_esplora = { version = "0.5.0", default-features = false, features = ["std", "blocking"] }
 uniffi = { version = "=0.25.1" }
 
 [build-dependencies]
