@@ -163,7 +163,6 @@ dependencies = [
  "assert_matches",
  "bdk",
  "bdk_esplora",
- "thiserror",
  "uniffi",
 ]
 

@@ -11,7 +11,7 @@ use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransact
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::Update as BdkUpdate;
-use bdk::{FeeRate as BdkFeeRate};
+use bdk::FeeRate as BdkFeeRate;
 use bdk::{SignOptions, Wallet as BdkWallet};
 
 use std::collections::HashSet;
@@ -68,7 +68,7 @@ impl Wallet {
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), Alpha3Error> {
         self.get_wallet()
             .apply_update(update.0.clone())
-            .map_err(|e| Alpha3Error::Generic)
+            .map_err(|_| Alpha3Error::Generic)
     }
 
     pub fn is_mine(&self, script: &Script) -> bool {
@@ -85,7 +85,7 @@ impl Wallet {
         let mut psbt = psbt.inner.lock().unwrap();
         self.get_wallet()
             .sign(&mut psbt, SignOptions::default())
-            .map_err(|e| Alpha3Error::Generic)
+            .map_err(|_| Alpha3Error::Generic)
     }
 
     pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
@@ -561,8 +561,7 @@ impl BumpFeeTxBuilder {
         &self,
         wallet: &Wallet,
     ) -> Result<Arc<PartiallySignedTransaction>, Alpha3Error> {
-        let txid =
-            Txid::from_str(self.txid.as_str()).map_err(|e| Alpha3Error::Generic)?;
+        let txid = Txid::from_str(self.txid.as_str()).map_err(|_| Alpha3Error::Generic)?;
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_fee_bump(txid)?;
         tx_builder.fee_rate(BdkFeeRate::from_sat_per_vb(self.fee_rate));
@@ -579,9 +578,8 @@ impl BumpFeeTxBuilder {
                 }
             }
         }
-        let psbt: BdkPartiallySignedTransaction = tx_builder
-            .finish()
-            .map_err(|e| Alpha3Error::Generic)?;
+        let psbt: BdkPartiallySignedTransaction =
+            tx_builder.finish().map_err(|_| Alpha3Error::Generic)?;
 
         Ok(Arc::new(psbt.into()))
     }

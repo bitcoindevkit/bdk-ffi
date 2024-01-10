@@ -9,10 +9,10 @@ use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::bitcoin::Txid;
 
+use crate::error::Alpha3Error;
 use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use crate::error::Alpha3Error;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Script(pub(crate) BdkScriptBuf);
@@ -74,11 +74,11 @@ impl Address {
     pub fn new(address: String, network: Network) -> Result<Self, Alpha3Error> {
         let parsed_address = address
             .parse::<bdk::bitcoin::Address<NetworkUnchecked>>()
-            .map_err(|e| Alpha3Error::Generic)?;
+            .map_err(|_| Alpha3Error::Generic)?;
 
         let network_checked_address = parsed_address
             .require_network(network.into())
-            .map_err(|e| Alpha3Error::Generic)?;
+            .map_err(|_| Alpha3Error::Generic)?;
 
         Ok(Address {
             inner: network_checked_address,
@@ -153,8 +153,8 @@ pub struct Transaction {
 impl Transaction {
     pub fn new(transaction_bytes: Vec<u8>) -> Result<Self, Alpha3Error> {
         let mut decoder = Cursor::new(transaction_bytes);
-        let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)
-            .map_err(|e| Alpha3Error::Generic)?;
+        let tx: BdkTransaction =
+            BdkTransaction::consensus_decode(&mut decoder).map_err(|_| Alpha3Error::Generic)?;
         Ok(Transaction { inner: tx })
     }
 
@@ -233,7 +233,7 @@ impl PartiallySignedTransaction {
     pub(crate) fn new(psbt_base64: String) -> Result<Self, Alpha3Error> {
         let psbt: BdkPartiallySignedTransaction =
             BdkPartiallySignedTransaction::from_str(&psbt_base64)
-                .map_err(|e| Alpha3Error::Generic)?;
+                .map_err(|_| Alpha3Error::Generic)?;
 
         Ok(PartiallySignedTransaction {
             inner: Mutex::new(psbt),

@@ -1,5 +1,5 @@
-use crate::Network;
 use crate::error::Alpha3Error;
+use crate::Network;
 
 use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::key::Secp256k1;
@@ -38,13 +38,13 @@ impl Mnemonic {
     pub(crate) fn from_string(mnemonic: String) -> Result<Self, Alpha3Error> {
         BdkMnemonic::from_str(&mnemonic)
             .map(|m| Mnemonic { inner: m })
-            .map_err(|e| Alpha3Error::Generic)
+            .map_err(|_| Alpha3Error::Generic)
     }
 
     pub(crate) fn from_entropy(entropy: Vec<u8>) -> Result<Self, Alpha3Error> {
         BdkMnemonic::from_entropy(entropy.as_slice())
             .map(|m| Mnemonic { inner: m })
-            .map_err(|e| Alpha3Error::Generic)
+            .map_err(|_| Alpha3Error::Generic)
     }
 
     pub(crate) fn as_string(&self) -> String {
@@ -62,7 +62,7 @@ impl DerivationPath {
             .map(|x| DerivationPath {
                 inner_mutex: Mutex::new(x),
             })
-            .map_err(|e| Alpha3Error::Generic)
+            .map_err(|_| Alpha3Error::Generic)
     }
 }
 
@@ -88,7 +88,7 @@ impl DescriptorSecretKey {
 
     pub(crate) fn from_string(private_key: String) -> Result<Self, Alpha3Error> {
         let descriptor_secret_key = BdkDescriptorSecretKey::from_str(private_key.as_str())
-            .map_err(|e| Alpha3Error::Generic)?;
+            .map_err(|_| Alpha3Error::Generic)?;
         Ok(Self {
             inner: descriptor_secret_key,
         })
@@ -179,7 +179,7 @@ pub struct DescriptorPublicKey {
 impl DescriptorPublicKey {
     pub(crate) fn from_string(public_key: String) -> Result<Self, Alpha3Error> {
         let descriptor_public_key = BdkDescriptorPublicKey::from_str(public_key.as_str())
-            .map_err(|e| Alpha3Error::Generic)?;
+            .map_err(|_| Alpha3Error::Generic)?;
         Ok(Self {
             inner: descriptor_public_key,
         })
@@ -242,9 +242,9 @@ impl DescriptorPublicKey {
 mod test {
     use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
     // use bdk::bitcoin::hashes::hex::ToHex;
+    use crate::error::Alpha3Error;
     use bdk::bitcoin::Network;
     use std::sync::Arc;
-    use crate::error::Alpha3Error;
 
     fn get_inner() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();

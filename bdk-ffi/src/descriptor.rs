@@ -1,7 +1,7 @@
+use crate::error::Alpha3Error;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::Network;
-use crate::error::Alpha3Error;
 
 use bdk::bitcoin::bip32::Fingerprint;
 use bdk::bitcoin::key::Secp256k1;
@@ -281,8 +281,7 @@ mod test {
     use crate::*;
     use assert_matches::assert_matches;
 
-    use bdk::descriptor::DescriptorError::Key;
-    use bdk::keys::KeyError::InvalidNetwork;
+    use crate::Alpha3Error;
 
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
@@ -400,9 +399,6 @@ mod test {
         let descriptor2 = Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Bitcoin);
         // Creating a Descriptor using an extended key that doesn't match the network provided will throw and InvalidNetwork Error
         assert!(descriptor1.is_ok());
-        assert_matches!(
-            descriptor2.unwrap_err(),
-            bdk::Error::Descriptor(Key(InvalidNetwork))
-        )
+        assert_matches!(descriptor2.unwrap_err(), Alpha3Error::Generic)
     }
 }

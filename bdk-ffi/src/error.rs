@@ -7,19 +7,23 @@ use std::fmt;
 use bdk::descriptor::DescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
-use bdk::wallet::{NewError, NewOrLoadError};
+use bdk::wallet::NewError;
 use std::convert::Infallible;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum Alpha3Error {
     Generic,
 }
 
 impl fmt::Display for Alpha3Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Error in FFI")
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Alpha3Error::Generic => write!(f, "Error in FFI"),
+        }
     }
 }
+
+impl std::error::Error for Alpha3Error {}
 
 impl From<DescriptorError> for Alpha3Error {
     fn from(_: DescriptorError) -> Self {
@@ -57,23 +61,11 @@ impl From<bdk::bitcoin::bip32::Error> for Alpha3Error {
     }
 }
 
-// impl From<FileError<'_>> for TempFfiError {
-//     fn from(_: FileError<'_>) -> Self {
-//         TempFfiError::FfiError
-//     }
-// }
-
 impl From<NewError<std::io::Error>> for Alpha3Error {
     fn from(_: NewError<std::io::Error>) -> Self {
         Alpha3Error::Generic
     }
 }
-
-// impl From<NewOrLoadError<std::io::Error, IterError>> for Alpha3Error {
-//     fn from(_: NewOrLoadError<std::io::Error, IterError>) -> Self {
-//         Alpha3Error::Alpha3Error
-//     }
-// }
 
 impl From<CreateTxError<std::io::Error>> for Alpha3Error {
     fn from(_: CreateTxError<std::io::Error>) -> Self {

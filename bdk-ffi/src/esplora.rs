@@ -1,5 +1,5 @@
-use crate::wallet::{Update, Wallet};
 use crate::error::Alpha3Error;
+use crate::wallet::{Update, Wallet};
 
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::wallet::Update as BdkUpdate;
@@ -32,11 +32,7 @@ impl EsploraClient {
 
         let (update_graph, last_active_indices) = self
             .0
-            .full_scan(
-                keychain_spks,
-                stop_gap as usize,
-                parallel_requests as usize,
-            )
+            .full_scan(keychain_spks, stop_gap as usize, parallel_requests as usize)
             .unwrap();
 
         let missing_heights = update_graph.missing_heights(wallet.local_chain());
@@ -60,7 +56,7 @@ impl EsploraClient {
         let bdk_transaction: BdkTransaction = transaction.into();
         self.0
             .broadcast(&bdk_transaction)
-            .map_err(|e| Alpha3Error::Generic)
+            .map_err(|_| Alpha3Error::Generic)
     }
 
     // pub fn estimate_fee();
