@@ -19,7 +19,7 @@ impl EsploraClient {
 
     // This is a temporary solution for scanning. The long-term solution involves not passing
     // the wallet to the client at all.
-    pub fn scan(
+    pub fn full_scan(
         &self,
         wallet: Arc<Wallet>,
         stop_gap: u64,

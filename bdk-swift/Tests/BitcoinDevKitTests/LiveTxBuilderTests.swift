@@ -13,7 +13,7 @@ final class LiveTxBuilderTests: XCTestCase {
             network: .testnet
         )
         let esploraClient = EsploraClient(url: "https://mempool.space/testnet/api")
-        let update = try esploraClient.scan(
+        let update = try esploraClient.fullScan(
             wallet: wallet,
             stopGap: 10,
             parallelRequests: 1
@@ -47,7 +47,7 @@ final class LiveTxBuilderTests: XCTestCase {
             network: .testnet
         )
         let esploraClient = EsploraClient(url: "https://mempool.space/testnet/api")
-        let update = try esploraClient.scan(
+        let update = try esploraClient.fullScan(
             wallet: wallet,
             stopGap: 10,
             parallelRequests: 1

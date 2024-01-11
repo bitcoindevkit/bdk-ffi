@@ -14,7 +14,7 @@ class TestLiveTxBuilder(unittest.TestCase):
             bdk.Network.TESTNET
         )
         esploraClient: bdk.EsploraClient = bdk.EsploraClient(url = "https://mempool.space/testnet/api")
-        update = esploraClient.scan(
+        update = esploraClient.full_scan(
             wallet = wallet,
             stop_gap = 10,
             parallel_requests = 1
@@ -48,7 +48,7 @@ class TestLiveTxBuilder(unittest.TestCase):
             bdk.Network.TESTNET
         )
         esploraClient: bdk.EsploraClient = bdk.EsploraClient(url = "https://mempool.space/testnet/api")
-        update = esploraClient.scan(
+        update = esploraClient.full_scan(
             wallet = wallet,
             stop_gap = 10,
             parallel_requests = 1

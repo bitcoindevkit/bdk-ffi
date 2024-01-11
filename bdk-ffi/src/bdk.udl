@@ -255,7 +255,7 @@ interface EsploraClient {
   constructor(string url);
 
   [Throws=Alpha3Error]
-  Update scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
+  Update full_scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
 
   [Throws=Alpha3Error]
   void broadcast([ByRef] Transaction transaction);
