@@ -46,6 +46,7 @@ enum BdkError {
   "Sled",
   "Rusqlite",
   "Rpc",
+  "HardenedIndex"
 };
 
 dictionary AddressInfo {
@@ -361,7 +362,7 @@ interface TxBuilder {
 interface BumpFeeTxBuilder {
   constructor(string txid, float new_fee_rate);
 
-  BumpFeeTxBuilder allow_shrinking(string address);
+  BumpFeeTxBuilder allow_shrinking(Script script_pubkey);
 
   BumpFeeTxBuilder enable_rbf();
 
@@ -455,7 +456,7 @@ interface Descriptor {
 
 interface Address {
   [Throws=BdkError]
-  constructor(string address);
+  constructor(string address, Network network);
 
   [Name=from_script, Throws=BdkError]
   constructor(Script script, Network network);
@@ -473,9 +474,9 @@ interface Address {
 
 [Enum]
 interface Payload {
-  PubkeyHash(sequence<u8> pubkey_hash);
+  PubkeyHash(string pubkey_hash);
 
-  ScriptHash(sequence<u8> script_hash);
+  ScriptHash(string script_hash);
 
   WitnessProgram(WitnessVersion version, sequence<u8> program);
 };

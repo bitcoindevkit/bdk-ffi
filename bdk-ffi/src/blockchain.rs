@@ -1,6 +1,6 @@
 // use crate::BlockchainConfig;
+use crate::Network;
 use crate::{BdkError, Transaction};
-use bdk::bitcoin::Network;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::rpc::Auth as BdkAuth;
 use bdk::blockchain::rpc::RpcSyncParams as BdkRpcSyncParams;
@@ -45,7 +45,7 @@ impl Blockchain {
             BlockchainConfig::Rpc { config } => AnyBlockchainConfig::Rpc(BdkRpcConfig {
                 url: config.url,
                 auth: config.auth.into(),
-                network: config.network,
+                network: config.network.into(),
                 wallet_name: config.wallet_name,
                 sync_params: config.sync_params.map(|p| p.into()),
             }),

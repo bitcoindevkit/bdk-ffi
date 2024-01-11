@@ -1,5 +1,6 @@
-use bdk::bitcoin::blockdata::script::Script as BdkScript;
-use bdk::bitcoin::{Address as BdkAddress, Network, OutPoint as BdkOutPoint, Sequence, Txid};
+use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
+use bdk::bitcoin::script::PushBytesBuf;
+use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::database::any::AnyDatabase;
 use bdk::database::{AnyDatabaseConfig, ConfigurableDatabase};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
@@ -8,6 +9,7 @@ use bdk::{
     SyncOptions as BdkSyncOptions, Wallet as BdkWallet,
 };
 use std::collections::HashSet;
+use std::convert::TryFrom;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -16,6 +18,7 @@ use crate::blockchain::Blockchain;
 use crate::database::DatabaseConfig;
 use crate::descriptor::Descriptor;
 use crate::psbt::PartiallySignedTransaction;
+use crate::Network;
 use crate::{
     AddressIndex, AddressInfo, Balance, BdkError, LocalUtxo, OutPoint, Progress, ProgressHolder,
     RbfValue, Script, ScriptAmount, TransactionDetails, TxBuilderResult,
@@ -50,7 +53,7 @@ impl Wallet {
         let wallet_mutex = Mutex::new(BdkWallet::new(
             &descriptor,
             change_descriptor.as_ref(),
-            network,
+            network.into(),
             database,
         )?);
         Ok(Wallet {
@@ -64,12 +67,12 @@ impl Wallet {
 
     /// Get the Bitcoin network the wallet is using.
     pub(crate) fn network(&self) -> Network {
-        self.get_wallet().network()
+        self.get_wallet().network().into()
     }
 
     /// Return whether or not a script is part of this wallet (either internal or external).
     pub(crate) fn is_mine(&self, script: Arc<Script>) -> Result<bool, BdkError> {
-        self.get_wallet().is_mine(&script.inner)
+        self.get_wallet().is_mine(&script.0)
     }
 
     /// Sync the internal database with the blockchain.
@@ -240,7 +243,7 @@ impl From<SignOptions> for BdkSignOptions {
 /// Each method on the TxBuilder returns an instance of a new TxBuilder with the option set/added.
 #[derive(Clone, Debug)]
 pub(crate) struct TxBuilder {
-    pub(crate) recipients: Vec<(BdkScript, u64)>,
+    pub(crate) recipients: Vec<(BdkScriptBuf, u64)>,
     pub(crate) utxos: Vec<OutPoint>,
     pub(crate) unspendable: HashSet<OutPoint>,
     pub(crate) change_policy: ChangeSpendPolicy,
@@ -248,7 +251,7 @@ pub(crate) struct TxBuilder {
     pub(crate) fee_rate: Option<f32>,
     pub(crate) fee_absolute: Option<u64>,
     pub(crate) drain_wallet: bool,
-    pub(crate) drain_to: Option<BdkScript>,
+    pub(crate) drain_to: Option<BdkScriptBuf>,
     pub(crate) rbf: Option<RbfValue>,
     pub(crate) data: Vec<u8>,
 }
@@ -272,8 +275,8 @@ impl TxBuilder {
 
     /// Add a recipient to the internal list.
     pub(crate) fn add_recipient(&self, script: Arc<Script>, amount: u64) -> Arc<Self> {
-        let mut recipients: Vec<(BdkScript, u64)> = self.recipients.clone();
-        recipients.append(&mut vec![(script.inner.clone(), amount)]);
+        let mut recipients: Vec<(BdkScriptBuf, u64)> = self.recipients.clone();
+        recipients.append(&mut vec![(script.0.clone(), amount)]);
         Arc::new(TxBuilder {
             recipients,
             ..self.clone()
@@ -283,7 +286,7 @@ impl TxBuilder {
     pub(crate) fn set_recipients(&self, recipients: Vec<ScriptAmount>) -> Arc<Self> {
         let recipients = recipients
             .iter()
-            .map(|script_amount| (script_amount.script.inner.clone(), script_amount.amount))
+            .map(|script_amount| (script_amount.script.0.clone(), script_amount.amount))
             .collect();
         Arc::new(TxBuilder {
             recipients,
@@ -388,7 +391,7 @@ impl TxBuilder {
     /// to allow this output to be reduced to pay for the extra fees.
     pub(crate) fn drain_to(&self, script: Arc<Script>) -> Arc<Self> {
         Arc::new(TxBuilder {
-            drain_to: Some(script.inner.clone()),
+            drain_to: Some(script.0.clone()),
             ..self.clone()
         })
     }
@@ -463,7 +466,10 @@ impl TxBuilder {
             }
         }
         if !&self.data.is_empty() {
-            tx_builder.add_data(self.data.as_slice());
+            let push_bytes = PushBytesBuf::try_from(self.data.clone()).map_err(|_| {
+                BdkError::Generic("Failed to convert data to PushBytes".to_string())
+            })?;
+            tx_builder.add_data(&push_bytes);
         }
 
         tx_builder
@@ -482,7 +488,7 @@ impl TxBuilder {
 pub(crate) struct BumpFeeTxBuilder {
     pub(crate) txid: String,
     pub(crate) fee_rate: f32,
-    pub(crate) allow_shrinking: Option<String>,
+    pub(crate) allow_shrinking: Option<Arc<Script>>,
     pub(crate) rbf: Option<RbfValue>,
 }
 
@@ -501,9 +507,9 @@ impl BumpFeeTxBuilder {
     /// shrink instead. Note that the output may shrink to below the dust limit and therefore be removed. If it is preserved
     /// then it is currently not guaranteed to be in the same position as it was originally. Returns an error if script_pubkey
     /// can’t be found among the recipients of the transaction we are bumping.
-    pub(crate) fn allow_shrinking(&self, address: String) -> Arc<Self> {
+    pub(crate) fn allow_shrinking(&self, script_pubkey: Arc<Script>) -> Arc<Self> {
         Arc::new(Self {
-            allow_shrinking: Some(address),
+            allow_shrinking: Some(script_pubkey),
             ..self.clone()
         })
     }
@@ -536,10 +542,7 @@ impl BumpFeeTxBuilder {
         let mut tx_builder = wallet.build_fee_bump(txid)?;
         tx_builder.fee_rate(FeeRate::from_sat_per_vb(self.fee_rate));
         if let Some(allow_shrinking) = &self.allow_shrinking {
-            let address = BdkAddress::from_str(allow_shrinking)
-                .map_err(|e| BdkError::Generic(e.to_string()))?;
-            let script = address.script_pubkey();
-            tx_builder.allow_shrinking(script)?;
+            tx_builder.allow_shrinking(allow_shrinking.0.clone())?;
         }
         if let Some(rbf) = &self.rbf {
             match *rbf {
@@ -569,9 +572,10 @@ mod test {
     use crate::descriptor::Descriptor;
     use crate::keys::{DescriptorSecretKey, Mnemonic};
     use crate::wallet::{AddressIndex, TxBuilder, Wallet};
+    use crate::Network;
     use crate::Script;
     use assert_matches::assert_matches;
-    use bdk::bitcoin::{Address, Network};
+    use bdk::bitcoin::Address;
     use bdk::wallet::get_funded_wallet;
     use bdk::KeychainKind;
     use std::str::FromStr;
@@ -585,14 +589,14 @@ mod test {
             inner_mutex: Mutex::new(funded_wallet),
         };
         let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
-        let drain_to_script = crate::Address::new(drain_to_address)
+        let drain_to_script = crate::Address::new(drain_to_address, Network::Testnet)
             .unwrap()
             .script_pubkey();
         let tx_builder = TxBuilder::new()
             .drain_wallet()
             .drain_to(drain_to_script.clone());
         assert!(tx_builder.drain_wallet);
-        assert_eq!(tx_builder.drain_to, Some(drain_to_script.inner.clone()));
+        assert_eq!(tx_builder.drain_to, Some(drain_to_script.0.clone()));
 
         let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
         let psbt = tx_builder_result.psbt.inner.lock().unwrap().clone();
@@ -623,12 +627,14 @@ mod test {
                 .cloned()
                 .unwrap()
                 .script_pubkey,
-            Network::Testnet,
+            Network::Testnet.into(),
         )
         .unwrap();
         assert_eq!(
             output_address,
-            Address::from_str("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt").unwrap()
+            Address::from_str("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt")
+                .unwrap()
+                .assume_checked()
         );
         let output_value = psbt.unsigned_tx.output.get(0).cloned().unwrap().value;
         assert_eq!(output_value, 49_890_u64); // input - fee

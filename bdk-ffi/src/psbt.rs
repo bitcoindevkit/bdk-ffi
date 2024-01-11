@@ -1,5 +1,4 @@
-use bdk::bitcoin::hashes::hex::ToHex;
-use bdk::bitcoin::util::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
+use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::bitcoincore_rpc::jsonrpc::serde_json;
 use bdk::psbt::PsbtUtils;
 use std::ops::Deref;
@@ -30,7 +29,7 @@ impl PartiallySignedTransaction {
     pub(crate) fn txid(&self) -> String {
         let tx = self.inner.lock().unwrap().clone().extract_tx();
         let txid = tx.txid();
-        txid.to_hex()
+        txid.to_string()
     }
 
     /// Return the transaction.
@@ -82,6 +81,7 @@ impl PartiallySignedTransaction {
 #[cfg(test)]
 mod test {
     use crate::wallet::{TxBuilder, Wallet};
+    use crate::Network;
     use bdk::wallet::get_funded_wallet;
     use std::sync::Mutex;
 
@@ -93,7 +93,7 @@ mod test {
             inner_mutex: Mutex::new(funded_wallet),
         };
         let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
-        let drain_to_script = crate::Address::new(drain_to_address)
+        let drain_to_script = crate::Address::new(drain_to_address, Network::Testnet)
             .unwrap()
             .script_pubkey();
 
@@ -103,7 +103,7 @@ mod test {
             .drain_to(drain_to_script.clone());
         //dbg!(&tx_builder);
         assert!(tx_builder.drain_wallet);
-        assert_eq!(tx_builder.drain_to, Some(drain_to_script.inner.clone()));
+        assert_eq!(tx_builder.drain_to, Some(drain_to_script.0.clone()));
 
         let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
 

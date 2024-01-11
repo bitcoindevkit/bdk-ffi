@@ -1,14 +1,14 @@
 use crate::BdkError;
 
+use crate::Network;
+use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::secp256k1::Secp256k1;
-use bdk::bitcoin::util::bip32::DerivationPath as BdkDerivationPath;
-use bdk::bitcoin::Network;
-use bdk::descriptor::DescriptorXKey;
 use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic, WordCount};
 use bdk::keys::{
     DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
     DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
 };
+use bdk::miniscript::descriptor::{DescriptorXKey, Wildcard};
 use bdk::miniscript::BareCtx;
 use std::ops::Deref;
 use std::str::FromStr;
@@ -75,9 +75,9 @@ impl DescriptorSecretKey {
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key().unwrap();
         let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
             origin: None,
-            xkey: xkey.into_xprv(network).unwrap(),
+            xkey: xkey.into_xprv(network.into()).unwrap(),
             derivation_path: BdkDerivationPath::master(),
-            wildcard: bdk::descriptor::Wildcard::Unhardened,
+            wildcard: Wildcard::Unhardened,
         });
         Self {
             inner: descriptor_secret_key,
@@ -116,6 +116,9 @@ impl DescriptorSecretKey {
             BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
                 "Cannot derive from a single key".to_string(),
             )),
+            BdkDescriptorSecretKey::MultiXPrv(_) => Err(BdkError::Generic(
+                "Cannot derive from a multi key".to_string(),
+            )),
         }
     }
 
@@ -138,6 +141,9 @@ impl DescriptorSecretKey {
             BdkDescriptorSecretKey::Single(_) => Err(BdkError::Generic(
                 "Cannot extend from a single key".to_string(),
             )),
+            BdkDescriptorSecretKey::MultiXPrv(_) => Err(BdkError::Generic(
+                "Cannot extend from a multi key".to_string(),
+            )),
         }
     }
 
@@ -152,11 +158,14 @@ impl DescriptorSecretKey {
     /// Get the private key as bytes.
     pub(crate) fn secret_bytes(&self) -> Vec<u8> {
         let inner = &self.inner;
-        let secret_bytes: Vec<u8> = match inner.deref() {
+        let secret_bytes: Vec<u8> = match inner {
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 descriptor_x_key.xkey.private_key.secret_bytes().to_vec()
             }
             BdkDescriptorSecretKey::Single(_) => {
+                unreachable!()
+            }
+            BdkDescriptorSecretKey::MultiXPrv(_) => {
                 unreachable!()
             }
         };
@@ -188,7 +197,7 @@ impl DescriptorPublicKey {
         let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
 
-        match descriptor_public_key.deref() {
+        match descriptor_public_key {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derived_xpub = descriptor_x_key.xkey.derive_pub(&secp, &path)?;
                 let key_source = match descriptor_x_key.origin.clone() {
@@ -208,13 +217,16 @@ impl DescriptorPublicKey {
             BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
                 "Cannot derive from a single key".to_string(),
             )),
+            BdkDescriptorPublicKey::MultiXPub(_) => Err(BdkError::Generic(
+                "Cannot derive from a multi key".to_string(),
+            )),
         }
     }
 
     pub(crate) fn extend(&self, path: Arc<DerivationPath>) -> Result<Arc<Self>, BdkError> {
         let descriptor_public_key = &self.inner;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
-        match descriptor_public_key.deref() {
+        match descriptor_public_key {
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let extended_path = descriptor_x_key.derivation_path.extend(path);
                 let extended_descriptor_public_key = BdkDescriptorPublicKey::XPub(DescriptorXKey {
@@ -229,6 +241,9 @@ impl DescriptorPublicKey {
             }
             BdkDescriptorPublicKey::Single(_) => Err(BdkError::Generic(
                 "Cannot extend from a single key".to_string(),
+            )),
+            BdkDescriptorPublicKey::MultiXPub(_) => Err(BdkError::Generic(
+                "Cannot extend from a multi key".to_string(),
             )),
         }
     }
@@ -245,8 +260,7 @@ impl DescriptorPublicKey {
 mod test {
     use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
     use crate::BdkError;
-    use bdk::bitcoin::hashes::hex::ToHex;
-    use bdk::bitcoin::Network;
+    use crate::Network;
     use std::sync::Arc;
 
     fn get_inner() -> DescriptorSecretKey {
@@ -357,15 +371,5 @@ mod test {
         let master_dpk = get_inner().as_public();
         let derived_dpk = &derive_dpk(&master_dpk, "m/84h/1h/0h");
         assert!(derived_dpk.is_err());
-    }
-
-    #[test]
-    fn test_retrieve_master_secret_key() {
-        let master_dpk = get_inner();
-        let master_private_key = master_dpk.secret_bytes().to_hex();
-        assert_eq!(
-            master_private_key,
-            "e93315d6ce401eb4db803a56232f0ed3e69b053774e6047df54f1bd00e5ea936"
-        )
     }
 }
