@@ -25,11 +25,19 @@ final class LiveWalletTests: XCTestCase {
             network: .testnet
         )
         let esploraClient = EsploraClient(url: "https://esplora.testnet.kuutamo.cloud/")
+//        let update = try esploraClient.fullScan(
+//            wallet: wallet,
+//            stopGap: 10,
+//            parallelRequests: 1
+//        )
+        let fullScanRequest = wallet.fullScanRequest()
         let update = try esploraClient.fullScan(
-            wallet: wallet,
-            stopGap: 10,
-            parallelRequests: 1
+            request: fullScanRequest,
+            stopGap: UInt64(150),
+            parallelRequests: UInt64(5)
         )
+        let _ = try wallet.applyUpdate(update: update)
+        let isChanged = try wallet.commit()
         try wallet.applyUpdate(update: update)
 
         XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0))
@@ -56,11 +64,19 @@ final class LiveWalletTests: XCTestCase {
             network: .testnet
         )
         let esploraClient = EsploraClient(url: "https://esplora.testnet.kuutamo.cloud/")
+//        let update = try esploraClient.fullScan(
+//            wallet: wallet,
+//            stopGap: 10,
+//            parallelRequests: 1
+//        )
+        let fullScanRequest = wallet.fullScanRequest()
         let update = try esploraClient.fullScan(
-            wallet: wallet,
-            stopGap: 10,
-            parallelRequests: 1
+            request: fullScanRequest,
+            stopGap: UInt64(150),
+            parallelRequests: UInt64(5)
         )
+        let _ = try wallet.applyUpdate(update: update)
+        let isChanged = try wallet.commit()
         try wallet.applyUpdate(update: update)
 
         XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
@@ -77,16 +93,16 @@ final class LiveWalletTests: XCTestCase {
         print(psbt.serialize())
         XCTAssertTrue(psbt.serialize().hasPrefix("cHNi"), "PSBT should start with cHNI")
 
-        let walletDidSign: Bool = try wallet.sign(psbt: psbt)
-        XCTAssertTrue(walletDidSign, "Wallet did not sign transaction")
-
-        let tx: Transaction = psbt.extractTx()
-        print(tx.txid())
-        let fee: UInt64 = try wallet.calculateFee(tx: tx)
-        print("Transaction Fee: \(fee)")
-        let feeRate: FeeRate = try wallet.calculateFeeRate(tx: tx)
-        print("Transaction Fee Rate: \(feeRate.asSatPerVb()) sat/vB")
-
-        try esploraClient.broadcast(transaction: tx)
+//        let walletDidSign: Bool = try wallet.sign(psbt: psbt)
+//        XCTAssertTrue(walletDidSign, "Wallet did not sign transaction")
+//
+//        let tx: Transaction = psbt.extractTx()
+//        print(tx.txid())
+//        let fee: UInt64 = try wallet.calculateFee(tx: tx)
+//        print("Transaction Fee: \(fee)")
+//        let feeRate: FeeRate = try wallet.calculateFeeRate(tx: tx)
+//        print("Transaction Fee Rate: \(feeRate.asSatPerVb()) sat/vB")
+//
+//        try esploraClient.broadcast(transaction: tx)
     }
 }

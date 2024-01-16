@@ -28,7 +28,7 @@ The below directories (a separate repository in the case of bdk-swift) include i
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should compile with any combination of features with Rust 1.73.0.
+This library should compile with any combination of features with Rust 1.74.0.
 
 ## Contributing
 

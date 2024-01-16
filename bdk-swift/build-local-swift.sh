@@ -5,7 +5,7 @@
 
 # Run the script from the repo root directory, ie: ./bdk-swift/build-local-swift.sh
 
-rustup install 1.73.0
+rustup install 1.74.0
 rustup component add rust-src
 rustup target add aarch64-apple-ios      # iOS ARM64
 rustup target add x86_64-apple-ios       # iOS x86_64

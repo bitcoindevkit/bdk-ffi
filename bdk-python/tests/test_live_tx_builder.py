@@ -20,11 +20,19 @@ class LiveTxBuilderTest(unittest.TestCase):
             bdk.Network.TESTNET
         )
         esploraClient: bdk.EsploraClient = bdk.EsploraClient(url = "https://esplora.testnet.kuutamo.cloud/")
+        # update = esploraClient.full_scan(
+        #     wallet = wallet,
+        #     stop_gap = 10,
+        #     parallel_requests = 1
+        # )
+        full_scan_request = wallet.full_scan_request()
         update = esploraClient.full_scan(
-            wallet = wallet,
+            full_scan_request = full_scan_request,
             stop_gap = 10,
             parallel_requests = 1
         )
+        wallet.apply_update(update)
+        wallet.commit()
         wallet.apply_update(update)
         
         self.assertGreater(wallet.get_balance().total, 0)
@@ -54,11 +62,19 @@ class LiveTxBuilderTest(unittest.TestCase):
             bdk.Network.TESTNET
         )
         esploraClient: bdk.EsploraClient = bdk.EsploraClient(url = "https://esplora.testnet.kuutamo.cloud/")
+        # update = esploraClient.full_scan(
+        #     wallet = wallet,
+        #     stop_gap = 10,
+        #     parallel_requests = 1
+        # )
+        full_scan_request = wallet.full_scan_request()
         update = esploraClient.full_scan(
-            wallet = wallet,
+            full_scan_request = full_scan_request,
             stop_gap = 10,
             parallel_requests = 1
         )
+        wallet.apply_update(update)
+        wallet.commit()
         wallet.apply_update(update)
         
         self.assertGreater(wallet.get_balance().total, 0)

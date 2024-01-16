@@ -56,10 +56,10 @@ _Note that Kotlin version `1.6.10` or later is required to build the library._
 git clone https://github.com/bitcoindevkit/bdk-ffi
 ```
 2. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions. 
-3. Install Rust (note that we are currently building using Rust 1.73.0):
+3. Install Rust (note that we are currently building using Rust 1.74.0):
 ```shell
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup default 1.73.0
+rustup default 1.74.0
 ```
 4. Install required targets
 ```sh

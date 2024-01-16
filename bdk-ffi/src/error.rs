@@ -260,7 +260,15 @@ impl From<BdkEsploraError> for EsploraError {
                 EsploraError::HeaderHeightNotFound { height }
             }
             BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
+            bdk_esplora::esplora_client::Error::Reqwest(_) => todo!(),
         }
+    }
+}
+
+impl From<Box<bdk_esplora::esplora_client::Error>> for EsploraError {
+    fn from(error: Box<bdk_esplora::esplora_client::Error>) -> Self {
+        // Dereference the boxed error and convert it
+        (*error).into()
     }
 }
 
