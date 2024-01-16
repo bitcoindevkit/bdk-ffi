@@ -49,7 +49,7 @@ class LiveWalletTest {
 
         val psbt: PartiallySignedTransaction = TxBuilder()
             .addRecipient(recipient.scriptPubkey(), 4200uL)
-            .feeRate(4.0f)
+            .feeRate(FeeRate.fromSatPerVb(4.0f))
             .finish(wallet)
 
         println(psbt.serialize())

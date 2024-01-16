@@ -68,7 +68,14 @@ dictionary TxOut {
 // ------------------------------------------------------------------------
 
 interface FeeRate {
+  [Name=from_sat_per_vb]
+  constructor(f32 sat_per_vb);
+
+  [Name=from_sat_per_kwu]
+  constructor(f32 sat_per_kwu);
+
   f32 as_sat_per_vb();
+
   f32 sat_per_kwu();
 };
 
@@ -132,7 +139,7 @@ interface TxBuilder {
 
   TxBuilder manually_selected_only();
 
-  TxBuilder fee_rate(float sat_per_vbyte);
+  TxBuilder fee_rate([ByRef] FeeRate fee_rate);
 
   TxBuilder fee_absolute(u64 fee);
 

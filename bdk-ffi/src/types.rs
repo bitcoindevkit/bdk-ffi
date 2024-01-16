@@ -11,9 +11,18 @@ use bdk::FeeRate as BdkFeeRate;
 
 use std::sync::Arc;
 
+#[derive(Clone, Debug)]
 pub struct FeeRate(pub BdkFeeRate);
 
 impl FeeRate {
+    pub fn from_sat_per_vb(sat_per_vb: f32) -> Self {
+        FeeRate(BdkFeeRate::from_sat_per_vb(sat_per_vb))
+    }
+
+    pub fn from_sat_per_kwu(sat_per_kwu: f32) -> Self {
+        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
+    }
+
     pub fn as_sat_per_vb(&self) -> f32 {
         self.0.as_sat_per_vb()
     }

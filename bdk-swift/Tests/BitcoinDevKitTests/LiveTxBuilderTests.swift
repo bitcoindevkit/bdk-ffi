@@ -25,7 +25,7 @@ final class LiveTxBuilderTests: XCTestCase {
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .testnet)
         let psbt: PartiallySignedTransaction = try TxBuilder()
             .addRecipient(script: recipient.scriptPubkey(), amount: 4200)
-            .feeRate(satPerVbyte: 2.0)
+            .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2.0))
             .finish(wallet: wallet)
 
         print(psbt.serialize())
@@ -65,7 +65,7 @@ final class LiveTxBuilderTests: XCTestCase {
 
         let psbt: PartiallySignedTransaction = try TxBuilder()
             .setRecipients(recipients: allRecipients)
-            .feeRate(satPerVbyte: 4.0)
+            .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 4.0))
             .changePolicy(changePolicy: ChangeSpendPolicy.changeForbidden)
             .enableRbf()
             .finish(wallet: wallet)

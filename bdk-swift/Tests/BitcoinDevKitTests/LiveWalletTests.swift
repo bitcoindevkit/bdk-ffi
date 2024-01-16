@@ -58,7 +58,7 @@ final class LiveWalletTests: XCTestCase {
         let psbt: PartiallySignedTransaction = try
             TxBuilder()
                 .addRecipient(script: recipient.scriptPubkey(), amount: 4200)
-                .feeRate(satPerVbyte: 2.0)
+                .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2.0))
                 .finish(wallet: wallet)
 
         print(psbt.serialize())

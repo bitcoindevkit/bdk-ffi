@@ -309,7 +309,7 @@ pub struct TxBuilder {
     pub(crate) unspendable: HashSet<OutPoint>,
     pub(crate) change_policy: ChangeSpendPolicy,
     pub(crate) manually_selected_only: bool,
-    pub(crate) fee_rate: Option<f32>,
+    pub(crate) fee_rate: Option<FeeRate>,
     pub(crate) fee_absolute: Option<u64>,
     pub(crate) drain_wallet: bool,
     pub(crate) drain_to: Option<BdkScriptBuf>,
@@ -412,9 +412,9 @@ impl TxBuilder {
         })
     }
 
-    pub(crate) fn fee_rate(&self, sat_per_vb: f32) -> Arc<Self> {
+    pub(crate) fn fee_rate(&self, fee_rate: &FeeRate) -> Arc<Self> {
         Arc::new(TxBuilder {
-            fee_rate: Some(sat_per_vb),
+            fee_rate: Some(fee_rate.clone()),
             ..self.clone()
         })
     }
@@ -486,8 +486,8 @@ impl TxBuilder {
         if self.manually_selected_only {
             tx_builder.manually_selected_only();
         }
-        if let Some(sat_per_vb) = self.fee_rate {
-            tx_builder.fee_rate(BdkFeeRate::from_sat_per_vb(sat_per_vb));
+        if let Some(fee_rate) = &self.fee_rate {
+            tx_builder.fee_rate(fee_rate.0);
         }
         if let Some(fee_amount) = self.fee_absolute {
             tx_builder.fee_absolute(fee_amount);

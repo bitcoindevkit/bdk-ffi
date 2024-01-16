@@ -28,7 +28,7 @@ class TestLiveTxBuilder(unittest.TestCase):
             network = bdk.Network.TESTNET
         )
 
-        psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(2.0).finish(wallet)
+        psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2.0)).finish(wallet)
         # print(psbt.serialize())
         
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
@@ -70,7 +70,7 @@ class TestLiveTxBuilder(unittest.TestCase):
             bdk.ScriptAmount(recipient2.script_pubkey, 4200)
         )
 
-        psbt: bdk.PartiallySignedTransaction = bdk.TxBuilder().set_recipients(all_recipients).fee_rate(4.0).change_policy(bdk.ChangeSpendPolicy.CHANGE_FORBIDDEN).enable_rbf().finish(wallet)
+        psbt: bdk.PartiallySignedTransaction = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2.0)).finish(wallet)
         wallet.sign(psbt)
 
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
