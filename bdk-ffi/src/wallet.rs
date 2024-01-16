@@ -8,14 +8,18 @@ use crate::{AddressIndex, AddressInfo};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
-use bdk::bitcoin::Network;
-use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
+use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid, Network};
+use bdk::chain::spk_client::{
+    FullScanRequest as BdkFullScanRequest, SyncRequest as BdkSyncRequest,
+};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::{ChangeSet, Update as BdkUpdate};
-use bdk::Wallet as BdkWallet;
-use bdk::{FeeRate as BdkFeeRate, SignOptions};
+use bdk::{FeeRate as BdkFeeRate, KeychainKind};
+use bdk::{SignOptions, Wallet as BdkWallet};
 use bdk_file_store::Store;
 
+use bdk::chain::SpkIterator;
+use bdk::descriptor::DescriptorPublicKey;
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -61,6 +65,8 @@ impl Wallet {
             .apply_update(update.0.clone())
             .map_err(|_| Alpha3Error::Generic)
     }
+
+    // TODO: add `commit()` function when persistence is working
 
     // TODO: This is the fallible version of get_internal_address; should I rename it to get_internal_address?
     //       It's a slight change of the API, the other option is to rename the get_address to try_get_address
@@ -124,12 +130,33 @@ impl Wallet {
             .map(|bdk_fee_rate| Arc::new(FeeRate(bdk_fee_rate)))
             .map_err(|e| e.into())
     }
+
+    pub fn full_scan_request(&self) -> Arc<FullScanRequest> {
+        let request = self.get_wallet().full_scan_request();
+        Arc::new(FullScanRequest(Mutex::new(request)))
+    }
+
+    pub fn sync_revealed_spks_request(&self) -> Arc<SyncRequest> {
+        let request = self.get_wallet().sync_revealed_spks_request();
+        Arc::new(SyncRequest(Mutex::new(request)))
+    }
 }
 
 pub struct SentAndReceivedValues {
     pub sent: u64,
     pub received: u64,
 }
+
+pub struct FullScanRequest(
+    pub(crate)  Mutex<
+        BdkFullScanRequest<
+            KeychainKind,
+            SpkIterator<bdk::descriptor::Descriptor<DescriptorPublicKey>>,
+        >,
+    >,
+);
+
+pub struct SyncRequest(pub(crate) Mutex<BdkSyncRequest>);
 
 pub struct Update(pub(crate) BdkUpdate);
 

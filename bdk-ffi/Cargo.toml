@@ -18,9 +18,11 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { version = "1.0.0-alpha.6", features = ["all-keys", "keys-bip39"] }
-bdk_esplora = { version = "0.8.0", default-features = false, features = ["std", "blocking"] }
-bdk_file_store = { version = "0.6.0" }
+bdk = { git = "https://github.com/notmandatory/bdk.git", branch = "feat/wallet_start_update", features = ["all-keys", "keys-bip39"] }
+bdk_esplora = { git = "https://github.com/notmandatory/bdk.git", branch = "feat/wallet_start_update", features = ["std", "blocking"] }
+# bdk = { version = "1.0.0-alpha.6", features = ["all-keys", "keys-bip39"] }
+# bdk_esplora = { version = "0.8.0", default-features = false, features = ["std", "blocking"] }
+bdk_file_store = { path = "../../bdk/crates/file_store" }
 
 # TODO 22: The bdk_esplora crate uses esplora_client which uses reqwest for async. By default it uses the system
 #          openssl library, which is creating problems for cross-compilation. I'd rather use rustls, but it's hidden
