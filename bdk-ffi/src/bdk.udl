@@ -469,6 +469,8 @@ interface Address {
 
   string to_qr_uri();
 
+  boolean is_valid_for_network(Network network);
+
   string as_string();
 };
 

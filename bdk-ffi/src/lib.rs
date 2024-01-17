@@ -423,6 +423,15 @@ impl Address {
         self.inner.to_qr_uri()
     }
 
+    pub fn is_valid_for_network(&self, network: Network) -> bool {
+        let address_str = self.inner.to_string();
+        if let Ok(unchecked_address) = address_str.parse::<BdkAddress<NetworkUnchecked>>() {
+            unchecked_address.is_valid_for_network(network.into())
+        } else {
+            false
+        }
+    }
+
     fn as_string(&self) -> String {
         self.inner.to_string()
     }
