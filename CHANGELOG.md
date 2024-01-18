@@ -11,6 +11,18 @@ This release is the first alpha release of the 1.0 API for the bindings librarie
 - Create and sign transactions using the transaction builder
 - Broadcast transactions
 
+## [0.31.0]
+This release updates the bindings libraries to bdk version 0.29.0, updating rust-bitcoin to version 0.30.2.
+
+- APIs Changed:
+  - `BumpFeeTxBuilder.allow_shrinking()` now takes a `Script` as its argument [#443]
+  - The `Address` constructor now takes a `Network` argument [#443]
+  - The `Payload::PubkeyHash` and `Payload::ScriptHash` now have string arguments instead of byte arrays [#443]
+- APIs Added:
+  - The `Address` type now has the `is_valid_for_network()` method [#443]
+
+[#443]: https://github.com/bitcoindevkit/bdk-ffi/pull/443
+
 ## [0.30.0]
 This release has a new API and a few internal optimizations and refactorings.
 
@@ -230,6 +242,7 @@ Changelog
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v0.31.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.30.0...v0.31.0
 [v0.30.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.29.0...v0.30.0
 [v0.29.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.28.0...v0.29.0
 [v0.28.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.27.1...v0.28.0
