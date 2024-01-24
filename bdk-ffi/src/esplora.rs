@@ -28,7 +28,7 @@ impl EsploraClient {
         let wallet = wallet.get_wallet();
 
         let previous_tip = wallet.latest_checkpoint();
-        let keychain_spks = wallet.spks_of_all_keychains().into_iter().collect();
+        let keychain_spks = wallet.all_unbounded_spk_iters().into_iter().collect();
 
         let (update_graph, last_active_indices) = self
             .0
