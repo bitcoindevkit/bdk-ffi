@@ -7,7 +7,6 @@ mod types;
 mod wallet;
 
 use crate::bitcoin::Address;
-use crate::bitcoin::Network;
 use crate::bitcoin::OutPoint;
 use crate::bitcoin::PartiallySignedTransaction;
 use crate::bitcoin::Script;
@@ -33,6 +32,7 @@ use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
 
+use bdk::bitcoin::Network;
 use bdk::keys::bip39::WordCount;
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::KeychainKind;

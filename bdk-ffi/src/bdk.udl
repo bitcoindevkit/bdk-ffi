@@ -292,6 +292,7 @@ interface Script {
   sequence<u8> to_bytes();
 };
 
+[NonExhaustive]
 enum Network {
   "Bitcoin",
   "Testnet",

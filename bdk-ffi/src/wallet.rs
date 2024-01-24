@@ -4,10 +4,11 @@ use crate::error::{Alpha3Error, CalculateFeeError};
 use crate::types::ScriptAmount;
 use crate::types::{Balance, FeeRate};
 use crate::Script;
-use crate::{AddressIndex, AddressInfo, Network};
+use crate::{AddressIndex, AddressInfo};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
+use bdk::bitcoin::Network;
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::Update as BdkUpdate;
@@ -33,8 +34,7 @@ impl Wallet {
         let descriptor = descriptor.as_string_private();
         let change_descriptor = change_descriptor.map(|d| d.as_string_private());
 
-        let wallet =
-            BdkWallet::new_no_persist(&descriptor, change_descriptor.as_ref(), network.into())?;
+        let wallet = BdkWallet::new_no_persist(&descriptor, change_descriptor.as_ref(), network)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -51,7 +51,7 @@ impl Wallet {
     }
 
     pub fn network(&self) -> Network {
-        self.get_wallet().network().into()
+        self.get_wallet().network()
     }
 
     pub fn get_internal_address(&self, address_index: AddressIndex) -> AddressInfo {

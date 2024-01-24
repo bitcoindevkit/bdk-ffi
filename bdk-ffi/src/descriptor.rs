@@ -1,10 +1,10 @@
 use crate::error::Alpha3Error;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
-use crate::Network;
 
 use bdk::bitcoin::bip32::Fingerprint;
 use bdk::bitcoin::key::Secp256k1;
+use bdk::bitcoin::Network;
 use bdk::descriptor::{ExtendedDescriptor, IntoWalletDescriptor};
 use bdk::keys::DescriptorPublicKey as BdkDescriptorPublicKey;
 use bdk::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, KeyMap};
@@ -25,8 +25,7 @@ pub struct Descriptor {
 impl Descriptor {
     pub(crate) fn new(descriptor: String, network: Network) -> Result<Self, Alpha3Error> {
         let secp = Secp256k1::new();
-        let (extended_descriptor, key_map) =
-            descriptor.into_wallet_descriptor(&secp, network.into())?;
+        let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network)?;
         Ok(Self {
             extended_descriptor,
             key_map,
@@ -46,9 +45,8 @@ impl Descriptor {
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip44(derivable_key, keychain_kind)
-                    .build(network.into())
-                    .unwrap();
+                let (extended_descriptor, key_map, _) =
+                    Bip44(derivable_key, keychain_kind).build(network).unwrap();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -77,7 +75,7 @@ impl Descriptor {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
                     Bip44Public(derivable_key, fingerprint, keychain_kind)
-                        .build(network.into())
+                        .build(network)
                         .unwrap();
 
                 Self {
@@ -104,9 +102,8 @@ impl Descriptor {
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip49(derivable_key, keychain_kind)
-                    .build(network.into())
-                    .unwrap();
+                let (extended_descriptor, key_map, _) =
+                    Bip49(derivable_key, keychain_kind).build(network).unwrap();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -135,7 +132,7 @@ impl Descriptor {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
                     Bip49Public(derivable_key, fingerprint, keychain_kind)
-                        .build(network.into())
+                        .build(network)
                         .unwrap();
 
                 Self {
@@ -162,9 +159,8 @@ impl Descriptor {
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip84(derivable_key, keychain_kind)
-                    .build(network.into())
-                    .unwrap();
+                let (extended_descriptor, key_map, _) =
+                    Bip84(derivable_key, keychain_kind).build(network).unwrap();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -193,7 +189,7 @@ impl Descriptor {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
                     Bip84Public(derivable_key, fingerprint, keychain_kind)
-                        .build(network.into())
+                        .build(network)
                         .unwrap();
 
                 Self {
@@ -220,9 +216,8 @@ impl Descriptor {
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip86(derivable_key, keychain_kind)
-                    .build(network.into())
-                    .unwrap();
+                let (extended_descriptor, key_map, _) =
+                    Bip86(derivable_key, keychain_kind).build(network).unwrap();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -251,7 +246,7 @@ impl Descriptor {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) =
                     Bip86Public(derivable_key, fingerprint, keychain_kind)
-                        .build(network.into())
+                        .build(network)
                         .unwrap();
 
                 Self {

@@ -1,10 +1,10 @@
 use crate::error::Alpha3Error;
-use crate::Network;
 
 use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::key::Secp256k1;
 use bdk::bitcoin::secp256k1::rand;
 use bdk::bitcoin::secp256k1::rand::Rng;
+use bdk::bitcoin::Network;
 use bdk::keys::bip39::WordCount;
 use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic};
 use bdk::keys::{
@@ -77,7 +77,7 @@ impl DescriptorSecretKey {
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key().unwrap();
         let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
             origin: None,
-            xkey: xkey.into_xprv(network.into()).unwrap(),
+            xkey: xkey.into_xprv(network).unwrap(),
             derivation_path: BdkDerivationPath::master(),
             wildcard: Wildcard::Unhardened,
         });
@@ -248,7 +248,7 @@ mod test {
 
     fn get_inner() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
-        DescriptorSecretKey::new(Network::Testnet.into(), &mnemonic, None)
+        DescriptorSecretKey::new(Network::Testnet, &mnemonic, None)
     }
 
     fn derive_dsk(

@@ -2,9 +2,9 @@ use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk::bitcoin::consensus::Decodable;
-use bdk::bitcoin::network::constants::Network as BdkNetwork;
 use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::bitcoin::Address as BdkAddress;
+use bdk::bitcoin::Network;
 use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::bitcoin::Txid;
@@ -34,37 +34,6 @@ impl From<BdkScriptBuf> for Script {
     }
 }
 
-#[derive(PartialEq, Debug)]
-pub enum Network {
-    Bitcoin,
-    Testnet,
-    Signet,
-    Regtest,
-}
-
-impl From<Network> for BdkNetwork {
-    fn from(network: Network) -> Self {
-        match network {
-            Network::Bitcoin => BdkNetwork::Bitcoin,
-            Network::Testnet => BdkNetwork::Testnet,
-            Network::Signet => BdkNetwork::Signet,
-            Network::Regtest => BdkNetwork::Regtest,
-        }
-    }
-}
-
-impl From<BdkNetwork> for Network {
-    fn from(network: BdkNetwork) -> Self {
-        match network {
-            BdkNetwork::Bitcoin => Network::Bitcoin,
-            BdkNetwork::Testnet => Network::Testnet,
-            BdkNetwork::Signet => Network::Signet,
-            BdkNetwork::Regtest => Network::Regtest,
-            _ => panic!("Network {} not supported", network),
-        }
-    }
-}
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct Address {
     inner: BdkAddress<NetworkChecked>,
@@ -77,7 +46,7 @@ impl Address {
             .map_err(|_| Alpha3Error::Generic)?;
 
         let network_checked_address = parsed_address
-            .require_network(network.into())
+            .require_network(network)
             .map_err(|_| Alpha3Error::Generic)?;
 
         Ok(Address {
@@ -108,7 +77,7 @@ impl Address {
     // }
 
     pub fn network(&self) -> Network {
-        self.inner.network.into()
+        self.inner.network
     }
 
     pub fn script_pubkey(&self) -> Arc<Script> {
@@ -126,7 +95,7 @@ impl Address {
     pub fn is_valid_for_network(&self, network: Network) -> bool {
         let address_str = self.inner.to_string();
         if let Ok(unchecked_address) = address_str.parse::<BdkAddress<NetworkUnchecked>>() {
-            unchecked_address.is_valid_for_network(network.into())
+            unchecked_address.is_valid_for_network(network)
         } else {
             false
         }
