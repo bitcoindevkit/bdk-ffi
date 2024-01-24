@@ -144,7 +144,7 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             // The code above worked for uniffi 0.24.3 using the --library flag
             // The code below works for uniffi 0.23.0
             workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--out-dir", "../bdk-android/lib/src/main/kotlin", "--no-format")
+            val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--config", "uniffi-android.toml", "--out-dir", "../bdk-android/lib/src/main/kotlin", "--no-format")
 
             executable("cargo")
             args(cargoArgs)

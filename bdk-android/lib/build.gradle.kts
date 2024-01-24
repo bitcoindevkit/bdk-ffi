@@ -19,11 +19,11 @@ repositories {
 }
 
 android {
-    compileSdk = 31
+    compileSdk = 33
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 31
+        targetSdk = 33
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -44,7 +44,7 @@ android {
 }
 
 dependencies {
-    implementation("net.java.dev.jna:jna:5.8.0@aar")
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
     implementation("androidx.appcompat:appcompat:1.4.0")
     implementation("androidx.core:core-ktx:1.7.0")
