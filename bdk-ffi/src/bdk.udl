@@ -86,21 +86,22 @@ enum ChangeSpendPolicy {
 };
 
 interface Wallet {
-  [Name=new_no_persist, Throws=Alpha3Error]
-  constructor(Descriptor descriptor, Descriptor? change_descriptor, Network network);
+  [Throws=Alpha3Error]
+  constructor(Descriptor descriptor, Descriptor? change_descriptor, string persistence_backend_path, Network network);
 
   AddressInfo get_address(AddressIndex address_index);
 
-  AddressInfo get_internal_address(AddressIndex address_index);
+  [Throws=Alpha3Error]
+  AddressInfo try_get_internal_address(AddressIndex address_index);
 
   Network network();
 
   Balance get_balance();
 
-  boolean is_mine([ByRef] Script script);
-
   [Throws=Alpha3Error]
   void apply_update(Update update);
+
+  boolean is_mine([ByRef] Script script);
 
   [Throws=Alpha3Error]
   boolean sign(PartiallySignedTransaction psbt);

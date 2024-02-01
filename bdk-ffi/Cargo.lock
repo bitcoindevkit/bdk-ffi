@@ -160,6 +160,7 @@ dependencies = [
  "assert_matches",
  "bdk",
  "bdk_esplora",
+ "bdk_file_store",
  "uniffi",
 ]
 
@@ -182,6 +183,17 @@ checksum = "d8d3b3f593d5fb57db374e14489dcd0da0ed6292c6d8989a1f2b381f1cbbc74b"
 dependencies = [
  "bdk_chain",
  "esplora-client",
+]
+
+[[package]]
+name = "bdk_file_store"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0eb85d94f0e03f63ad5c03425df5e830d52b56875bcc50c8c5e94347f7b03b9"
+dependencies = [
+ "bdk_chain",
+ "bincode",
+ "serde",
 ]
 
 [[package]]

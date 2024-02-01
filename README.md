@@ -8,7 +8,7 @@
 </p>
 
 ## 🚨 Warning 🚨
-The `master` branch of this repository is being migrated to the [bdk 1.0 API](https://github.com/bitcoindevkit/bdk) and is incomplete. For production-ready libraries, use the [`0.30.X`](https://github.com/bitcoindevkit/bdk-ffi/tree/release/0.30) releases.
+The `master` branch of this repository is being migrated to the [bdk 1.0 API](https://github.com/bitcoindevkit/bdk) and is incomplete. For production-ready libraries, use the [`0.31.X`](https://github.com/bitcoindevkit/bdk-ffi/tree/release/0.30) releases.
 
 ## Readme
 The workspace in this repository creates the `libbdkffi` multi-language library for the Rust-based 

@@ -11,58 +11,49 @@ use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransact
 use bdk::bitcoin::Network;
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
-use bdk::wallet::Update as BdkUpdate;
-use bdk::FeeRate as BdkFeeRate;
-use bdk::{SignOptions, Wallet as BdkWallet};
+use bdk::wallet::{ChangeSet, Update as BdkUpdate};
+use bdk::Wallet as BdkWallet;
+use bdk::{FeeRate as BdkFeeRate, SignOptions};
+use bdk_file_store::Store;
 
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
-#[derive(Debug)]
+const MAGIC_BYTES: &[u8] = "bdkffi".as_bytes();
+
 pub struct Wallet {
-    // TODO 8: Do we really need the mutex on the wallet? Could this be an Arc?
-    inner_mutex: Mutex<BdkWallet>,
+    inner_mutex: Mutex<BdkWallet<Store<ChangeSet>>>,
 }
 
 impl Wallet {
-    pub fn new_no_persist(
+    pub fn new(
         descriptor: Arc<Descriptor>,
         change_descriptor: Option<Arc<Descriptor>>,
+        persistence_backend_path: String,
         network: Network,
     ) -> Result<Self, Alpha3Error> {
         let descriptor = descriptor.as_string_private();
         let change_descriptor = change_descriptor.map(|d| d.as_string_private());
+        let db = Store::<ChangeSet>::open_or_create_new(MAGIC_BYTES, persistence_backend_path)?;
 
-        let wallet = BdkWallet::new_no_persist(&descriptor, change_descriptor.as_ref(), network)?;
+        let wallet: bdk::wallet::Wallet<Store<ChangeSet>> =
+            BdkWallet::new_or_load(&descriptor, change_descriptor.as_ref(), db, network)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
         })
     }
 
-    // TODO 10: Do we need this mutex
-    pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
+    pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet<Store<ChangeSet>>> {
         self.inner_mutex.lock().expect("wallet")
     }
 
     pub fn get_address(&self, address_index: AddressIndex) -> AddressInfo {
-        self.get_wallet().get_address(address_index.into()).into()
-    }
-
-    pub fn network(&self) -> Network {
-        self.get_wallet().network()
-    }
-
-    pub fn get_internal_address(&self, address_index: AddressIndex) -> AddressInfo {
         self.get_wallet()
-            .get_internal_address(address_index.into())
+            .try_get_address(address_index.into())
+            .unwrap()
             .into()
-    }
-
-    pub fn get_balance(&self) -> Balance {
-        let bdk_balance: bdk::wallet::Balance = self.get_wallet().get_balance();
-        Balance::from(bdk_balance)
     }
 
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), Alpha3Error> {
@@ -71,10 +62,31 @@ impl Wallet {
             .map_err(|_| Alpha3Error::Generic)
     }
 
+    // TODO: This is the fallible version of get_internal_address; should I rename it to get_internal_address?
+    //       It's a slight change of the API, the other option is to rename the get_address to try_get_address
+    pub fn try_get_internal_address(
+        &self,
+        address_index: AddressIndex,
+    ) -> Result<AddressInfo, Alpha3Error> {
+        self.get_wallet()
+            .try_get_internal_address(address_index.into())
+            .map_or_else(
+                |_| Err(Alpha3Error::Generic),
+                |address_info| Ok(address_info.into()),
+            )
+    }
+
+    pub fn network(&self) -> Network {
+        self.get_wallet().network()
+    }
+
+    pub fn get_balance(&self) -> Balance {
+        let bdk_balance: bdk::wallet::Balance = self.get_wallet().get_balance();
+        Balance::from(bdk_balance)
+    }
+
     pub fn is_mine(&self, script: &Script) -> bool {
-        // TODO: Both of the following lines work. Which is better?
         self.get_wallet().is_mine(&script.0)
-        // self.get_wallet().is_mine(script.0.clone().as_script())
     }
 
     pub(crate) fn sign(
@@ -464,7 +476,7 @@ impl TxBuilder {
 
     pub(crate) fn finish(
         &self,
-        wallet: &Wallet,
+        wallet: &Arc<Wallet>,
     ) -> Result<Arc<PartiallySignedTransaction>, Alpha3Error> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();

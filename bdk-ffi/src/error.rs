@@ -7,7 +7,8 @@ use std::fmt;
 use bdk::descriptor::DescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
-use bdk::wallet::NewError;
+use bdk::wallet::{NewError, NewOrLoadError};
+use bdk_file_store::{FileError, IterError};
 use std::convert::Infallible;
 
 #[derive(Debug)]
@@ -24,6 +25,18 @@ impl fmt::Display for Alpha3Error {
 }
 
 impl std::error::Error for Alpha3Error {}
+
+impl From<FileError> for Alpha3Error {
+    fn from(_: FileError) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+impl From<NewOrLoadError<std::io::Error, IterError>> for Alpha3Error {
+    fn from(_: NewOrLoadError<std::io::Error, IterError>) -> Self {
+        Alpha3Error::Generic
+    }
+}
 
 impl From<DescriptorError> for Alpha3Error {
     fn from(_: DescriptorError) -> Self {
