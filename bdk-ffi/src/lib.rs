@@ -15,6 +15,7 @@ use crate::bitcoin::TxOut;
 use crate::descriptor::Descriptor;
 use crate::error::Alpha3Error;
 use crate::error::CalculateFeeError;
+use crate::error::EsploraError;
 use crate::esplora::EsploraClient;
 use crate::keys::DerivationPath;
 use crate::keys::DescriptorPublicKey;

@@ -27,6 +27,21 @@ interface WalletCreationError {
   LoadedNetworkDoesNotMatch(Network expected, Network? got);
 };
 
+[Error]
+interface EsploraError {
+  Ureq(string error_message);
+  UreqTransport(string error_message);
+  Http(u16 status_code);
+  Io(string error_message);
+  NoHeader();
+  Parsing(string error_message);
+  BitcoinEncoding(string error_message);
+  Hex(string error_message);
+  TransactionNotFound();
+  HeaderHeightNotFound(u32 height);
+  HeaderHashNotFound();
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
@@ -274,7 +289,7 @@ interface Descriptor {
 interface EsploraClient {
   constructor(string url);
 
-  [Throws=Alpha3Error]
+  [Throws=EsploraError]
   Update full_scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
 
   [Throws=Alpha3Error]

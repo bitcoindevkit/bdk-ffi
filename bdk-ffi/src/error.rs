@@ -1,6 +1,7 @@
 use crate::bitcoin::OutPoint;
 
 use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
+use bdk_esplora::esplora_client::Error as BdkEsploraError;
 
 use std::fmt;
 
@@ -186,8 +187,88 @@ impl From<BdkCalculateFeeError> for CalculateFeeError {
 
 impl std::error::Error for CalculateFeeError {}
 
+#[derive(Debug)]
+pub enum EsploraError {
+    Ureq { error_message: String },
+    UreqTransport { error_message: String },
+    Http { status_code: u16 },
+    Io { error_message: String },
+    NoHeader,
+    Parsing { error_message: String },
+    BitcoinEncoding { error_message: String },
+    Hex { error_message: String },
+    TransactionNotFound,
+    HeaderHeightNotFound { height: u32 },
+    HeaderHashNotFound,
+}
+
+impl fmt::Display for EsploraError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            EsploraError::Ureq { error_message } => write!(f, "Ureq error: {}", error_message),
+            EsploraError::UreqTransport { error_message } => {
+                write!(f, "Ureq transport error: {}", error_message)
+            }
+            EsploraError::Http { status_code } => {
+                write!(f, "HTTP error with status code: {}", status_code)
+            }
+            EsploraError::Io { error_message } => write!(f, "IO error: {}", error_message),
+            EsploraError::NoHeader => write!(f, "No header found in the response"),
+            EsploraError::Parsing { error_message } => {
+                write!(f, "Parsing error: {}", error_message)
+            }
+            EsploraError::BitcoinEncoding { error_message } => {
+                write!(f, "Bitcoin encoding error: {}", error_message)
+            }
+            EsploraError::Hex { error_message } => {
+                write!(f, "Hex decoding error: {}", error_message)
+            }
+            EsploraError::TransactionNotFound => write!(f, "Transaction not found"),
+            EsploraError::HeaderHeightNotFound { height } => {
+                write!(f, "Header height {} not found", height)
+            }
+            EsploraError::HeaderHashNotFound => write!(f, "Header hash not found"),
+        }
+    }
+}
+
+impl From<BdkEsploraError> for EsploraError {
+    fn from(error: BdkEsploraError) -> Self {
+        match error {
+            BdkEsploraError::Ureq(e) => EsploraError::Ureq {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::UreqTransport(e) => EsploraError::UreqTransport {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::HttpResponse(code) => EsploraError::Http { status_code: code },
+            BdkEsploraError::Io(e) => EsploraError::Io {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::NoHeader => EsploraError::NoHeader,
+            BdkEsploraError::Parsing(e) => EsploraError::Parsing {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::BitcoinEncoding(e) => EsploraError::BitcoinEncoding {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::Hex(e) => EsploraError::Hex {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::TransactionNotFound(_) => EsploraError::TransactionNotFound,
+            BdkEsploraError::HeaderHeightNotFound(height) => {
+                EsploraError::HeaderHeightNotFound { height }
+            }
+            BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
+        }
+    }
+}
+
+impl std::error::Error for EsploraError {}
+
 #[cfg(test)]
 mod test {
+    use crate::error::EsploraError;
     use crate::CalculateFeeError;
     use crate::OutPoint;
 
@@ -230,5 +311,62 @@ mod test {
         let error = CalculateFeeError::NegativeFee { fee: -100 };
 
         assert_eq!(error.to_string(), "Negative fee value: -100");
+    }
+
+    #[test]
+    fn test_esplora_errors() {
+        let cases = vec![
+            (
+                EsploraError::Ureq {
+                    error_message: "Network error".to_string(),
+                },
+                "Ureq error: Network error",
+            ),
+            (
+                EsploraError::UreqTransport {
+                    error_message: "Timeout occurred".to_string(),
+                },
+                "Ureq transport error: Timeout occurred",
+            ),
+            (
+                EsploraError::Http { status_code: 404 },
+                "HTTP error with status code: 404",
+            ),
+            (
+                EsploraError::Io {
+                    error_message: "File not found".to_string(),
+                },
+                "IO error: File not found",
+            ),
+            (EsploraError::NoHeader, "No header found in the response"),
+            (
+                EsploraError::Parsing {
+                    error_message: "Invalid JSON".to_string(),
+                },
+                "Parsing error: Invalid JSON",
+            ),
+            (
+                EsploraError::BitcoinEncoding {
+                    error_message: "Bad format".to_string(),
+                },
+                "Bitcoin encoding error: Bad format",
+            ),
+            (
+                EsploraError::Hex {
+                    error_message: "Invalid hex".to_string(),
+                },
+                "Hex decoding error: Invalid hex",
+            ),
+            (EsploraError::TransactionNotFound, "Transaction not found"),
+            (
+                EsploraError::HeaderHeightNotFound { height: 123456 },
+                "Header height 123456 not found",
+            ),
+            (EsploraError::HeaderHashNotFound, "Header hash not found"),
+        ];
+
+        for (error, expected_message) in cases {
+            assert_eq!(error.to_string(), expected_message);
+        }
     }
 }
