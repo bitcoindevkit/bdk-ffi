@@ -5,10 +5,24 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.runner.RunWith
+import java.io.File
+import kotlin.test.AfterTest
 
 @RunWith(AndroidJUnit4::class)
 class OfflineWalletTest {
+    private val persistenceFilePath = InstrumentationRegistry
+        .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence.db"
+
+    @AfterTest
+    fun cleanup() {
+        val file = File(persistenceFilePath)
+        if (file.exists()) {
+            file.delete()
+        }
+    }
+
     @Test
     fun testDescriptorBip86() {
         val mnemonic: Mnemonic = Mnemonic(WordCount.WORDS12)
@@ -24,9 +38,10 @@ class OfflineWalletTest {
             "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
             Network.TESTNET
         )
-        val wallet: Wallet = Wallet.newNoPersist(
+        val wallet: Wallet = Wallet(
             descriptor,
             null,
+            persistenceFilePath,
             Network.TESTNET
         )
         val addressInfo: AddressInfo = wallet.getAddress(AddressIndex.New)
@@ -48,9 +63,10 @@ class OfflineWalletTest {
             "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
             Network.TESTNET
         )
-        val wallet: Wallet = Wallet.newNoPersist(
+        val wallet: Wallet = Wallet(
             descriptor,
             null,
+            persistenceFilePath,
             Network.TESTNET
         )
 

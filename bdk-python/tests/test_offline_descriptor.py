@@ -1,7 +1,7 @@
 import bdkpython as bdk
 import unittest
 
-class TestSimpleWallet(unittest.TestCase):
+class OfflineDescriptorTest(unittest.TestCase):
 
     def test_descriptor_bip86(self):
         mnemonic: bdk.Mnemonic = bdk.Mnemonic.from_string("space echo position wrist orient erupt relief museum myself grain wisdom tumble")

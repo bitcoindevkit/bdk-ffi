@@ -1,17 +1,31 @@
 package org.bitcoindevkit
 
-import org.junit.Test
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
+import kotlin.test.AfterTest
 import kotlin.test.assertTrue
 
 @RunWith(AndroidJUnit4::class)
 class LiveTxBuilderTest {
+    private val persistenceFilePath = InstrumentationRegistry
+        .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence.db"
+
+    @AfterTest
+    fun cleanup() {
+        val file = File(persistenceFilePath)
+        if (file.exists()) {
+            file.delete()
+        }
+    }
+
     @Test
     fun testTxBuilder() {
         val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
-        val wallet = Wallet.newNoPersist(descriptor, null, Network.TESTNET)
-        val esploraClient = EsploraClient("https://mempool.space/testnet/api")
+        val wallet = Wallet(descriptor, null, persistenceFilePath, Network.TESTNET)
+        val esploraClient = EsploraClient("https://esplora.testnet.kuutamo.cloud/")
         val update = esploraClient.fullScan(wallet, 10uL, 1uL)
         wallet.applyUpdate(update)
         println("Balance: ${wallet.getBalance().total}")
@@ -32,8 +46,8 @@ class LiveTxBuilderTest {
     fun complexTxBuilder() {
         val externalDescriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
         val changeDescriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)", Network.TESTNET)
-        val wallet = Wallet.newNoPersist(externalDescriptor, changeDescriptor, Network.TESTNET)
-        val esploraClient = EsploraClient("https://mempool.space/testnet/api")
+        val wallet = Wallet(externalDescriptor, changeDescriptor, persistenceFilePath, Network.TESTNET)
+        val esploraClient = EsploraClient("https://esplora.testnet.kuutamo.cloud/")
         val update = esploraClient.fullScan(wallet, 10uL, 1uL)
         wallet.applyUpdate(update)
         println("Balance: ${wallet.getBalance().total}")
