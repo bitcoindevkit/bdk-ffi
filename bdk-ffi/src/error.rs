@@ -4,11 +4,13 @@ use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 
 use std::fmt;
 
+use bdk::bitcoin::Network;
 use bdk::descriptor::DescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
 use bdk::wallet::{NewError, NewOrLoadError};
-use bdk_file_store::{FileError, IterError};
+use bdk_file_store::FileError as BdkFileError;
+use bdk_file_store::IterError;
 use std::convert::Infallible;
 
 #[derive(Debug)]
@@ -26,15 +28,83 @@ impl fmt::Display for Alpha3Error {
 
 impl std::error::Error for Alpha3Error {}
 
-impl From<FileError> for Alpha3Error {
-    fn from(_: FileError) -> Self {
-        Alpha3Error::Generic
+#[derive(Debug)]
+pub enum WalletCreationError {
+    // Errors coming from the FileError enum
+    Io {
+        e: String,
+    },
+    InvalidMagicBytes {
+        got: Vec<u8>,
+        expected: Vec<u8>,
+    },
+
+    // Errors coming from the NewOrLoadError enum
+    Descriptor,
+    Write,
+    Load,
+    NotInitialized,
+    LoadedGenesisDoesNotMatch,
+    LoadedNetworkDoesNotMatch {
+        expected: Network,
+        got: Option<Network>,
+    },
+}
+
+impl fmt::Display for WalletCreationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Io { e } => write!(f, "io error trying to read file: {}", e),
+            Self::InvalidMagicBytes { got, expected } => write!(
+                f,
+                "file has invalid magic bytes: expected={:?} got={:?}",
+                expected, got,
+            ),
+            Self::Descriptor => write!(f, "error with descriptor"),
+            Self::Write => write!(f, "failed to write to persistence"),
+            Self::Load => write!(f, "failed to load from persistence"),
+            Self::NotInitialized => {
+                write!(f, "wallet is not initialized, persistence backend is empty")
+            }
+            Self::LoadedGenesisDoesNotMatch => {
+                write!(f, "loaded genesis hash does not match the expected one")
+            }
+            Self::LoadedNetworkDoesNotMatch { expected, got } => {
+                write!(f, "loaded network type is not {}, got {:?}", expected, got)
+            }
+        }
     }
 }
 
-impl From<NewOrLoadError<std::io::Error, IterError>> for Alpha3Error {
-    fn from(_: NewOrLoadError<std::io::Error, IterError>) -> Self {
-        Alpha3Error::Generic
+impl std::error::Error for WalletCreationError {}
+
+impl From<BdkFileError> for WalletCreationError {
+    fn from(error: BdkFileError) -> Self {
+        match error {
+            BdkFileError::Io(_) => WalletCreationError::Io {
+                e: "io error trying to read file".to_string(),
+            },
+            BdkFileError::InvalidMagicBytes { got, expected } => {
+                WalletCreationError::InvalidMagicBytes { got, expected }
+            }
+        }
+    }
+}
+
+impl From<NewOrLoadError<std::io::Error, IterError>> for WalletCreationError {
+    fn from(error: NewOrLoadError<std::io::Error, IterError>) -> Self {
+        match error {
+            NewOrLoadError::Descriptor(_) => WalletCreationError::Descriptor,
+            NewOrLoadError::Write(_) => WalletCreationError::Write,
+            NewOrLoadError::Load(_) => WalletCreationError::Load,
+            NewOrLoadError::NotInitialized => WalletCreationError::NotInitialized,
+            NewOrLoadError::LoadedGenesisDoesNotMatch { .. } => {
+                WalletCreationError::LoadedGenesisDoesNotMatch
+            }
+            NewOrLoadError::LoadedNetworkDoesNotMatch { expected, got } => {
+                WalletCreationError::LoadedNetworkDoesNotMatch { expected, got }
+            }
+        }
     }
 }
 

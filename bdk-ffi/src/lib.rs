@@ -32,6 +32,7 @@ use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
 
+use crate::error::WalletCreationError;
 use bdk::bitcoin::Network;
 use bdk::keys::bip39::WordCount;
 use bdk::wallet::tx_builder::ChangeSpendPolicy;

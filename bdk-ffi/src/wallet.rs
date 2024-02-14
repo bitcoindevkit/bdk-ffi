@@ -1,6 +1,6 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
-use crate::error::{Alpha3Error, CalculateFeeError};
+use crate::error::{Alpha3Error, CalculateFeeError, WalletCreationError};
 use crate::types::ScriptAmount;
 use crate::types::{Balance, FeeRate};
 use crate::Script;
@@ -32,7 +32,7 @@ impl Wallet {
         change_descriptor: Option<Arc<Descriptor>>,
         persistence_backend_path: String,
         network: Network,
-    ) -> Result<Self, Alpha3Error> {
+    ) -> Result<Self, WalletCreationError> {
         let descriptor = descriptor.as_string_private();
         let change_descriptor = change_descriptor.map(|d| d.as_string_private());
         let db = Store::<ChangeSet>::open_or_create_new(MAGIC_BYTES, persistence_backend_path)?;

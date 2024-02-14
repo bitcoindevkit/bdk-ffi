@@ -15,6 +15,18 @@ interface CalculateFeeError {
   NegativeFee(i64 fee);
 };
 
+[Error]
+interface WalletCreationError {
+  Io(string e);
+  InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
+  Descriptor();
+  Write();
+  Load();
+  NotInitialized();
+  LoadedGenesisDoesNotMatch();
+  LoadedNetworkDoesNotMatch(Network expected, Network? got);
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
@@ -86,7 +98,7 @@ enum ChangeSpendPolicy {
 };
 
 interface Wallet {
-  [Throws=Alpha3Error]
+  [Throws=WalletCreationError]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, string persistence_backend_path, Network network);
 
   AddressInfo get_address(AddressIndex address_index);
