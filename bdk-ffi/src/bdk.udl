@@ -28,6 +28,11 @@ interface WalletCreationError {
 };
 
 [Error]
+interface PersistenceError {
+  Write(string e);
+};
+
+[Error]
 interface EsploraError {
   Ureq(string error_message);
   UreqTransport(string error_message);
@@ -118,7 +123,7 @@ interface Wallet {
 
   AddressInfo get_address(AddressIndex address_index);
 
-  [Throws=Alpha3Error]
+  [Throws=PersistenceError]
   AddressInfo try_get_internal_address(AddressIndex address_index);
 
   Network network();

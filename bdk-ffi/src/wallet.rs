@@ -1,6 +1,6 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
-use crate::error::{Alpha3Error, CalculateFeeError, WalletCreationError};
+use crate::error::{Alpha3Error, CalculateFeeError, PersistenceError, WalletCreationError};
 use crate::types::ScriptAmount;
 use crate::types::{Balance, FeeRate};
 use crate::Script;
@@ -67,13 +67,12 @@ impl Wallet {
     pub fn try_get_internal_address(
         &self,
         address_index: AddressIndex,
-    ) -> Result<AddressInfo, Alpha3Error> {
-        self.get_wallet()
-            .try_get_internal_address(address_index.into())
-            .map_or_else(
-                |_| Err(Alpha3Error::Generic),
-                |address_info| Ok(address_info.into()),
-            )
+    ) -> Result<AddressInfo, PersistenceError> {
+        let address_info = self
+            .get_wallet()
+            .try_get_internal_address(address_index.into())?
+            .into();
+        Ok(address_info)
     }
 
     pub fn network(&self) -> Network {

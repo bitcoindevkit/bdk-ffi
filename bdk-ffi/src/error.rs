@@ -60,6 +60,12 @@ pub enum WalletCreationError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum PersistenceError {
+    #[error("writing to persistence error: {e}")]
+    Write { e: String },
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum EsploraError {
     #[error("ureq error: {error_message}")]
     Ureq { error_message: String },
@@ -119,6 +125,14 @@ impl From<NewOrLoadError<std::io::Error, IterError>> for WalletCreationError {
             NewOrLoadError::LoadedNetworkDoesNotMatch { expected, got } => {
                 WalletCreationError::LoadedNetworkDoesNotMatch { expected, got }
             }
+        }
+    }
+}
+
+impl From<std::io::Error> for PersistenceError {
+    fn from(error: std::io::Error) -> Self {
+        PersistenceError::Write {
+            e: error.to_string(),
         }
     }
 }
@@ -216,7 +230,7 @@ impl From<BdkEsploraError> for EsploraError {
 
 #[cfg(test)]
 mod test {
-    use crate::error::EsploraError;
+    use crate::error::{EsploraError, PersistenceError};
     use crate::CalculateFeeError;
     use crate::OutPoint;
 
@@ -316,5 +330,17 @@ mod test {
         for (error, expected_message) in cases {
             assert_eq!(error.to_string(), expected_message);
         }
+    }
+
+    #[test]
+    fn test_persistence_error() {
+        let io_err = std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "unable to persist the new address",
+        );
+        let op_err: PersistenceError = io_err.into();
+
+        let PersistenceError::Write { e } = op_err;
+        assert_eq!(e, "unable to persist the new address");
     }
 }
