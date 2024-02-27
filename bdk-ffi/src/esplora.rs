@@ -1,19 +1,18 @@
 use crate::error::Alpha3Error;
-use crate::wallet::{Update, Wallet};
+use crate::wallet::Update;
 use std::convert::TryInto;
+use std::ops::DerefMut;
 
-use bdk::bitcoin::{ScriptBuf, Transaction as BdkTransaction};
-use bdk::wallet::Update as BdkUpdate;
+use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
 
 use crate::bitcoin::Transaction;
-use bdk::chain::spk_client::{FullScanResult as BdkFullScanResult, FullScanRequest as BdkFullScanRequest, SyncResult};
-use std::sync::Arc;
+use bdk::chain::spk_client::{FullScanResult as BdkFullScanResult, SyncResult as BdkSyncResult};
 use bdk::KeychainKind;
+use std::sync::Arc;
 
-
-pub struct FullScanRequest(pub BdkFullScanRequest<KeychainKind, dyn Iterator<Item = (u32, ScriptBuf)> + Send >);
+use crate::wallet::{FullScanRequest, SyncRequest};
 
 pub struct EsploraClient(BlockingClient);
 
@@ -27,31 +26,20 @@ impl EsploraClient {
     // the wallet to the client at all.
     pub fn full_scan(
         &self,
-        request: FullScanRequest,
+        request: Arc<FullScanRequest>,
         stop_gap: u64,
         parallel_requests: u64,
     ) -> Result<Arc<Update>, Alpha3Error> {
-        // let wallet = wallet.get_wallet();
-
-        // 1. get data required to do a wallet full_scan
-        let request = request.0;//wallet.full_scan_request();
-
-        // 2. full scan to discover wallet transactions
-        let BdkFullScanResult {
-            graph_update,
-            chain_update,
-            last_active_indices,
-        } = self.0.full_scan(
-            request,
+        let result: BdkFullScanResult<KeychainKind> = self.0.full_scan(
+            request.0.lock().unwrap().deref_mut(),
             stop_gap.try_into().unwrap(),
             parallel_requests.try_into().unwrap(),
         )?;
 
-        // 3. create wallet update
-        let update = BdkUpdate {
-            last_active_indices,
-            graph: graph_update,
-            chain: Some(chain_update),
+        let update = bdk::wallet::Update {
+            last_active_indices: result.last_active_indices,
+            graph: result.graph_update,
+            chain: Some(result.chain_update),
         };
 
         Ok(Arc::new(Update(update)))
@@ -59,27 +47,18 @@ impl EsploraClient {
 
     pub fn sync(
         &self,
-        wallet: Arc<Wallet>,
+        request: Arc<SyncRequest>,
         parallel_requests: u64,
     ) -> Result<Arc<Update>, Alpha3Error> {
-        let wallet = wallet.get_wallet();
+        let result: BdkSyncResult = self.0.sync(
+            request.0.lock().unwrap().deref_mut(),
+            parallel_requests.try_into().unwrap(),
+        )?;
 
-        // 1. get data required to do a wallet sync, if also syncing previously used addresses set unused_spks_only = false
-        let request = wallet.sync_revealed_spks_request();
-
-        // 2. sync unused wallet spks (addresses), unconfirmed tx, and utxos
-        let SyncResult {
-            graph_update,
-            chain_update,
-        } = self
-            .0
-            .sync(request, parallel_requests.try_into().unwrap())?;
-
-        // 3. create wallet update
-        let update = BdkUpdate {
-            graph: graph_update,
-            chain: Some(chain_update),
-            ..BdkUpdate::default()
+        let update = bdk::wallet::Update {
+            graph: result.graph_update,
+            chain: Some(result.chain_update),
+            ..bdk::wallet::Update::default()
         };
 
         Ok(Arc::new(Update(update)))

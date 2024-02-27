@@ -8,7 +8,7 @@ use crate::{AddressIndex, AddressInfo};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
-use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid, Network};
+use bdk::bitcoin::{Network, OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::chain::spk_client::{
     FullScanRequest as BdkFullScanRequest, SyncRequest as BdkSyncRequest,
 };
