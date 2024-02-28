@@ -2,12 +2,22 @@ import XCTest
 @testable import BitcoinDevKit
 
 final class OfflineWalletTests: XCTestCase {
+    var dbFilePath: URL!
+
+    override func setUpWithError() throws {
+        super.setUp()
+        let fileManager = FileManager.default
+        let documentDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let uniqueDbFileName = "bdk_persistence_\(UUID().uuidString).db"
+        dbFilePath = documentDirectory.appendingPathComponent(uniqueDbFileName)
+
+        if fileManager.fileExists(atPath: dbFilePath.path) {
+            try fileManager.removeItem(at: dbFilePath)
+        }
+    }
+
     override func tearDownWithError() throws {
         let fileManager = FileManager.default
-        let dbFileName = "bdk_persistence.db"
-        let documentDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let dbFilePath: URL = documentDirectory.appendingPathComponent(dbFileName)
-
         if fileManager.fileExists(atPath: dbFilePath.path) {
             try fileManager.removeItem(at: dbFilePath)
         }
@@ -18,10 +28,10 @@ final class OfflineWalletTests: XCTestCase {
             descriptor: "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
             network: Network.testnet
         )
-        let wallet: Wallet = try Wallet(
+        let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: nil,
-            persistenceBackendPath: "bdk_persistence.db",
+            persistenceBackendPath: dbFilePath.path,
             network: .testnet
         )
         let addressInfo: AddressInfo = wallet.getAddress(addressIndex: AddressIndex.new)
@@ -43,10 +53,10 @@ final class OfflineWalletTests: XCTestCase {
             descriptor: "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
             network: Network.testnet
         )
-        let wallet: Wallet = try Wallet(
+        let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: nil,
-            persistenceBackendPath: "bdk_persistence.db",
+            persistenceBackendPath: dbFilePath.path,
             network: .testnet
         )
 

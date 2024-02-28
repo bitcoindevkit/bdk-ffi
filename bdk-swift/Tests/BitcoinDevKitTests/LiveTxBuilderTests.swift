@@ -2,12 +2,22 @@ import XCTest
 @testable import BitcoinDevKit
 
 final class LiveTxBuilderTests: XCTestCase {
+    var dbFilePath: URL!
+
+    override func setUpWithError() throws {
+        super.setUp()
+        let fileManager = FileManager.default
+        let documentDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let uniqueDbFileName = "bdk_persistence_\(UUID().uuidString).db"
+        dbFilePath = documentDirectory.appendingPathComponent(uniqueDbFileName)
+
+        if fileManager.fileExists(atPath: dbFilePath.path) {
+            try fileManager.removeItem(at: dbFilePath)
+        }
+    }
+
     override func tearDownWithError() throws {
         let fileManager = FileManager.default
-        let dbFileName = "bdk_persistence.db"
-        let documentDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let dbFilePath: URL = documentDirectory.appendingPathComponent(dbFileName)
-
         if fileManager.fileExists(atPath: dbFilePath.path) {
             try fileManager.removeItem(at: dbFilePath)
         }
@@ -21,7 +31,7 @@ final class LiveTxBuilderTests: XCTestCase {
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: nil,
-            persistenceBackendPath: "bdk_persistence.db",
+            persistenceBackendPath: dbFilePath.path,
             network: .testnet
         )
         let esploraClient = EsploraClient(url: "https://esplora.testnet.kuutamo.cloud/")
@@ -56,7 +66,7 @@ final class LiveTxBuilderTests: XCTestCase {
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
-            persistenceBackendPath: "bdk_persistence.db",
+            persistenceBackendPath: dbFilePath.path,
             network: .testnet
         )
         let esploraClient = EsploraClient(url: "https://esplora.testnet.kuutamo.cloud/")
