@@ -66,7 +66,12 @@ impl Wallet {
             .map_err(|_| Alpha3Error::Generic)
     }
 
-    // TODO: add `commit()` function when persistence is working
+    pub fn commit(&self) -> Result<bool, WalletCreationError> {
+        self.get_wallet()
+            .commit()
+            .map_err(|_| WalletCreationError::Write)
+            .map(|b| Ok(b))?
+    }
 
     // TODO: This is the fallible version of get_internal_address; should I rename it to get_internal_address?
     //       It's a slight change of the API, the other option is to rename the get_address to try_get_address

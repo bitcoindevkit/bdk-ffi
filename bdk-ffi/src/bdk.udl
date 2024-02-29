@@ -117,6 +117,9 @@ interface Wallet {
   [Throws=Alpha3Error]
   void apply_update(Update update);
 
+  [Throws=WalletCreationError]
+  boolean commit();
+
   boolean is_mine([ByRef] Script script);
 
   [Throws=Alpha3Error]
