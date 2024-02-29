@@ -150,6 +150,18 @@ impl From<NewError<std::io::Error>> for Alpha3Error {
     }
 }
 
+impl From<bdk_esplora::esplora_client::Error> for Alpha3Error {
+    fn from(_: bdk_esplora::esplora_client::Error) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
+impl From<Box<bdk_esplora::esplora_client::Error>> for Alpha3Error {
+    fn from(_: Box<bdk_esplora::esplora_client::Error>) -> Self {
+        Alpha3Error::Generic
+    }
+}
+
 impl From<CreateTxError<std::io::Error>> for Alpha3Error {
     fn from(_: CreateTxError<std::io::Error>) -> Self {
         Alpha3Error::Generic
