@@ -16,6 +16,12 @@ interface CalculateFeeError {
 };
 
 [Error]
+interface PersistBackendError {
+  Write();
+  Load();
+};
+
+[Error]
 interface WalletError {
   Io(string e);
   InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
@@ -118,7 +124,7 @@ interface Wallet {
 
   AddressInfo get_address(AddressIndex address_index);
 
-  [Throws=WalletError]
+  [Throws=PersistBackendError]
   AddressInfo try_get_internal_address(AddressIndex address_index);
 
   Network network();

@@ -1,6 +1,6 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
-use crate::error::{Alpha3Error, CalculateFeeError, WalletError};
+use crate::error::{Alpha3Error, CalculateFeeError, PersistBackendError, WalletError};
 use crate::types::ScriptAmount;
 use crate::types::{Balance, FeeRate};
 use crate::Script;
@@ -67,10 +67,10 @@ impl Wallet {
     pub fn try_get_internal_address(
         &self,
         address_index: AddressIndex,
-    ) -> Result<AddressInfo, WalletError> {
+    ) -> Result<AddressInfo, PersistBackendError> {
         self.get_wallet()
             .try_get_internal_address(address_index.into())
-            .map_err(|_| WalletError::Write)
+            .map_err(|_| PersistBackendError::Write)
             .map(|address_info| address_info.into())
     }
 

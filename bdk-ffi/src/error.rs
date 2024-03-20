@@ -10,7 +10,7 @@ use bdk::descriptor::DescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
 use bdk::wallet::{NewError, NewOrLoadError};
-use bdk_file_store::FileError as BdkFileError;
+use bdk_file_store::{FileError as BdkFileError};
 use bdk_file_store::IterError;
 use std::convert::Infallible;
 
@@ -107,6 +107,15 @@ impl From<NewOrLoadError<std::io::Error, IterError>> for WalletError {
             }
         }
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PersistBackendError {
+    #[error("error while attempting to write to persistence")]
+    Write,
+
+    #[error("error while attempting to load from persistence")]
+    Load,
 }
 
 impl From<DescriptorError> for Alpha3Error {

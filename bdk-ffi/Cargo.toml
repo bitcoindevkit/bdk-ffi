@@ -31,6 +31,7 @@ bdk_file_store = { version = "0.6.0" }
 # bdk_esplora = { git = "https://github.com/thunderbiscuit/bdk.git", branch = "test-rust-tls", version = "0.4.0", package = "bdk_esplora", default-features = false, features = ["std", "blocking", "async-https-rustls"] }
 
 uniffi = { version = "=0.26.1" }
+thiserror = "1.0.58"
 
 [build-dependencies]
 uniffi = { version = "=0.26.1", features = ["build"] }

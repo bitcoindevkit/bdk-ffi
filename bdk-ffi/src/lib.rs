@@ -32,6 +32,7 @@ use crate::wallet::SentAndReceivedValues;
 use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
+use crate::error::PersistBackendError;
 
 use crate::error::WalletError;
 use bdk::bitcoin::Network;
