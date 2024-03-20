@@ -23,7 +23,7 @@ interface PersistBackendError {
 
 [Error]
 interface WalletError {
-  Io(string e);
+  Io();
   InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
   Descriptor();
   Write();
