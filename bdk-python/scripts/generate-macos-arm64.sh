@@ -9,7 +9,7 @@ cd ../bdk-ffi/
 cargo run --bin uniffi-bindgen generate src/bdk.udl --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
 
 echo "Generating native binaries..."
-rustup default 1.73.0
+rustup default 1.74.0
 rustup target add aarch64-apple-darwin
 cargo build --profile release-smaller --target aarch64-apple-darwin
 

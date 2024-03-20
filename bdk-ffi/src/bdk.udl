@@ -90,6 +90,10 @@ dictionary TxOut {
   Script script_pubkey;
 };
 
+interface FullScanRequest {};
+
+interface SyncRequest {};
+
 // ------------------------------------------------------------------------
 // bdk crate - wallet module
 // ------------------------------------------------------------------------
@@ -128,6 +132,9 @@ interface Wallet {
   [Throws=Alpha3Error]
   void apply_update(Update update);
 
+  [Throws=WalletCreationError]
+  boolean commit();
+
   boolean is_mine([ByRef] Script script);
 
   [Throws=Alpha3Error]
@@ -142,6 +149,10 @@ interface Wallet {
 
   [Throws=CalculateFeeError]
   FeeRate calculate_fee_rate([ByRef] Transaction tx);
+
+  FullScanRequest full_scan_request();
+
+  SyncRequest sync_revealed_spks_request();
 };
 
 interface Update {};
@@ -290,7 +301,10 @@ interface EsploraClient {
   constructor(string url);
 
   [Throws=EsploraError]
-  Update full_scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
+  Update full_scan(FullScanRequest request, u64 stop_gap, u64 parallel_requests);
+
+  [Throws=EsploraError]
+  Update sync(SyncRequest request, u64 parallel_requests);
 
   [Throws=Alpha3Error]
   void broadcast([ByRef] Transaction transaction);
