@@ -18,17 +18,10 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { version = "1.0.0-alpha.6", features = ["all-keys", "keys-bip39"] }
-bdk_esplora = { version = "0.8.0", default-features = false, features = ["std", "blocking"] }
-bdk_file_store = { version = "0.6.0" }
-
-# TODO 22: The bdk_esplora crate uses esplora_client which uses reqwest for async. By default it uses the system
-#          openssl library, which is creating problems for cross-compilation. I'd rather use rustls, but it's hidden
-#          behind a feature flag. We need to look into whether openssl-sys is really required by bdk or if using rustls
-#          would work just as well. This here is a temporary workaround which removes the async feature on the bdk_esplora crate.
-#          See PR #1179 https://github.com/bitcoindevkit/bdk/pull/1179 for the fix in bdk.
-# bdk = { git = "https://github.com/thunderbiscuit/bdk.git", branch = "test-rust-tls", version = "1.0.0-alpha.2", features = ["all-keys", "keys-bip39"] }
-# bdk_esplora = { git = "https://github.com/thunderbiscuit/bdk.git", branch = "test-rust-tls", version = "0.4.0", package = "bdk_esplora", default-features = false, features = ["std", "blocking", "async-https-rustls"] }
+bdk = { version = "1.0.0-alpha.7", features = ["all-keys", "keys-bip39"] }
+bdk_esplora = { version = "0.9.0", default-features = false, features = ["std", "blocking"] }
+# bdk_esplora = { version = "0.9.0", default-features = false, features = ["std", "blocking", "async-https-rustls"] }
+bdk_file_store = { version = "0.7.0" }
 
 uniffi = { version = "=0.26.1" }
 
