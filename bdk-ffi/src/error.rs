@@ -29,84 +29,121 @@ impl fmt::Display for Alpha3Error {
 
 impl std::error::Error for Alpha3Error {}
 
-#[derive(Debug)]
-pub enum WalletCreationError {
-    // Errors coming from the FileError enum
-    Io {
-        e: String,
-    },
-    InvalidMagicBytes {
-        got: Vec<u8>,
-        expected: Vec<u8>,
-    },
+#[derive(Debug, thiserror::Error)]
+pub enum WalletError {
+    #[error("IO error, this may mean that the file is too short")]
+    Io,
 
-    // Errors coming from the NewOrLoadError enum
+    #[error("file has invalid magic bytes: expected={expected:?} got={got:?}")]
+    InvalidMagicBytes { got: Vec<u8>, expected: Vec<u8> },
+
+    #[error("error with descriptor")]
     Descriptor,
+
+    #[error("failed to write to persistence")]
     Write,
+
+    #[error("failed to load from persistence")]
     Load,
+
+    #[error("wallet is not initialized, persistence backend is empty")]
     NotInitialized,
+
+    #[error("loaded genesis hash does not match the expected one")]
     LoadedGenesisDoesNotMatch,
+
+    #[error("loaded network type is not {expected}, got {got:?}")]
     LoadedNetworkDoesNotMatch {
         expected: Network,
         got: Option<Network>,
     },
 }
 
-impl fmt::Display for WalletCreationError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Io { e } => write!(f, "io error trying to read file: {}", e),
-            Self::InvalidMagicBytes { got, expected } => write!(
-                f,
-                "file has invalid magic bytes: expected={:?} got={:?}",
-                expected, got,
-            ),
-            Self::Descriptor => write!(f, "error with descriptor"),
-            Self::Write => write!(f, "failed to write to persistence"),
-            Self::Load => write!(f, "failed to load from persistence"),
-            Self::NotInitialized => {
-                write!(f, "wallet is not initialized, persistence backend is empty")
-            }
-            Self::LoadedGenesisDoesNotMatch => {
-                write!(f, "loaded genesis hash does not match the expected one")
-            }
-            Self::LoadedNetworkDoesNotMatch { expected, got } => {
-                write!(f, "loaded network type is not {}, got {:?}", expected, got)
-            }
-        }
-    }
-}
+// #[derive(Debug)]
+// pub enum WalletError {
+//     // Errors coming from the FileError enum
+//     Io {
+//         e: String,
+//     },
+//     InvalidMagicBytes {
+//         got: Vec<u8>,
+//         expected: Vec<u8>,
+//     },
+//
+//     // Errors coming from the NewOrLoadError enum
+//     Descriptor,
+//     Write,
+//     Load,
+//     NotInitialized,
+//     LoadedGenesisDoesNotMatch,
+//     LoadedNetworkDoesNotMatch {
+//         expected: Network,
+//         got: Option<Network>,
+//     },
+// }
 
-impl std::error::Error for WalletCreationError {}
+// impl fmt::Display for WalletError {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         match self {
+//             Self::Io { e } => write!(f, "io error trying to read file: {}", e),
+//             Self::InvalidMagicBytes { got, expected } => write!(
+//                 f,
+//                 "file has invalid magic bytes: expected={:?} got={:?}",
+//                 expected, got,
+//             ),
+//             Self::Descriptor => write!(f, "error with descriptor"),
+//             Self::Write => write!(f, "failed to write to persistence"),
+//             Self::Load => write!(f, "failed to load from persistence"),
+//             Self::NotInitialized => {
+//                 write!(f, "wallet is not initialized, persistence backend is empty")
+//             }
+//             Self::LoadedGenesisDoesNotMatch => {
+//                 write!(f, "loaded genesis hash does not match the expected one")
+//             }
+//             Self::LoadedNetworkDoesNotMatch { expected, got } => {
+//                 write!(f, "loaded network type is not {}, got {:?}", expected, got)
+//             }
+//         }
+//     }
+// }
 
-impl From<BdkFileError> for WalletCreationError {
+// impl std::error::Error for WalletError {}
+
+impl From<BdkFileError> for WalletError {
     fn from(error: BdkFileError) -> Self {
         match error {
-            BdkFileError::Io(_) => WalletCreationError::Io {
-                e: "io error trying to read file".to_string(),
-            },
+            BdkFileError::Io(_) => WalletError::Io,
             BdkFileError::InvalidMagicBytes { got, expected } => {
-                WalletCreationError::InvalidMagicBytes { got, expected }
+                WalletError::InvalidMagicBytes { got, expected }
             }
         }
     }
 }
 
-impl From<NewOrLoadError<std::io::Error, IterError>> for WalletCreationError {
+impl From<NewOrLoadError<std::io::Error, IterError>> for WalletError {
     fn from(error: NewOrLoadError<std::io::Error, IterError>) -> Self {
         match error {
-            NewOrLoadError::Descriptor(_) => WalletCreationError::Descriptor,
-            NewOrLoadError::Write(_) => WalletCreationError::Write,
-            NewOrLoadError::Load(_) => WalletCreationError::Load,
-            NewOrLoadError::NotInitialized => WalletCreationError::NotInitialized,
+            NewOrLoadError::Descriptor(_) => WalletError::Descriptor,
+            NewOrLoadError::Write(_) => WalletError::Write,
+            NewOrLoadError::Load(_) => WalletError::Load,
+            NewOrLoadError::NotInitialized => WalletError::NotInitialized,
             NewOrLoadError::LoadedGenesisDoesNotMatch { .. } => {
-                WalletCreationError::LoadedGenesisDoesNotMatch
+                WalletError::LoadedGenesisDoesNotMatch
             }
             NewOrLoadError::LoadedNetworkDoesNotMatch { expected, got } => {
-                WalletCreationError::LoadedNetworkDoesNotMatch { expected, got }
+                WalletError::LoadedNetworkDoesNotMatch { expected, got }
             }
         }
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PersistBackendError {
+    #[error("error while attempting to write to persistence")]
+    Write,
+
+    #[error("error while attempting to load from persistence")]
+    Load,
 }
 
 impl From<DescriptorError> for Alpha3Error {
@@ -271,6 +308,8 @@ mod test {
     use crate::error::EsploraError;
     use crate::CalculateFeeError;
     use crate::OutPoint;
+    use crate::WalletError;
+    use bdk::bitcoin::Network;
 
     #[test]
     fn test_error_missing_tx_out() {
@@ -368,5 +407,53 @@ mod test {
         for (error, expected_message) in cases {
             assert_eq!(error.to_string(), expected_message);
         }
+    }
+
+    #[test]
+    fn test_wallet_error() {
+        let io_error = WalletError::Io;
+        assert_eq!(
+            io_error.to_string(),
+            "IO error, this may mean that the file is too short"
+        );
+
+        let invalid_magic_bytes_error = WalletError::InvalidMagicBytes {
+            got: vec![1, 2, 3, 4],
+            expected: vec![4, 3, 2, 1],
+        };
+        assert_eq!(
+            invalid_magic_bytes_error.to_string(),
+            "file has invalid magic bytes: expected=[4, 3, 2, 1] got=[1, 2, 3, 4]"
+        );
+
+        let descriptor_error = WalletError::Descriptor;
+        assert_eq!(descriptor_error.to_string(), "error with descriptor");
+
+        let write_error = WalletError::Write;
+        assert_eq!(write_error.to_string(), "failed to write to persistence");
+
+        let load_error = WalletError::Load;
+        assert_eq!(load_error.to_string(), "failed to load from persistence");
+
+        let not_initialized_error = WalletError::NotInitialized;
+        assert_eq!(
+            not_initialized_error.to_string(),
+            "wallet is not initialized, persistence backend is empty"
+        );
+
+        let loaded_genesis_does_not_match_error = WalletError::LoadedGenesisDoesNotMatch;
+        assert_eq!(
+            loaded_genesis_does_not_match_error.to_string(),
+            "loaded genesis hash does not match the expected one"
+        );
+
+        let loaded_network_does_not_match_error = WalletError::LoadedNetworkDoesNotMatch {
+            expected: Network::Bitcoin,
+            got: Some(Network::Testnet),
+        };
+        assert_eq!(
+            loaded_network_does_not_match_error.to_string(),
+            "loaded network type is not bitcoin, got Some(Testnet)"
+        );
     }
 }

@@ -16,8 +16,14 @@ interface CalculateFeeError {
 };
 
 [Error]
-interface WalletCreationError {
-  Io(string e);
+interface PersistBackendError {
+  Write();
+  Load();
+};
+
+[Error]
+interface WalletError {
+  Io();
   InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
   Descriptor();
   Write();
@@ -113,12 +119,12 @@ enum ChangeSpendPolicy {
 };
 
 interface Wallet {
-  [Throws=WalletCreationError]
+  [Throws=WalletError]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, string persistence_backend_path, Network network);
 
   AddressInfo get_address(AddressIndex address_index);
 
-  [Throws=Alpha3Error]
+  [Throws=PersistBackendError]
   AddressInfo try_get_internal_address(AddressIndex address_index);
 
   Network network();

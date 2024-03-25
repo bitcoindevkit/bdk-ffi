@@ -1,6 +1,6 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
 use crate::descriptor::Descriptor;
-use crate::error::{Alpha3Error, CalculateFeeError, WalletCreationError};
+use crate::error::{Alpha3Error, CalculateFeeError, PersistBackendError, WalletError};
 use crate::types::ScriptAmount;
 use crate::types::{Balance, FeeRate};
 use crate::Script;
@@ -32,7 +32,7 @@ impl Wallet {
         change_descriptor: Option<Arc<Descriptor>>,
         persistence_backend_path: String,
         network: Network,
-    ) -> Result<Self, WalletCreationError> {
+    ) -> Result<Self, WalletError> {
         let descriptor = descriptor.as_string_private();
         let change_descriptor = change_descriptor.map(|d| d.as_string_private());
         let db = Store::<ChangeSet>::open_or_create_new(MAGIC_BYTES, persistence_backend_path)?;
@@ -67,13 +67,11 @@ impl Wallet {
     pub fn try_get_internal_address(
         &self,
         address_index: AddressIndex,
-    ) -> Result<AddressInfo, Alpha3Error> {
+    ) -> Result<AddressInfo, PersistBackendError> {
         self.get_wallet()
             .try_get_internal_address(address_index.into())
-            .map_or_else(
-                |_| Err(Alpha3Error::Generic),
-                |address_info| Ok(address_info.into()),
-            )
+            .map_err(|_| PersistBackendError::Write)
+            .map(|address_info| address_info.into())
     }
 
     pub fn network(&self) -> Network {

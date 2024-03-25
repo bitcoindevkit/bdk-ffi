@@ -16,6 +16,7 @@ use crate::descriptor::Descriptor;
 use crate::error::Alpha3Error;
 use crate::error::CalculateFeeError;
 use crate::error::EsploraError;
+use crate::error::PersistBackendError;
 use crate::esplora::EsploraClient;
 use crate::keys::DerivationPath;
 use crate::keys::DescriptorPublicKey;
@@ -33,7 +34,7 @@ use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
 
-use crate::error::WalletCreationError;
+use crate::error::WalletError;
 use bdk::bitcoin::Network;
 use bdk::keys::bip39::WordCount;
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
