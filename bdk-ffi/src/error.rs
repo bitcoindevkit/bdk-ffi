@@ -3,8 +3,6 @@ use crate::bitcoin::OutPoint;
 use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk_esplora::esplora_client::Error as BdkEsploraError;
 
-use std::fmt;
-
 use bdk::bitcoin::Network;
 use bdk::descriptor::DescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
@@ -14,77 +12,93 @@ use bdk_file_store::FileError as BdkFileError;
 use bdk_file_store::IterError;
 use std::convert::Infallible;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Alpha3Error {
+    #[error("generic error in ffi")]
     Generic,
 }
 
-impl fmt::Display for Alpha3Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Alpha3Error::Generic => write!(f, "Error in FFI"),
-        }
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum CalculateFeeError {
+    #[error("missing transaction output: {out_points:?}")]
+    MissingTxOut { out_points: Vec<OutPoint> },
+
+    #[error("negative fee value: {fee}")]
+    NegativeFee { fee: i64 },
 }
 
-impl std::error::Error for Alpha3Error {}
-
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum WalletCreationError {
     // Errors coming from the FileError enum
-    Io {
-        e: String,
-    },
-    InvalidMagicBytes {
-        got: Vec<u8>,
-        expected: Vec<u8>,
-    },
+    #[error("io error trying to read file: {e}")]
+    Io { e: String },
+
+    #[error("file has invalid magic bytes: expected={expected:?} got={got:?}")]
+    InvalidMagicBytes { got: Vec<u8>, expected: Vec<u8> },
 
     // Errors coming from the NewOrLoadError enum
+    #[error("error with descriptor")]
     Descriptor,
+
+    #[error("failed to write to persistence")]
     Write,
+
+    #[error("failed to load from persistence")]
     Load,
+
+    #[error("wallet is not initialized, persistence backend is empty")]
     NotInitialized,
+
+    #[error("loaded genesis hash does not match the expected one")]
     LoadedGenesisDoesNotMatch,
+
+    #[error("loaded network type is not {expected}, got {got:?}")]
     LoadedNetworkDoesNotMatch {
         expected: Network,
         got: Option<Network>,
     },
 }
 
-impl fmt::Display for WalletCreationError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Io { e } => write!(f, "io error trying to read file: {}", e),
-            Self::InvalidMagicBytes { got, expected } => write!(
-                f,
-                "file has invalid magic bytes: expected={:?} got={:?}",
-                expected, got,
-            ),
-            Self::Descriptor => write!(f, "error with descriptor"),
-            Self::Write => write!(f, "failed to write to persistence"),
-            Self::Load => write!(f, "failed to load from persistence"),
-            Self::NotInitialized => {
-                write!(f, "wallet is not initialized, persistence backend is empty")
-            }
-            Self::LoadedGenesisDoesNotMatch => {
-                write!(f, "loaded genesis hash does not match the expected one")
-            }
-            Self::LoadedNetworkDoesNotMatch { expected, got } => {
-                write!(f, "loaded network type is not {}, got {:?}", expected, got)
-            }
-        }
-    }
-}
+#[derive(Debug, thiserror::Error)]
+pub enum EsploraError {
+    #[error("ureq error: {error_message}")]
+    Ureq { error_message: String },
 
-impl std::error::Error for WalletCreationError {}
+    #[error("ureq transport error: {error_message}")]
+    UreqTransport { error_message: String },
+
+    #[error("http error with status code: {status_code}")]
+    Http { status_code: u16 },
+
+    #[error("io error: {error_message}")]
+    Io { error_message: String },
+
+    #[error("no header found in the response")]
+    NoHeader,
+
+    #[error("parsing error: {error_message}")]
+    Parsing { error_message: String },
+
+    #[error("bitcoin encoding error: {error_message}")]
+    BitcoinEncoding { error_message: String },
+
+    #[error("hex decoding error: {error_message}")]
+    Hex { error_message: String },
+
+    #[error("transaction not found")]
+    TransactionNotFound,
+
+    #[error("header height {height} not found")]
+    HeaderHeightNotFound { height: u32 },
+
+    #[error("header hash not found")]
+    HeaderHashNotFound,
+}
 
 impl From<BdkFileError> for WalletCreationError {
     fn from(error: BdkFileError) -> Self {
         match error {
-            BdkFileError::Io(_) => WalletCreationError::Io {
-                e: "io error trying to read file".to_string(),
-            },
+            BdkFileError::Io(e) => WalletCreationError::Io { e: e.to_string() },
             BdkFileError::InvalidMagicBytes { got, expected } => {
                 WalletCreationError::InvalidMagicBytes { got, expected }
             }
@@ -157,23 +171,6 @@ impl From<CreateTxError<std::io::Error>> for Alpha3Error {
     }
 }
 
-#[derive(Debug)]
-pub enum CalculateFeeError {
-    MissingTxOut { out_points: Vec<OutPoint> },
-    NegativeFee { fee: i64 },
-}
-
-impl fmt::Display for CalculateFeeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            CalculateFeeError::MissingTxOut { out_points } => {
-                write!(f, "Missing transaction output: {:?}", out_points)
-            }
-            CalculateFeeError::NegativeFee { fee } => write!(f, "Negative fee value: {}", fee),
-        }
-    }
-}
-
 impl From<BdkCalculateFeeError> for CalculateFeeError {
     fn from(error: BdkCalculateFeeError) -> Self {
         match error {
@@ -181,53 +178,6 @@ impl From<BdkCalculateFeeError> for CalculateFeeError {
                 out_points: out_points.iter().map(|op| op.into()).collect(),
             },
             BdkCalculateFeeError::NegativeFee(fee) => CalculateFeeError::NegativeFee { fee },
-        }
-    }
-}
-
-impl std::error::Error for CalculateFeeError {}
-
-#[derive(Debug)]
-pub enum EsploraError {
-    Ureq { error_message: String },
-    UreqTransport { error_message: String },
-    Http { status_code: u16 },
-    Io { error_message: String },
-    NoHeader,
-    Parsing { error_message: String },
-    BitcoinEncoding { error_message: String },
-    Hex { error_message: String },
-    TransactionNotFound,
-    HeaderHeightNotFound { height: u32 },
-    HeaderHashNotFound,
-}
-
-impl fmt::Display for EsploraError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            EsploraError::Ureq { error_message } => write!(f, "Ureq error: {}", error_message),
-            EsploraError::UreqTransport { error_message } => {
-                write!(f, "Ureq transport error: {}", error_message)
-            }
-            EsploraError::Http { status_code } => {
-                write!(f, "HTTP error with status code: {}", status_code)
-            }
-            EsploraError::Io { error_message } => write!(f, "IO error: {}", error_message),
-            EsploraError::NoHeader => write!(f, "No header found in the response"),
-            EsploraError::Parsing { error_message } => {
-                write!(f, "Parsing error: {}", error_message)
-            }
-            EsploraError::BitcoinEncoding { error_message } => {
-                write!(f, "Bitcoin encoding error: {}", error_message)
-            }
-            EsploraError::Hex { error_message } => {
-                write!(f, "Hex decoding error: {}", error_message)
-            }
-            EsploraError::TransactionNotFound => write!(f, "Transaction not found"),
-            EsploraError::HeaderHeightNotFound { height } => {
-                write!(f, "Header height {} not found", height)
-            }
-            EsploraError::HeaderHashNotFound => write!(f, "Header hash not found"),
         }
     }
 }
@@ -264,8 +214,6 @@ impl From<BdkEsploraError> for EsploraError {
     }
 }
 
-impl std::error::Error for EsploraError {}
-
 #[cfg(test)]
 mod test {
     use crate::error::EsploraError;
@@ -290,7 +238,7 @@ mod test {
         let error = CalculateFeeError::MissingTxOut { out_points };
 
         let expected_message: String = format!(
-            "Missing transaction output: [{:?}, {:?}]",
+            "missing transaction output: [{:?}, {:?}]",
             OutPoint {
                 txid: "0000000000000000000000000000000000000000000000000000000000000001"
                     .to_string(),
@@ -310,7 +258,7 @@ mod test {
     fn test_error_negative_fee() {
         let error = CalculateFeeError::NegativeFee { fee: -100 };
 
-        assert_eq!(error.to_string(), "Negative fee value: -100");
+        assert_eq!(error.to_string(), "negative fee value: -100");
     }
 
     #[test]
@@ -320,49 +268,49 @@ mod test {
                 EsploraError::Ureq {
                     error_message: "Network error".to_string(),
                 },
-                "Ureq error: Network error",
+                "ureq error: Network error",
             ),
             (
                 EsploraError::UreqTransport {
                     error_message: "Timeout occurred".to_string(),
                 },
-                "Ureq transport error: Timeout occurred",
+                "ureq transport error: Timeout occurred",
             ),
             (
                 EsploraError::Http { status_code: 404 },
-                "HTTP error with status code: 404",
+                "http error with status code: 404",
             ),
             (
                 EsploraError::Io {
                     error_message: "File not found".to_string(),
                 },
-                "IO error: File not found",
+                "io error: File not found",
             ),
-            (EsploraError::NoHeader, "No header found in the response"),
+            (EsploraError::NoHeader, "no header found in the response"),
             (
                 EsploraError::Parsing {
                     error_message: "Invalid JSON".to_string(),
                 },
-                "Parsing error: Invalid JSON",
+                "parsing error: Invalid JSON",
             ),
             (
                 EsploraError::BitcoinEncoding {
                     error_message: "Bad format".to_string(),
                 },
-                "Bitcoin encoding error: Bad format",
+                "bitcoin encoding error: Bad format",
             ),
             (
                 EsploraError::Hex {
                     error_message: "Invalid hex".to_string(),
                 },
-                "Hex decoding error: Invalid hex",
+                "hex decoding error: Invalid hex",
             ),
-            (EsploraError::TransactionNotFound, "Transaction not found"),
+            (EsploraError::TransactionNotFound, "transaction not found"),
             (
                 EsploraError::HeaderHeightNotFound { height: 123456 },
-                "Header height 123456 not found",
+                "header height 123456 not found",
             ),
-            (EsploraError::HeaderHashNotFound, "Header hash not found"),
+            (EsploraError::HeaderHashNotFound, "header hash not found"),
         ];
 
         for (error, expected_message) in cases {
