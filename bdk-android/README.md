@@ -22,12 +22,21 @@ import org.bitcoindevkit.*
 val externalDescriptor = Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)", Network.TESTNET)
 val internalDescriptor = Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)", Network.TESTNET)
 
-val databaseConfig = DatabaseConfig.Memory
+val esploraClient: EsploraClient = EsploraClient("https://esplora.testnet.kuutamo.cloud/")
+val wallet: Wallet = Wallet(
+    descriptor = externalDescriptor, 
+    changeDescriptor = internalDescriptor, 
+    persistenceBackendPath = "./bdkwallet.db", 
+    network = Network.TESTNET
+)
+val update = esploraClient.fullScan(
+    wallet = wallet,
+    stopGap = 10uL,
+    parallelRequests = 1uL
+)
 
-val blockchainConfig = BlockchainConfig.Electrum(
-        ElectrumConfig("ssl://electrum.blockstream.info:60002", null, 5u, null, 10u, true)
-    )
-val wallet = Wallet(externalDescriptor, internalDescriptor, Network.TESTNET, databaseConfig, blockchainConfig)
+wallet.applyUpdate(update)
+
 val newAddress = wallet.getAddress(AddressIndex.LastUnused)
 ```
 
@@ -78,7 +87,7 @@ export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
  cd bdk-android
  ./gradlew buildAndroidLib
  ```
-8. Start android emulator (must be x86_64) and run tests
+1. Start android emulator and run tests
 ```sh
 ./gradlew connectedAndroidTest
 ```
