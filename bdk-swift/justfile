@@ -1,0 +1,8 @@
+build:
+  bash ./build-local-swift.sh
+
+test:
+  swift test
+
+offlinetests:
+  swift test --skip LiveWalletTests --skip LiveTxBuilderTests
