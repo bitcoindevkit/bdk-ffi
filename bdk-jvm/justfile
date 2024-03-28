@@ -1,0 +1,14 @@
+test:
+  ./gradlew test
+
+offlinetests:
+  ./gradlew test -P excludeConnectedTests
+
+onetest TEST:
+  ./gradlew test --tests {{TEST}}
+
+build:
+  ./gradlew buildJvmLib
+
+publishlocal:
+  ./gradlew publishToMavenLocal --exclude-task signMavenPublication

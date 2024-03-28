@@ -6,18 +6,18 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 val libraryVersion: String by project
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.6.10"
-    id("java-library")
-    id("maven-publish")
-    id("signing")
+    id("org.jetbrains.kotlin.jvm")
+    id("org.gradle.java-library")
+    id("org.gradle.maven-publish")
+    id("org.gradle.signing")
 
     // Custom plugin to generate the native libs and bindings file
     id("org.bitcoindevkit.plugins.generate-jvm-bindings")
 }
 
-repositories {
-    mavenCentral()
-}
+// repositories {
+//     mavenCentral()
+// }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11

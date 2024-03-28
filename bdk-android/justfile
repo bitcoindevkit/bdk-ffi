@@ -1,0 +1,11 @@
+test:
+  ./gradlew connectedAndroidTest
+
+onetest TEST:
+  ./gradlew test --tests {{TEST}}
+
+build:
+  ./gradlew buildAndroidLib
+
+publishlocal:
+  ./gradlew publishToMavenLocal --exclude-task signMavenPublication
