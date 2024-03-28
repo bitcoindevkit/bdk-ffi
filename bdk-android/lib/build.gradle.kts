@@ -5,25 +5,20 @@ val libraryVersion: String by project
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android") version "1.6.10"
-    id("maven-publish")
-    id("signing")
+    id("org.jetbrains.kotlin.android")
+    id("org.gradle.maven-publish")
+    id("org.gradle.signing")
 
     // Custom plugin to generate the native libs and bindings file
     id("org.bitcoindevkit.plugins.generate-android-bindings")
 }
 
-repositories {
-    mavenCentral()
-    google()
-}
-
 android {
-    compileSdk = 33
+    namespace = "org.bitcoindevkit"
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 33
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
