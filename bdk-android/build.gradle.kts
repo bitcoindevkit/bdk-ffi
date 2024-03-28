@@ -1,14 +1,10 @@
-buildscript {
-    repositories {
-        google()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:7.1.2")
-    }
-}
-
 plugins {
-    id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+    id("com.android.library").version("8.3.1").apply(false)
+    id("org.jetbrains.kotlin.android").version("1.6.10").apply(false)
+    id("org.gradle.maven-publish")
+    id("org.gradle.signing")
+    id("org.bitcoindevkit.plugins.generate-android-bindings").apply(false)
+    id("io.github.gradle-nexus.publish-plugin").version("1.1.0").apply(true)
 }
 
 // library version is defined in gradle.properties
