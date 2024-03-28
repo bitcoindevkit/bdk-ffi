@@ -52,7 +52,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
 
       - name: "Set default Rust version to 1.73.0"
         run: rustup default 1.73.0
@@ -92,7 +92,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
 
       - name: "Set default Rust version to 1.73.0"
         run: rustup default 1.73.0
