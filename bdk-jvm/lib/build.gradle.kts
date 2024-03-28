@@ -15,10 +15,6 @@ plugins {
     id("org.bitcoindevkit.plugins.generate-jvm-bindings")
 }
 
-// repositories {
-//     mavenCentral()
-// }
-
 java {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
@@ -41,7 +37,7 @@ tasks.test {
 testing {
     suites {
         val test by getting(JvmTestSuite::class) {
-            useKotlinTest("1.6.10")
+            useKotlinTest("1.9.23")
         }
     }
 }
