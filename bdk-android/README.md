@@ -58,7 +58,7 @@ dependencies {
 * [Padawan Wallet](https://github.com/thunderbiscuit/padawan-wallet)
 
 ### How to build
-_Note that Kotlin version `1.6.10` or later is required to build the library._
+_Note that Kotlin version `1.9.23` or later is required to build the library._
 
 1. Clone this repository.
 ```shell
