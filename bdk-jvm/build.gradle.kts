@@ -1,4 +1,9 @@
 plugins {
+    id("org.jetbrains.kotlin.jvm").version("1.6.10").apply(false)
+    id("org.gradle.java-library")
+    id("org.gradle.maven-publish")
+    id("org.gradle.signing")
+    id("org.bitcoindevkit.plugins.generate-jvm-bindings").apply(false)
     id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
 }
 
