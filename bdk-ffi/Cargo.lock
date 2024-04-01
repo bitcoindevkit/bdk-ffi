@@ -138,9 +138,9 @@ dependencies = [
 
 [[package]]
 name = "bdk"
-version = "1.0.0-alpha.7"
+version = "1.0.0-alpha.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3898b68da1d179ec68acaaefe29b3ea952800ebf5809cad1e3a3cc5504ccc6d4"
+checksum = "06494244111d4f934f40f2a46883bcec3ea5d573fe30d310623e08a27adac849"
 dependencies = [
  "bdk_chain",
  "bip39",
@@ -155,7 +155,7 @@ dependencies = [
 
 [[package]]
 name = "bdk-ffi"
-version = "1.0.0-alpha.7"
+version = "1.0.0-alpha.8"
 dependencies = [
  "assert_matches",
  "bdk",
@@ -178,9 +178,9 @@ dependencies = [
 
 [[package]]
 name = "bdk_esplora"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a218fdf700ba98cf68f3b678af004b6770a04329bd1de4c0ce52382cecb2e0e9"
+checksum = "9abd2ce171d0a10c44b847c0e4aaf2e6eb81d7b3f5ac8bde4e0e0b77edfc313f"
 dependencies = [
  "bdk_chain",
  "esplora-client",
@@ -188,9 +188,9 @@ dependencies = [
 
 [[package]]
 name = "bdk_file_store"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0efb7e3263bc937977d798a0a5f1c64467de5998380b8dc5003f5924b2af3398"
+checksum = "403e8a1b6671585d1d5466cd5414e51d9f38c9079137ab79d4b83b56b21b03ac"
 dependencies = [
  "bdk_chain",
  "bincode",

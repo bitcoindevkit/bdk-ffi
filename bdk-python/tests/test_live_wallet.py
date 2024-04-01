@@ -64,7 +64,7 @@ class LiveWalletTest(unittest.TestCase):
             network = bdk.Network.TESTNET
         )
         
-        psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2.0)).finish(wallet)
+        psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).finish(wallet)
         # print(psbt.serialize())
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
         
@@ -75,7 +75,7 @@ class LiveWalletTest(unittest.TestCase):
         fee = wallet.calculate_fee(tx)
         print(f"Transaction Fee: {fee}")
         fee_rate = wallet.calculate_fee_rate(tx)
-        print(f"Transaction Fee Rate: {fee_rate.as_sat_per_vb()} sat/vB")
+        print(f"Transaction Fee Rate: {fee_rate.to_sat_per_vb_ceil()} sat/vB")
         
         esploraClient.broadcast(tx)
     

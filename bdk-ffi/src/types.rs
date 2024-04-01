@@ -4,31 +4,39 @@ use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::wallet::Balance as BdkBalance;
 use bdk::KeychainKind;
-
 use bdk::LocalOutput as BdkLocalOutput;
 
-use bdk::FeeRate as BdkFeeRate;
+use bdk::bitcoin::FeeRate as BdkFeeRate;
 
+use crate::error::FeeRateError;
 use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct FeeRate(pub BdkFeeRate);
 
 impl FeeRate {
-    pub fn from_sat_per_vb(sat_per_vb: f32) -> Self {
-        FeeRate(BdkFeeRate::from_sat_per_vb(sat_per_vb))
+    pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
+        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
+        match fee_rate {
+            Some(fee_rate) => Ok(FeeRate(fee_rate)),
+            None => Err(FeeRateError::ArithmeticOverflow),
+        }
     }
 
-    pub fn from_sat_per_kwu(sat_per_kwu: f32) -> Self {
+    pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
         FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
     }
 
-    pub fn as_sat_per_vb(&self) -> f32 {
-        self.0.as_sat_per_vb()
+    pub fn to_sat_per_vb_ceil(&self) -> u64 {
+        self.0.to_sat_per_vb_ceil()
     }
 
-    pub fn sat_per_kwu(&self) -> f32 {
-        self.0.sat_per_kwu()
+    pub fn to_sat_per_vb_floor(&self) -> u64 {
+        self.0.to_sat_per_vb_floor()
+    }
+
+    pub fn to_sat_per_kwu(&self) -> u64 {
+        self.0.to_sat_per_kwu()
     }
 }
 

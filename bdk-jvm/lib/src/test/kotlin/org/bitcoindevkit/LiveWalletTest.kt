@@ -61,7 +61,7 @@ class LiveWalletTest {
 
         val psbt: PartiallySignedTransaction = TxBuilder()
             .addRecipient(recipient.scriptPubkey(), 4200uL)
-            .feeRate(FeeRate.fromSatPerVb(2.0f))
+            .feeRate(FeeRate.fromSatPerVb(2uL))
             .finish(wallet)
 
         println(psbt.serialize())
@@ -77,7 +77,7 @@ class LiveWalletTest {
         println("Tx fee is: ${txFee}")
 
         val feeRate: FeeRate = wallet.calculateFeeRate(tx)
-        println("Tx fee rate is: ${feeRate.asSatPerVb()} sat/vB")
+        println("Tx fee rate is: ${feeRate.toSatPerVbCeil()} sat/vB")
 
         esploraClient.broadcast(tx)
     }

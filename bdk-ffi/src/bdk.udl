@@ -47,6 +47,11 @@ interface EsploraError {
   HeaderHashNotFound();
 };
 
+[Error]
+enum FeeRateError {
+  "ArithmeticOverflow"
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
@@ -100,15 +105,17 @@ dictionary TxOut {
 // ------------------------------------------------------------------------
 
 interface FeeRate {
-  [Name=from_sat_per_vb]
-  constructor(f32 sat_per_vb);
+  [Name=from_sat_per_vb, Throws=FeeRateError]
+  constructor(u64 sat_per_vb);
 
   [Name=from_sat_per_kwu]
-  constructor(f32 sat_per_kwu);
+  constructor(u64 sat_per_kwu);
 
-  f32 as_sat_per_vb();
+  u64 to_sat_per_vb_ceil();
 
-  f32 sat_per_kwu();
+  u64 to_sat_per_vb_floor();
+
+  u64 to_sat_per_kwu();
 };
 
 enum ChangeSpendPolicy {
@@ -189,7 +196,7 @@ interface TxBuilder {
 };
 
 interface BumpFeeTxBuilder {
-  constructor(string txid, f32 fee_rate);
+  constructor(string txid, FeeRate fee_rate);
 
   BumpFeeTxBuilder allow_shrinking(Script script_pubkey);
 

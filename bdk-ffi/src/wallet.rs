@@ -12,8 +12,8 @@ use bdk::bitcoin::Network;
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::{ChangeSet, Update as BdkUpdate};
+use bdk::SignOptions;
 use bdk::Wallet as BdkWallet;
-use bdk::{FeeRate as BdkFeeRate, SignOptions};
 use bdk_file_store::Store;
 
 use std::collections::HashSet;
@@ -532,13 +532,13 @@ impl TxBuilder {
 #[derive(Clone)]
 pub(crate) struct BumpFeeTxBuilder {
     pub(crate) txid: String,
-    pub(crate) fee_rate: f32,
+    pub(crate) fee_rate: Arc<FeeRate>,
     pub(crate) allow_shrinking: Option<Arc<Script>>,
     pub(crate) rbf: Option<RbfValue>,
 }
 
 impl BumpFeeTxBuilder {
-    pub(crate) fn new(txid: String, fee_rate: f32) -> Self {
+    pub(crate) fn new(txid: String, fee_rate: Arc<FeeRate>) -> Self {
         Self {
             txid,
             fee_rate,
@@ -575,7 +575,7 @@ impl BumpFeeTxBuilder {
         let txid = Txid::from_str(self.txid.as_str()).map_err(|_| Alpha3Error::Generic)?;
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_fee_bump(txid)?;
-        tx_builder.fee_rate(BdkFeeRate::from_sat_per_vb(self.fee_rate));
+        tx_builder.fee_rate(self.fee_rate.0);
         if let Some(allow_shrinking) = &self.allow_shrinking {
             tx_builder.allow_shrinking(allow_shrinking.0.clone())?;
         }

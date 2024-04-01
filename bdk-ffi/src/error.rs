@@ -101,6 +101,12 @@ pub enum EsploraError {
     HeaderHashNotFound,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum FeeRateError {
+    #[error("arithmetic overflow on feerate")]
+    ArithmeticOverflow,
+}
+
 impl From<BdkFileError> for WalletCreationError {
     fn from(error: BdkFileError) -> Self {
         match error {

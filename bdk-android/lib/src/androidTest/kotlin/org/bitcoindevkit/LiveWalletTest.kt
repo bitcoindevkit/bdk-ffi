@@ -79,7 +79,7 @@ class LiveWalletTest {
         println("Tx fee is: ${txFee}")
 
         val feeRate: FeeRate = wallet.calculateFeeRate(tx)
-        println("Tx fee rate is: ${feeRate.asSatPerVb()} sat/vB")
+        println("Tx fee rate is: ${feeRate.toSatPerVbCeil()} sat/vB")
 
         esploraClient.broadcast(tx)
     }

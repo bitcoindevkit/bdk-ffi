@@ -33,7 +33,7 @@ class LiveTxBuilderTest {
         val recipient: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.TESTNET)
         val psbt: PartiallySignedTransaction = TxBuilder()
             .addRecipient(recipient.scriptPubkey(), 4200uL)
-            .feeRate(FeeRate.fromSatPerVb(2.0f))
+            .feeRate(FeeRate.fromSatPerVb(2uL))
             .finish(wallet)
 
         println(psbt.serialize())
@@ -62,7 +62,7 @@ class LiveTxBuilderTest {
 
         val psbt: PartiallySignedTransaction = TxBuilder()
             .setRecipients(allRecipients)
-            .feeRate(FeeRate.fromSatPerVb(4.0f))
+            .feeRate(FeeRate.fromSatPerVb(4uL))
             .changePolicy(ChangeSpendPolicy.CHANGE_FORBIDDEN)
             .enableRbf()
             .finish(wallet)

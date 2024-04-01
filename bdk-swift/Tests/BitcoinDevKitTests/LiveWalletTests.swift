@@ -81,7 +81,7 @@ final class LiveWalletTests: XCTestCase {
         let psbt: PartiallySignedTransaction = try
             TxBuilder()
                 .addRecipient(script: recipient.scriptPubkey(), amount: 4200)
-                .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2.0))
+                .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2))
                 .finish(wallet: wallet)
 
         print(psbt.serialize())
@@ -95,7 +95,7 @@ final class LiveWalletTests: XCTestCase {
         let fee: UInt64 = try wallet.calculateFee(tx: tx)
         print("Transaction Fee: \(fee)")
         let feeRate: FeeRate = try wallet.calculateFeeRate(tx: tx)
-        print("Transaction Fee Rate: \(feeRate.asSatPerVb()) sat/vB")
+        print("Transaction Fee Rate: \(feeRate.toSatPerVbCeil()) sat/vB")
 
         try esploraClient.broadcast(transaction: tx)
     }
