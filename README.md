@@ -35,14 +35,6 @@ This library should compile with any combination of features with Rust 1.73.0.
 ### Adding new structs and functions
 See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
 
-#### For pass by value objects
-1. Create new rust struct with only fields that are supported UniFFI types
-2. Update mapping `bdk.udl` file with new `dictionary`
-
-#### For pass by reference values
-1. Create wrapper rust struct/impl with only fields that are `Sync + Send`
-2. Update mapping `bdk.udl` file with new `interface`
-
 ## Goals
 1. Language bindings should feel idiomatic in target languages/platforms
 2. Adding new targets should be easy 
