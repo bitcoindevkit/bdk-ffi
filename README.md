@@ -26,14 +26,21 @@ The below directories (a separate repository in the case of bdk-swift) include i
 | Swift    | iOS, macOS            | [bdk-swift (GitHub)]          | [Readme bdk-swift]     |                       |
 | Python   | linux, macOS, Windows | [bdk-python (PyPI)]           | [Readme bdk-python]    |                       |
 
-## Minimum Supported Rust Version (MSRV)
+## Building and Testing the Libraries
+If you are familiar with the build tools for the specific languages you wish to build the libraries for, you can use their normal build/test workflows. We also include some [just](https://just.systems/) files to simplify the work across different languages. If you have the just tool installed on your system, you can simply call the commands defined in the `justfile`s, for example:
+```sh
+cd bdk-android
 
+just build
+just offlinetests
+just publishlocal
+```
+
+## Minimum Supported Rust Version (MSRV)
 This library should compile with any combination of features with Rust 1.73.0.
 
 ## Contributing
-
-### Adding new structs and functions
-See the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/)
+To add new structs and functions, see the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/) and the [uniffi-examples](https://thunderbiscuit.github.io/uniffi-examples/) repository.
 
 ## Goals
 1. Language bindings should feel idiomatic in target languages/platforms
