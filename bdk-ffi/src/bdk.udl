@@ -36,6 +36,7 @@ interface PersistenceError {
 interface EsploraError {
   Ureq(string error_message);
   UreqTransport(string error_message);
+  Reqwest();
   Http(u16 status_code);
   Io(string error_message);
   NoHeader();

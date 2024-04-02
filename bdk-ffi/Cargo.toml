@@ -19,13 +19,15 @@ default = ["uniffi/cli"]
 
 [dependencies]
 bdk = { version = "1.0.0-alpha.8", features = ["all-keys", "keys-bip39"] }
-bdk_esplora = { version = "0.10.0", default-features = false, features = ["std", "blocking"] }
-# bdk_esplora = { version = "0.10.0", default-features = false, features = ["std", "blocking", "async-https-rustls"] }
+bdk_esplora = { version = "0.10.0", default-features = false, features = ["std", "blocking", "async-https-rustls"] }
 bdk_file_store = { version = "0.8.0" }
 
 uniffi = { version = "=0.26.1" }
 bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
 thiserror = "1.0.58"
+# This is necessary to remove the "macos-system-configuration" feature from the reqwest dependency
+# See issue #455 for more information
+reqwest = { version = "0.12.2" , default-features = false, features = ["default-tls", "charset", "http2"] }
 
 [build-dependencies]
 uniffi = { version = "=0.26.1", features = ["build"] }
