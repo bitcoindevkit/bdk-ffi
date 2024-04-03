@@ -230,9 +230,10 @@ impl From<BdkEsploraError> for EsploraError {
 
 #[cfg(test)]
 mod test {
-    use crate::error::{EsploraError, PersistenceError};
+    use crate::error::{EsploraError, PersistenceError, WalletCreationError};
     use crate::CalculateFeeError;
     use crate::OutPoint;
+    use bdk::bitcoin::Network;
 
     #[test]
     fn test_error_missing_tx_out() {
@@ -342,5 +343,55 @@ mod test {
 
         let PersistenceError::Write { e } = op_err;
         assert_eq!(e, "unable to persist the new address");
+    }
+
+    #[test]
+    fn test_error_wallet_creation() {
+        let io_error = WalletCreationError::Io {
+            e: "io error".to_string(),
+        };
+        assert_eq!(
+            io_error.to_string(),
+            "io error trying to read file: io error"
+        );
+
+        let invalid_magic_bytes_error = WalletCreationError::InvalidMagicBytes {
+            got: vec![1, 2, 3, 4],
+            expected: vec![4, 3, 2, 1],
+        };
+        assert_eq!(
+            invalid_magic_bytes_error.to_string(),
+            "file has invalid magic bytes: expected=[4, 3, 2, 1] got=[1, 2, 3, 4]"
+        );
+
+        let descriptor_error = WalletCreationError::Descriptor;
+        assert_eq!(descriptor_error.to_string(), "error with descriptor");
+
+        let write_error = WalletCreationError::Write;
+        assert_eq!(write_error.to_string(), "failed to write to persistence");
+
+        let load_error = WalletCreationError::Load;
+        assert_eq!(load_error.to_string(), "failed to load from persistence");
+
+        let not_initialized_error = WalletCreationError::NotInitialized;
+        assert_eq!(
+            not_initialized_error.to_string(),
+            "wallet is not initialized, persistence backend is empty"
+        );
+
+        let loaded_genesis_does_not_match_error = WalletCreationError::LoadedGenesisDoesNotMatch;
+        assert_eq!(
+            loaded_genesis_does_not_match_error.to_string(),
+            "loaded genesis hash does not match the expected one"
+        );
+
+        let loaded_network_does_not_match_error = WalletCreationError::LoadedNetworkDoesNotMatch {
+            expected: Network::Bitcoin,
+            got: Some(Network::Testnet),
+        };
+        assert_eq!(
+            loaded_network_does_not_match_error.to_string(),
+            "loaded network type is not bitcoin, got Some(Testnet)"
+        );
     }
 }
