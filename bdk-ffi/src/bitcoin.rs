@@ -41,14 +41,9 @@ pub struct Address {
 }
 
 impl Address {
-    pub fn new(address: String, network: Network) -> Result<Self, Alpha3Error> {
-        let parsed_address = address
-            .parse::<bdk::bitcoin::Address<NetworkUnchecked>>()
-            .map_err(|_| Alpha3Error::Generic)?;
-
-        let network_checked_address = parsed_address
-            .require_network(network)
-            .map_err(|_| Alpha3Error::Generic)?;
+    pub fn new(address: String, network: Network) -> Result<Self, AddressError> {
+        let parsed_address = address.parse::<bdk::bitcoin::Address<NetworkUnchecked>>()?;
+        let network_checked_address = parsed_address.require_network(network)?;
 
         Ok(Address {
             inner: network_checked_address,

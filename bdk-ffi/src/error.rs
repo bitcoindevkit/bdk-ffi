@@ -107,6 +107,66 @@ pub enum FeeRateError {
     ArithmeticOverflow,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum AddressError {
+    #[error("base58 address encoding error")]
+    Base58,
+
+    #[error("bech32 address encoding error")]
+    Bech32,
+
+    #[error("the bech32 payload was empty")]
+    EmptyBech32Payload,
+
+    #[error("invalid bech32 checksum variant found")]
+    InvalidBech32Variant,
+
+    #[error("invalid witness script version: {version}")]
+    InvalidWitnessVersion { version: u8 },
+
+    #[error("incorrect format of a witness version byte")]
+    UnparsableWitnessVersion,
+
+    #[error(
+        "bitcoin script opcode does not match any known witness version, the script is malformed"
+    )]
+    MalformedWitnessVersion,
+
+    #[error("the witness program must be between 2 and 40 bytes in length: length={length}")]
+    InvalidWitnessProgramLength { length: u64 },
+
+    #[error("a v0 witness program must be either of length 20 or 32 bytes: length={length}")]
+    InvalidSegwitV0ProgramLength { length: u64 },
+
+    #[error("an uncompressed pubkey was used where it is not allowed")]
+    UncompressedPubkey,
+
+    #[error("script size exceed 520 bytes")]
+    ExcessiveScriptSize,
+
+    #[error("script is not p2pkh, p2sh, or witness program")]
+    UnrecognizedScript,
+
+    #[error("unknown address type: '{s}' is either invalid or not supported")]
+    UnknownAddressType { s: String },
+
+    #[error(
+        "address {address} belongs to network {found} which is different from required {required}"
+    )]
+    NetworkValidation {
+        /// Network that was required.
+        required: Network,
+        /// Network on which the address was found to be valid.
+        found: Network,
+        /// The address itself
+        address: String,
+    },
+
+    // This is required because the bdk::bitcoin::address::Error is non-exhaustive
+    #[error("other address error")]
+    OtherAddressError,
+}
+
 impl From<BdkFileError> for WalletCreationError {
     fn from(error: BdkFileError) -> Self {
         match error {
@@ -230,6 +290,56 @@ impl From<BdkEsploraError> for EsploraError {
                 EsploraError::HeaderHeightNotFound { height }
             }
             BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
+        }
+    }
+}
+
+impl From<bdk::bitcoin::address::Error> for AddressError {
+    fn from(error: bdk::bitcoin::address::Error) -> Self {
+        match error {
+            bdk::bitcoin::address::Error::Base58(_) => AddressError::Base58,
+            bdk::bitcoin::address::Error::Bech32(_) => AddressError::Bech32,
+            bdk::bitcoin::address::Error::EmptyBech32Payload => AddressError::EmptyBech32Payload,
+            bdk::bitcoin::address::Error::InvalidBech32Variant { .. } => {
+                AddressError::InvalidBech32Variant
+            }
+            bdk::bitcoin::address::Error::InvalidWitnessVersion(version) => {
+                AddressError::InvalidWitnessVersion { version }
+            }
+            bdk::bitcoin::address::Error::UnparsableWitnessVersion(_) => {
+                AddressError::UnparsableWitnessVersion
+            }
+            bdk::bitcoin::address::Error::MalformedWitnessVersion => {
+                AddressError::MalformedWitnessVersion
+            }
+            bdk::bitcoin::address::Error::InvalidWitnessProgramLength(length) => {
+                let length = length as u64;
+                AddressError::InvalidWitnessProgramLength { length }
+            }
+            bdk::bitcoin::address::Error::InvalidSegwitV0ProgramLength(length) => {
+                let length = length as u64;
+                AddressError::InvalidSegwitV0ProgramLength { length }
+            }
+            bdk::bitcoin::address::Error::UncompressedPubkey => AddressError::UncompressedPubkey,
+            bdk::bitcoin::address::Error::ExcessiveScriptSize => AddressError::ExcessiveScriptSize,
+            bdk::bitcoin::address::Error::UnrecognizedScript => AddressError::UnrecognizedScript,
+            bdk::bitcoin::address::Error::UnknownAddressType(s) => {
+                AddressError::UnknownAddressType { s }
+            }
+            bdk::bitcoin::address::Error::NetworkValidation {
+                required,
+                found,
+                address,
+            } => {
+                // let address = address.to_string();
+                let address = format!("{:?}", address);
+                AddressError::NetworkValidation {
+                    required,
+                    found,
+                    address,
+                }
+            }
+            _ => AddressError::OtherAddressError,
         }
     }
 }
