@@ -161,6 +161,7 @@ dependencies = [
  "bdk",
  "bdk_esplora",
  "bdk_file_store",
+ "bitcoin-internals 0.2.0",
  "thiserror",
  "uniffi",
 ]
@@ -243,6 +244,12 @@ name = "bitcoin-internals"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1f9997f8650dd818369931b5672a18dbef95324d0513aa99aae758de8ce86e5b"
+
+[[package]]
+name = "bitcoin-internals"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9425c3bf7089c983facbae04de54513cce73b41c7f9ff8c845b54e7bc64ebbfb"
 
 [[package]]
 name = "bitcoin-private"
@@ -393,7 +400,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0cb1f7f2489cce83bc3bd92784f9ba5271eeb6e729b975895fc541f78cbfcdca"
 dependencies = [
  "bitcoin",
- "bitcoin-internals",
+ "bitcoin-internals 0.1.0",
  "log",
  "serde",
  "ureq",

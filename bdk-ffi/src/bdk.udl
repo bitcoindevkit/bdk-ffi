@@ -71,6 +71,17 @@ interface AddressError {
   OtherAddressError();
 };
 
+[Error]
+interface TransactionError {
+  Io();
+  OversizedVectorAllocation();
+  InvalidChecksum(string expected, string actual);
+  NonMinimalVarInt();
+  ParseFailed();
+  UnsupportedSegwitFlag(u8 flag);
+  OtherTransactionError();
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
@@ -394,7 +405,7 @@ interface Address {
 };
 
 interface Transaction {
-  [Throws=Alpha3Error]
+  [Throws=TransactionError]
   constructor(sequence<u8> transaction_bytes);
 
   string txid();

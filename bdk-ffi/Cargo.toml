@@ -24,6 +24,7 @@ bdk_esplora = { version = "0.10.0", default-features = false, features = ["std",
 bdk_file_store = { version = "0.8.0" }
 
 uniffi = { version = "=0.26.1" }
+bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
 thiserror = "1.0.58"
 
 [build-dependencies]

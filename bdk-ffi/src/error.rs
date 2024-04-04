@@ -10,6 +10,7 @@ use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
 use bdk::wallet::{NewError, NewOrLoadError};
 use bdk_file_store::FileError as BdkFileError;
 use bdk_file_store::IterError;
+use bitcoin_internals::hex::display::DisplayHex;
 use std::convert::Infallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -165,6 +166,32 @@ pub enum AddressError {
     // This is required because the bdk::bitcoin::address::Error is non-exhaustive
     #[error("other address error")]
     OtherAddressError,
+}
+
+// Mapping https://docs.rs/bitcoin/latest/src/bitcoin/consensus/encode.rs.html#40-63
+#[derive(Debug, thiserror::Error)]
+pub enum TransactionError {
+    #[error("IO error")]
+    Io,
+
+    #[error("allocation of oversized vector")]
+    OversizedVectorAllocation,
+
+    #[error("invalid checksum: expected={expected} actual={actual}")]
+    InvalidChecksum { expected: String, actual: String },
+
+    #[error("non-minimal varint")]
+    NonMinimalVarInt,
+
+    #[error("parse failed")]
+    ParseFailed,
+
+    #[error("unsupported segwit version: {flag}")]
+    UnsupportedSegwitFlag { flag: u8 },
+
+    // This is required because the bdk::bitcoin::consensus::encode::Error is non-exhaustive
+    #[error("other transaction error")]
+    OtherTransactionError,
 }
 
 impl From<BdkFileError> for WalletCreationError {
@@ -340,6 +367,30 @@ impl From<bdk::bitcoin::address::Error> for AddressError {
                 }
             }
             _ => AddressError::OtherAddressError,
+        }
+    }
+}
+
+impl From<bdk::bitcoin::consensus::encode::Error> for TransactionError {
+    fn from(error: bdk::bitcoin::consensus::encode::Error) -> Self {
+        match error {
+            bdk::bitcoin::consensus::encode::Error::Io(_) => TransactionError::Io,
+            bdk::bitcoin::consensus::encode::Error::OversizedVectorAllocation { .. } => {
+                TransactionError::OversizedVectorAllocation
+            }
+            bdk::bitcoin::consensus::encode::Error::InvalidChecksum { expected, actual } => {
+                let expected = DisplayHex::to_lower_hex_string(&expected);
+                let actual = DisplayHex::to_lower_hex_string(&actual);
+                TransactionError::InvalidChecksum { expected, actual }
+            }
+            bdk::bitcoin::consensus::encode::Error::NonMinimalVarInt => {
+                TransactionError::NonMinimalVarInt
+            }
+            bdk::bitcoin::consensus::encode::Error::ParseFailed(_) => TransactionError::ParseFailed,
+            bdk::bitcoin::consensus::encode::Error::UnsupportedSegwitFlag(flag) => {
+                TransactionError::UnsupportedSegwitFlag { flag }
+            }
+            _ => TransactionError::OtherTransactionError,
         }
     }
 }

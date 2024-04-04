@@ -19,6 +19,7 @@ use crate::error::CalculateFeeError;
 use crate::error::EsploraError;
 use crate::error::FeeRateError;
 use crate::error::PersistenceError;
+use crate::error::TransactionError;
 use crate::error::WalletCreationError;
 use crate::esplora::EsploraClient;
 use crate::keys::DerivationPath;

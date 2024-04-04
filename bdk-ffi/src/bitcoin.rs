@@ -1,4 +1,5 @@
-use crate::error::Alpha3Error;
+use crate::error::{Alpha3Error, TransactionError};
+use crate::error::AddressError;
 
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
@@ -116,10 +117,9 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn new(transaction_bytes: Vec<u8>) -> Result<Self, Alpha3Error> {
+    pub fn new(transaction_bytes: Vec<u8>) -> Result<Self, TransactionError> {
         let mut decoder = Cursor::new(transaction_bytes);
-        let tx: BdkTransaction =
-            BdkTransaction::consensus_decode(&mut decoder).map_err(|_| Alpha3Error::Generic)?;
+        let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
         Ok(Transaction { inner: tx })
     }
 
