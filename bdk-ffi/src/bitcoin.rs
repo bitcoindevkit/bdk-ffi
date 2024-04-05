@@ -1,4 +1,4 @@
-use crate::error::{Alpha3Error, TransactionError};
+use crate::error::{PsbtParseError, TransactionError};
 use crate::error::AddressError;
 
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
@@ -195,10 +195,10 @@ pub struct PartiallySignedTransaction {
 }
 
 impl PartiallySignedTransaction {
-    pub(crate) fn new(psbt_base64: String) -> Result<Self, Alpha3Error> {
+    pub(crate) fn new(psbt_base64: String) -> Result<Self, PsbtParseError> {
         let psbt: BdkPartiallySignedTransaction =
-            BdkPartiallySignedTransaction::from_str(&psbt_base64)
-                .map_err(|_| Alpha3Error::Generic)?;
+            BdkPartiallySignedTransaction::from_str(&psbt_base64)?;
+        // .map_err(|_| Alpha3Error::Generic)?;
 
         Ok(PartiallySignedTransaction {
             inner: Mutex::new(psbt),

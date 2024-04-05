@@ -1,8 +1,9 @@
 use crate::bitcoin::OutPoint;
 
 use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
-use bdk_esplora::esplora_client::Error as BdkEsploraError;
+use bdk_esplora::esplora_client::{Error as BdkEsploraError};
 
+use bdk::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
 use bdk::bitcoin::Network;
 use bdk::descriptor::DescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
@@ -194,6 +195,29 @@ pub enum TransactionError {
     OtherTransactionError,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum PsbtParseError {
+    #[error("error in internal PSBT data structure: {e}")]
+    PsbtEncoding { e: String },
+
+    #[error("error in PSBT base64 encoding: {e}")]
+    Base64Encoding { e: String },
+}
+
+impl From<BdkPsbtParseError> for PsbtParseError {
+    fn from(error: BdkPsbtParseError) -> Self {
+        match error {
+            BdkPsbtParseError::PsbtEncoding(e) => PsbtParseError::PsbtEncoding { e: e.to_string() },
+            BdkPsbtParseError::Base64Encoding(e) => {
+                PsbtParseError::Base64Encoding { e: e.to_string() }
+            }
+            _ => {
+                unreachable!("this is required because of the non-exhaustive enum in rust-bitcoin")
+            }
+        }
+    }
+}
+
 impl From<BdkFileError> for WalletCreationError {
     fn from(error: BdkFileError) -> Self {
         match error {
@@ -340,12 +364,10 @@ impl From<bdk::bitcoin::address::Error> for AddressError {
                 AddressError::MalformedWitnessVersion
             }
             bdk::bitcoin::address::Error::InvalidWitnessProgramLength(length) => {
-                let length = length as u64;
-                AddressError::InvalidWitnessProgramLength { length }
+                AddressError::InvalidWitnessProgramLength { length: length as u64 }
             }
             bdk::bitcoin::address::Error::InvalidSegwitV0ProgramLength(length) => {
-                let length = length as u64;
-                AddressError::InvalidSegwitV0ProgramLength { length }
+                AddressError::InvalidSegwitV0ProgramLength { length: length as u64 }
             }
             bdk::bitcoin::address::Error::UncompressedPubkey => AddressError::UncompressedPubkey,
             bdk::bitcoin::address::Error::ExcessiveScriptSize => AddressError::ExcessiveScriptSize,
@@ -358,12 +380,10 @@ impl From<bdk::bitcoin::address::Error> for AddressError {
                 found,
                 address,
             } => {
-                // let address = address.to_string();
-                let address = format!("{:?}", address);
                 AddressError::NetworkValidation {
                     required,
                     found,
-                    address,
+                    address: format!("{:?}", address),
                 }
             }
             _ => AddressError::OtherAddressError,
@@ -379,9 +399,10 @@ impl From<bdk::bitcoin::consensus::encode::Error> for TransactionError {
                 TransactionError::OversizedVectorAllocation
             }
             bdk::bitcoin::consensus::encode::Error::InvalidChecksum { expected, actual } => {
-                let expected = DisplayHex::to_lower_hex_string(&expected);
-                let actual = DisplayHex::to_lower_hex_string(&actual);
-                TransactionError::InvalidChecksum { expected, actual }
+                TransactionError::InvalidChecksum {
+                    expected: DisplayHex::to_lower_hex_string(&expected),
+                    actual: DisplayHex::to_lower_hex_string(&actual),
+                }
             }
             bdk::bitcoin::consensus::encode::Error::NonMinimalVarInt => {
                 TransactionError::NonMinimalVarInt

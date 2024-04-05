@@ -82,6 +82,12 @@ interface TransactionError {
   OtherTransactionError();
 };
 
+[Error]
+interface PsbtParseError {
+  PsbtEncoding(string e);
+  Base64Encoding(string e);
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
@@ -424,7 +430,7 @@ interface Transaction {
 };
 
 interface PartiallySignedTransaction {
-  [Throws=Alpha3Error]
+  [Throws=PsbtParseError]
   constructor(string psbt_base64);
 
   string serialize();
