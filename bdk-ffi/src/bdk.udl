@@ -88,6 +88,22 @@ interface PsbtParseError {
   Base64Encoding(string e);
 };
 
+[Error]
+interface DescriptorError {
+    InvalidHdKeyPath();
+    InvalidDescriptorChecksum();
+    HardenedDerivationXpub();
+    MultiPath();
+    Key(string e);
+    Policy(string e);
+    InvalidDescriptorCharacter(string char);
+    Bip32(string e);
+    Base58(string e);
+    Pk(string e);
+    Miniscript(string e);
+    Hex(string e);
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
@@ -309,7 +325,7 @@ interface DescriptorPublicKey {
 };
 
 interface Descriptor {
-  [Throws=Alpha3Error]
+  [Throws=DescriptorError]
   constructor(string descriptor, Network network);
 
   [Name=new_bip44]

@@ -1,4 +1,4 @@
-use crate::error::Alpha3Error;
+use crate::error::DescriptorError;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 
@@ -23,7 +23,7 @@ pub struct Descriptor {
 }
 
 impl Descriptor {
-    pub(crate) fn new(descriptor: String, network: Network) -> Result<Self, Alpha3Error> {
+    pub(crate) fn new(descriptor: String, network: Network) -> Result<Self, DescriptorError> {
         let secp = Secp256k1::new();
         let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network)?;
         Ok(Self {
@@ -276,8 +276,6 @@ mod test {
     use crate::*;
     use assert_matches::assert_matches;
 
-    use crate::Alpha3Error;
-
     fn get_descriptor_secret_key() -> DescriptorSecretKey {
         let mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
         DescriptorSecretKey::new(Network::Testnet, &mnemonic, None)
@@ -392,8 +390,8 @@ mod test {
     fn test_descriptor_from_string() {
         let descriptor1 = Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Testnet);
         let descriptor2 = Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Bitcoin);
-        // Creating a Descriptor using an extended key that doesn't match the network provided will throw and InvalidNetwork Error
+        // Creating a Descriptor using an extended key that doesn't match the network provided will throw a DescriptorError::Key with inner InvalidNetwork error
         assert!(descriptor1.is_ok());
-        assert_matches!(descriptor2.unwrap_err(), Alpha3Error::Generic)
+        assert_matches!(descriptor2.unwrap_err(), DescriptorError::Key { .. });
     }
 }

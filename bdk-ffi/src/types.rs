@@ -1,5 +1,6 @@
-use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
 use crate::error::FeeRateError;
+
+use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
 
 use bdk::bitcoin::FeeRate as BdkFeeRate;
 use bdk::bitcoin::Transaction as BdkTransaction;

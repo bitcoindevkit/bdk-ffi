@@ -1,17 +1,17 @@
 use crate::bitcoin::OutPoint;
 
-use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
-use bdk_esplora::esplora_client::{Error as BdkEsploraError};
-
 use bdk::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
 use bdk::bitcoin::Network;
-use bdk::descriptor::DescriptorError;
+use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
+use bdk::descriptor::DescriptorError as BdkDescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
 use bdk::wallet::{NewError, NewOrLoadError};
+use bdk_esplora::esplora_client::Error as BdkEsploraError;
 use bdk_file_store::FileError as BdkFileError;
 use bdk_file_store::IterError;
 use bitcoin_internals::hex::display::DisplayHex;
+
 use std::convert::Infallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -204,6 +204,70 @@ pub enum PsbtParseError {
     Base64Encoding { e: String },
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum DescriptorError {
+    #[error("invalid hd key path")]
+    InvalidHdKeyPath,
+
+    #[error("the provided descriptor doesn't match its checksum")]
+    InvalidDescriptorChecksum,
+
+    #[error("the descriptor contains hardened derivation steps on public extended keys")]
+    HardenedDerivationXpub,
+
+    #[error("the descriptor contains multipath keys, which are not supported yet")]
+    MultiPath,
+
+    #[error("key error: {e}")]
+    Key { e: String },
+
+    #[error("policy error: {e}")]
+    Policy { e: String },
+
+    #[error("invalid descriptor character: {char}")]
+    InvalidDescriptorCharacter { char: String },
+
+    #[error("BIP32 error: {e}")]
+    Bip32 { e: String },
+
+    #[error("Base58 error: {e}")]
+    Base58 { e: String },
+
+    #[error("Key-related error: {e}")]
+    Pk { e: String },
+
+    #[error("Miniscript error: {e}")]
+    Miniscript { e: String },
+
+    #[error("Hex decoding error: {e}")]
+    Hex { e: String },
+}
+
+impl From<BdkDescriptorError> for DescriptorError {
+    fn from(error: BdkDescriptorError) -> Self {
+        match error {
+            BdkDescriptorError::InvalidHdKeyPath => DescriptorError::InvalidHdKeyPath,
+            BdkDescriptorError::InvalidDescriptorChecksum => {
+                DescriptorError::InvalidDescriptorChecksum
+            }
+            BdkDescriptorError::HardenedDerivationXpub => DescriptorError::HardenedDerivationXpub,
+            BdkDescriptorError::MultiPath => DescriptorError::MultiPath,
+            BdkDescriptorError::Key(e) => DescriptorError::Key { e: e.to_string() },
+            BdkDescriptorError::Policy(e) => DescriptorError::Policy { e: e.to_string() },
+            BdkDescriptorError::InvalidDescriptorCharacter(char) => {
+                DescriptorError::InvalidDescriptorCharacter {
+                    char: char.to_string(),
+                }
+            }
+            BdkDescriptorError::Bip32(e) => DescriptorError::Bip32 { e: e.to_string() },
+            BdkDescriptorError::Base58(e) => DescriptorError::Base58 { e: e.to_string() },
+            BdkDescriptorError::Pk(e) => DescriptorError::Pk { e: e.to_string() },
+            BdkDescriptorError::Miniscript(e) => DescriptorError::Miniscript { e: e.to_string() },
+            BdkDescriptorError::Hex(e) => DescriptorError::Hex { e: e.to_string() },
+        }
+    }
+}
+
 impl From<BdkPsbtParseError> for PsbtParseError {
     fn from(error: BdkPsbtParseError) -> Self {
         match error {
@@ -254,11 +318,11 @@ impl From<std::io::Error> for PersistenceError {
     }
 }
 
-impl From<DescriptorError> for Alpha3Error {
-    fn from(_: DescriptorError) -> Self {
-        Alpha3Error::Generic
-    }
-}
+// impl From<DescriptorError> for Alpha3Error {
+//     fn from(_: DescriptorError) -> Self {
+//         Alpha3Error::Generic
+//     }
+// }
 
 impl From<AllowShrinkingError> for Alpha3Error {
     fn from(_: AllowShrinkingError) -> Self {
@@ -364,10 +428,14 @@ impl From<bdk::bitcoin::address::Error> for AddressError {
                 AddressError::MalformedWitnessVersion
             }
             bdk::bitcoin::address::Error::InvalidWitnessProgramLength(length) => {
-                AddressError::InvalidWitnessProgramLength { length: length as u64 }
+                AddressError::InvalidWitnessProgramLength {
+                    length: length as u64,
+                }
             }
             bdk::bitcoin::address::Error::InvalidSegwitV0ProgramLength(length) => {
-                AddressError::InvalidSegwitV0ProgramLength { length: length as u64 }
+                AddressError::InvalidSegwitV0ProgramLength {
+                    length: length as u64,
+                }
             }
             bdk::bitcoin::address::Error::UncompressedPubkey => AddressError::UncompressedPubkey,
             bdk::bitcoin::address::Error::ExcessiveScriptSize => AddressError::ExcessiveScriptSize,
@@ -379,13 +447,11 @@ impl From<bdk::bitcoin::address::Error> for AddressError {
                 required,
                 found,
                 address,
-            } => {
-                AddressError::NetworkValidation {
-                    required,
-                    found,
-                    address: format!("{:?}", address),
-                }
-            }
+            } => AddressError::NetworkValidation {
+                required,
+                found,
+                address: format!("{:?}", address),
+            },
             _ => AddressError::OtherAddressError,
         }
     }

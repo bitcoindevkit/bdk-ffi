@@ -1,12 +1,12 @@
 use crate::error::{Alpha3Error, EsploraError};
 use crate::wallet::{Update, Wallet};
 
+use crate::bitcoin::Transaction;
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::wallet::Update as BdkUpdate;
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
 
-use crate::bitcoin::Transaction;
 use std::sync::Arc;
 
 pub struct EsploraClient(BlockingClient);
