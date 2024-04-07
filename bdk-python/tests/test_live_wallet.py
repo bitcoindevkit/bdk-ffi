@@ -32,8 +32,8 @@ class LiveWalletTest(unittest.TestCase):
         print(f"Transactions count: {len(wallet.transactions())}")
         transactions = wallet.transactions()[:3]
         for tx in transactions:
-            sent_and_received = wallet.sent_and_received(tx)
-            print(f"Transaction: {tx.txid()}")
+            sent_and_received = wallet.sent_and_received(tx.transaction)
+            print(f"Transaction: {tx.transaction.txid()}")
             print(f"Sent {sent_and_received.sent}")
             print(f"Received {sent_and_received.received}")
 

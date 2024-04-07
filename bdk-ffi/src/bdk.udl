@@ -147,7 +147,7 @@ interface Wallet {
 
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
 
-  sequence<Transaction> transactions();
+  sequence<TransactionDetails> transactions();
 
   [Throws=CalculateFeeError]
   u64 calculate_fee([ByRef] Transaction tx);
@@ -361,6 +361,17 @@ interface Address {
   string as_string();
 
   boolean is_valid_for_network(Network network);
+};
+
+[Enum]
+interface ConfirmationDetails {
+  Confirmed(u32 height, u64 timestamp);
+  Unconfirmed(u64 timestamp);
+};
+
+dictionary TransactionDetails {
+  Transaction transaction;
+  ConfirmationDetails confirmation;
 };
 
 interface Transaction {

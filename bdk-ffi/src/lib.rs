@@ -34,6 +34,9 @@ use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
 
+use crate::bitcoin::ConfirmationDetails;
+use crate::bitcoin::TransactionDetails;
+
 use crate::error::PersistenceError;
 use crate::error::WalletCreationError;
 use bdk::bitcoin::Network;

@@ -35,8 +35,8 @@ class LiveWalletTest {
         println("Transactions count: ${wallet.transactions().count()}")
         val transactions = wallet.transactions().take(3)
         for (tx in transactions) {
-            val sentAndReceived = wallet.sentAndReceived(tx)
-            println("Transaction: ${tx.txid()}")
+            val sentAndReceived = wallet.sentAndReceived(tx.transaction)
+            println("Transaction: ${tx.transaction.txid()}")
             println("Sent ${sentAndReceived.sent}")
             println("Received ${sentAndReceived.received}")
         }

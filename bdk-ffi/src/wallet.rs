@@ -1,4 +1,4 @@
-use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction};
+use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction, TransactionDetails};
 use crate::descriptor::Descriptor;
 use crate::error::{Alpha3Error, CalculateFeeError, PersistenceError, WalletCreationError};
 use crate::types::ScriptAmount;
@@ -104,10 +104,10 @@ impl Wallet {
         SentAndReceivedValues { sent, received }
     }
 
-    pub fn transactions(&self) -> Vec<Arc<Transaction>> {
+    pub fn transactions(&self) -> Vec<TransactionDetails> {
         self.get_wallet()
             .transactions()
-            .map(|tx| Arc::new(tx.tx_node.tx.into()))
+            .map(|tx| tx.into())
             .collect()
     }
 

@@ -47,8 +47,8 @@ final class LiveWalletTests: XCTestCase {
         print("Transactions count: \(wallet.transactions().count)")
         let transactions = wallet.transactions().prefix(3)
         for tx in transactions {
-            let sentAndReceived = wallet.sentAndReceived(tx: tx)
-            print("Transaction: \(tx.txid())")
+            let sentAndReceived = wallet.sentAndReceived(tx: tx.transaction)
+            print("Transaction: \(tx.transaction.txid())")
             print("Sent \(sentAndReceived.sent)")
             print("Received \(sentAndReceived.received)")
         }
