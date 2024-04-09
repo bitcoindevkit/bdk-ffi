@@ -1,10 +1,7 @@
-use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Transaction, TransactionDetails};
+use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{Alpha3Error, CalculateFeeError, PersistenceError, WalletCreationError};
-use crate::types::ScriptAmount;
-use crate::types::{Balance, FeeRate};
-use crate::Script;
-use crate::{AddressIndex, AddressInfo};
+use crate::types::{AddressIndex, AddressInfo, Balance, CanonicalTx, FeeRate, ScriptAmount};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
@@ -104,7 +101,7 @@ impl Wallet {
         SentAndReceivedValues { sent, received }
     }
 
-    pub fn transactions(&self) -> Vec<TransactionDetails> {
+    pub fn transactions(&self) -> Vec<CanonicalTx> {
         self.get_wallet()
             .transactions()
             .map(|tx| tx.into())

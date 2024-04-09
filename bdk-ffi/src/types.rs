@@ -1,15 +1,45 @@
-use crate::bitcoin::{Address, OutPoint, Script, TxOut};
+use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
+use crate::error::FeeRateError;
 
+use bdk::bitcoin::FeeRate as BdkFeeRate;
+use bdk::bitcoin::Transaction as BdkTransaction;
+use bdk::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
+use bdk::chain::{ChainPosition as BdkChainPosition, ConfirmationTimeHeightAnchor};
 use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::wallet::Balance as BdkBalance;
 use bdk::KeychainKind;
 use bdk::LocalOutput as BdkLocalOutput;
 
-use bdk::bitcoin::FeeRate as BdkFeeRate;
-
-use crate::error::FeeRateError;
 use std::sync::Arc;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ChainPosition {
+    Confirmed { height: u32, timestamp: u64 },
+    Unconfirmed { timestamp: u64 },
+}
+
+pub struct CanonicalTx {
+    pub transaction: Arc<Transaction>,
+    pub chain_position: ChainPosition,
+}
+
+impl From<BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>> for CanonicalTx {
+    fn from(tx: BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>) -> Self {
+        let chain_position = match tx.chain_position {
+            BdkChainPosition::Confirmed(anchor) => ChainPosition::Confirmed {
+                height: anchor.confirmation_height,
+                timestamp: anchor.confirmation_time,
+            },
+            BdkChainPosition::Unconfirmed(timestamp) => ChainPosition::Unconfirmed { timestamp },
+        };
+
+        CanonicalTx {
+            transaction: Arc::new(Transaction::from(tx.tx_node.tx)),
+            chain_position,
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct FeeRate(pub BdkFeeRate);

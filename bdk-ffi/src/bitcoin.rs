@@ -1,3 +1,5 @@
+use crate::error::Alpha3Error;
+
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
@@ -8,10 +10,7 @@ use bdk::bitcoin::Network;
 use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::bitcoin::Txid;
-use bdk::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
 
-use crate::error::Alpha3Error;
-use bdk::chain::{ChainPosition, ConfirmationTimeHeightAnchor};
 use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -113,36 +112,6 @@ impl From<Address> for BdkAddress {
 impl From<BdkAddress> for Address {
     fn from(address: BdkAddress) -> Self {
         Address { inner: address }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ConfirmationDetails {
-    Confirmed { height: u32, timestamp: u64 },
-    Unconfirmed { timestamp: u64 },
-}
-
-pub struct TransactionDetails {
-    pub transaction: Arc<Transaction>,
-    pub confirmation: ConfirmationDetails,
-}
-
-impl<'a> From<BdkCanonicalTx<'a, BdkTransaction, ConfirmationTimeHeightAnchor>>
-    for TransactionDetails
-{
-    fn from(tx: BdkCanonicalTx<'a, BdkTransaction, ConfirmationTimeHeightAnchor>) -> Self {
-        let confirmation = match tx.chain_position {
-            ChainPosition::Confirmed(anchor) => ConfirmationDetails::Confirmed {
-                height: anchor.confirmation_height,
-                timestamp: anchor.confirmation_time,
-            },
-            ChainPosition::Unconfirmed(timestamp) => ConfirmationDetails::Unconfirmed { timestamp },
-        };
-
-        TransactionDetails {
-            transaction: Arc::new(Transaction::from(tx.tx_node.tx)),
-            confirmation,
-        }
     }
 }
 

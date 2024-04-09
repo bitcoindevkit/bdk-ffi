@@ -100,6 +100,17 @@ dictionary TxOut {
   Script script_pubkey;
 };
 
+[Enum]
+interface ChainPosition {
+  Confirmed(u32 height, u64 timestamp);
+  Unconfirmed(u64 timestamp);
+};
+
+dictionary CanonicalTx {
+  Transaction transaction;
+  ChainPosition chain_position;
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - wallet module
 // ------------------------------------------------------------------------
@@ -147,7 +158,7 @@ interface Wallet {
 
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
 
-  sequence<TransactionDetails> transactions();
+  sequence<CanonicalTx> transactions();
 
   [Throws=CalculateFeeError]
   u64 calculate_fee([ByRef] Transaction tx);
@@ -361,17 +372,6 @@ interface Address {
   string as_string();
 
   boolean is_valid_for_network(Network network);
-};
-
-[Enum]
-interface ConfirmationDetails {
-  Confirmed(u32 height, u64 timestamp);
-  Unconfirmed(u64 timestamp);
-};
-
-dictionary TransactionDetails {
-  Transaction transaction;
-  ConfirmationDetails confirmation;
 };
 
 interface Transaction {
