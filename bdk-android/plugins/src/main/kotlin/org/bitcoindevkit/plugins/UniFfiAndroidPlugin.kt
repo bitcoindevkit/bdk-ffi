@@ -113,6 +113,8 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val moveNativeAndroidLibs by tasks.register<Copy>("moveNativeAndroidLibs") {
 
             dependsOn(buildAndroidAarch64Binary)
+            dependsOn(buildAndroidArmv7Binary)
+            dependsOn(buildAndroidX86_64Binary)
 
             into("${project.projectDir}/../lib/src/main/jniLibs/")
 

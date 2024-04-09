@@ -105,6 +105,12 @@ afterEvaluate {
             }
         }
     }
+    
+    // This is required because we must ensure the moveNativeAndroidLibs task is executed after
+    // the mergeReleaseJniLibFolders (hard requirement introduced by our upgrade to Gradle 8.7)
+    tasks.named("mergeReleaseJniLibFolders") {
+        dependsOn(":lib:moveNativeAndroidLibs")
+    }
 }
 
 signing {
