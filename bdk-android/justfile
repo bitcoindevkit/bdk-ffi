@@ -8,4 +8,4 @@ build:
   ./gradlew buildAndroidLib
 
 publishlocal:
-  ./gradlew publishToMavenLocal --exclude-task signMavenPublication
+  ./gradlew publishToMavenLocal -P localBuild

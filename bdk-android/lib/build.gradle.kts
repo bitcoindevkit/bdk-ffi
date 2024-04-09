@@ -114,6 +114,10 @@ afterEvaluate {
 }
 
 signing {
+    if (project.hasProperty("localBuild")) {
+        isRequired = false
+    }
+
     val signingKeyId: String? by project
     val signingKey: String? by project
     val signingPassword: String? by project
@@ -121,8 +125,7 @@ signing {
     sign(publishing.publications)
 }
 
-// This task dependency ensures that we build the bindings
-// binaries before running the tests
+// This task dependency ensures that we build the bindings binaries before running the tests
 tasks.withType<KotlinCompile> {
     dependsOn("buildAndroidLib")
 }
