@@ -104,6 +104,11 @@ interface DescriptorError {
     Hex(string e);
 };
 
+[Error]
+interface TxidParseError {
+  InvalidTxid(string txid);
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
@@ -211,6 +216,9 @@ interface Wallet {
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
 
   sequence<CanonicalTx> transactions();
+
+  [Throws=TxidParseError]
+  CanonicalTx? get_tx(string txid);
 
   [Throws=CalculateFeeError]
   u64 calculate_fee([ByRef] Transaction tx);

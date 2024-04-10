@@ -110,6 +110,12 @@ pub enum FeeRateError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum TxidParseError {
+    #[error("invalid txid: {txid}")]
+    InvalidTxid { txid: String },
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum AddressError {
     #[error("base58 address encoding error")]
     Base58,
@@ -317,12 +323,6 @@ impl From<std::io::Error> for PersistenceError {
         }
     }
 }
-
-// impl From<DescriptorError> for Alpha3Error {
-//     fn from(_: DescriptorError) -> Self {
-//         Alpha3Error::Generic
-//     }
-// }
 
 impl From<AllowShrinkingError> for Alpha3Error {
     fn from(_: AllowShrinkingError) -> Self {

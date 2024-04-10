@@ -1,6 +1,8 @@
 use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Script, Transaction};
 use crate::descriptor::Descriptor;
-use crate::error::{Alpha3Error, CalculateFeeError, PersistenceError, WalletCreationError};
+use crate::error::{
+    Alpha3Error, CalculateFeeError, PersistenceError, TxidParseError, WalletCreationError,
+};
 use crate::types::{AddressIndex, AddressInfo, Balance, CanonicalTx, FeeRate, ScriptAmount};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
@@ -106,6 +108,12 @@ impl Wallet {
             .transactions()
             .map(|tx| tx.into())
             .collect()
+    }
+
+    pub fn get_tx(&self, txid: String) -> Result<Option<CanonicalTx>, TxidParseError> {
+        let txid =
+            Txid::from_str(txid.as_str()).map_err(|_| TxidParseError::InvalidTxid { txid })?;
+        Ok(self.get_wallet().get_tx(txid).map(|tx| tx.into()))
     }
 
     pub fn calculate_fee(&self, tx: &Transaction) -> Result<u64, CalculateFeeError> {

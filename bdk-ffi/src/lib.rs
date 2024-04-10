@@ -22,6 +22,7 @@ use crate::error::FeeRateError;
 use crate::error::PersistenceError;
 use crate::error::PsbtParseError;
 use crate::error::TransactionError;
+use crate::error::TxidParseError;
 use crate::error::WalletCreationError;
 use crate::esplora::EsploraClient;
 use crate::keys::DerivationPath;
