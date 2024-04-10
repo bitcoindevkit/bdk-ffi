@@ -225,6 +225,10 @@ interface Wallet {
 
   [Throws=CalculateFeeError]
   FeeRate calculate_fee_rate([ByRef] Transaction tx);
+
+  sequence<LocalOutput> list_unspent();
+
+  sequence<LocalOutput> list_output();
 };
 
 interface Update {};

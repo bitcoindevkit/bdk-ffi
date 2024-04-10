@@ -3,7 +3,9 @@ use crate::descriptor::Descriptor;
 use crate::error::{
     Alpha3Error, CalculateFeeError, PersistenceError, TxidParseError, WalletCreationError,
 };
-use crate::types::{AddressIndex, AddressInfo, Balance, CanonicalTx, FeeRate, ScriptAmount};
+use crate::types::{
+    AddressIndex, AddressInfo, Balance, CanonicalTx, FeeRate, LocalOutput, ScriptAmount,
+};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
@@ -127,6 +129,14 @@ impl Wallet {
             .calculate_fee_rate(&tx.into())
             .map(|bdk_fee_rate| Arc::new(FeeRate(bdk_fee_rate)))
             .map_err(|e| e.into())
+    }
+
+    pub fn list_unspent(&self) -> Vec<LocalOutput> {
+        self.get_wallet().list_unspent().map(|o| o.into()).collect()
+    }
+
+    pub fn list_output(&self) -> Vec<LocalOutput> {
+        self.get_wallet().list_output().map(|o| o.into()).collect()
     }
 }
 
