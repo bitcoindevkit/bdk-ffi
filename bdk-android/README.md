@@ -95,7 +95,7 @@ export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
 ## How to publish to your local Maven repo
 ```shell
 cd bdk-android
-./gradlew publishToMavenLocal --exclude-task signMavenPublication
+./gradlew publishToMavenLocal -P localBuild
 ```
 
 Note that the commands assume you don't need the local libraries to be signed. If you do wish to sign them, simply set your `~/.gradle/gradle.properties` signing key values like so:
@@ -104,7 +104,7 @@ signing.gnupg.keyName=<YOUR_GNUPG_ID>
 signing.gnupg.passphrase=<YOUR_GNUPG_PASSPHRASE>
 ```
 
-and use the `publishToMavenLocal` task without excluding the signing task:
+and use the `publishToMavenLocal` task without the `localBuild` flag:
 ```shell
 ./gradlew publishToMavenLocal
 ```
