@@ -4,11 +4,13 @@ namespace bdk {};
 // bdk crate - error module
 // ------------------------------------------------------------------------
 
+/// Temporary bdk-ffi 1.0.0-alpha error type.
 [Error]
 enum Alpha3Error {
   "Generic"
 };
 
+/// Errors returned by `TxGraph::calculate_fee`.
 [Error]
 interface CalculateFeeError {
   MissingTxOut(sequence<OutPoint> out_points);
@@ -113,17 +115,20 @@ interface TxidParseError {
 // bdk crate - types module
 // ------------------------------------------------------------------------
 
+/// Types of keychains
 enum KeychainKind {
   "External",
   "Internal",
 };
 
+/// A derived address and the index it was found at. For convenience this automatically derefs to `Address`
 dictionary AddressInfo {
   u32 index;
   Address address;
   KeychainKind keychain;
 };
 
+/// The address index selection strategy to use to derived an address from the wallet’s external descriptor. See `Wallet::get_address`. If you’re unsure which one to use use `WalletIndex::New`.
 [Enum]
 interface AddressIndex {
   New();
@@ -131,6 +136,7 @@ interface AddressIndex {
   Peek(u32 index);
 };
 
+/// Balance, differentiated into various categories.
 dictionary Balance {
   u64 immature;
 
@@ -145,6 +151,7 @@ dictionary Balance {
   u64 total;
 };
 
+/// An unspent output owned by a `Wallet`.
 dictionary LocalOutput {
   OutPoint outpoint;
   TxOut txout;
@@ -152,6 +159,9 @@ dictionary LocalOutput {
   boolean is_spent;
 };
 
+/// Bitcoin transaction output.
+/// Defines new coins to be created as a result of the transaction, along with spending conditions (“script”, aka “output script”), which an input spending it must satisfy.
+/// An output that is not yet spent by an input is called Unspent Transaction Output (“UTXO”).
 dictionary TxOut {
   u64 value;
   Script script_pubkey;
@@ -172,6 +182,7 @@ dictionary CanonicalTx {
 // bdk crate - wallet module
 // ------------------------------------------------------------------------
 
+/// Fee rate.
 interface FeeRate {
   [Name=from_sat_per_vb, Throws=FeeRateError]
   constructor(u64 sat_per_vb);
@@ -186,12 +197,17 @@ interface FeeRate {
   u64 to_sat_per_kwu();
 };
 
+/// Policy regarding the use of change outputs when creating a transaction.
 enum ChangeSpendPolicy {
   "ChangeAllowed",
   "OnlyChange",
   "ChangeForbidden"
 };
 
+/// A Bitcoin wallet.
+/// The Wallet acts as a way of coherently interfacing with output descriptors and related transactions. Its main components are:
+/// 1. output descriptors from which it can derive addresses.
+/// 2. `signers` that can contribute signatures to addresses instantiated from the descriptors.
 interface Wallet {
   [Throws=WalletCreationError]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, string persistence_backend_path, Network network);
@@ -231,8 +247,12 @@ interface Wallet {
   sequence<LocalOutput> list_output();
 };
 
+/// An update to `Wallet`.
+/// It updates `bdk_chain::keychain::KeychainTxOutIndex`, `bdk_chain::TxGraph` and `local_chain::LocalChain` atomically.
 interface Update {};
 
+/// A transaction builder.
+/// A TxBuilder is created by calling `build_tx` or `build_fee_bump` on a wallet. After assigning it, you set options on it until finally calling `finish` to consume the builder and generate the transaction.
 interface TxBuilder {
   constructor();
 
