@@ -13,33 +13,6 @@ dependencies {
 }
 ```
 
-You may then import and use the `org.bitcoindevkit` library in your Kotlin code like so. Note that this example is for the `0.30.0` release. For examples of the 1.0 API in the alpha releases, take a look at the tests [here](https://github.com/bitcoindevkit/bdk-ffi/tree/master/bdk-jvm/lib/src/test/kotlin/org/bitcoindevkit).
-```kotlin
-import org.bitcoindevkit.*
-
-// ...
-
-val externalDescriptor = Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)", Network.TESTNET)
-val internalDescriptor = Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)", Network.TESTNET)
-
-val esploraClient: EsploraClient = EsploraClient("https://esplora.testnet.kuutamo.cloud/")
-val wallet: Wallet = Wallet(
-    descriptor = externalDescriptor, 
-    changeDescriptor = internalDescriptor, 
-    persistenceBackendPath = "./bdkwallet.db", 
-    network = Network.TESTNET
-)
-val update = esploraClient.fullScan(
-    wallet = wallet,
-    stopGap = 10uL,
-    parallelRequests = 1uL
-)
-
-wallet.applyUpdate(update)
-
-val newAddress = wallet.getAddress(AddressIndex.LastUnused)
-```
-
 ### Snapshot releases
 To use a snapshot release, specify the snapshot repository url in the `repositories` block and use the snapshot version in the `dependencies` block:
 ```kotlin
