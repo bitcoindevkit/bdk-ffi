@@ -3,7 +3,6 @@ use crate::error::FeeRateError;
 use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
 
 use bdk::bitcoin::FeeRate as BdkFeeRate;
-use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
 use bdk::chain::{ChainPosition as BdkChainPosition, ConfirmationTimeHeightAnchor};
 use bdk::wallet::AddressIndex as BdkAddressIndex;
@@ -25,8 +24,12 @@ pub struct CanonicalTx {
     pub chain_position: ChainPosition,
 }
 
-impl From<BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>> for CanonicalTx {
-    fn from(tx: BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>) -> Self {
+impl From<BdkCanonicalTx<'_, Arc<bdk::bitcoin::Transaction>, ConfirmationTimeHeightAnchor>>
+    for CanonicalTx
+{
+    fn from(
+        tx: BdkCanonicalTx<'_, Arc<bdk::bitcoin::Transaction>, ConfirmationTimeHeightAnchor>,
+    ) -> Self {
         let chain_position = match tx.chain_position {
             BdkChainPosition::Confirmed(anchor) => ChainPosition::Confirmed {
                 height: anchor.confirmation_height,
@@ -36,11 +39,28 @@ impl From<BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>> for 
         };
 
         CanonicalTx {
-            transaction: Arc::new(Transaction::from(tx.tx_node.tx)),
+            transaction: Arc::new(Transaction::from(tx.tx_node.tx.as_ref().clone())),
             chain_position,
         }
     }
 }
+
+// impl From<BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>> for CanonicalTx {
+//     fn from(tx: BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>) -> Self {
+//         let chain_position = match tx.chain_position {
+//             BdkChainPosition::Confirmed(anchor) => ChainPosition::Confirmed {
+//                 height: anchor.confirmation_height,
+//                 timestamp: anchor.confirmation_time,
+//             },
+//             BdkChainPosition::Unconfirmed(timestamp) => ChainPosition::Unconfirmed { timestamp },
+//         };
+//
+//         CanonicalTx {
+//             transaction: Arc::new(Transaction::from(tx.tx_node.tx)),
+//             chain_position,
+//         }
+//     }
+// }
 
 #[derive(Clone, Debug)]
 pub struct FeeRate(pub BdkFeeRate);
@@ -176,7 +196,7 @@ impl From<BdkLocalOutput> for LocalOutput {
                 vout: local_utxo.outpoint.vout,
             },
             txout: TxOut {
-                value: local_utxo.txout.value,
+                value: local_utxo.txout.value.to_sat(),
                 script_pubkey: Arc::new(Script(local_utxo.txout.script_pubkey)),
             },
             keychain: local_utxo.keychain,

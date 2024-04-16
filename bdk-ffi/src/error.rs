@@ -7,11 +7,12 @@ use bdk::descriptor::DescriptorError as BdkDescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
 use bdk::wallet::{NewError, NewOrLoadError};
-use bdk_esplora::esplora_client::Error as BdkEsploraError;
+use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_file_store::FileError as BdkFileError;
 use bdk_file_store::IterError;
 use bitcoin_internals::hex::display::DisplayHex;
 
+use bdk::bitcoin::address::ParseError;
 use std::convert::Infallible;
 
 #[derive(Debug, thiserror::Error)]
@@ -69,29 +70,26 @@ pub enum PersistenceError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum EsploraError {
-    #[error("ureq error: {error_message}")]
-    Ureq { error_message: String },
+    #[error("minreq error: {error_message}")]
+    Minreq { error_message: String },
 
-    #[error("ureq transport error: {error_message}")]
-    UreqTransport { error_message: String },
-
-    #[error("http error with status code: {status_code}")]
-    Http { status_code: u16 },
-
-    #[error("io error: {error_message}")]
-    Io { error_message: String },
-
-    #[error("no header found in the response")]
-    NoHeader,
+    #[error("http error with status code {status} and message {message}")]
+    HttpResponse { status: u16, message: String },
 
     #[error("parsing error: {error_message}")]
     Parsing { error_message: String },
 
+    #[error("Invalid status code, unable to convert to u16: {error_message}")]
+    StatusCode { error_message: String },
+
     #[error("bitcoin encoding error: {error_message}")]
     BitcoinEncoding { error_message: String },
 
-    #[error("hex decoding error: {error_message}")]
-    Hex { error_message: String },
+    #[error("invalid hex data returned: {error_message}")]
+    HexToArray { error_message: String },
+
+    #[error("invalid hex data returned: {error_message}")]
+    HexToBytes { error_message: String },
 
     #[error("transaction not found")]
     TransactionNotFound,
@@ -101,6 +99,12 @@ pub enum EsploraError {
 
     #[error("header hash not found")]
     HeaderHashNotFound,
+
+    #[error("invalid HTTP header name: {name}")]
+    InvalidHttpHeaderName { name: String },
+
+    #[error("invalid HTTP header value: {value}")]
+    InvalidHttpHeaderValue { value: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -117,34 +121,19 @@ pub enum TxidParseError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum AddressError {
+    // Errors coming from the ParseError enum
     #[error("base58 address encoding error")]
     Base58,
 
     #[error("bech32 address encoding error")]
     Bech32,
 
-    #[error("the bech32 payload was empty")]
-    EmptyBech32Payload,
+    // Errors coming from the bitcoin::address::Error enum
+    #[error("witness version conversion/parsing error: {error_message}")]
+    WitnessVersion { error_message: String },
 
-    #[error("invalid bech32 checksum variant found")]
-    InvalidBech32Variant,
-
-    #[error("invalid witness script version: {version}")]
-    InvalidWitnessVersion { version: u8 },
-
-    #[error("incorrect format of a witness version byte")]
-    UnparsableWitnessVersion,
-
-    #[error(
-        "bitcoin script opcode does not match any known witness version, the script is malformed"
-    )]
-    MalformedWitnessVersion,
-
-    #[error("the witness program must be between 2 and 40 bytes in length: length={length}")]
-    InvalidWitnessProgramLength { length: u64 },
-
-    #[error("a v0 witness program must be either of length 20 or 32 bytes: length={length}")]
-    InvalidSegwitV0ProgramLength { length: u64 },
+    #[error("witness program error: {error_message}")]
+    WitnessProgram { error_message: String },
 
     #[error("an uncompressed pubkey was used where it is not allowed")]
     UncompressedPubkey,
@@ -155,12 +144,7 @@ pub enum AddressError {
     #[error("script is not p2pkh, p2sh, or witness program")]
     UnrecognizedScript,
 
-    #[error("unknown address type: '{s}' is either invalid or not supported")]
-    UnknownAddressType { s: String },
-
-    #[error(
-        "address {address} belongs to network {found} which is different from required {required}"
-    )]
+    #[error("address {address} is not valid on {required}")]
     NetworkValidation {
         /// Network that was required.
         required: Network,
@@ -247,6 +231,23 @@ pub enum DescriptorError {
 
     #[error("Hex decoding error: {e}")]
     Hex { e: String },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ExtractTxError {
+    #[error("an absurdly high fee rate of {fee_rate} sat/vbyte")]
+    AbsurdFeeRate { fee_rate: u64 },
+
+    #[error("one of the inputs lacked value information (witness_utxo or non_witness_utxo)")]
+    MissingInputValue,
+
+    #[error("transaction would be invalid due to output value being greater than input value")]
+    SendingTooMuch,
+
+    #[error(
+        "this error is required because the bdk::bitcoin::psbt::ExtractTxError is non-exhaustive"
+    )]
+    OtherExtractTransactionError,
 }
 
 impl From<BdkDescriptorError> for DescriptorError {
@@ -380,24 +381,25 @@ impl From<BdkCalculateFeeError> for CalculateFeeError {
 impl From<BdkEsploraError> for EsploraError {
     fn from(error: BdkEsploraError) -> Self {
         match error {
-            BdkEsploraError::Ureq(e) => EsploraError::Ureq {
+            BdkEsploraError::Minreq(e) => EsploraError::Minreq {
                 error_message: e.to_string(),
             },
-            BdkEsploraError::UreqTransport(e) => EsploraError::UreqTransport {
-                error_message: e.to_string(),
-            },
-            BdkEsploraError::HttpResponse(code) => EsploraError::Http { status_code: code },
-            BdkEsploraError::Io(e) => EsploraError::Io {
-                error_message: e.to_string(),
-            },
-            BdkEsploraError::NoHeader => EsploraError::NoHeader,
+            BdkEsploraError::HttpResponse { status, message } => {
+                EsploraError::HttpResponse { status, message }
+            }
             BdkEsploraError::Parsing(e) => EsploraError::Parsing {
+                error_message: e.to_string(),
+            },
+            Error::StatusCode(e) => EsploraError::StatusCode {
                 error_message: e.to_string(),
             },
             BdkEsploraError::BitcoinEncoding(e) => EsploraError::BitcoinEncoding {
                 error_message: e.to_string(),
             },
-            BdkEsploraError::Hex(e) => EsploraError::Hex {
+            BdkEsploraError::HexToArray(e) => EsploraError::HexToArray {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::HexToBytes(e) => EsploraError::HexToBytes {
                 error_message: e.to_string(),
             },
             BdkEsploraError::TransactionNotFound(_) => EsploraError::TransactionNotFound,
@@ -405,6 +407,10 @@ impl From<BdkEsploraError> for EsploraError {
                 EsploraError::HeaderHeightNotFound { height }
             }
             BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
+            Error::InvalidHttpHeaderName(name) => EsploraError::InvalidHttpHeaderName { name },
+            BdkEsploraError::InvalidHttpHeaderValue(value) => {
+                EsploraError::InvalidHttpHeaderValue { value }
+            }
         }
     }
 }
@@ -412,37 +418,17 @@ impl From<BdkEsploraError> for EsploraError {
 impl From<bdk::bitcoin::address::Error> for AddressError {
     fn from(error: bdk::bitcoin::address::Error) -> Self {
         match error {
-            bdk::bitcoin::address::Error::Base58(_) => AddressError::Base58,
-            bdk::bitcoin::address::Error::Bech32(_) => AddressError::Bech32,
-            bdk::bitcoin::address::Error::EmptyBech32Payload => AddressError::EmptyBech32Payload,
-            bdk::bitcoin::address::Error::InvalidBech32Variant { .. } => {
-                AddressError::InvalidBech32Variant
-            }
-            bdk::bitcoin::address::Error::InvalidWitnessVersion(version) => {
-                AddressError::InvalidWitnessVersion { version }
-            }
-            bdk::bitcoin::address::Error::UnparsableWitnessVersion(_) => {
-                AddressError::UnparsableWitnessVersion
-            }
-            bdk::bitcoin::address::Error::MalformedWitnessVersion => {
-                AddressError::MalformedWitnessVersion
-            }
-            bdk::bitcoin::address::Error::InvalidWitnessProgramLength(length) => {
-                AddressError::InvalidWitnessProgramLength {
-                    length: length as u64,
+            bdk::bitcoin::address::Error::WitnessVersion(error_message) => {
+                AddressError::WitnessVersion {
+                    error_message: error_message.to_string(),
                 }
             }
-            bdk::bitcoin::address::Error::InvalidSegwitV0ProgramLength(length) => {
-                AddressError::InvalidSegwitV0ProgramLength {
-                    length: length as u64,
-                }
-            }
+            bdk::bitcoin::address::Error::WitnessProgram(e) => AddressError::WitnessProgram {
+                error_message: e.to_string(),
+            },
             bdk::bitcoin::address::Error::UncompressedPubkey => AddressError::UncompressedPubkey,
             bdk::bitcoin::address::Error::ExcessiveScriptSize => AddressError::ExcessiveScriptSize,
             bdk::bitcoin::address::Error::UnrecognizedScript => AddressError::UnrecognizedScript,
-            bdk::bitcoin::address::Error::UnknownAddressType(s) => {
-                AddressError::UnknownAddressType { s }
-            }
             bdk::bitcoin::address::Error::NetworkValidation {
                 required,
                 found,
@@ -451,6 +437,22 @@ impl From<bdk::bitcoin::address::Error> for AddressError {
                 required,
                 found,
                 address: format!("{:?}", address),
+            },
+            _ => AddressError::OtherAddressError,
+        }
+    }
+}
+
+impl From<ParseError> for AddressError {
+    fn from(error: ParseError) -> Self {
+        match error {
+            ParseError::Base58(_) => AddressError::Base58,
+            ParseError::Bech32(_) => AddressError::Bech32,
+            ParseError::WitnessVersion(e) => AddressError::WitnessVersion {
+                error_message: e.to_string(),
+            },
+            ParseError::WitnessProgram(e) => AddressError::WitnessProgram {
+                error_message: e.to_string(),
             },
             _ => AddressError::OtherAddressError,
         }
@@ -482,6 +484,25 @@ impl From<bdk::bitcoin::consensus::encode::Error> for TransactionError {
     }
 }
 
+impl From<bdk::bitcoin::psbt::ExtractTxError> for ExtractTxError {
+    fn from(error: bdk::bitcoin::psbt::ExtractTxError) -> Self {
+        match error {
+            bdk::bitcoin::psbt::ExtractTxError::AbsurdFeeRate { fee_rate, .. } => {
+                let sat_per_vbyte = fee_rate.to_sat_per_vb_ceil();
+                ExtractTxError::AbsurdFeeRate {
+                    fee_rate: sat_per_vbyte,
+                }
+            }
+            bdk::bitcoin::psbt::ExtractTxError::MissingInputValue { .. } => {
+                ExtractTxError::MissingInputValue
+            }
+            bdk::bitcoin::psbt::ExtractTxError::SendingTooMuch { .. } => {
+                ExtractTxError::SendingTooMuch
+            }
+            _ => ExtractTxError::OtherExtractTransactionError,
+        }
+    }
+}
 #[cfg(test)]
 mod test {
     use crate::error::{EsploraError, PersistenceError, WalletCreationError};
@@ -534,28 +555,24 @@ mod test {
     fn test_esplora_errors() {
         let cases = vec![
             (
-                EsploraError::Ureq {
+                EsploraError::Minreq {
                     error_message: "Network error".to_string(),
                 },
-                "ureq error: Network error",
+                "minreq error: Network error",
             ),
             (
-                EsploraError::UreqTransport {
-                    error_message: "Timeout occurred".to_string(),
+                EsploraError::HttpResponse {
+                    status: 404,
+                    message: "Not found".to_string(),
                 },
-                "ureq transport error: Timeout occurred",
+                "http error with status code 404 and message Not found",
             ),
             (
-                EsploraError::Http { status_code: 404 },
-                "http error with status code: 404",
-            ),
-            (
-                EsploraError::Io {
-                    error_message: "File not found".to_string(),
+                EsploraError::StatusCode {
+                    error_message: "code 1234567".to_string(),
                 },
-                "io error: File not found",
+                "Invalid status code, unable to convert to u16: code 1234567",
             ),
-            (EsploraError::NoHeader, "no header found in the response"),
             (
                 EsploraError::Parsing {
                     error_message: "Invalid JSON".to_string(),
@@ -569,10 +586,16 @@ mod test {
                 "bitcoin encoding error: Bad format",
             ),
             (
-                EsploraError::Hex {
+                EsploraError::HexToArray {
                     error_message: "Invalid hex".to_string(),
                 },
-                "hex decoding error: Invalid hex",
+                "invalid hex data returned: Invalid hex",
+            ),
+            (
+                EsploraError::HexToBytes {
+                    error_message: "Invalid hex".to_string(),
+                },
+                "invalid hex data returned: Invalid hex",
             ),
             (EsploraError::TransactionNotFound, "transaction not found"),
             (

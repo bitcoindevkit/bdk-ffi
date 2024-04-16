@@ -1,4 +1,4 @@
-use crate::bitcoin::{OutPoint, PartiallySignedTransaction, Script, Transaction};
+use crate::bitcoin::{OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     Alpha3Error, CalculateFeeError, PersistenceError, TxidParseError, WalletCreationError,
@@ -8,8 +8,8 @@ use crate::types::{
 };
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
-use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::bitcoin::Network;
+use bdk::bitcoin::Psbt as BdkPsbt;
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::{ChangeSet, Update as BdkUpdate};
@@ -91,7 +91,7 @@ impl Wallet {
 
     pub(crate) fn sign(
         &self,
-        psbt: Arc<PartiallySignedTransaction>,
+        psbt: Arc<Psbt>,
         // sign_options: Option<SignOptions>,
     ) -> Result<bool, Alpha3Error> {
         let mut psbt = psbt.inner.lock().unwrap();
@@ -488,10 +488,7 @@ impl TxBuilder {
     //     })
     // }
 
-    pub(crate) fn finish(
-        &self,
-        wallet: &Arc<Wallet>,
-    ) -> Result<Arc<PartiallySignedTransaction>, Alpha3Error> {
+    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, Alpha3Error> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
@@ -583,10 +580,7 @@ impl BumpFeeTxBuilder {
         })
     }
 
-    pub(crate) fn finish(
-        &self,
-        wallet: &Wallet,
-    ) -> Result<Arc<PartiallySignedTransaction>, Alpha3Error> {
+    pub(crate) fn finish(&self, wallet: &Wallet) -> Result<Arc<Psbt>, Alpha3Error> {
         let txid = Txid::from_str(self.txid.as_str()).map_err(|_| Alpha3Error::Generic)?;
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_fee_bump(txid)?;
@@ -604,8 +598,7 @@ impl BumpFeeTxBuilder {
                 }
             }
         }
-        let psbt: BdkPartiallySignedTransaction =
-            tx_builder.finish().map_err(|_| Alpha3Error::Generic)?;
+        let psbt: BdkPsbt = tx_builder.finish().map_err(|_| Alpha3Error::Generic)?;
 
         Ok(Arc::new(psbt.into()))
     }

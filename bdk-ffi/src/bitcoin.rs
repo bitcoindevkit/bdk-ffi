@@ -4,13 +4,14 @@ use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk::bitcoin::consensus::Decodable;
-use bdk::bitcoin::psbt::PartiallySignedTransaction as BdkPartiallySignedTransaction;
 use bdk::bitcoin::Address as BdkAddress;
 use bdk::bitcoin::Network;
 use bdk::bitcoin::OutPoint as BdkOutPoint;
+use bdk::bitcoin::Psbt as BdkPsbt;
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::bitcoin::Txid;
 
+use bdk::bitcoin::psbt::ExtractTxError;
 use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -73,7 +74,7 @@ impl Address {
     // }
 
     pub fn network(&self) -> Network {
-        self.inner.network
+        *self.inner.network()
     }
 
     pub fn script_pubkey(&self) -> Arc<Script> {
@@ -130,8 +131,8 @@ impl Transaction {
     //     self.inner.weight() as u64
     // }
 
-    pub fn size(&self) -> u64 {
-        self.inner.size() as u64
+    pub fn total_size(&self) -> u64 {
+        self.inner.total_size() as u64
     }
 
     pub fn vsize(&self) -> u64 {
@@ -142,8 +143,8 @@ impl Transaction {
     //     self.inner.serialize()
     // }
 
-    pub fn is_coin_base(&self) -> bool {
-        self.inner.is_coin_base()
+    pub fn is_coinbase(&self) -> bool {
+        self.inner.is_coinbase()
     }
 
     pub fn is_explicitly_rbf(&self) -> bool {
@@ -155,7 +156,7 @@ impl Transaction {
     }
 
     pub fn version(&self) -> i32 {
-        self.inner.version
+        self.inner.version.0
     }
 
     // fn lock_time(&self) -> u32 {
@@ -189,16 +190,14 @@ impl From<&Transaction> for BdkTransaction {
     }
 }
 
-pub struct PartiallySignedTransaction {
-    pub(crate) inner: Mutex<BdkPartiallySignedTransaction>,
+pub struct Psbt {
+    pub(crate) inner: Mutex<BdkPsbt>,
 }
 
-impl PartiallySignedTransaction {
+impl Psbt {
     pub(crate) fn new(psbt_base64: String) -> Result<Self, PsbtParseError> {
-        let psbt: BdkPartiallySignedTransaction =
-            BdkPartiallySignedTransaction::from_str(&psbt_base64)?;
-
-        Ok(PartiallySignedTransaction {
+        let psbt: BdkPsbt = BdkPsbt::from_str(&psbt_base64)?;
+        Ok(Psbt {
             inner: Mutex::new(psbt),
         })
     }
@@ -214,9 +213,10 @@ impl PartiallySignedTransaction {
     //     txid.to_hex()
     // }
 
-    pub(crate) fn extract_tx(&self) -> Arc<Transaction> {
-        let tx = self.inner.lock().unwrap().clone().extract_tx();
-        Arc::new(tx.into())
+    pub(crate) fn extract_tx(&self) -> Result<Arc<Transaction>, ExtractTxError> {
+        let tx: BdkTransaction = self.inner.lock().unwrap().clone().extract_tx()?;
+        let transaction: Transaction = tx.into();
+        Ok(Arc::new(transaction))
     }
 
     // /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.
@@ -256,9 +256,9 @@ impl PartiallySignedTransaction {
     // }
 }
 
-impl From<BdkPartiallySignedTransaction> for PartiallySignedTransaction {
-    fn from(psbt: BdkPartiallySignedTransaction) -> Self {
-        PartiallySignedTransaction {
+impl From<BdkPsbt> for Psbt {
+    fn from(psbt: BdkPsbt) -> Self {
+        Psbt {
             inner: Mutex::new(psbt),
         }
     }
@@ -297,7 +297,7 @@ pub struct TxOut {
 impl From<&BdkTxOut> for TxOut {
     fn from(tx_out: &BdkTxOut) -> Self {
         TxOut {
-            value: tx_out.value,
+            value: tx_out.value.to_sat(),
             script_pubkey: Arc::new(Script(tx_out.script_pubkey.clone())),
         }
     }

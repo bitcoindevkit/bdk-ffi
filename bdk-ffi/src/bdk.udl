@@ -34,17 +34,18 @@ interface PersistenceError {
 
 [Error]
 interface EsploraError {
-  Ureq(string error_message);
-  UreqTransport(string error_message);
-  Http(u16 status_code);
-  Io(string error_message);
-  NoHeader();
+  Minreq(string error_message);
+  HttpResponse(u16 status, string message);
   Parsing(string error_message);
+  StatusCode(string error_message);
   BitcoinEncoding(string error_message);
-  Hex(string error_message);
+  HexToArray(string error_message);
+  HexToBytes(string error_message);
   TransactionNotFound();
   HeaderHeightNotFound(u32 height);
   HeaderHashNotFound();
+  InvalidHttpHeaderName(string name);
+  InvalidHttpHeaderValue(string value);
 };
 
 [Error]
@@ -56,17 +57,11 @@ enum FeeRateError {
 interface AddressError {
   Base58();
   Bech32();
-  EmptyBech32Payload();
-  InvalidBech32Variant();
-  InvalidWitnessVersion(u8 version);
-  UnparsableWitnessVersion();
-  MalformedWitnessVersion();
-  InvalidWitnessProgramLength(u64 length);
-  InvalidSegwitV0ProgramLength(u64 length);
+  WitnessVersion(string error_message);
+  WitnessProgram(string error_message);
   UncompressedPubkey();
   ExcessiveScriptSize();
   UnrecognizedScript();
-  UnknownAddressType(string s);
   NetworkValidation(Network required, Network found, string address);
   OtherAddressError();
 };
@@ -107,6 +102,14 @@ interface DescriptorError {
 [Error]
 interface TxidParseError {
   InvalidTxid(string txid);
+};
+
+[Error]
+interface ExtractTxError {
+  AbsurdFeeRate(u64 fee_rate);
+  MissingInputValue();
+  SendingTooMuch();
+  OtherExtractTransactionError();
 };
 
 // ------------------------------------------------------------------------
@@ -211,7 +214,7 @@ interface Wallet {
   boolean is_mine([ByRef] Script script);
 
   [Throws=Alpha3Error]
-  boolean sign(PartiallySignedTransaction psbt);
+  boolean sign(Psbt psbt);
 
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
 
@@ -267,7 +270,7 @@ interface TxBuilder {
   TxBuilder enable_rbf_with_sequence(u32 nsequence);
 
   [Throws=Alpha3Error]
-  PartiallySignedTransaction finish([ByRef] Wallet wallet);
+  Psbt finish([ByRef] Wallet wallet);
 };
 
 interface BumpFeeTxBuilder {
@@ -280,7 +283,7 @@ interface BumpFeeTxBuilder {
   BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
 
   [Throws=Alpha3Error]
-  PartiallySignedTransaction finish([ByRef] Wallet wallet);
+  Psbt finish([ByRef] Wallet wallet);
 };
 
 // ------------------------------------------------------------------------
@@ -444,11 +447,11 @@ interface Transaction {
 
   string txid();
 
-  u64 size();
+  u64 total_size();
 
   u64 vsize();
 
-  boolean is_coin_base();
+  boolean is_coinbase();
 
   boolean is_explicitly_rbf();
 
@@ -457,12 +460,13 @@ interface Transaction {
   i32 version();
 };
 
-interface PartiallySignedTransaction {
+interface Psbt {
   [Throws=PsbtParseError]
   constructor(string psbt_base64);
 
   string serialize();
 
+  [Throws=ExtractTxError]
   Transaction extract_tx();
 };
 

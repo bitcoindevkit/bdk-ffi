@@ -13,7 +13,7 @@ pub struct EsploraClient(BlockingClient);
 
 impl EsploraClient {
     pub fn new(url: String) -> Self {
-        let client = Builder::new(url.as_str()).build_blocking().unwrap();
+        let client = Builder::new(url.as_str()).build_blocking();
         Self(client)
     }
 

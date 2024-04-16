@@ -8,7 +8,7 @@ mod wallet;
 
 use crate::bitcoin::Address;
 use crate::bitcoin::OutPoint;
-use crate::bitcoin::PartiallySignedTransaction;
+use crate::bitcoin::Psbt;
 use crate::bitcoin::Script;
 use crate::bitcoin::Transaction;
 use crate::bitcoin::TxOut;
@@ -18,6 +18,7 @@ use crate::error::Alpha3Error;
 use crate::error::CalculateFeeError;
 use crate::error::DescriptorError;
 use crate::error::EsploraError;
+use crate::error::ExtractTxError;
 use crate::error::FeeRateError;
 use crate::error::PersistenceError;
 use crate::error::PsbtParseError;
