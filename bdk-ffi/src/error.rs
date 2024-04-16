@@ -75,6 +75,9 @@ pub enum EsploraError {
     #[error("ureq transport error: {error_message}")]
     UreqTransport { error_message: String },
 
+    #[error("error during reqwest http request")]
+    Reqwest,
+
     #[error("http error with status code: {status_code}")]
     Http { status_code: u16 },
 
@@ -386,6 +389,7 @@ impl From<BdkEsploraError> for EsploraError {
             BdkEsploraError::UreqTransport(e) => EsploraError::UreqTransport {
                 error_message: e.to_string(),
             },
+            BdkEsploraError::Reqwest(_) => EsploraError::Reqwest,
             BdkEsploraError::HttpResponse(code) => EsploraError::Http { status_code: code },
             BdkEsploraError::Io(e) => EsploraError::Io {
                 error_message: e.to_string(),
