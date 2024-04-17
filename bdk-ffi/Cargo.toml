@@ -20,6 +20,7 @@ default = ["uniffi/cli"]
 [dependencies]
 bdk = { version = "1.0.0-alpha.9", features = ["all-keys", "keys-bip39"] }
 bdk_esplora = { version = "0.11.0", default-features = false, features = ["std", "blocking"] }
+esplora-client = { version = "0.7.0", default-features = false, features = ["blocking-https-rustls"] }
 # bdk_esplora = { version = "0.10.0", default-features = false, features = ["std", "blocking", "async-https-rustls"] }
 bdk_file_store = { version = "0.9.0" }
 
