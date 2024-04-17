@@ -35,7 +35,7 @@ interface PersistenceError {
 [Error]
 interface EsploraError {
   Minreq(string error_message);
-  HttpResponse(u16 status, string message);
+  HttpResponse(u16 status, string error_message);
   Parsing(string error_message);
   StatusCode(string error_message);
   BitcoinEncoding(string error_message);

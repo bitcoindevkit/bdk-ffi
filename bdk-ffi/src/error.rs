@@ -73,8 +73,8 @@ pub enum EsploraError {
     #[error("minreq error: {error_message}")]
     Minreq { error_message: String },
 
-    #[error("http error with status code {status} and message {message}")]
-    HttpResponse { status: u16, message: String },
+    #[error("http error with status code {status} and message {error_message}")]
+    HttpResponse { status: u16, error_message: String },
 
     #[error("parsing error: {error_message}")]
     Parsing { error_message: String },
@@ -385,7 +385,7 @@ impl From<BdkEsploraError> for EsploraError {
                 error_message: e.to_string(),
             },
             BdkEsploraError::HttpResponse { status, message } => {
-                EsploraError::HttpResponse { status, message }
+                EsploraError::HttpResponse { status: status, error_message: message }
             }
             BdkEsploraError::Parsing(e) => EsploraError::Parsing {
                 error_message: e.to_string(),
