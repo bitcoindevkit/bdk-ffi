@@ -45,23 +45,6 @@ impl From<BdkCanonicalTx<'_, Arc<bdk::bitcoin::Transaction>, ConfirmationTimeHei
     }
 }
 
-// impl From<BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>> for CanonicalTx {
-//     fn from(tx: BdkCanonicalTx<'_, BdkTransaction, ConfirmationTimeHeightAnchor>) -> Self {
-//         let chain_position = match tx.chain_position {
-//             BdkChainPosition::Confirmed(anchor) => ChainPosition::Confirmed {
-//                 height: anchor.confirmation_height,
-//                 timestamp: anchor.confirmation_time,
-//             },
-//             BdkChainPosition::Unconfirmed(timestamp) => ChainPosition::Unconfirmed { timestamp },
-//         };
-//
-//         CanonicalTx {
-//             transaction: Arc::new(Transaction::from(tx.tx_node.tx)),
-//             chain_position,
-//         }
-//     }
-// }
-
 #[derive(Clone, Debug)]
 pub struct FeeRate(pub BdkFeeRate);
 

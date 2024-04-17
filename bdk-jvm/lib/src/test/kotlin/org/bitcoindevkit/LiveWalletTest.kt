@@ -59,7 +59,7 @@ class LiveWalletTest {
 
         val recipient: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.TESTNET)
 
-        val psbt: PartiallySignedTransaction = TxBuilder()
+        val psbt: Psbt = TxBuilder()
             .addRecipient(recipient.scriptPubkey(), 4200uL)
             .feeRate(FeeRate.fromSatPerVb(2uL))
             .finish(wallet)

@@ -64,7 +64,7 @@ class LiveWalletTest(unittest.TestCase):
             network = bdk.Network.TESTNET
         )
         
-        psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).finish(wallet)
+        psbt: bdk.Psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).finish(wallet)
         # print(psbt.serialize())
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
         

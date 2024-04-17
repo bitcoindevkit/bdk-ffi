@@ -76,7 +76,7 @@ class LiveTxBuilderTest(unittest.TestCase):
             bdk.ScriptAmount(recipient2.script_pubkey, 4200)
         )
         
-        psbt: bdk.PartiallySignedTransaction = bdk.TxBuilder().set_recipients(all_recipients).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).enable_rbf().finish(wallet)
+        psbt: bdk.Psbt = bdk.TxBuilder().set_recipients(all_recipients).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).enable_rbf().finish(wallet)
         wallet.sign(psbt)
         
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")

@@ -45,7 +45,7 @@ final class LiveTxBuilderTests: XCTestCase {
         XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
 
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .testnet)
-        let psbt: PartiallySignedTransaction = try TxBuilder()
+        let psbt: Psbt = try TxBuilder()
             .addRecipient(script: recipient.scriptPubkey(), amount: 4200)
             .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2))
             .finish(wallet: wallet)
@@ -86,7 +86,7 @@ final class LiveTxBuilderTests: XCTestCase {
             ScriptAmount(script: recipient2.scriptPubkey(), amount: 4200)
         ]
 
-        let psbt: PartiallySignedTransaction = try TxBuilder()
+        let psbt: Psbt = try TxBuilder()
             .setRecipients(recipients: allRecipients)
             .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 4))
             .changePolicy(changePolicy: ChangeSpendPolicy.changeForbidden)

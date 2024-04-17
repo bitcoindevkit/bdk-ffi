@@ -384,9 +384,10 @@ impl From<BdkEsploraError> for EsploraError {
             BdkEsploraError::Minreq(e) => EsploraError::Minreq {
                 error_message: e.to_string(),
             },
-            BdkEsploraError::HttpResponse { status, message } => {
-                EsploraError::HttpResponse { status: status, error_message: message }
-            }
+            BdkEsploraError::HttpResponse { status, message } => EsploraError::HttpResponse {
+                status,
+                error_message: message,
+            },
             BdkEsploraError::Parsing(e) => EsploraError::Parsing {
                 error_message: e.to_string(),
             },
@@ -563,7 +564,7 @@ mod test {
             (
                 EsploraError::HttpResponse {
                     status: 404,
-                    message: "Not found".to_string(),
+                    error_message: "Not found".to_string(),
                 },
                 "http error with status code 404 and message Not found",
             ),

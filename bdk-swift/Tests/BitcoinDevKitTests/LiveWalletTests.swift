@@ -78,7 +78,7 @@ final class LiveWalletTests: XCTestCase {
         print("Balance: \(wallet.getBalance().total)")
 
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .testnet)
-        let psbt: PartiallySignedTransaction = try
+        let psbt: Psbt = try
             TxBuilder()
                 .addRecipient(script: recipient.scriptPubkey(), amount: 4200)
                 .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2))
@@ -90,7 +90,7 @@ final class LiveWalletTests: XCTestCase {
         let walletDidSign: Bool = try wallet.sign(psbt: psbt)
         XCTAssertTrue(walletDidSign, "Wallet did not sign transaction")
 
-        let tx: Transaction = psbt.extractTx()
+        let tx: Transaction = try! psbt.extractTx()
         print(tx.txid())
         let fee: UInt64 = try wallet.calculateFee(tx: tx)
         print("Transaction Fee: \(fee)")

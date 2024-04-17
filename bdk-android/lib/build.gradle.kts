@@ -111,6 +111,9 @@ afterEvaluate {
     tasks.named("mergeReleaseJniLibFolders") {
         dependsOn(":lib:moveNativeAndroidLibs")
     }
+    tasks.named("mergeDebugJniLibFolders") {
+        dependsOn(":lib:moveNativeAndroidLibs")
+    }
 }
 
 signing {

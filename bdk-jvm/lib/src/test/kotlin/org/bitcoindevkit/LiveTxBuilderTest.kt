@@ -31,7 +31,7 @@ class LiveTxBuilderTest {
         assert(wallet.getBalance().total > 0uL)
 
         val recipient: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.TESTNET)
-        val psbt: PartiallySignedTransaction = TxBuilder()
+        val psbt: Psbt = TxBuilder()
             .addRecipient(recipient.scriptPubkey(), 4200uL)
             .feeRate(FeeRate.fromSatPerVb(2uL))
             .finish(wallet)
@@ -60,7 +60,7 @@ class LiveTxBuilderTest {
             ScriptAmount(recipient2.scriptPubkey(), 4200uL),
         )
 
-        val psbt: PartiallySignedTransaction = TxBuilder()
+        val psbt: Psbt = TxBuilder()
             .setRecipients(allRecipients)
             .feeRate(FeeRate.fromSatPerVb(4uL))
             .changePolicy(ChangeSpendPolicy.CHANGE_FORBIDDEN)
