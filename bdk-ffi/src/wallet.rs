@@ -1,8 +1,8 @@
 use crate::bitcoin::{OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    Alpha3Error, CalculateFeeError, PersistenceError, SignerError, TxidParseError,
-    WalletCreationError,
+    Alpha3Error, CalculateFeeError, CannotConnectError, PersistenceError, SignerError,
+    TxidParseError, WalletCreationError,
 };
 use crate::types::{
     AddressIndex, AddressInfo, Balance, CanonicalTx, FeeRate, LocalOutput, ScriptAmount,
@@ -58,10 +58,12 @@ impl Wallet {
             .into()
     }
 
-    pub fn apply_update(&self, update: Arc<Update>) -> Result<(), Alpha3Error> {
+    pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
         self.get_wallet()
             .apply_update(update.0.clone())
-            .map_err(|_| Alpha3Error::Generic)
+            .map_err(|e| CannotConnectError::Include {
+                height: e.try_include_height,
+            })
     }
 
     // TODO: This is the fallible version of get_internal_address; should I rename it to get_internal_address?

@@ -16,6 +16,7 @@ use crate::descriptor::Descriptor;
 use crate::error::AddressError;
 use crate::error::Alpha3Error;
 use crate::error::CalculateFeeError;
+use crate::error::CannotConnectError;
 use crate::error::DescriptorError;
 use crate::error::EsploraError;
 use crate::error::ExtractTxError;

@@ -121,6 +121,12 @@ pub enum TxidParseError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum CannotConnectError {
+    #[error("cannot include height: {height}")]
+    Include { height: u32 },
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum AddressError {
     // Errors coming from the ParseError enum
     #[error("base58 address encoding error")]
@@ -575,7 +581,7 @@ impl From<bdk::bitcoin::psbt::ExtractTxError> for ExtractTxError {
 }
 #[cfg(test)]
 mod test {
-    use crate::error::{EsploraError, PersistenceError, WalletCreationError};
+    use crate::error::{CannotConnectError, EsploraError, PersistenceError, WalletCreationError};
     use crate::CalculateFeeError;
     use crate::OutPoint;
     use crate::SignerError;
@@ -792,5 +798,12 @@ mod test {
         for (error, message) in errors {
             assert_eq!(error.to_string(), message);
         }
+    }
+
+    #[test]
+    fn test_cannot_connect_error_include() {
+        let error = CannotConnectError::Include { height: 42 };
+
+        assert_eq!(format!("{}", error), "cannot include height: 42");
     }
 }

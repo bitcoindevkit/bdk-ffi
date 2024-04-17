@@ -130,6 +130,11 @@ interface ExtractTxError {
   OtherExtractTransactionError();
 };
 
+[Error]
+interface CannotConnectError {
+  Include(u32 height);
+};
+
 // ------------------------------------------------------------------------
 // bdk crate - types module
 // ------------------------------------------------------------------------
@@ -226,7 +231,7 @@ interface Wallet {
 
   Balance get_balance();
 
-  [Throws=Alpha3Error]
+  [Throws=CannotConnectError]
   void apply_update(Update update);
 
   boolean is_mine([ByRef] Script script);
