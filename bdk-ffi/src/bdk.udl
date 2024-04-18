@@ -382,7 +382,7 @@ interface EsploraClient {
   [Throws=EsploraError]
   Update full_scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
 
-  [Throws=Alpha3Error]
+  [Throws=EsploraError]
   void broadcast([ByRef] Transaction transaction);
 };
 

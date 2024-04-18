@@ -1,4 +1,4 @@
-use crate::error::{Alpha3Error, EsploraError};
+use crate::error::EsploraError;
 use crate::wallet::{Update, Wallet};
 
 use crate::bitcoin::Transaction;
@@ -52,11 +52,11 @@ impl EsploraClient {
 
     // pub fn sync();
 
-    pub fn broadcast(&self, transaction: &Transaction) -> Result<(), Alpha3Error> {
+    pub fn broadcast(&self, transaction: &Transaction) -> Result<(), EsploraError> {
         let bdk_transaction: BdkTransaction = transaction.into();
         self.0
             .broadcast(&bdk_transaction)
-            .map_err(|_| Alpha3Error::Generic)
+            .map_err(EsploraError::from)
     }
 
     // pub fn estimate_fee();
