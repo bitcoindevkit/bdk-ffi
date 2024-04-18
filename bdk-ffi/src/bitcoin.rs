@@ -3,7 +3,9 @@ use crate::error::{AddressError, PsbtParseError, TransactionError};
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
+use bdk::bitcoin::consensus::encode::serialize;
 use bdk::bitcoin::consensus::Decodable;
+use bdk::bitcoin::psbt::ExtractTxError;
 use bdk::bitcoin::Address as BdkAddress;
 use bdk::bitcoin::Network;
 use bdk::bitcoin::OutPoint as BdkOutPoint;
@@ -11,7 +13,6 @@ use bdk::bitcoin::Psbt as BdkPsbt;
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::bitcoin::Txid;
 
-use bdk::bitcoin::psbt::ExtractTxError;
 use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -139,10 +140,6 @@ impl Transaction {
         self.inner.vsize() as u64
     }
 
-    // fn serialize(&self) -> Vec<u8> {
-    //     self.inner.serialize()
-    // }
-
     pub fn is_coinbase(&self) -> bool {
         self.inner.is_coinbase()
     }
@@ -157,6 +154,10 @@ impl Transaction {
 
     pub fn version(&self) -> i32 {
         self.inner.version.0
+    }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        serialize(&self.inner)
     }
 
     // fn lock_time(&self) -> u32 {

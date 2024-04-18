@@ -458,6 +458,8 @@ interface Transaction {
   boolean is_lock_time_enabled();
 
   i32 version();
+
+  sequence<u8> serialize();
 };
 
 interface Psbt {
