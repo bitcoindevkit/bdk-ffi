@@ -19,6 +19,21 @@ interface Bip39Error {
 };
 
 [Error]
+interface Bip32Error {
+    CannotDeriveFromHardenedKey();
+    Secp256k1(string e);
+    InvalidChildNumber(u32 child_number);
+    InvalidChildNumberFormat();
+    InvalidDerivationPathFormat();
+    UnknownVersion(string version);
+    WrongExtendedKeyLength(u32 length);
+    Base58(string e);
+    Hex(string e);
+    InvalidPublicKeyHexLength(u32 length);
+    UnknownError(string e);
+};
+
+[Error]
 interface CalculateFeeError {
   MissingTxOut(sequence<OutPoint> out_points);
   NegativeFee(i64 fee);
@@ -335,7 +350,7 @@ interface Mnemonic {
 };
 
 interface DerivationPath {
-  [Throws=Alpha3Error]
+  [Throws=Bip32Error]
   constructor(string path);
 };
 

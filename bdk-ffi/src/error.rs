@@ -13,8 +13,12 @@ use bdk_file_store::FileError as BdkFileError;
 use bdk_file_store::IterError;
 use bitcoin_internals::hex::display::DisplayHex;
 
+use crate::error::bip32::Error as BdkBip32Error;
 use bdk::bitcoin::address::ParseError;
 use bdk::keys::bip39::Error as BdkBip39Error;
+
+use bdk::bitcoin::bip32;
+
 use std::convert::Infallible;
 use std::convert::TryInto;
 
@@ -22,6 +26,42 @@ use std::convert::TryInto;
 pub enum Alpha3Error {
     #[error("generic error in ffi")]
     Generic,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Bip32Error {
+    #[error("Cannot derive from a hardened key")]
+    CannotDeriveFromHardenedKey,
+
+    #[error("Secp256k1 error: {e}")]
+    Secp256k1 { e: String },
+
+    #[error("Invalid child number: {child_number}")]
+    InvalidChildNumber { child_number: u32 },
+
+    #[error("Invalid format for child number")]
+    InvalidChildNumberFormat,
+
+    #[error("Invalid derivation path format")]
+    InvalidDerivationPathFormat,
+
+    #[error("Unknown version: {version}")]
+    UnknownVersion { version: String },
+
+    #[error("Wrong extended key length: {length}")]
+    WrongExtendedKeyLength { length: u32 },
+
+    #[error("Base58 error: {e}")]
+    Base58 { e: String },
+
+    #[error("Hexadecimal conversion error: {e}")]
+    Hex { e: String },
+
+    #[error("Invalid public key hex length: {length}")]
+    InvalidPublicKeyHexLength { length: u32 },
+
+    #[error("Unknown error: {e}")]
+    UnknownError { e: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -470,6 +510,34 @@ impl From<bdk::bitcoin::bip32::Error> for Alpha3Error {
     }
 }
 
+impl From<BdkBip32Error> for Bip32Error {
+    fn from(error: BdkBip32Error) -> Self {
+        match error {
+            BdkBip32Error::CannotDeriveFromHardenedKey => Bip32Error::CannotDeriveFromHardenedKey,
+            BdkBip32Error::Secp256k1(err) => Bip32Error::Secp256k1 { e: err.to_string() },
+            BdkBip32Error::InvalidChildNumber(num) => {
+                Bip32Error::InvalidChildNumber { child_number: num }
+            }
+            BdkBip32Error::InvalidChildNumberFormat => Bip32Error::InvalidChildNumberFormat,
+            BdkBip32Error::InvalidDerivationPathFormat => Bip32Error::InvalidDerivationPathFormat,
+            BdkBip32Error::UnknownVersion(bytes) => Bip32Error::UnknownVersion {
+                version: bytes.to_lower_hex_string(),
+            },
+            BdkBip32Error::WrongExtendedKeyLength(len) => {
+                Bip32Error::WrongExtendedKeyLength { length: len as u32 }
+            }
+            BdkBip32Error::Base58(err) => Bip32Error::Base58 { e: err.to_string() },
+            BdkBip32Error::Hex(err) => Bip32Error::Hex { e: err.to_string() },
+            BdkBip32Error::InvalidPublicKeyHexLength(len) => {
+                Bip32Error::InvalidPublicKeyHexLength { length: len as u32 }
+            }
+            _ => Bip32Error::UnknownError {
+                e: format!("Unhandled error: {:?}", error),
+            },
+        }
+    }
+}
+
 impl From<NewError<std::io::Error>> for Alpha3Error {
     fn from(_: NewError<std::io::Error>) -> Self {
         Alpha3Error::Generic
@@ -622,7 +690,8 @@ impl From<bdk::bitcoin::psbt::ExtractTxError> for ExtractTxError {
 #[cfg(test)]
 mod test {
     use crate::error::{
-        Bip39Error, CannotConnectError, EsploraError, PersistenceError, WalletCreationError,
+        Bip32Error, Bip39Error, CannotConnectError, EsploraError, PersistenceError,
+        WalletCreationError,
     };
     use crate::CalculateFeeError;
     use crate::OutPoint;
@@ -869,6 +938,58 @@ mod test {
         assert_eq!(
             format!("{}", error),
             "ambiguous languages detected: English, Spanish"
+        )
+    }
+
+    #[test]
+    fn test_error_bip32() {
+        let error = Bip32Error::CannotDeriveFromHardenedKey;
+        assert_eq!(format!("{}", error), "Cannot derive from a hardened key");
+
+        let error = Bip32Error::Secp256k1 {
+            e: "Secp256k1 failure".to_string(),
+        };
+        assert_eq!(format!("{}", error), "Secp256k1 error: Secp256k1 failure");
+
+        let error = Bip32Error::InvalidChildNumber { child_number: 42 };
+        assert_eq!(format!("{}", error), "Invalid child number: 42");
+
+        let error = Bip32Error::InvalidChildNumberFormat;
+        assert_eq!(format!("{}", error), "Invalid format for child number");
+
+        let error = Bip32Error::InvalidDerivationPathFormat;
+        assert_eq!(format!("{}", error), "Invalid derivation path format");
+
+        let error = Bip32Error::UnknownVersion {
+            version: "deadbeef".to_string(),
+        };
+        assert_eq!(format!("{}", error), "Unknown version: deadbeef");
+
+        let error = Bip32Error::WrongExtendedKeyLength { length: 128 };
+        assert_eq!(format!("{}", error), "Wrong extended key length: 128");
+
+        let error = Bip32Error::Base58 {
+            e: "Base58 error".to_string(),
+        };
+        assert_eq!(format!("{}", error), "Base58 error: Base58 error");
+
+        let error = Bip32Error::Hex {
+            e: "Hex error".to_string(),
+        };
+        assert_eq!(
+            format!("{}", error),
+            "Hexadecimal conversion error: Hex error"
+        );
+
+        let error = Bip32Error::InvalidPublicKeyHexLength { length: 65 };
+        assert_eq!(format!("{}", error), "Invalid public key hex length: 65");
+
+        let error = Bip32Error::UnknownError {
+            e: "An unknown error occurred".to_string(),
+        };
+        assert_eq!(
+            format!("{}", error),
+            "Unknown error: An unknown error occurred"
         );
     }
 }

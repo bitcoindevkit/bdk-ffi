@@ -1,4 +1,4 @@
-use crate::error::{Alpha3Error, Bip39Error};
+use crate::error::{Alpha3Error, Bip32Error, Bip39Error};
 
 use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::key::Secp256k1;
@@ -57,12 +57,12 @@ pub(crate) struct DerivationPath {
 }
 
 impl DerivationPath {
-    pub(crate) fn new(path: String) -> Result<Self, Alpha3Error> {
+    pub(crate) fn new(path: String) -> Result<Self, Bip32Error> {
         BdkDerivationPath::from_str(&path)
             .map(|x| DerivationPath {
                 inner_mutex: Mutex::new(x),
             })
-            .map_err(|_| Alpha3Error::Generic)
+            .map_err(Bip32Error::from)
     }
 }
 
