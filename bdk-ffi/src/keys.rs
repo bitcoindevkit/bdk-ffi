@@ -1,4 +1,4 @@
-use crate::error::Alpha3Error;
+use crate::error::{Alpha3Error, Bip39Error};
 
 use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk::bitcoin::key::Secp256k1;
@@ -35,16 +35,16 @@ impl Mnemonic {
         Mnemonic { inner: mnemonic }
     }
 
-    pub(crate) fn from_string(mnemonic: String) -> Result<Self, Alpha3Error> {
+    pub(crate) fn from_string(mnemonic: String) -> Result<Self, Bip39Error> {
         BdkMnemonic::from_str(&mnemonic)
             .map(|m| Mnemonic { inner: m })
-            .map_err(|_| Alpha3Error::Generic)
+            .map_err(Bip39Error::from)
     }
 
-    pub(crate) fn from_entropy(entropy: Vec<u8>) -> Result<Self, Alpha3Error> {
+    pub(crate) fn from_entropy(entropy: Vec<u8>) -> Result<Self, Bip39Error> {
         BdkMnemonic::from_entropy(entropy.as_slice())
             .map(|m| Mnemonic { inner: m })
-            .map_err(|_| Alpha3Error::Generic)
+            .map_err(Bip39Error::from)
     }
 
     pub(crate) fn as_string(&self) -> String {

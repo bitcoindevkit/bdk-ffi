@@ -10,6 +10,15 @@ enum Alpha3Error {
 };
 
 [Error]
+interface Bip39Error {
+  BadWordCount(u64 word_count);
+  UnknownWord(u64 index);
+  BadEntropyBitCount(u64 bit_count);
+  InvalidChecksum();
+  AmbiguousLanguages(string languages);
+};
+
+[Error]
 interface CalculateFeeError {
   MissingTxOut(sequence<OutPoint> out_points);
   NegativeFee(i64 fee);
@@ -316,10 +325,10 @@ interface BumpFeeTxBuilder {
 interface Mnemonic {
   constructor(WordCount word_count);
 
-  [Name=from_string, Throws=Alpha3Error]
+  [Name=from_string, Throws=Bip39Error]
   constructor(string mnemonic);
 
-  [Name=from_entropy, Throws=Alpha3Error]
+  [Name=from_entropy, Throws=Bip39Error]
   constructor(sequence<u8> entropy);
 
   string as_string();

@@ -14,7 +14,9 @@ use bdk_file_store::IterError;
 use bitcoin_internals::hex::display::DisplayHex;
 
 use bdk::bitcoin::address::ParseError;
+use bdk::keys::bip39::Error as BdkBip39Error;
 use std::convert::Infallible;
+use std::convert::TryInto;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Alpha3Error {
@@ -61,6 +63,24 @@ pub enum WalletCreationError {
         expected: Network,
         got: Option<Network>,
     },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Bip39Error {
+    #[error("the word count {word_count} is not supported")]
+    BadWordCount { word_count: u64 },
+
+    #[error("unknown word at index {index}")]
+    UnknownWord { index: u64 },
+
+    #[error("entropy bit count {bit_count} is invalid")]
+    BadEntropyBitCount { bit_count: u64 },
+
+    #[error("checksum is invalid")]
+    InvalidChecksum,
+
+    #[error("ambiguous languages detected: {languages}")]
+    AmbiguousLanguages { languages: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -392,6 +412,26 @@ impl From<NewOrLoadError<std::io::Error, IterError>> for WalletCreationError {
     }
 }
 
+impl From<BdkBip39Error> for Bip39Error {
+    fn from(error: BdkBip39Error) -> Self {
+        match error {
+            BdkBip39Error::BadWordCount(word_count) => Bip39Error::BadWordCount {
+                word_count: word_count.try_into().expect("word count exceeds u64"),
+            },
+            BdkBip39Error::UnknownWord(index) => Bip39Error::UnknownWord {
+                index: index.try_into().expect("index exceeds u64"),
+            },
+            BdkBip39Error::BadEntropyBitCount(bit_count) => Bip39Error::BadEntropyBitCount {
+                bit_count: bit_count.try_into().expect("bit count exceeds u64"),
+            },
+            BdkBip39Error::InvalidChecksum => Bip39Error::InvalidChecksum,
+            BdkBip39Error::AmbiguousLanguages(info) => Bip39Error::AmbiguousLanguages {
+                languages: format!("{:?}", info),
+            },
+        }
+    }
+}
+
 impl From<std::io::Error> for PersistenceError {
     fn from(error: std::io::Error) -> Self {
         PersistenceError::Write {
@@ -581,7 +621,9 @@ impl From<bdk::bitcoin::psbt::ExtractTxError> for ExtractTxError {
 }
 #[cfg(test)]
 mod test {
-    use crate::error::{CannotConnectError, EsploraError, PersistenceError, WalletCreationError};
+    use crate::error::{
+        Bip39Error, CannotConnectError, EsploraError, PersistenceError, WalletCreationError,
+    };
     use crate::CalculateFeeError;
     use crate::OutPoint;
     use crate::SignerError;
@@ -805,5 +847,28 @@ mod test {
         let error = CannotConnectError::Include { height: 42 };
 
         assert_eq!(format!("{}", error), "cannot include height: 42");
+    }
+
+    #[test]
+    fn test_error_bip39() {
+        let error = Bip39Error::BadWordCount { word_count: 15 };
+        assert_eq!(format!("{}", error), "the word count 15 is not supported");
+
+        let error = Bip39Error::UnknownWord { index: 102 };
+        assert_eq!(format!("{}", error), "unknown word at index 102");
+
+        let error = Bip39Error::BadEntropyBitCount { bit_count: 128 };
+        assert_eq!(format!("{}", error), "entropy bit count 128 is invalid");
+
+        let error = Bip39Error::InvalidChecksum;
+        assert_eq!(format!("{}", error), "checksum is invalid");
+
+        let error = Bip39Error::AmbiguousLanguages {
+            languages: "English, Spanish".to_string(),
+        };
+        assert_eq!(
+            format!("{}", error),
+            "ambiguous languages detected: English, Spanish"
+        );
     }
 }
