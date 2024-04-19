@@ -526,6 +526,8 @@ interface Transaction {
   i32 version();
 
   sequence<u8> serialize();
+
+  u64 weight();
 };
 
 interface Psbt {

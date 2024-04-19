@@ -129,9 +129,9 @@ impl Transaction {
         self.inner.txid().to_string()
     }
 
-    // fn weight(&self) -> u64 {
-    //     self.inner.weight() as u64
-    // }
+    pub fn weight(&self) -> u64 {
+        self.inner.weight().to_wu()
+    }
 
     pub fn total_size(&self) -> u64 {
         self.inner.total_size() as u64
