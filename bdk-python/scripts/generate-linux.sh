@@ -9,7 +9,7 @@ cd ../bdk-ffi/
 cargo run --bin uniffi-bindgen generate src/bdk.udl --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
 
 echo "Generating native binaries..."
-rustup default 1.73.0
+rustup default 1.77.1
 cargo build --profile release-smaller
 
 echo "Copying linux libbdkffi.so..."

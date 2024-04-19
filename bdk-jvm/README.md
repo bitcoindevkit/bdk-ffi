@@ -36,10 +36,10 @@ curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install java 17.0.2-tem
 ```
-2. Install Rust (note that we are currently building using Rust 1.73.0):
+2. Install Rust (note that we are currently building using Rust 1.77.1):
 ```shell
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup default 1.73.0
+rustup default 1.77.1
 ```
 3. Clone this repository.
 ```shell
