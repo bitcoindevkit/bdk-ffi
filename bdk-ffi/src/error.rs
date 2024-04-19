@@ -156,7 +156,7 @@ pub enum AddressError {
 
     // This is required because the bdk::bitcoin::address::Error is non-exhaustive
     #[error("other address error")]
-    OtherAddressError,
+    OtherAddressErr,
 }
 
 // Mapping https://docs.rs/bitcoin/latest/src/bitcoin/consensus/encode.rs.html#40-63
@@ -182,7 +182,7 @@ pub enum TransactionError {
 
     // This is required because the bdk::bitcoin::consensus::encode::Error is non-exhaustive
     #[error("other transaction error")]
-    OtherTransactionError,
+    OtherTransactionErr,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -247,7 +247,7 @@ pub enum ExtractTxError {
     #[error(
         "this error is required because the bdk::bitcoin::psbt::ExtractTxError is non-exhaustive"
     )]
-    OtherExtractTransactionError,
+    OtherExtractTxErr,
 }
 
 impl From<BdkDescriptorError> for DescriptorError {
@@ -439,7 +439,7 @@ impl From<bdk::bitcoin::address::Error> for AddressError {
                 found,
                 address: format!("{:?}", address),
             },
-            _ => AddressError::OtherAddressError,
+            _ => AddressError::OtherAddressErr,
         }
     }
 }
@@ -455,7 +455,7 @@ impl From<ParseError> for AddressError {
             ParseError::WitnessProgram(e) => AddressError::WitnessProgram {
                 error_message: e.to_string(),
             },
-            _ => AddressError::OtherAddressError,
+            _ => AddressError::OtherAddressErr,
         }
     }
 }
@@ -480,7 +480,7 @@ impl From<bdk::bitcoin::consensus::encode::Error> for TransactionError {
             bdk::bitcoin::consensus::encode::Error::UnsupportedSegwitFlag(flag) => {
                 TransactionError::UnsupportedSegwitFlag { flag }
             }
-            _ => TransactionError::OtherTransactionError,
+            _ => TransactionError::OtherTransactionErr,
         }
     }
 }
@@ -500,7 +500,7 @@ impl From<bdk::bitcoin::psbt::ExtractTxError> for ExtractTxError {
             bdk::bitcoin::psbt::ExtractTxError::SendingTooMuch { .. } => {
                 ExtractTxError::SendingTooMuch
             }
-            _ => ExtractTxError::OtherExtractTransactionError,
+            _ => ExtractTxError::OtherExtractTxErr,
         }
     }
 }

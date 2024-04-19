@@ -63,7 +63,7 @@ interface AddressError {
   ExcessiveScriptSize();
   UnrecognizedScript();
   NetworkValidation(Network required, Network found, string address);
-  OtherAddressError();
+  OtherAddressErr();
 };
 
 [Error]
@@ -74,7 +74,7 @@ interface TransactionError {
   NonMinimalVarInt();
   ParseFailed();
   UnsupportedSegwitFlag(u8 flag);
-  OtherTransactionError();
+  OtherTransactionErr();
 };
 
 [Error]
@@ -109,7 +109,7 @@ interface ExtractTxError {
   AbsurdFeeRate(u64 fee_rate);
   MissingInputValue();
   SendingTooMuch();
-  OtherExtractTransactionError();
+  OtherExtractTxErr();
 };
 
 // ------------------------------------------------------------------------
