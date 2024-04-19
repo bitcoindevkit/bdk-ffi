@@ -3,7 +3,7 @@
 # The results of this script can be used for locally testing your SPM package adding a local package
 # to your application pointing at the bdk-swift directory.
 
-rustup install 1.73.0
+rustup install 1.77.1
 rustup component add rust-src
 rustup target add aarch64-apple-ios      # iOS arm64
 rustup target add x86_64-apple-ios       # iOS x86_64
