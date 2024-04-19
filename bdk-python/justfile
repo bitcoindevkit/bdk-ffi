@@ -3,3 +3,9 @@ test:
 
 maclocalbuild:
   bash ./scripts/generate-macos-arm64.sh && python3 setup.py bdist_wheel --verbose
+
+clean:
+  rm -rf ../bdk-ffi/target/
+  rm -rf ./bdkpython.egg-info/
+  rm -rf ./build/
+  rm -rf ./dist/

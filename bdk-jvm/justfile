@@ -12,3 +12,9 @@ build:
 
 publishlocal:
   ./gradlew publishToMavenLocal -P localBuild
+
+clean:
+  rm -rf ../bdk-ffi/target/
+  rm -rf ./build/
+  rm -rf ./lib/build/
+  rm -rf ./plugins/build/

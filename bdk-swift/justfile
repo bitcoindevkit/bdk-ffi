@@ -6,3 +6,6 @@ test:
 
 offlinetests:
   swift test --skip LiveWalletTests --skip LiveTxBuilderTests
+
+clean:
+  rm -rf ../bdk-ffi/target/
