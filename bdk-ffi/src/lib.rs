@@ -22,6 +22,7 @@ use crate::error::CalculateFeeError;
 use crate::error::CannotConnectError;
 use crate::error::CreateTxError;
 use crate::error::DescriptorError;
+use crate::error::DescriptorKeyError;
 use crate::error::EsploraError;
 use crate::error::ExtractTxError;
 use crate::error::FeeRateError;

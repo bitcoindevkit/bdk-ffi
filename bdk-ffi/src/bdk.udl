@@ -34,6 +34,13 @@ interface Bip32Error {
 };
 
 [Error]
+interface DescriptorKeyError {
+  Parse(string e);
+  InvalidKeyType();
+  Bip32(string e);
+};
+
+[Error]
 interface CalculateFeeError {
   MissingTxOut(sequence<OutPoint> out_points);
   NegativeFee(i64 fee);
@@ -369,13 +376,13 @@ interface DerivationPath {
 interface DescriptorSecretKey {
   constructor(Network network, [ByRef] Mnemonic mnemonic, string? password);
 
-  [Name=from_string, Throws=Alpha3Error]
+  [Name=from_string, Throws=DescriptorKeyError]
   constructor(string secret_key);
 
-  [Throws=Alpha3Error]
+  [Throws=DescriptorKeyError]
   DescriptorSecretKey derive([ByRef] DerivationPath path);
 
-  [Throws=Alpha3Error]
+  [Throws=DescriptorKeyError]
   DescriptorSecretKey extend([ByRef] DerivationPath path);
 
   DescriptorPublicKey as_public();
@@ -386,13 +393,13 @@ interface DescriptorSecretKey {
 };
 
 interface DescriptorPublicKey {
-  [Name=from_string, Throws=Alpha3Error]
+  [Name=from_string, Throws=DescriptorKeyError]
   constructor(string public_key);
 
-  [Throws=Alpha3Error]
+  [Throws=DescriptorKeyError]
   DescriptorPublicKey derive([ByRef] DerivationPath path);
 
-  [Throws=Alpha3Error]
+  [Throws=DescriptorKeyError]
   DescriptorPublicKey extend([ByRef] DerivationPath path);
 
   string as_string();

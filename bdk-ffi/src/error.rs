@@ -16,6 +16,7 @@ use bitcoin_internals::hex::display::DisplayHex;
 use crate::error::bip32::Error as BdkBip32Error;
 use bdk::bitcoin::address::ParseError;
 use bdk::keys::bip39::Error as BdkBip39Error;
+use bdk::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
 
 use bdk::bitcoin::bip32;
 
@@ -131,6 +132,18 @@ pub enum CreateTxError {
 
     #[error("Miniscript PSBT error: {e}")]
     MiniscriptPsbt { e: String },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum DescriptorKeyError {
+    #[error("error parsing descriptor key: {e}")]
+    Parse { e: String },
+
+    #[error("error invalid key type")]
+    InvalidKeyType,
+
+    #[error("error bip 32 related: {e}")]
+    Bip32 { e: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -541,6 +554,22 @@ impl From<BdkSignerError> for SignerError {
                 e: format!("{:?}", e),
             },
             BdkSignerError::External(e) => SignerError::External { e },
+        }
+    }
+}
+
+impl From<BdkDescriptorKeyParseError> for DescriptorKeyError {
+    fn from(err: BdkDescriptorKeyParseError) -> DescriptorKeyError {
+        DescriptorKeyError::Parse {
+            e: format!("DescriptorKeyError error: {:?}", err),
+        }
+    }
+}
+
+impl From<bdk::bitcoin::bip32::Error> for DescriptorKeyError {
+    fn from(err: bdk::bitcoin::bip32::Error) -> DescriptorKeyError {
+        DescriptorKeyError::Bip32 {
+            e: format!("BIP32 derivation error: {:?}", err),
         }
     }
 }
