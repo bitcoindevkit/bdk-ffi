@@ -1,7 +1,8 @@
 use crate::bitcoin::{OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    Alpha3Error, CalculateFeeError, PersistenceError, TxidParseError, WalletCreationError,
+    Alpha3Error, CalculateFeeError, PersistenceError, SignerError, TxidParseError,
+    WalletCreationError,
 };
 use crate::types::{
     AddressIndex, AddressInfo, Balance, CanonicalTx, FeeRate, LocalOutput, ScriptAmount,
@@ -93,11 +94,11 @@ impl Wallet {
         &self,
         psbt: Arc<Psbt>,
         // sign_options: Option<SignOptions>,
-    ) -> Result<bool, Alpha3Error> {
+    ) -> Result<bool, SignerError> {
         let mut psbt = psbt.inner.lock().unwrap();
         self.get_wallet()
             .sign(&mut psbt, SignOptions::default())
-            .map_err(|_| Alpha3Error::Generic)
+            .map_err(SignerError::from)
     }
 
     pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {

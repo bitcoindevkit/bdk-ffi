@@ -5,6 +5,7 @@ use bdk::bitcoin::Network;
 use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk::descriptor::DescriptorError as BdkDescriptorError;
 use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
+use bdk::wallet::signer::SignerError as BdkSignerError;
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
 use bdk::wallet::{NewError, NewOrLoadError};
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
@@ -234,6 +235,51 @@ pub enum DescriptorError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum SignerError {
+    #[error("Missing key for signing")]
+    MissingKey,
+
+    #[error("Invalid key provided")]
+    InvalidKey,
+
+    #[error("User canceled operation")]
+    UserCanceled,
+
+    #[error("Input index out of range")]
+    InputIndexOutOfRange,
+
+    #[error("Missing non-witness UTXO information")]
+    MissingNonWitnessUtxo,
+
+    #[error("Invalid non-witness UTXO information provided")]
+    InvalidNonWitnessUtxo,
+
+    #[error("Missing witness UTXO")]
+    MissingWitnessUtxo,
+
+    #[error("Missing witness script")]
+    MissingWitnessScript,
+
+    #[error("Missing HD keypath")]
+    MissingHdKeypath,
+
+    #[error("Non-standard sighash type used")]
+    NonStandardSighash,
+
+    #[error("Invalid sighash type provided")]
+    InvalidSighash,
+
+    #[error("Error with sighash computation: {e}")]
+    SighashError { e: String },
+
+    #[error("Miniscript Psbt error: {e}")]
+    MiniscriptPsbt { e: String },
+
+    #[error("External error: {e}")]
+    External { e: String },
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum ExtractTxError {
     #[error("an absurdly high fee rate of {fee_rate} sat/vbyte")]
     AbsurdFeeRate { fee_rate: u64 },
@@ -271,6 +317,29 @@ impl From<BdkDescriptorError> for DescriptorError {
             BdkDescriptorError::Pk(e) => DescriptorError::Pk { e: e.to_string() },
             BdkDescriptorError::Miniscript(e) => DescriptorError::Miniscript { e: e.to_string() },
             BdkDescriptorError::Hex(e) => DescriptorError::Hex { e: e.to_string() },
+        }
+    }
+}
+
+impl From<BdkSignerError> for SignerError {
+    fn from(error: BdkSignerError) -> Self {
+        match error {
+            BdkSignerError::MissingKey => SignerError::MissingKey,
+            BdkSignerError::InvalidKey => SignerError::InvalidKey,
+            BdkSignerError::UserCanceled => SignerError::UserCanceled,
+            BdkSignerError::InputIndexOutOfRange => SignerError::InputIndexOutOfRange,
+            BdkSignerError::MissingNonWitnessUtxo => SignerError::MissingNonWitnessUtxo,
+            BdkSignerError::InvalidNonWitnessUtxo => SignerError::InvalidNonWitnessUtxo,
+            BdkSignerError::MissingWitnessUtxo => SignerError::MissingWitnessUtxo,
+            BdkSignerError::MissingWitnessScript => SignerError::MissingWitnessScript,
+            BdkSignerError::MissingHdKeypath => SignerError::MissingHdKeypath,
+            BdkSignerError::NonStandardSighash => SignerError::NonStandardSighash,
+            BdkSignerError::InvalidSighash => SignerError::InvalidSighash,
+            BdkSignerError::SighashError(e) => SignerError::SighashError { e: e.to_string() },
+            BdkSignerError::MiniscriptPsbt(e) => SignerError::MiniscriptPsbt {
+                e: format!("{:?}", e),
+            },
+            BdkSignerError::External(e) => SignerError::External { e },
         }
     }
 }
@@ -509,6 +578,7 @@ mod test {
     use crate::error::{EsploraError, PersistenceError, WalletCreationError};
     use crate::CalculateFeeError;
     use crate::OutPoint;
+    use crate::SignerError;
     use bdk::bitcoin::Network;
 
     #[test]
@@ -671,5 +741,56 @@ mod test {
             loaded_network_does_not_match_error.to_string(),
             "loaded network type is not bitcoin, got Some(Testnet)"
         );
+    }
+
+    #[test]
+    fn test_signer_errors() {
+        let errors = vec![
+            (SignerError::MissingKey, "Missing key for signing"),
+            (SignerError::InvalidKey, "Invalid key provided"),
+            (SignerError::UserCanceled, "User canceled operation"),
+            (
+                SignerError::InputIndexOutOfRange,
+                "Input index out of range",
+            ),
+            (
+                SignerError::MissingNonWitnessUtxo,
+                "Missing non-witness UTXO information",
+            ),
+            (
+                SignerError::InvalidNonWitnessUtxo,
+                "Invalid non-witness UTXO information provided",
+            ),
+            (SignerError::MissingWitnessUtxo, "Missing witness UTXO"),
+            (SignerError::MissingWitnessScript, "Missing witness script"),
+            (SignerError::MissingHdKeypath, "Missing HD keypath"),
+            (
+                SignerError::NonStandardSighash,
+                "Non-standard sighash type used",
+            ),
+            (SignerError::InvalidSighash, "Invalid sighash type provided"),
+            (
+                SignerError::SighashError {
+                    e: "dummy error".into(),
+                },
+                "Error with sighash computation: dummy error",
+            ),
+            (
+                SignerError::MiniscriptPsbt {
+                    e: "psbt issue".into(),
+                },
+                "Miniscript Psbt error: psbt issue",
+            ),
+            (
+                SignerError::External {
+                    e: "external error".into(),
+                },
+                "External error: external error",
+            ),
+        ];
+
+        for (error, message) in errors {
+            assert_eq!(error.to_string(), message);
+        }
     }
 }

@@ -100,6 +100,24 @@ interface DescriptorError {
 };
 
 [Error]
+interface SignerError {
+    MissingKey();
+    InvalidKey();
+    UserCanceled();
+    InputIndexOutOfRange();
+    MissingNonWitnessUtxo();
+    InvalidNonWitnessUtxo();
+    MissingWitnessUtxo();
+    MissingWitnessScript();
+    MissingHdKeypath();
+    NonStandardSighash();
+    InvalidSighash();
+    SighashError(string e);
+    MiniscriptPsbt(string e);
+    External(string e);
+};
+
+[Error]
 interface TxidParseError {
   InvalidTxid(string txid);
 };
@@ -213,7 +231,7 @@ interface Wallet {
 
   boolean is_mine([ByRef] Script script);
 
-  [Throws=Alpha3Error]
+  [Throws=SignerError]
   boolean sign(Psbt psbt);
 
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
