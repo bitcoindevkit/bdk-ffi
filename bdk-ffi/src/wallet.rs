@@ -1,8 +1,8 @@
 use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    Alpha3Error, CalculateFeeError, CannotConnectError, PersistenceError, SignerError,
-    TxidParseError, WalletCreationError,
+    Alpha3Error, CalculateFeeError, CannotConnectError, CreateTxError, PersistenceError,
+    SignerError, TxidParseError, WalletCreationError,
 };
 use crate::types::{AddressIndex, AddressInfo, Balance, CanonicalTx, LocalOutput, ScriptAmount};
 
@@ -489,7 +489,7 @@ impl TxBuilder {
     //     })
     // }
 
-    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, Alpha3Error> {
+    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
@@ -499,8 +499,9 @@ impl TxBuilder {
         tx_builder.change_policy(self.change_policy);
         if !self.utxos.is_empty() {
             let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
-            let utxos: &[BdkOutPoint] = &bdk_utxos;
-            tx_builder.add_utxos(utxos)?;
+            tx_builder
+                .add_utxos(&bdk_utxos)
+                .map_err(CreateTxError::from)?;
         }
         if !self.unspendable.is_empty() {
             let bdk_unspendable: Vec<BdkOutPoint> =
@@ -536,7 +537,7 @@ impl TxBuilder {
         //     tx_builder.add_data(self.data.as_slice());
         // }
 
-        let psbt = tx_builder.finish()?;
+        let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
 
         Ok(Arc::new(psbt.into()))
     }

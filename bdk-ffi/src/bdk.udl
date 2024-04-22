@@ -52,6 +52,32 @@ interface WalletCreationError {
 };
 
 [Error]
+interface CreateTxError {
+  Descriptor(string e);
+  Persist(string e);
+  Policy(string e);
+  SpendingPolicyRequired(string kind);
+  Version0();
+  Version1Csv();
+  LockTime(string requested, string required);
+  RbfSequence();
+  RbfSequenceCsv(string rbf, string csv);
+  FeeTooLow(u64 required);
+  FeeRateTooLow(string required);
+  NoUtxosSelected();
+  OutputBelowDustLimit(u64 index);
+  ChangePolicyDescriptor();
+  CoinSelection(string e);
+  InsufficientFunds(u64 needed, u64 available);
+  NoRecipients();
+  Psbt(string e);
+  MissingKeyOrigin(string key);
+  UnknownUtxo(string outpoint);
+  MissingNonWitnessUtxo(string outpoint);
+  MiniscriptPsbt(string e);
+};
+
+[Error]
 interface PersistenceError {
   Write(string e);
 };
@@ -302,7 +328,7 @@ interface TxBuilder {
 
   TxBuilder enable_rbf_with_sequence(u32 nsequence);
 
-  [Throws=Alpha3Error]
+  [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
 };
 

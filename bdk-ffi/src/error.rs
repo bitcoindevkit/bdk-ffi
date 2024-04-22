@@ -4,7 +4,7 @@ use bdk::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
 use bdk::bitcoin::Network;
 use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk::descriptor::DescriptorError as BdkDescriptorError;
-use bdk::wallet::error::{BuildFeeBumpError, CreateTxError};
+use bdk::wallet::error::BuildFeeBumpError;
 use bdk::wallet::signer::SignerError as BdkSignerError;
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
 use bdk::wallet::{NewError, NewOrLoadError};
@@ -19,7 +19,7 @@ use bdk::keys::bip39::Error as BdkBip39Error;
 
 use bdk::bitcoin::bip32;
 
-use std::convert::Infallible;
+use bdk::wallet::error::CreateTxError as BdkCreateTxError;
 use std::convert::TryInto;
 
 #[derive(Debug, thiserror::Error)]
@@ -62,6 +62,75 @@ pub enum Bip32Error {
 
     #[error("Unknown error: {e}")]
     UnknownError { e: String },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CreateTxError {
+    #[error("Descriptor error: {e}")]
+    Descriptor { e: String },
+
+    #[error("Persistence failure: {e}")]
+    Persist { e: String },
+
+    #[error("Policy error: {e}")]
+    Policy { e: String },
+
+    #[error("Spending policy required for {kind}")]
+    SpendingPolicyRequired { kind: String },
+
+    #[error("Unsupported version 0")]
+    Version0,
+
+    #[error("Unsupported version 1 with CSV")]
+    Version1Csv,
+
+    #[error("Lock time conflict: requested {requested}, but required {required}")]
+    LockTime { requested: String, required: String },
+
+    #[error("Transaction requires RBF sequence number")]
+    RbfSequence,
+
+    #[error("RBF sequence: {rbf}, CSV sequence: {csv}")]
+    RbfSequenceCsv { rbf: String, csv: String },
+
+    #[error("Fee too low: {required} sat required")]
+    FeeTooLow { required: u64 },
+
+    #[error("Fee rate too low: {required}")]
+    FeeRateTooLow { required: String },
+
+    #[error("No UTXOs selected for the transaction")]
+    NoUtxosSelected,
+
+    #[error("Output value below dust limit at index {index}")]
+    OutputBelowDustLimit { index: u64 },
+
+    #[error("Change policy descriptor error")]
+    ChangePolicyDescriptor,
+
+    #[error("Coin selection failed: {e}")]
+    CoinSelection { e: String },
+
+    #[error("Insufficient funds: needed {needed} sat, available {available} sat")]
+    InsufficientFunds { needed: u64, available: u64 },
+
+    #[error("Transaction has no recipients")]
+    NoRecipients,
+
+    #[error("PSBT creation error: {e}")]
+    Psbt { e: String },
+
+    #[error("Missing key origin for: {key}")]
+    MissingKeyOrigin { key: String },
+
+    #[error("Reference to an unknown UTXO: {outpoint}")]
+    UnknownUtxo { outpoint: String },
+
+    #[error("Missing non-witness UTXO for outpoint: {outpoint}")]
+    MissingNonWitnessUtxo { outpoint: String },
+
+    #[error("Miniscript PSBT error: {e}")]
+    MiniscriptPsbt { e: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -362,6 +431,72 @@ pub enum ExtractTxError {
     OtherExtractTxErr,
 }
 
+impl From<BdkCreateTxError<std::io::Error>> for CreateTxError {
+    fn from(error: BdkCreateTxError<std::io::Error>) -> Self {
+        match error {
+            BdkCreateTxError::Descriptor(e) => CreateTxError::Descriptor { e: e.to_string() },
+            BdkCreateTxError::Persist(e) => CreateTxError::Persist { e: e.to_string() },
+            BdkCreateTxError::Policy(e) => CreateTxError::Policy { e: e.to_string() },
+            BdkCreateTxError::SpendingPolicyRequired(kind) => {
+                CreateTxError::SpendingPolicyRequired {
+                    kind: format!("{:?}", kind),
+                }
+            }
+            BdkCreateTxError::Version0 => CreateTxError::Version0,
+            BdkCreateTxError::Version1Csv => CreateTxError::Version1Csv,
+            BdkCreateTxError::LockTime {
+                requested,
+                required,
+            } => CreateTxError::LockTime {
+                requested: requested.to_string(),
+                required: required.to_string(),
+            },
+            BdkCreateTxError::RbfSequence => CreateTxError::RbfSequence,
+            BdkCreateTxError::RbfSequenceCsv { rbf, csv } => CreateTxError::RbfSequenceCsv {
+                rbf: rbf.to_string(),
+                csv: csv.to_string(),
+            },
+            BdkCreateTxError::FeeTooLow { required } => CreateTxError::FeeTooLow { required },
+            BdkCreateTxError::FeeRateTooLow { required } => CreateTxError::FeeRateTooLow {
+                required: required.to_string(),
+            },
+            BdkCreateTxError::NoUtxosSelected => CreateTxError::NoUtxosSelected,
+            BdkCreateTxError::OutputBelowDustLimit(index) => CreateTxError::OutputBelowDustLimit {
+                index: index as u64,
+            },
+            BdkCreateTxError::ChangePolicyDescriptor => CreateTxError::ChangePolicyDescriptor,
+            BdkCreateTxError::CoinSelection(e) => CreateTxError::CoinSelection { e: e.to_string() },
+            BdkCreateTxError::InsufficientFunds { needed, available } => {
+                CreateTxError::InsufficientFunds { needed, available }
+            }
+            BdkCreateTxError::NoRecipients => CreateTxError::NoRecipients,
+            BdkCreateTxError::Psbt(e) => CreateTxError::Psbt { e: e.to_string() },
+            BdkCreateTxError::MissingKeyOrigin(key) => CreateTxError::MissingKeyOrigin { key },
+            BdkCreateTxError::UnknownUtxo => CreateTxError::UnknownUtxo {
+                outpoint: "Unknown".to_string(),
+            },
+            BdkCreateTxError::MissingNonWitnessUtxo(outpoint) => {
+                CreateTxError::MissingNonWitnessUtxo {
+                    outpoint: outpoint.to_string(),
+                }
+            }
+            BdkCreateTxError::MiniscriptPsbt(e) => {
+                CreateTxError::MiniscriptPsbt { e: e.to_string() }
+            }
+        }
+    }
+}
+
+impl From<AddUtxoError> for CreateTxError {
+    fn from(error: AddUtxoError) -> Self {
+        match error {
+            AddUtxoError::UnknownUtxo(outpoint) => CreateTxError::UnknownUtxo {
+                outpoint: outpoint.to_string(),
+            },
+        }
+    }
+}
+
 impl From<BdkDescriptorError> for DescriptorError {
     fn from(error: BdkDescriptorError) -> Self {
         match error {
@@ -492,12 +627,6 @@ impl From<BuildFeeBumpError> for Alpha3Error {
     }
 }
 
-impl From<CreateTxError<Infallible>> for Alpha3Error {
-    fn from(_: CreateTxError<Infallible>) -> Self {
-        Alpha3Error::Generic
-    }
-}
-
 impl From<AddUtxoError> for Alpha3Error {
     fn from(_: AddUtxoError) -> Self {
         Alpha3Error::Generic
@@ -540,12 +669,6 @@ impl From<BdkBip32Error> for Bip32Error {
 
 impl From<NewError<std::io::Error>> for Alpha3Error {
     fn from(_: NewError<std::io::Error>) -> Self {
-        Alpha3Error::Generic
-    }
-}
-
-impl From<CreateTxError<std::io::Error>> for Alpha3Error {
-    fn from(_: CreateTxError<std::io::Error>) -> Self {
         Alpha3Error::Generic
     }
 }

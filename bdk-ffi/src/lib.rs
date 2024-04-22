@@ -20,6 +20,7 @@ use crate::error::Bip32Error;
 use crate::error::Bip39Error;
 use crate::error::CalculateFeeError;
 use crate::error::CannotConnectError;
+use crate::error::CreateTxError;
 use crate::error::DescriptorError;
 use crate::error::EsploraError;
 use crate::error::ExtractTxError;
