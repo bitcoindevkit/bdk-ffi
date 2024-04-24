@@ -222,20 +222,6 @@ dictionary CanonicalTx {
 // bdk crate - wallet module
 // ------------------------------------------------------------------------
 
-interface FeeRate {
-  [Name=from_sat_per_vb, Throws=FeeRateError]
-  constructor(u64 sat_per_vb);
-
-  [Name=from_sat_per_kwu]
-  constructor(u64 sat_per_kwu);
-
-  u64 to_sat_per_vb_ceil();
-
-  u64 to_sat_per_vb_floor();
-
-  u64 to_sat_per_kwu();
-};
-
 enum ChangeSpendPolicy {
   "ChangeAllowed",
   "OnlyChange",
@@ -522,4 +508,18 @@ interface Psbt {
 dictionary OutPoint {
   string txid;
   u32 vout;
+};
+
+interface FeeRate {
+  [Name=from_sat_per_vb, Throws=FeeRateError]
+  constructor(u64 sat_per_vb);
+
+  [Name=from_sat_per_kwu]
+  constructor(u64 sat_per_kwu);
+
+  u64 to_sat_per_vb_ceil();
+
+  u64 to_sat_per_vb_floor();
+
+  u64 to_sat_per_kwu();
 };

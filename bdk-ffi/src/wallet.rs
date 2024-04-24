@@ -1,12 +1,10 @@
-use crate::bitcoin::{OutPoint, Psbt, Script, Transaction};
+use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     Alpha3Error, CalculateFeeError, CannotConnectError, PersistenceError, SignerError,
     TxidParseError, WalletCreationError,
 };
-use crate::types::{
-    AddressIndex, AddressInfo, Balance, CanonicalTx, FeeRate, LocalOutput, ScriptAmount,
-};
+use crate::types::{AddressIndex, AddressInfo, Balance, CanonicalTx, LocalOutput, ScriptAmount};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::Network;

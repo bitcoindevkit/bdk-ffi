@@ -1,4 +1,4 @@
-use crate::error::{AddressError, PsbtParseError, TransactionError};
+use crate::error::{AddressError, FeeRateError, PsbtParseError, TransactionError};
 
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
@@ -7,6 +7,7 @@ use bdk::bitcoin::consensus::encode::serialize;
 use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::psbt::ExtractTxError;
 use bdk::bitcoin::Address as BdkAddress;
+use bdk::bitcoin::FeeRate as BdkFeeRate;
 use bdk::bitcoin::Network;
 use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::bitcoin::Psbt as BdkPsbt;
@@ -301,6 +302,35 @@ impl From<&BdkTxOut> for TxOut {
             value: tx_out.value.to_sat(),
             script_pubkey: Arc::new(Script(tx_out.script_pubkey.clone())),
         }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct FeeRate(pub BdkFeeRate);
+
+impl FeeRate {
+    pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
+        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
+        match fee_rate {
+            Some(fee_rate) => Ok(FeeRate(fee_rate)),
+            None => Err(FeeRateError::ArithmeticOverflow),
+        }
+    }
+
+    pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
+        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
+    }
+
+    pub fn to_sat_per_vb_ceil(&self) -> u64 {
+        self.0.to_sat_per_vb_ceil()
+    }
+
+    pub fn to_sat_per_vb_floor(&self) -> u64 {
+        self.0.to_sat_per_vb_floor()
+    }
+
+    pub fn to_sat_per_kwu(&self) -> u64 {
+        self.0.to_sat_per_kwu()
     }
 }
 

@@ -7,6 +7,7 @@ mod types;
 mod wallet;
 
 use crate::bitcoin::Address;
+use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
 use crate::bitcoin::Psbt;
 use crate::bitcoin::Script;
@@ -39,7 +40,6 @@ use crate::types::AddressInfo;
 use crate::types::Balance;
 use crate::types::CanonicalTx;
 use crate::types::ChainPosition;
-use crate::types::FeeRate;
 use crate::types::LocalOutput;
 use crate::types::ScriptAmount;
 use crate::wallet::BumpFeeTxBuilder;

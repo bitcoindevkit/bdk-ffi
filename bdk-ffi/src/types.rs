@@ -1,8 +1,5 @@
-use crate::error::FeeRateError;
-
 use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
 
-use bdk::bitcoin::FeeRate as BdkFeeRate;
 use bdk::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
 use bdk::chain::{ChainPosition as BdkChainPosition, ConfirmationTimeHeightAnchor};
 use bdk::wallet::AddressIndex as BdkAddressIndex;
@@ -42,35 +39,6 @@ impl From<BdkCanonicalTx<'_, Arc<bdk::bitcoin::Transaction>, ConfirmationTimeHei
             transaction: Arc::new(Transaction::from(tx.tx_node.tx.as_ref().clone())),
             chain_position,
         }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct FeeRate(pub BdkFeeRate);
-
-impl FeeRate {
-    pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
-        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
-        match fee_rate {
-            Some(fee_rate) => Ok(FeeRate(fee_rate)),
-            None => Err(FeeRateError::ArithmeticOverflow),
-        }
-    }
-
-    pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
-        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
-    }
-
-    pub fn to_sat_per_vb_ceil(&self) -> u64 {
-        self.0.to_sat_per_vb_ceil()
-    }
-
-    pub fn to_sat_per_vb_floor(&self) -> u64 {
-        self.0.to_sat_per_vb_floor()
-    }
-
-    pub fn to_sat_per_kwu(&self) -> u64 {
-        self.0.to_sat_per_kwu()
     }
 }
 
