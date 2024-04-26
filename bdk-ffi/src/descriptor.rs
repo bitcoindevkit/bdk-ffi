@@ -37,7 +37,7 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = &secret_key.inner;
+        let derivable_key = &secret_key.0;
 
         match derivable_key {
             BdkDescriptorSecretKey::Single(_) => {
@@ -65,7 +65,7 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = &public_key.inner;
+        let derivable_key = &public_key.0;
 
         match derivable_key {
             BdkDescriptorPublicKey::Single(_) => {
@@ -94,7 +94,7 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = &secret_key.inner;
+        let derivable_key = &secret_key.0;
 
         match derivable_key {
             BdkDescriptorSecretKey::Single(_) => {
@@ -122,7 +122,7 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = &public_key.inner;
+        let derivable_key = &public_key.0;
 
         match derivable_key {
             BdkDescriptorPublicKey::Single(_) => {
@@ -151,7 +151,7 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = &secret_key.inner;
+        let derivable_key = &secret_key.0;
 
         match derivable_key {
             BdkDescriptorSecretKey::Single(_) => {
@@ -179,7 +179,7 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = &public_key.inner;
+        let derivable_key = &public_key.0;
 
         match derivable_key {
             BdkDescriptorPublicKey::Single(_) => {
@@ -208,7 +208,7 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network: Network,
     ) -> Self {
-        let derivable_key = &secret_key.inner;
+        let derivable_key = &secret_key.0;
 
         match derivable_key {
             BdkDescriptorSecretKey::Single(_) => {
@@ -236,7 +236,7 @@ impl Descriptor {
         network: Network,
     ) -> Self {
         let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
-        let derivable_key = &public_key.inner;
+        let derivable_key = &public_key.0;
 
         match derivable_key {
             BdkDescriptorPublicKey::Single(_) => {
