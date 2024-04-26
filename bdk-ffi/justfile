@@ -3,3 +3,7 @@ build:
 
 test:
   cargo test --lib
+
+check:
+  cargo fmt
+  cargo clippy
