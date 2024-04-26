@@ -39,18 +39,14 @@ impl From<BdkScriptBuf> for Script {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct Address {
-    inner: BdkAddress<NetworkChecked>,
-}
+pub struct Address(BdkAddress<NetworkChecked>);
 
 impl Address {
     pub fn new(address: String, network: Network) -> Result<Self, AddressError> {
         let parsed_address = address.parse::<bdk::bitcoin::Address<NetworkUnchecked>>()?;
         let network_checked_address = parsed_address.require_network(network)?;
 
-        Ok(Address {
-            inner: network_checked_address,
-        })
+        Ok(Address(network_checked_address))
     }
 
     /// alternative constructor
@@ -76,23 +72,23 @@ impl Address {
     // }
 
     pub fn network(&self) -> Network {
-        *self.inner.network()
+        *self.0.network()
     }
 
     pub fn script_pubkey(&self) -> Arc<Script> {
-        Arc::new(Script(self.inner.script_pubkey()))
+        Arc::new(Script(self.0.script_pubkey()))
     }
 
     pub fn to_qr_uri(&self) -> String {
-        self.inner.to_qr_uri()
+        self.0.to_qr_uri()
     }
 
     pub fn as_string(&self) -> String {
-        self.inner.to_string()
+        self.0.to_string()
     }
 
     pub fn is_valid_for_network(&self, network: Network) -> bool {
-        let address_str = self.inner.to_string();
+        let address_str = self.0.to_string();
         if let Ok(unchecked_address) = address_str.parse::<BdkAddress<NetworkUnchecked>>() {
             unchecked_address.is_valid_for_network(network)
         } else {
@@ -103,13 +99,13 @@ impl Address {
 
 impl From<Address> for BdkAddress {
     fn from(address: Address) -> Self {
-        address.inner
+        address.0
     }
 }
 
 impl From<BdkAddress> for Address {
     fn from(address: BdkAddress) -> Self {
-        Address { inner: address }
+        Address(address)
     }
 }
 
