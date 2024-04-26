@@ -95,7 +95,7 @@ impl Wallet {
         psbt: Arc<Psbt>,
         // sign_options: Option<SignOptions>,
     ) -> Result<bool, SignerError> {
-        let mut psbt = psbt.inner.lock().unwrap();
+        let mut psbt = psbt.0.lock().unwrap();
         self.get_wallet()
             .sign(&mut psbt, SignOptions::default())
             .map_err(SignerError::from)

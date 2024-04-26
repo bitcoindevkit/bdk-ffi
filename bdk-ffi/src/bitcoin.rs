@@ -186,20 +186,16 @@ impl From<&Transaction> for BdkTransaction {
     }
 }
 
-pub struct Psbt {
-    pub(crate) inner: Mutex<BdkPsbt>,
-}
+pub struct Psbt(pub(crate) Mutex<BdkPsbt>);
 
 impl Psbt {
     pub(crate) fn new(psbt_base64: String) -> Result<Self, PsbtParseError> {
         let psbt: BdkPsbt = BdkPsbt::from_str(&psbt_base64)?;
-        Ok(Psbt {
-            inner: Mutex::new(psbt),
-        })
+        Ok(Psbt(Mutex::new(psbt)))
     }
 
     pub(crate) fn serialize(&self) -> String {
-        let psbt = self.inner.lock().unwrap().clone();
+        let psbt = self.0.lock().unwrap().clone();
         psbt.to_string()
     }
 
@@ -210,7 +206,7 @@ impl Psbt {
     // }
 
     pub(crate) fn extract_tx(&self) -> Result<Arc<Transaction>, ExtractTxError> {
-        let tx: BdkTransaction = self.inner.lock().unwrap().clone().extract_tx()?;
+        let tx: BdkTransaction = self.0.lock().unwrap().clone().extract_tx()?;
         let transaction: Transaction = tx.into();
         Ok(Arc::new(transaction))
     }
@@ -254,9 +250,7 @@ impl Psbt {
 
 impl From<BdkPsbt> for Psbt {
     fn from(psbt: BdkPsbt) -> Self {
-        Psbt {
-            inner: Mutex::new(psbt),
-        }
+        Psbt(Mutex::new(psbt))
     }
 }
 
