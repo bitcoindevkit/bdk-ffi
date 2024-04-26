@@ -18,9 +18,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-pub(crate) struct Mnemonic {
-    inner: BdkMnemonic,
-}
+pub(crate) struct Mnemonic(pub(crate) BdkMnemonic);
 
 impl Mnemonic {
     pub(crate) fn new(word_count: WordCount) -> Self {
@@ -32,23 +30,23 @@ impl Mnemonic {
         let generated_key: GeneratedKey<_, BareCtx> =
             BdkMnemonic::generate_with_entropy((word_count, Language::English), entropy).unwrap();
         let mnemonic = BdkMnemonic::parse_in(Language::English, generated_key.to_string()).unwrap();
-        Mnemonic { inner: mnemonic }
+        Mnemonic(mnemonic)
     }
 
     pub(crate) fn from_string(mnemonic: String) -> Result<Self, Bip39Error> {
         BdkMnemonic::from_str(&mnemonic)
-            .map(|m| Mnemonic { inner: m })
+            .map(Mnemonic)
             .map_err(Bip39Error::from)
     }
 
     pub(crate) fn from_entropy(entropy: Vec<u8>) -> Result<Self, Bip39Error> {
         BdkMnemonic::from_entropy(entropy.as_slice())
-            .map(|m| Mnemonic { inner: m })
+            .map(Mnemonic)
             .map_err(Bip39Error::from)
     }
 
     pub(crate) fn as_string(&self) -> String {
-        self.inner.to_string()
+        self.0.to_string()
     }
 }
 
@@ -73,7 +71,7 @@ pub struct DescriptorSecretKey {
 
 impl DescriptorSecretKey {
     pub(crate) fn new(network: Network, mnemonic: &Mnemonic, password: Option<String>) -> Self {
-        let mnemonic = mnemonic.inner.clone();
+        let mnemonic = mnemonic.0.clone();
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key().unwrap();
         let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
             origin: None,
