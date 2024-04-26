@@ -110,19 +110,17 @@ impl From<BdkAddress> for Address {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Transaction {
-    inner: BdkTransaction,
-}
+pub struct Transaction(BdkTransaction);
 
 impl Transaction {
     pub fn new(transaction_bytes: Vec<u8>) -> Result<Self, TransactionError> {
         let mut decoder = Cursor::new(transaction_bytes);
         let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
-        Ok(Transaction { inner: tx })
+        Ok(Transaction(tx))
     }
 
     pub fn txid(&self) -> String {
-        self.inner.txid().to_string()
+        self.0.txid().to_string()
     }
 
     pub fn weight(&self) -> u64 {
@@ -130,31 +128,31 @@ impl Transaction {
     }
 
     pub fn total_size(&self) -> u64 {
-        self.inner.total_size() as u64
+        self.0.total_size() as u64
     }
 
     pub fn vsize(&self) -> u64 {
-        self.inner.vsize() as u64
+        self.0.vsize() as u64
     }
 
     pub fn is_coinbase(&self) -> bool {
-        self.inner.is_coinbase()
+        self.0.is_coinbase()
     }
 
     pub fn is_explicitly_rbf(&self) -> bool {
-        self.inner.is_explicitly_rbf()
+        self.0.is_explicitly_rbf()
     }
 
     pub fn is_lock_time_enabled(&self) -> bool {
-        self.inner.is_lock_time_enabled()
+        self.0.is_lock_time_enabled()
     }
 
     pub fn version(&self) -> i32 {
-        self.inner.version.0
+        self.0.version.0
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        serialize(&self.inner)
+        serialize(&self.0)
     }
 
     // fn lock_time(&self) -> u32 {
@@ -172,19 +170,19 @@ impl Transaction {
 
 impl From<BdkTransaction> for Transaction {
     fn from(tx: BdkTransaction) -> Self {
-        Transaction { inner: tx }
+        Transaction(tx)
     }
 }
 
 impl From<&BdkTransaction> for Transaction {
     fn from(tx: &BdkTransaction) -> Self {
-        Transaction { inner: tx.clone() }
+        Transaction(tx.clone())
     }
 }
 
 impl From<&Transaction> for BdkTransaction {
     fn from(tx: &Transaction) -> Self {
-        tx.inner.clone()
+        tx.0.clone()
     }
 }
 
