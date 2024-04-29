@@ -155,7 +155,7 @@ dependencies = [
 
 [[package]]
 name = "bdk-ffi"
-version = "1.0.0-alpha.9"
+version = "1.0.0-alpha.10"
 dependencies = [
  "assert_matches",
  "bdk",
