@@ -23,7 +23,7 @@ jobs:
           - cp312-cp312
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -40,7 +40,7 @@ jobs:
         # see issue #350 for more information
         run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_28_x86_64 --verbose
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: bdkpython-manylinux_2_28_x86_64-${{ matrix.python }}
           path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
@@ -61,7 +61,7 @@ jobs:
           - "3.12"
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -79,7 +79,7 @@ jobs:
         run: python3 setup.py bdist_wheel --plat-name macosx_11_0_arm64 --verbose
 
       - name: "Upload artifacts"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bdkpython-macos-arm64-${{ matrix.python }}
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
@@ -100,7 +100,7 @@ jobs:
           - "3.12"
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -117,7 +117,7 @@ jobs:
         # see issue #350 for more information
         run: python3 setup.py bdist_wheel --plat-name macosx_11_0_x86_64 --verbose
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: bdkpython-macos-x86_64-${{ matrix.python }}
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
@@ -138,7 +138,7 @@ jobs:
           - "3.12"
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
       - uses: actions/setup-python@v4
@@ -152,7 +152,7 @@ jobs:
         run: python setup.py bdist_wheel --verbose
 
       - name: "Upload artifacts"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bdkpython-win-${{ matrix.python }}
           path: D:\a\bdk-ffi\bdk-ffi\bdk-python\dist\*.whl
@@ -166,7 +166,7 @@ jobs:
     needs: [build-manylinux_2_28-x86_64-wheels, build-macos-arm64-wheels, build-macos-x86_64-wheels, build-windows-wheels]
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Download artifacts in dist/ directory"
         uses: actions/download-artifact@v3
