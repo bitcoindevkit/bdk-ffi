@@ -1,8 +1,8 @@
 use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    Alpha3Error, CalculateFeeError, CannotConnectError, CreateTxError, PersistenceError,
-    SignerError, TxidParseError, WalletCreationError,
+    CalculateFeeError, CannotConnectError, CreateTxError, PersistenceError, SignerError,
+    TxidParseError, WalletCreationError,
 };
 use crate::types::{AddressIndex, AddressInfo, Balance, CanonicalTx, LocalOutput, ScriptAmount};
 
@@ -390,13 +390,17 @@ impl BumpFeeTxBuilder {
         })
     }
 
-    pub(crate) fn finish(&self, wallet: &Wallet) -> Result<Arc<Psbt>, Alpha3Error> {
-        let txid = Txid::from_str(self.txid.as_str()).map_err(|_| Alpha3Error::Generic)?;
+    pub(crate) fn finish(&self, wallet: &Wallet) -> Result<Arc<Psbt>, CreateTxError> {
+        let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
+            outpoint: self.txid.clone(),
+        })?;
         let mut wallet = wallet.get_wallet();
-        let mut tx_builder = wallet.build_fee_bump(txid)?;
+        let mut tx_builder = wallet.build_fee_bump(txid).map_err(CreateTxError::from)?;
         tx_builder.fee_rate(self.fee_rate.0);
         if let Some(allow_shrinking) = &self.allow_shrinking {
-            tx_builder.allow_shrinking(allow_shrinking.0.clone())?;
+            tx_builder
+                .allow_shrinking(allow_shrinking.0.clone())
+                .map_err(CreateTxError::from)?;
         }
         if let Some(rbf) = &self.rbf {
             match *rbf {
@@ -408,7 +412,7 @@ impl BumpFeeTxBuilder {
                 }
             }
         }
-        let psbt: BdkPsbt = tx_builder.finish().map_err(|_| Alpha3Error::Generic)?;
+        let psbt: BdkPsbt = tx_builder.finish()?;
 
         Ok(Arc::new(psbt.into()))
     }

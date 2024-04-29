@@ -15,7 +15,6 @@ use crate::bitcoin::Transaction;
 use crate::bitcoin::TxOut;
 use crate::descriptor::Descriptor;
 use crate::error::AddressError;
-use crate::error::Alpha3Error;
 use crate::error::Bip32Error;
 use crate::error::Bip39Error;
 use crate::error::CalculateFeeError;

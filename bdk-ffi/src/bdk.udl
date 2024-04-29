@@ -5,11 +5,6 @@ namespace bdk {};
 // ------------------------------------------------------------------------
 
 [Error]
-enum Alpha3Error {
-  "Generic"
-};
-
-[Error]
 interface Bip39Error {
   BadWordCount(u64 word_count);
   UnknownWord(u64 index);
@@ -348,7 +343,7 @@ interface BumpFeeTxBuilder {
 
   BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
 
-  [Throws=Alpha3Error]
+  [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
 };
 

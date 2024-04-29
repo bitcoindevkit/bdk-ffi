@@ -7,7 +7,7 @@ use bdk::descriptor::DescriptorError as BdkDescriptorError;
 use bdk::wallet::error::BuildFeeBumpError;
 use bdk::wallet::signer::SignerError as BdkSignerError;
 use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
-use bdk::wallet::{NewError, NewOrLoadError};
+use bdk::wallet::NewOrLoadError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_file_store::FileError as BdkFileError;
 use bdk_file_store::IterError;
@@ -22,12 +22,6 @@ use bdk::bitcoin::bip32;
 
 use bdk::wallet::error::CreateTxError as BdkCreateTxError;
 use std::convert::TryInto;
-
-#[derive(Debug, thiserror::Error)]
-pub enum Alpha3Error {
-    #[error("generic error in ffi")]
-    Generic,
-}
 
 #[derive(Debug, thiserror::Error)]
 pub enum Bip32Error {
@@ -510,6 +504,38 @@ impl From<AddUtxoError> for CreateTxError {
     }
 }
 
+impl From<AllowShrinkingError> for CreateTxError {
+    fn from(error: AllowShrinkingError) -> Self {
+        match error {
+            AllowShrinkingError::MissingScriptPubKey(_script) => {
+                CreateTxError::ChangePolicyDescriptor
+            }
+        }
+    }
+}
+
+impl From<BuildFeeBumpError> for CreateTxError {
+    fn from(error: BuildFeeBumpError) -> Self {
+        match error {
+            BuildFeeBumpError::UnknownUtxo(outpoint) => CreateTxError::UnknownUtxo {
+                outpoint: outpoint.to_string(),
+            },
+            BuildFeeBumpError::TransactionNotFound(txid) => CreateTxError::UnknownUtxo {
+                outpoint: txid.to_string(),
+            },
+            BuildFeeBumpError::TransactionConfirmed(txid) => CreateTxError::UnknownUtxo {
+                outpoint: txid.to_string(),
+            },
+            BuildFeeBumpError::IrreplaceableTransaction(txid) => CreateTxError::UnknownUtxo {
+                outpoint: txid.to_string(),
+            },
+            BuildFeeBumpError::FeeRateUnavailable => CreateTxError::FeeRateTooLow {
+                required: "unavailable".to_string(),
+            },
+        }
+    }
+}
+
 impl From<BdkDescriptorError> for DescriptorError {
     fn from(error: BdkDescriptorError) -> Self {
         match error {
@@ -644,30 +670,6 @@ impl From<std::io::Error> for PersistenceError {
     }
 }
 
-impl From<AllowShrinkingError> for Alpha3Error {
-    fn from(_: AllowShrinkingError) -> Self {
-        Alpha3Error::Generic
-    }
-}
-
-impl From<BuildFeeBumpError> for Alpha3Error {
-    fn from(_: BuildFeeBumpError) -> Self {
-        Alpha3Error::Generic
-    }
-}
-
-impl From<AddUtxoError> for Alpha3Error {
-    fn from(_: AddUtxoError) -> Self {
-        Alpha3Error::Generic
-    }
-}
-
-impl From<bdk::bitcoin::bip32::Error> for Alpha3Error {
-    fn from(_: bdk::bitcoin::bip32::Error) -> Self {
-        Alpha3Error::Generic
-    }
-}
-
 impl From<BdkBip32Error> for Bip32Error {
     fn from(error: BdkBip32Error) -> Self {
         match error {
@@ -693,12 +695,6 @@ impl From<BdkBip32Error> for Bip32Error {
                 e: format!("Unhandled error: {:?}", error),
             },
         }
-    }
-}
-
-impl From<NewError<std::io::Error>> for Alpha3Error {
-    fn from(_: NewError<std::io::Error>) -> Self {
-        Alpha3Error::Generic
     }
 }
 
