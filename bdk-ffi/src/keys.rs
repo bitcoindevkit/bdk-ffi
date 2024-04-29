@@ -113,7 +113,7 @@ impl DescriptorSecretKey {
         }
     }
 
-    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, Alpha3Error> {
+    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let descriptor_secret_key = &self.0;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_secret_key {
@@ -198,7 +198,7 @@ impl DescriptorPublicKey {
         }
     }
 
-    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, Alpha3Error> {
+    pub(crate) fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let descriptor_public_key = &self.0;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_public_key {

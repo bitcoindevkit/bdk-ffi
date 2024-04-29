@@ -124,7 +124,7 @@ impl Transaction {
     }
 
     pub fn weight(&self) -> u64 {
-        self.inner.weight().to_wu()
+        self.0.weight().to_wu()
     }
 
     pub fn total_size(&self) -> u64 {
