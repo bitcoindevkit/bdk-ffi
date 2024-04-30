@@ -56,5 +56,3 @@ use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::KeychainKind;
 
 uniffi::include_scaffolding!("bdk");
-
-// TODO: TxIn, Payload

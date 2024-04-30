@@ -49,28 +49,6 @@ impl Address {
         Ok(Address(network_checked_address))
     }
 
-    /// alternative constructor
-    // fn from_script(script: Arc<Script>, network: Network) -> Result<Self, BdkError> {
-    //     BdkAddress::from_script(&script.inner, network)
-    //         .map(|a| Address { inner: a })
-    //         .map_err(|e| BdkError::Generic(e.to_string()))
-    // }
-    //
-    // fn payload(&self) -> Payload {
-    //     match &self.inner.payload.clone() {
-    //         BdkPayload::PubkeyHash(pubkey_hash) => Payload::PubkeyHash {
-    //             pubkey_hash: pubkey_hash.to_vec(),
-    //         },
-    //         BdkPayload::ScriptHash(script_hash) => Payload::ScriptHash {
-    //             script_hash: script_hash.to_vec(),
-    //         },
-    //         BdkPayload::WitnessProgram { version, program } => Payload::WitnessProgram {
-    //             version: *version,
-    //             program: program.clone(),
-    //         },
-    //     }
-    // }
-
     pub fn network(&self) -> Network {
         *self.0.network()
     }
@@ -154,18 +132,6 @@ impl Transaction {
     pub fn serialize(&self) -> Vec<u8> {
         serialize(&self.0)
     }
-
-    // fn lock_time(&self) -> u32 {
-    //     self.inner.lock_time.0
-    // }
-
-    // fn input(&self) -> Vec<TxIn> {
-    //     self.inner.input.iter().map(|x| x.into()).collect()
-    // }
-    //
-    // fn output(&self) -> Vec<TxOut> {
-    //     self.inner.output.iter().map(|x| x.into()).collect()
-    // }
 }
 
 impl From<BdkTransaction> for Transaction {
@@ -199,53 +165,11 @@ impl Psbt {
         psbt.to_string()
     }
 
-    // pub(crate) fn txid(&self) -> String {
-    //     let tx = self.inner.lock().unwrap().clone().extract_tx();
-    //     let txid = tx.txid();
-    //     txid.to_hex()
-    // }
-
     pub(crate) fn extract_tx(&self) -> Result<Arc<Transaction>, ExtractTxError> {
         let tx: BdkTransaction = self.0.lock().unwrap().clone().extract_tx()?;
         let transaction: Transaction = tx.into();
         Ok(Arc::new(transaction))
     }
-
-    // /// Combines this PartiallySignedTransaction with other PSBT as described by BIP 174.
-    // ///
-    // /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
-    // pub(crate) fn combine(
-    //     &self,
-    //     other: Arc<PartiallySignedTransaction>,
-    // ) -> Result<Arc<PartiallySignedTransaction>, BdkError> {
-    //     let other_psbt = other.inner.lock().unwrap().clone();
-    //     let mut original_psbt = self.inner.lock().unwrap().clone();
-    //
-    //     original_psbt.combine(other_psbt)?;
-    //     Ok(Arc::new(PartiallySignedTransaction {
-    //         inner: Mutex::new(original_psbt),
-    //     }))
-    // }
-
-    // /// The total transaction fee amount, sum of input amounts minus sum of output amounts, in Sats.
-    // /// If the PSBT is missing a TxOut for an input returns None.
-    // pub(crate) fn fee_amount(&self) -> Option<u64> {
-    //     self.inner.lock().unwrap().fee_amount()
-    // }
-
-    // /// The transaction's fee rate. This value will only be accurate if calculated AFTER the
-    // /// `PartiallySignedTransaction` is finalized and all witness/signature data is added to the
-    // /// transaction.
-    // /// If the PSBT is missing a TxOut for an input returns None.
-    // pub(crate) fn fee_rate(&self) -> Option<Arc<FeeRate>> {
-    //     self.inner.lock().unwrap().fee_rate().map(Arc::new)
-    // }
-
-    // /// Serialize the PSBT data structure as a String of JSON.
-    // pub(crate) fn json_serialize(&self) -> String {
-    //     let psbt = self.inner.lock().unwrap();
-    //     serde_json::to_string(psbt.deref()).unwrap()
-    // }
 }
 
 impl From<BdkPsbt> for Psbt {

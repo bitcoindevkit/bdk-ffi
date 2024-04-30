@@ -58,6 +58,4 @@ impl EsploraClient {
             .broadcast(&bdk_transaction)
             .map_err(EsploraError::from)
     }
-
-    // pub fn estimate_fee();
 }
