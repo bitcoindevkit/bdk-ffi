@@ -17,6 +17,11 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             OS.OTHER -> throw Error("Cannot build Android library from current architecture")
         }
 
+        // if ANDROID_NDK_ROOT is not set, stop build
+        if (System.getenv("ANDROID_NDK_ROOT") == null) {
+            throw IllegalStateException("ANDROID_NDK_ROOT environment variable is not set; cannot build library")
+        }
+
         // arm64-v8a is the most popular hardware architecture for Android
         val buildAndroidAarch64Binary by tasks.register<Exec>("buildAndroidAarch64Binary") {
 
@@ -25,13 +30,6 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             executable("cargo")
             args(cargoArgs)
-
-            // if ANDROID_NDK_ROOT is not set then set it to github actions default
-            if (System.getenv("ANDROID_NDK_ROOT") == null) {
-                environment(
-                    Pair("ANDROID_NDK_ROOT", "${System.getenv("ANDROID_SDK_ROOT")}/ndk-bundle")
-                )
-            }
 
             environment(
                 // add build toolchain to PATH
@@ -56,13 +54,6 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             executable("cargo")
             args(cargoArgs)
 
-            // if ANDROID_NDK_ROOT is not set then set it to github actions default
-            if (System.getenv("ANDROID_NDK_ROOT") == null) {
-                environment(
-                    Pair("ANDROID_NDK_ROOT", "${System.getenv("ANDROID_SDK_ROOT")}/ndk-bundle")
-                )
-            }
-
             environment(
                 // add build toolchain to PATH
                 Pair("PATH", "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
@@ -85,13 +76,6 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
 
             executable("cargo")
             args(cargoArgs)
-
-            // if ANDROID_NDK_ROOT is not set then set it to github actions default
-            if (System.getenv("ANDROID_NDK_ROOT") == null) {
-                environment(
-                    Pair("ANDROID_NDK_ROOT", "${System.getenv("ANDROID_SDK_ROOT")}/ndk-bundle")
-                )
-            }
 
             environment(
                 // add build toolchain to PATH

@@ -48,12 +48,17 @@ rustup default 1.77.1
 rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
 ```
 5. Install Android SDK and Build-Tools for API level 30+
-6. Setup `$ANDROID_SDK_ROOT` and `$ANDROID_NDK_ROOT` path variables (which are required by the
-   build tool), for example (note that currently, NDK version 25.2.9519653 or above is required):
+6. Setup `ANDROID_SDK_ROOT` and `ANDROID_NDK_ROOT` path variables which are required by the build tool. Note that currently, NDK version 25.2.9519653 or above is required. For example:
 ```shell
-export ANDROID_SDK_ROOT=~/Android/Sdk
+# macOS
+export ANDROID_SDK_ROOT=~/Library/Android/sdk
+export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
+
+# linux
+export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
 export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
 ```
+
 7. Build kotlin bindings
  ```sh
  # build Android library
