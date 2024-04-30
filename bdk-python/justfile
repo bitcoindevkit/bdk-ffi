@@ -1,5 +1,5 @@
 test:
-  python -m unittest --verbose
+  python3 -m unittest --verbose
 
 maclocalbuild:
   bash ./scripts/generate-macos-arm64.sh && python3 setup.py bdist_wheel --verbose
