@@ -12,13 +12,14 @@ rustup target add aarch64-apple-darwin   # mac M1
 rustup target add x86_64-apple-darwin    # mac x86_64
 
 cd ../bdk-ffi/ || exit
-cargo run --bin uniffi-bindgen generate src/bdk.udl --language swift --out-dir ../bdk-swift/Sources/BitcoinDevKit --no-format
 
 cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-darwin
 cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-darwin
 cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-ios
 cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-ios
 cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-ios-sim
+
+cargo run --bin uniffi-bindgen generate --library ./target/aarch64-apple-ios/release-smaller/libbdkffi.dylib --language swift --out-dir ../bdk-swift/Sources/BitcoinDevKit --no-format
 
 mkdir -p target/lipo-ios-sim/release-smaller
 lipo target/aarch64-apple-ios-sim/release-smaller/libbdkffi.a target/x86_64-apple-ios/release-smaller/libbdkffi.a -create -output target/lipo-ios-sim/release-smaller/libbdkffi.a

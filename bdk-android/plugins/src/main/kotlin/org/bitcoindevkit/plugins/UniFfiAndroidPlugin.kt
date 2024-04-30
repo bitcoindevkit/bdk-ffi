@@ -123,14 +123,14 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
         val generateAndroidBindings by tasks.register<Exec>("generateAndroidBindings") {
             dependsOn(moveNativeAndroidLibs)
 
-            // val libraryPath = "${project.projectDir}/../../bdk-ffi/target/aarch64-linux-android/release-smaller/libbdkffi.so"
-            // workingDir("${project.projectDir}/../../bdk-ffi")
-            // val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "--library", libraryPath, "--language", "kotlin", "--out-dir", "../bdk-android/lib/src/main/kotlin", "--no-format")
+            val libraryPath = "${project.projectDir}/../../bdk-ffi/target/aarch64-linux-android/release-smaller/libbdkffi.so"
+            workingDir("${project.projectDir}/../../bdk-ffi")
+            val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "--library", libraryPath, "--language", "kotlin", "--out-dir", "../bdk-android/lib/src/main/kotlin", "--no-format")
 
             // The code above worked for uniffi 0.24.3 using the --library flag
             // The code below works for uniffi 0.23.0
-            workingDir("${project.projectDir}/../../bdk-ffi")
-            val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--config", "uniffi-android.toml", "--out-dir", "../bdk-android/lib/src/main/kotlin", "--no-format")
+            // workingDir("${project.projectDir}/../../bdk-ffi")
+            // val cargoArgs: List<String> = listOf("run", "--bin", "uniffi-bindgen", "generate", "src/bdk.udl", "--language", "kotlin", "--config", "uniffi-android.toml", "--out-dir", "../bdk-android/lib/src/main/kotlin", "--no-format")
 
             executable("cargo")
             args(cargoArgs)
