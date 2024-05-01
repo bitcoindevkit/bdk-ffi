@@ -6,7 +6,7 @@ use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk::descriptor::DescriptorError as BdkDescriptorError;
 use bdk::wallet::error::BuildFeeBumpError;
 use bdk::wallet::signer::SignerError as BdkSignerError;
-use bdk::wallet::tx_builder::{AddUtxoError, AllowShrinkingError};
+use bdk::wallet::tx_builder::AddUtxoError;
 use bdk::wallet::NewOrLoadError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_file_store::FileError as BdkFileError;
@@ -500,16 +500,6 @@ impl From<AddUtxoError> for CreateTxError {
             AddUtxoError::UnknownUtxo(outpoint) => CreateTxError::UnknownUtxo {
                 outpoint: outpoint.to_string(),
             },
-        }
-    }
-}
-
-impl From<AllowShrinkingError> for CreateTxError {
-    fn from(error: AllowShrinkingError) -> Self {
-        match error {
-            AllowShrinkingError::MissingScriptPubKey(_script) => {
-                CreateTxError::ChangePolicyDescriptor
-            }
         }
     }
 }

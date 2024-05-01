@@ -355,7 +355,6 @@ impl TxBuilder {
 pub(crate) struct BumpFeeTxBuilder {
     pub(crate) txid: String,
     pub(crate) fee_rate: Arc<FeeRate>,
-    pub(crate) allow_shrinking: Option<Arc<Script>>,
     pub(crate) rbf: Option<RbfValue>,
 }
 
@@ -364,16 +363,8 @@ impl BumpFeeTxBuilder {
         Self {
             txid,
             fee_rate,
-            allow_shrinking: None,
             rbf: None,
         }
-    }
-
-    pub(crate) fn allow_shrinking(&self, script_pubkey: Arc<Script>) -> Arc<Self> {
-        Arc::new(Self {
-            allow_shrinking: Some(script_pubkey),
-            ..self.clone()
-        })
     }
 
     pub(crate) fn enable_rbf(&self) -> Arc<Self> {
@@ -397,11 +388,6 @@ impl BumpFeeTxBuilder {
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_fee_bump(txid).map_err(CreateTxError::from)?;
         tx_builder.fee_rate(self.fee_rate.0);
-        if let Some(allow_shrinking) = &self.allow_shrinking {
-            tx_builder
-                .allow_shrinking(allow_shrinking.0.clone())
-                .map_err(CreateTxError::from)?;
-        }
         if let Some(rbf) = &self.rbf {
             match *rbf {
                 RbfValue::Default => {
