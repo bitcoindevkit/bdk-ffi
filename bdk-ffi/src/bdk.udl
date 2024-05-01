@@ -5,6 +5,34 @@ namespace bdk {};
 // ------------------------------------------------------------------------
 
 [Error]
+interface AddressError {
+  Base58();
+  Bech32();
+  WitnessVersion(string error_message);
+  WitnessProgram(string error_message);
+  UncompressedPubkey();
+  ExcessiveScriptSize();
+  UnrecognizedScript();
+  NetworkValidation(Network required, Network found, string address);
+  OtherAddressErr();
+};
+
+[Error]
+interface Bip32Error {
+    CannotDeriveFromHardenedKey();
+    Secp256k1(string error_message);
+    InvalidChildNumber(u32 child_number);
+    InvalidChildNumberFormat();
+    InvalidDerivationPathFormat();
+    UnknownVersion(string version);
+    WrongExtendedKeyLength(u32 length);
+    Base58(string error_message);
+    Hex(string error_message);
+    InvalidPublicKeyHexLength(u32 length);
+    UnknownError(string error_message);
+};
+
+[Error]
 interface Bip39Error {
   BadWordCount(u64 word_count);
   UnknownWord(u64 index);
@@ -14,50 +42,21 @@ interface Bip39Error {
 };
 
 [Error]
-interface Bip32Error {
-    CannotDeriveFromHardenedKey();
-    Secp256k1(string e);
-    InvalidChildNumber(u32 child_number);
-    InvalidChildNumberFormat();
-    InvalidDerivationPathFormat();
-    UnknownVersion(string version);
-    WrongExtendedKeyLength(u32 length);
-    Base58(string e);
-    Hex(string e);
-    InvalidPublicKeyHexLength(u32 length);
-    UnknownError(string e);
-};
-
-[Error]
-interface DescriptorKeyError {
-  Parse(string e);
-  InvalidKeyType();
-  Bip32(string e);
-};
-
-[Error]
 interface CalculateFeeError {
   MissingTxOut(sequence<OutPoint> out_points);
   NegativeFee(i64 fee);
 };
 
 [Error]
-interface WalletCreationError {
-  Io(string e);
-  InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
-  Descriptor();
-  Write();
-  Load();
-  NotInitialized();
-  LoadedGenesisDoesNotMatch();
-  LoadedNetworkDoesNotMatch(Network expected, Network? got);
+interface CannotConnectError {
+  Include(u32 height);
 };
 
 [Error]
 interface CreateTxError {
-  Descriptor(string e);
-  Persist(string e);
-  Policy(string e);
+  Descriptor(string error_message);
+  Persist(string error_message);
+  Policy(string error_message);
   SpendingPolicyRequired(string kind);
   Version0();
   Version1Csv();
@@ -69,19 +68,37 @@ interface CreateTxError {
   NoUtxosSelected();
   OutputBelowDustLimit(u64 index);
   ChangePolicyDescriptor();
-  CoinSelection(string e);
+  CoinSelection(string error_message);
   InsufficientFunds(u64 needed, u64 available);
   NoRecipients();
-  Psbt(string e);
+  Psbt(string error_message);
   MissingKeyOrigin(string key);
   UnknownUtxo(string outpoint);
   MissingNonWitnessUtxo(string outpoint);
-  MiniscriptPsbt(string e);
+  MiniscriptPsbt(string error_message);
 };
 
 [Error]
-interface PersistenceError {
-  Write(string e);
+interface DescriptorError {
+    InvalidHdKeyPath();
+    InvalidDescriptorChecksum();
+    HardenedDerivationXpub();
+    MultiPath();
+    Key(string error_message);
+    Policy(string error_message);
+    InvalidDescriptorCharacter(string char);
+    Bip32(string error_message);
+    Base58(string error_message);
+    Pk(string error_message);
+    Miniscript(string error_message);
+    Hex(string error_message);
+};
+
+[Error]
+interface DescriptorKeyError {
+  Parse(string error_message);
+  InvalidKeyType();
+  Bip32(string error_message);
 };
 
 [Error]
@@ -101,54 +118,27 @@ interface EsploraError {
 };
 
 [Error]
+interface ExtractTxError {
+  AbsurdFeeRate(u64 fee_rate);
+  MissingInputValue();
+  SendingTooMuch();
+  OtherExtractTxErr();
+};
+
+[Error]
 enum FeeRateError {
   "ArithmeticOverflow"
 };
 
 [Error]
-interface AddressError {
-  Base58();
-  Bech32();
-  WitnessVersion(string error_message);
-  WitnessProgram(string error_message);
-  UncompressedPubkey();
-  ExcessiveScriptSize();
-  UnrecognizedScript();
-  NetworkValidation(Network required, Network found, string address);
-  OtherAddressErr();
-};
-
-[Error]
-interface TransactionError {
-  Io();
-  OversizedVectorAllocation();
-  InvalidChecksum(string expected, string actual);
-  NonMinimalVarInt();
-  ParseFailed();
-  UnsupportedSegwitFlag(u8 flag);
-  OtherTransactionErr();
+interface PersistenceError {
+  Write(string error_message);
 };
 
 [Error]
 interface PsbtParseError {
-  PsbtEncoding(string e);
-  Base64Encoding(string e);
-};
-
-[Error]
-interface DescriptorError {
-    InvalidHdKeyPath();
-    InvalidDescriptorChecksum();
-    HardenedDerivationXpub();
-    MultiPath();
-    Key(string e);
-    Policy(string e);
-    InvalidDescriptorCharacter(string char);
-    Bip32(string e);
-    Base58(string e);
-    Pk(string e);
-    Miniscript(string e);
-    Hex(string e);
+  PsbtEncoding(string error_message);
+  Base64Encoding(string error_message);
 };
 
 [Error]
@@ -164,9 +154,20 @@ interface SignerError {
     MissingHdKeypath();
     NonStandardSighash();
     InvalidSighash();
-    SighashError(string e);
-    MiniscriptPsbt(string e);
-    External(string e);
+    SighashError(string error_message);
+    MiniscriptPsbt(string error_message);
+    External(string error_message);
+};
+
+[Error]
+interface TransactionError {
+  Io();
+  OversizedVectorAllocation();
+  InvalidChecksum(string expected, string actual);
+  NonMinimalVarInt();
+  ParseFailed();
+  UnsupportedSegwitFlag(u8 flag);
+  OtherTransactionErr();
 };
 
 [Error]
@@ -175,16 +176,15 @@ interface TxidParseError {
 };
 
 [Error]
-interface ExtractTxError {
-  AbsurdFeeRate(u64 fee_rate);
-  MissingInputValue();
-  SendingTooMuch();
-  OtherExtractTxErr();
-};
-
-[Error]
-interface CannotConnectError {
-  Include(u32 height);
+interface WalletCreationError {
+  Io(string error_message);
+  InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
+  Descriptor();
+  Write();
+  Load();
+  NotInitialized();
+  LoadedGenesisDoesNotMatch();
+  LoadedNetworkDoesNotMatch(Network expected, Network? got);
 };
 
 // ------------------------------------------------------------------------
