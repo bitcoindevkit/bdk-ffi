@@ -20,6 +20,8 @@ use bdk::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyPars
 
 use bdk::bitcoin::bip32;
 
+use bdk::chain;
+
 use bdk::wallet::error::CreateTxError as BdkCreateTxError;
 use std::convert::TryInto;
 
@@ -543,6 +545,14 @@ impl From<BdkCalculateFeeError> for CalculateFeeError {
                 out_points: out_points.iter().map(|op| op.into()).collect(),
             },
             BdkCalculateFeeError::NegativeFee(fee) => CalculateFeeError::NegativeFee { fee },
+        }
+    }
+}
+
+impl From<chain::local_chain::CannotConnectError> for CannotConnectError {
+    fn from(error: chain::local_chain::CannotConnectError) -> Self {
+        CannotConnectError::Include {
+            height: error.try_include_height,
         }
     }
 }

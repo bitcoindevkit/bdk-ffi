@@ -59,9 +59,7 @@ impl Wallet {
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
         self.get_wallet()
             .apply_update(update.0.clone())
-            .map_err(|e| CannotConnectError::Include {
-                height: e.try_include_height,
-            })
+            .map_err(CannotConnectError::from)
     }
 
     // TODO: This is the fallible version of get_internal_address; should I rename it to get_internal_address?
