@@ -180,10 +180,9 @@ interface WalletCreationError {
   Io(string error_message);
   InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
   Descriptor();
-  Write();
-  Load();
+  Persist(string error_message);
   NotInitialized();
-  LoadedGenesisDoesNotMatch();
+  LoadedGenesisDoesNotMatch(string expected, string got);
   LoadedNetworkDoesNotMatch(Network expected, Network? got);
 };
 
@@ -200,13 +199,6 @@ dictionary AddressInfo {
   u32 index;
   Address address;
   KeychainKind keychain;
-};
-
-[Enum]
-interface AddressIndex {
-  New();
-  LastUnused();
-  Peek(u32 index);
 };
 
 dictionary Balance {
@@ -260,10 +252,8 @@ interface Wallet {
   [Throws=WalletCreationError]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, string persistence_backend_path, Network network);
 
-  AddressInfo get_address(AddressIndex address_index);
-
   [Throws=PersistenceError]
-  AddressInfo try_get_internal_address(AddressIndex address_index);
+  AddressInfo reveal_next_address(KeychainKind keychain);
 
   Network network();
 
@@ -293,6 +283,10 @@ interface Wallet {
   sequence<LocalOutput> list_unspent();
 
   sequence<LocalOutput> list_output();
+
+  FullScanRequest start_full_scan();
+
+  SyncRequest start_sync_revealed_spks();
 };
 
 interface Update {};
@@ -439,7 +433,10 @@ interface EsploraClient {
   constructor(string url);
 
   [Throws=EsploraError]
-  Update full_scan(Wallet wallet, u64 stop_gap, u64 parallel_requests);
+  Update full_scan(FullScanRequest full_scan_request, u64 stop_gap, u64 parallel_requests);
+
+  [Throws=EsploraError]
+  Update sync(SyncRequest sync_request, u64 parallel_requests);
 
   [Throws=EsploraError]
   void broadcast([ByRef] Transaction transaction);
@@ -551,3 +548,7 @@ interface FeeRate {
 
   u64 to_sat_per_kwu();
 };
+
+interface FullScanRequest {};
+
+interface SyncRequest {};

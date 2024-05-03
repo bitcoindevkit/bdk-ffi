@@ -1,14 +1,15 @@
 use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
 
+use bdk::chain::spk_client::FullScanRequest as BdkFullScanRequest;
+use bdk::chain::spk_client::SyncRequest as BdkSyncRequest;
 use bdk::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
 use bdk::chain::{ChainPosition as BdkChainPosition, ConfirmationTimeHeightAnchor};
-use bdk::wallet::AddressIndex as BdkAddressIndex;
 use bdk::wallet::AddressInfo as BdkAddressInfo;
 use bdk::wallet::Balance as BdkBalance;
 use bdk::KeychainKind;
 use bdk::LocalOutput as BdkLocalOutput;
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChainPosition {
@@ -63,53 +64,6 @@ impl From<BdkAddressInfo> for AddressInfo {
     }
 }
 
-pub enum AddressIndex {
-    New,
-    LastUnused,
-    Peek { index: u32 },
-}
-
-impl From<AddressIndex> for BdkAddressIndex {
-    fn from(address_index: AddressIndex) -> Self {
-        match address_index {
-            AddressIndex::New => BdkAddressIndex::New,
-            AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
-            AddressIndex::Peek { index } => BdkAddressIndex::Peek(index),
-        }
-    }
-}
-
-impl From<BdkAddressIndex> for AddressIndex {
-    fn from(address_index: BdkAddressIndex) -> Self {
-        match address_index {
-            BdkAddressIndex::New => AddressIndex::New,
-            BdkAddressIndex::LastUnused => AddressIndex::LastUnused,
-            _ => panic!("Mmmm not working"),
-        }
-    }
-}
-
-// TODO 9: Peek is not correctly implemented
-impl From<&AddressIndex> for BdkAddressIndex {
-    fn from(address_index: &AddressIndex) -> Self {
-        match address_index {
-            AddressIndex::New => BdkAddressIndex::New,
-            AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
-            AddressIndex::Peek { index } => BdkAddressIndex::Peek(*index),
-        }
-    }
-}
-
-impl From<&BdkAddressIndex> for AddressIndex {
-    fn from(address_index: &BdkAddressIndex) -> Self {
-        match address_index {
-            BdkAddressIndex::New => AddressIndex::New,
-            BdkAddressIndex::LastUnused => AddressIndex::LastUnused,
-            _ => panic!("Mmmm not working"),
-        }
-    }
-}
-
 pub struct Balance {
     pub immature: u64,
     pub trusted_pending: u64,
@@ -155,3 +109,6 @@ impl From<BdkLocalOutput> for LocalOutput {
         }
     }
 }
+
+pub struct FullScanRequest(pub(crate) Mutex<Option<BdkFullScanRequest<KeychainKind>>>);
+pub struct SyncRequest(pub(crate) Mutex<Option<BdkSyncRequest>>);
