@@ -25,6 +25,11 @@ use bdk::chain;
 use bdk::wallet::error::CreateTxError as BdkCreateTxError;
 use std::convert::TryInto;
 
+use bdk::bitcoin::address::Error as BdkAddressError;
+use bdk::bitcoin::consensus::encode::Error as BdkEncodeError;
+use bdk::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
+use chain::local_chain::CannotConnectError as BdkCannotConnectError;
+
 // ------------------------------------------------------------------------
 // error definitions
 // ------------------------------------------------------------------------
@@ -440,21 +445,19 @@ pub enum WalletCreationError {
 // error conversions
 // ------------------------------------------------------------------------
 
-impl From<bdk::bitcoin::address::Error> for AddressError {
-    fn from(error: bdk::bitcoin::address::Error) -> Self {
+impl From<BdkAddressError> for AddressError {
+    fn from(error: BdkAddressError) -> Self {
         match error {
-            bdk::bitcoin::address::Error::WitnessVersion(error_message) => {
-                AddressError::WitnessVersion {
-                    error_message: error_message.to_string(),
-                }
-            }
-            bdk::bitcoin::address::Error::WitnessProgram(e) => AddressError::WitnessProgram {
+            BdkAddressError::WitnessVersion(error_message) => AddressError::WitnessVersion {
+                error_message: error_message.to_string(),
+            },
+            BdkAddressError::WitnessProgram(e) => AddressError::WitnessProgram {
                 error_message: e.to_string(),
             },
-            bdk::bitcoin::address::Error::UncompressedPubkey => AddressError::UncompressedPubkey,
-            bdk::bitcoin::address::Error::ExcessiveScriptSize => AddressError::ExcessiveScriptSize,
-            bdk::bitcoin::address::Error::UnrecognizedScript => AddressError::UnrecognizedScript,
-            bdk::bitcoin::address::Error::NetworkValidation {
+            BdkAddressError::UncompressedPubkey => AddressError::UncompressedPubkey,
+            BdkAddressError::ExcessiveScriptSize => AddressError::ExcessiveScriptSize,
+            BdkAddressError::UnrecognizedScript => AddressError::UnrecognizedScript,
+            BdkAddressError::NetworkValidation {
                 required,
                 found,
                 address,
@@ -549,8 +552,8 @@ impl From<BdkCalculateFeeError> for CalculateFeeError {
     }
 }
 
-impl From<chain::local_chain::CannotConnectError> for CannotConnectError {
-    fn from(error: chain::local_chain::CannotConnectError) -> Self {
+impl From<BdkCannotConnectError> for CannotConnectError {
+    fn from(error: BdkCannotConnectError) -> Self {
         CannotConnectError::Include {
             height: error.try_include_height,
         }
@@ -702,8 +705,8 @@ impl From<BdkDescriptorKeyParseError> for DescriptorKeyError {
     }
 }
 
-impl From<bdk::bitcoin::bip32::Error> for DescriptorKeyError {
-    fn from(error: bdk::bitcoin::bip32::Error) -> DescriptorKeyError {
+impl From<BdkBip32Error> for DescriptorKeyError {
+    fn from(error: BdkBip32Error) -> DescriptorKeyError {
         DescriptorKeyError::Bip32 {
             error_message: format!("BIP32 derivation error: {:?}", error),
         }
@@ -748,21 +751,17 @@ impl From<BdkEsploraError> for EsploraError {
     }
 }
 
-impl From<bdk::bitcoin::psbt::ExtractTxError> for ExtractTxError {
-    fn from(error: bdk::bitcoin::psbt::ExtractTxError) -> Self {
+impl From<BdkExtractTxError> for ExtractTxError {
+    fn from(error: BdkExtractTxError) -> Self {
         match error {
-            bdk::bitcoin::psbt::ExtractTxError::AbsurdFeeRate { fee_rate, .. } => {
+            BdkExtractTxError::AbsurdFeeRate { fee_rate, .. } => {
                 let sat_per_vbyte = fee_rate.to_sat_per_vb_ceil();
                 ExtractTxError::AbsurdFeeRate {
                     fee_rate: sat_per_vbyte,
                 }
             }
-            bdk::bitcoin::psbt::ExtractTxError::MissingInputValue { .. } => {
-                ExtractTxError::MissingInputValue
-            }
-            bdk::bitcoin::psbt::ExtractTxError::SendingTooMuch { .. } => {
-                ExtractTxError::SendingTooMuch
-            }
+            BdkExtractTxError::MissingInputValue { .. } => ExtractTxError::MissingInputValue,
+            BdkExtractTxError::SendingTooMuch { .. } => ExtractTxError::SendingTooMuch,
             _ => ExtractTxError::OtherExtractTxErr,
         }
     }
@@ -817,24 +816,22 @@ impl From<BdkSignerError> for SignerError {
     }
 }
 
-impl From<bdk::bitcoin::consensus::encode::Error> for TransactionError {
-    fn from(error: bdk::bitcoin::consensus::encode::Error) -> Self {
+impl From<BdkEncodeError> for TransactionError {
+    fn from(error: BdkEncodeError) -> Self {
         match error {
-            bdk::bitcoin::consensus::encode::Error::Io(_) => TransactionError::Io,
-            bdk::bitcoin::consensus::encode::Error::OversizedVectorAllocation { .. } => {
+            BdkEncodeError::Io(_) => TransactionError::Io,
+            BdkEncodeError::OversizedVectorAllocation { .. } => {
                 TransactionError::OversizedVectorAllocation
             }
-            bdk::bitcoin::consensus::encode::Error::InvalidChecksum { expected, actual } => {
+            BdkEncodeError::InvalidChecksum { expected, actual } => {
                 TransactionError::InvalidChecksum {
                     expected: DisplayHex::to_lower_hex_string(&expected),
                     actual: DisplayHex::to_lower_hex_string(&actual),
                 }
             }
-            bdk::bitcoin::consensus::encode::Error::NonMinimalVarInt => {
-                TransactionError::NonMinimalVarInt
-            }
-            bdk::bitcoin::consensus::encode::Error::ParseFailed(_) => TransactionError::ParseFailed,
-            bdk::bitcoin::consensus::encode::Error::UnsupportedSegwitFlag(flag) => {
+            BdkEncodeError::NonMinimalVarInt => TransactionError::NonMinimalVarInt,
+            BdkEncodeError::ParseFailed(_) => TransactionError::ParseFailed,
+            BdkEncodeError::UnsupportedSegwitFlag(flag) => {
                 TransactionError::UnsupportedSegwitFlag { flag }
             }
             _ => TransactionError::OtherTransactionErr,
