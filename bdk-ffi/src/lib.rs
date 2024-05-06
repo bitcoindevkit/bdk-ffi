@@ -36,7 +36,6 @@ use crate::keys::DerivationPath;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
-use crate::types::AddressIndex;
 use crate::types::AddressInfo;
 use crate::types::Balance;
 use crate::types::CanonicalTx;

@@ -138,11 +138,13 @@ dependencies = [
 
 [[package]]
 name = "bdk"
-version = "1.0.0-alpha.9"
+version = "1.0.0-alpha.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ffe2761cc729d09bcaf88fe6e283ff5b5af0398c0eee855469295b59d6c6a9d"
+checksum = "66fc0ebc2a63463f709cfdfbb7e7877b9975bcaea9d2d4f02f97ad012de37e3b"
 dependencies = [
+ "anyhow",
  "bdk_chain",
+ "bdk_persist",
  "bip39",
  "bitcoin",
  "getrandom",
@@ -162,16 +164,15 @@ dependencies = [
  "bdk_esplora",
  "bdk_file_store",
  "bitcoin-internals",
- "esplora-client",
  "thiserror",
  "uniffi",
 ]
 
 [[package]]
 name = "bdk_chain"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cd4e915470c6bb196a4c2515c6db3190dcdec482255d8f1022068646641cc8f"
+checksum = "e879c03ebf3a64643295152a19a8b0e0a3af22e25539d2bc56ce07d07b059c33"
 dependencies = [
  "bitcoin",
  "miniscript",
@@ -180,9 +181,9 @@ dependencies = [
 
 [[package]]
 name = "bdk_esplora"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7b5358eb90cbf99f7725ec5b1786e25a869cacba555f74f70cc4bf453921c34"
+checksum = "b0aad9d99b103cd9c67ce1f4702720f2813db7aeba72abc9628ae9b00462a492"
 dependencies = [
  "bdk_chain",
  "esplora-client",
@@ -190,13 +191,25 @@ dependencies = [
 
 [[package]]
 name = "bdk_file_store"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c19806b6b4e898e351e0bc2d8bd4cb96f7d8e2730c8b277e9e889c72dfb32de"
+checksum = "492a011ee853773bce14f2d899fa34fe3ac3b5f39eeb1504d0d2b28de448bd73"
 dependencies = [
+ "anyhow",
  "bdk_chain",
+ "bdk_persist",
  "bincode",
  "serde",
+]
+
+[[package]]
+name = "bdk_persist"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6f7d6b38071ee828329434f86799e0bb6aaa5a4256e225480c2c53b7b2df295"
+dependencies = [
+ "anyhow",
+ "bdk_chain",
 ]
 
 [[package]]
@@ -640,9 +653,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.21.11"
+version = "0.21.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fecbfb7b1444f477b345853b1fce097a2c6fb637b2bfb87e6bc5db0f043fae4"
+checksum = "3f56a14d1f48b391359b22f731fd4bd7e43c97f3c50eee276f3aa09c94784d3e"
 dependencies = [
  "log",
  "ring",

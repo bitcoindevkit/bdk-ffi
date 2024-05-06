@@ -12,8 +12,8 @@ use bdk::bitcoin::Psbt as BdkPsbt;
 use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk::wallet::tx_builder::ChangeSpendPolicy;
 use bdk::wallet::{ChangeSet, Update as BdkUpdate};
-use bdk::SignOptions;
 use bdk::Wallet as BdkWallet;
+use bdk::{KeychainKind, SignOptions};
 use bdk_file_store::Store;
 
 use std::collections::HashSet;
@@ -23,7 +23,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 const MAGIC_BYTES: &[u8] = "bdkffi".as_bytes();
 
 pub struct Wallet {
-    inner_mutex: Mutex<BdkWallet<Store<ChangeSet>>>,
+    inner_mutex: Mutex<BdkWallet>,
 }
 
 impl Wallet {
@@ -37,7 +37,7 @@ impl Wallet {
         let change_descriptor = change_descriptor.map(|d| d.as_string_private());
         let db = Store::<ChangeSet>::open_or_create_new(MAGIC_BYTES, persistence_backend_path)?;
 
-        let wallet: bdk::wallet::Wallet<Store<ChangeSet>> =
+        let wallet: BdkWallet =
             BdkWallet::new_or_load(&descriptor, change_descriptor.as_ref(), db, network)?;
 
         Ok(Wallet {
@@ -45,15 +45,20 @@ impl Wallet {
         })
     }
 
-    pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet<Store<ChangeSet>>> {
+    pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
         self.inner_mutex.lock().expect("wallet")
     }
 
-    pub fn get_address(&self, address_index: AddressIndex) -> AddressInfo {
+    pub fn reveal_next_address(
+        &self,
+        keychain_kind: KeychainKind,
+    ) -> Result<AddressInfo, PersistenceError> {
         self.get_wallet()
-            .try_get_address(address_index.into())
-            .unwrap()
-            .into()
+            .reveal_next_address(keychain_kind)
+            .map(|address_info| address_info.into())
+            .map_err(|e| PersistenceError::Write {
+                error_message: e.to_string(),
+            })
     }
 
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
@@ -64,16 +69,16 @@ impl Wallet {
 
     // TODO: This is the fallible version of get_internal_address; should I rename it to get_internal_address?
     //       It's a slight change of the API, the other option is to rename the get_address to try_get_address
-    pub fn try_get_internal_address(
-        &self,
-        address_index: AddressIndex,
-    ) -> Result<AddressInfo, PersistenceError> {
-        let address_info = self
-            .get_wallet()
-            .try_get_internal_address(address_index.into())?
-            .into();
-        Ok(address_info)
-    }
+    // pub fn try_get_internal_address(
+    //     &self,
+    //     address_index: AddressIndex,
+    // ) -> Result<AddressInfo, PersistenceError> {
+    //     let address_info = self
+    //         .get_wallet()
+    //         .try_get_internal_address(address_index.into())?
+    //         .into();
+    //     Ok(address_info)
+    // }
 
     pub fn network(&self) -> Network {
         self.get_wallet().network()

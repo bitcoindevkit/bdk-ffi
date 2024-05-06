@@ -63,53 +63,6 @@ impl From<BdkAddressInfo> for AddressInfo {
     }
 }
 
-pub enum AddressIndex {
-    New,
-    LastUnused,
-    Peek { index: u32 },
-}
-
-impl From<AddressIndex> for BdkAddressIndex {
-    fn from(address_index: AddressIndex) -> Self {
-        match address_index {
-            AddressIndex::New => BdkAddressIndex::New,
-            AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
-            AddressIndex::Peek { index } => BdkAddressIndex::Peek(index),
-        }
-    }
-}
-
-impl From<BdkAddressIndex> for AddressIndex {
-    fn from(address_index: BdkAddressIndex) -> Self {
-        match address_index {
-            BdkAddressIndex::New => AddressIndex::New,
-            BdkAddressIndex::LastUnused => AddressIndex::LastUnused,
-            _ => panic!("Mmmm not working"),
-        }
-    }
-}
-
-// TODO 9: Peek is not correctly implemented
-impl From<&AddressIndex> for BdkAddressIndex {
-    fn from(address_index: &AddressIndex) -> Self {
-        match address_index {
-            AddressIndex::New => BdkAddressIndex::New,
-            AddressIndex::LastUnused => BdkAddressIndex::LastUnused,
-            AddressIndex::Peek { index } => BdkAddressIndex::Peek(*index),
-        }
-    }
-}
-
-impl From<&BdkAddressIndex> for AddressIndex {
-    fn from(address_index: &BdkAddressIndex) -> Self {
-        match address_index {
-            BdkAddressIndex::New => AddressIndex::New,
-            BdkAddressIndex::LastUnused => AddressIndex::LastUnused,
-            _ => panic!("Mmmm not working"),
-        }
-    }
-}
-
 pub struct Balance {
     pub immature: u64,
     pub trusted_pending: u64,

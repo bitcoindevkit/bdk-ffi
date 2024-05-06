@@ -180,10 +180,9 @@ interface WalletCreationError {
   Io(string error_message);
   InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
   Descriptor();
-  Write();
-  Load();
+  Persist(string error_message);
   NotInitialized();
-  LoadedGenesisDoesNotMatch();
+  LoadedGenesisDoesNotMatch(string expected, string got);
   LoadedNetworkDoesNotMatch(Network expected, Network? got);
 };
 
@@ -200,13 +199,6 @@ dictionary AddressInfo {
   u32 index;
   Address address;
   KeychainKind keychain;
-};
-
-[Enum]
-interface AddressIndex {
-  New();
-  LastUnused();
-  Peek(u32 index);
 };
 
 dictionary Balance {
@@ -260,10 +252,8 @@ interface Wallet {
   [Throws=WalletCreationError]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, string persistence_backend_path, Network network);
 
-  AddressInfo get_address(AddressIndex address_index);
-
   [Throws=PersistenceError]
-  AddressInfo try_get_internal_address(AddressIndex address_index);
+  AddressInfo reveal_next_address(KeychainKind keychain);
 
   Network network();
 
