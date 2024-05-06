@@ -1,11 +1,14 @@
+default:
+  just --list
+
 build:
   bash ./build-local-swift.sh
+
+clean:
+  rm -rf ../bdk-ffi/target/
 
 test:
   swift test
 
-offlinetests:
+test-offline:
   swift test --skip LiveWalletTests --skip LiveTxBuilderTests
-
-clean:
-  rm -rf ../bdk-ffi/target/

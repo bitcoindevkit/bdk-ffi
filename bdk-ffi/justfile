@@ -1,9 +1,12 @@
+default:
+  just --list
+
 build:
   cargo build
 
+check:
+   cargo fmt
+   cargo clippy
+
 test:
   cargo test --lib
-
-check:
-  cargo fmt
-  cargo clippy

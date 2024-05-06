@@ -1,20 +1,23 @@
-test:
-  ./gradlew test
-
-offlinetests:
-  ./gradlew test -P excludeConnectedTests
-
-onetest TEST:
-  ./gradlew test --tests {{TEST}}
+default:
+  just --list
 
 build:
   ./gradlew buildJvmLib
-
-publishlocal:
-  ./gradlew publishToMavenLocal -P localBuild
 
 clean:
   rm -rf ../bdk-ffi/target/
   rm -rf ./build/
   rm -rf ./lib/build/
   rm -rf ./plugins/build/
+
+publish-local:
+  ./gradlew publishToMavenLocal -P localBuild
+
+test:
+  ./gradlew test
+
+test-offline:
+  ./gradlew test -P excludeConnectedTests
+
+test-specific TEST:
+  ./gradlew test --tests {{TEST}}

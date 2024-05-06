@@ -1,7 +1,7 @@
-test:
-  python3 -m unittest --verbose
+default:
+  just --list
 
-maclocalbuild:
+build-local-mac:
   bash ./scripts/generate-macos-arm64.sh && python3 setup.py bdist_wheel --verbose
 
 clean:
@@ -9,3 +9,6 @@ clean:
   rm -rf ./bdkpython.egg-info/
   rm -rf ./build/
   rm -rf ./dist/
+
+test:
+  python3 -m unittest --verbose
