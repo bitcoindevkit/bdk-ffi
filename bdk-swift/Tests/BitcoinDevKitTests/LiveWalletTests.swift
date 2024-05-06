@@ -35,8 +35,9 @@ final class LiveWalletTests: XCTestCase {
             network: .testnet
         )
         let esploraClient = EsploraClient(url: "https://esplora.testnet.kuutamo.cloud/")
+        let fullScanRequest: FullScanRequest = wallet.startFullScan()
         let update = try esploraClient.fullScan(
-            wallet: wallet,
+            fullScanRequest: fullScanRequest,
             stopGap: 10,
             parallelRequests: 1
         )
@@ -66,8 +67,9 @@ final class LiveWalletTests: XCTestCase {
             network: .testnet
         )
         let esploraClient = EsploraClient(url: "https://esplora.testnet.kuutamo.cloud/")
+        let fullScanRequest: FullScanRequest = wallet.startFullScan()
         let update = try esploraClient.fullScan(
-            wallet: wallet,
+            fullScanRequest: fullScanRequest,
             stopGap: 10,
             parallelRequests: 1
         )

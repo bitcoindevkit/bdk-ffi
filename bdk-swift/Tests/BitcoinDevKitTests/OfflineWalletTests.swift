@@ -34,7 +34,7 @@ final class OfflineWalletTests: XCTestCase {
             persistenceBackendPath: dbFilePath.path,
             network: .testnet
         )
-        let addressInfo: AddressInfo = wallet.getAddress(addressIndex: AddressIndex.new)
+        let addressInfo: AddressInfo = try wallet.revealNextAddress(keychain: KeychainKind.external)
 
         XCTAssertTrue(addressInfo.address.isValidForNetwork(network: Network.testnet),
                      "Address is not valid for testnet network")

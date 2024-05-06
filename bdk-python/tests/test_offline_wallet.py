@@ -19,7 +19,7 @@ class OfflineWalletTest(unittest.TestCase):
             "./bdk_persistence.db",
             bdk.Network.TESTNET
         )
-        address_info: bdk.AddressInfo = wallet.get_address(bdk.AddressIndex.NEW())
+        address_info: bdk.AddressInfo = wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL)
     
         self.assertTrue(address_info.address.is_valid_for_network(bdk.Network.TESTNET), "Address is not valid for testnet network")
         self.assertTrue(address_info.address.is_valid_for_network(bdk.Network.SIGNET), "Address is not valid for signet network")

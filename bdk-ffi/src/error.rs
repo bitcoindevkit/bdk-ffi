@@ -1,34 +1,28 @@
 use crate::bitcoin::OutPoint;
 
+use bdk::bitcoin::address::ParseError;
+use bdk::bitcoin::bip32::Error as BdkBip32Error;
 use bdk::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
 use bdk::bitcoin::Network;
 use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk::descriptor::DescriptorError as BdkDescriptorError;
+use bdk::keys::bip39::Error as BdkBip39Error;
+use bdk::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
 use bdk::wallet::error::BuildFeeBumpError;
+use bdk::wallet::error::CreateTxError as BdkCreateTxError;
 use bdk::wallet::signer::SignerError as BdkSignerError;
 use bdk::wallet::tx_builder::AddUtxoError;
 use bdk::wallet::NewOrLoadError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_file_store::FileError as BdkFileError;
-use bdk_file_store::IterError;
 use bitcoin_internals::hex::display::DisplayHex;
 
-use crate::error::bip32::Error as BdkBip32Error;
-use bdk::bitcoin::address::ParseError;
-use bdk::keys::bip39::Error as BdkBip39Error;
-use bdk::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
-
-use bdk::bitcoin::bip32;
-
-use bdk::chain;
-
-use bdk::wallet::error::CreateTxError as BdkCreateTxError;
 use std::convert::TryInto;
 
 use bdk::bitcoin::address::Error as BdkAddressError;
 use bdk::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
-use chain::local_chain::CannotConnectError as BdkCannotConnectError;
+use bdk::chain::local_chain::CannotConnectError as BdkCannotConnectError;
 
 // ------------------------------------------------------------------------
 // error definitions
@@ -295,6 +289,9 @@ pub enum EsploraError {
 
     #[error("invalid HTTP header value: {value}")]
     InvalidHttpHeaderValue { value: String },
+
+    #[error("the request has already been consumed")]
+    RequestAlreadyConsumed,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -411,6 +408,7 @@ pub enum TxidParseError {
     InvalidTxid { txid: String },
 }
 
+// This error combines the Rust bdk::wallet::NewOrLoadError and bdk_file_store::FileError
 #[derive(Debug, thiserror::Error)]
 pub enum WalletCreationError {
     #[error("io error trying to read file: {error_message}")]
@@ -422,17 +420,14 @@ pub enum WalletCreationError {
     #[error("error with descriptor")]
     Descriptor,
 
-    #[error("failed to write to persistence")]
-    Write,
-
-    #[error("failed to load from persistence")]
-    Load,
+    #[error("failed to either write to or load from persistence, {error_message}")]
+    Persist { error_message: String },
 
     #[error("wallet is not initialized, persistence backend is empty")]
     NotInitialized,
 
-    #[error("loaded genesis hash does not match the expected one")]
-    LoadedGenesisDoesNotMatch,
+    #[error("loaded genesis hash '{got}' does not match the expected one '{expected}'")]
+    LoadedGenesisDoesNotMatch { expected: String, got: String },
 
     #[error("loaded network type is not {expected}, got {got:?}")]
     LoadedNetworkDoesNotMatch {
@@ -560,8 +555,8 @@ impl From<BdkCannotConnectError> for CannotConnectError {
     }
 }
 
-impl From<BdkCreateTxError<std::io::Error>> for CreateTxError {
-    fn from(error: BdkCreateTxError<std::io::Error>) -> Self {
+impl From<BdkCreateTxError> for CreateTxError {
+    fn from(error: BdkCreateTxError) -> Self {
         match error {
             BdkCreateTxError::Descriptor(e) => CreateTxError::Descriptor {
                 error_message: e.to_string(),
@@ -751,6 +746,44 @@ impl From<BdkEsploraError> for EsploraError {
     }
 }
 
+impl From<Box<BdkEsploraError>> for EsploraError {
+    fn from(error: Box<BdkEsploraError>) -> Self {
+        match *error {
+            BdkEsploraError::Minreq(e) => EsploraError::Minreq {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::HttpResponse { status, message } => EsploraError::HttpResponse {
+                status,
+                error_message: message,
+            },
+            BdkEsploraError::Parsing(e) => EsploraError::Parsing {
+                error_message: e.to_string(),
+            },
+            Error::StatusCode(e) => EsploraError::StatusCode {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::BitcoinEncoding(e) => EsploraError::BitcoinEncoding {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::HexToArray(e) => EsploraError::HexToArray {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::HexToBytes(e) => EsploraError::HexToBytes {
+                error_message: e.to_string(),
+            },
+            BdkEsploraError::TransactionNotFound(_) => EsploraError::TransactionNotFound,
+            BdkEsploraError::HeaderHeightNotFound(height) => {
+                EsploraError::HeaderHeightNotFound { height }
+            }
+            BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
+            Error::InvalidHttpHeaderName(name) => EsploraError::InvalidHttpHeaderName { name },
+            BdkEsploraError::InvalidHttpHeaderValue(value) => {
+                EsploraError::InvalidHttpHeaderValue { value }
+            }
+        }
+    }
+}
+
 impl From<BdkExtractTxError> for ExtractTxError {
     fn from(error: BdkExtractTxError) -> Self {
         match error {
@@ -852,15 +885,19 @@ impl From<BdkFileError> for WalletCreationError {
     }
 }
 
-impl From<NewOrLoadError<std::io::Error, IterError>> for WalletCreationError {
-    fn from(error: NewOrLoadError<std::io::Error, IterError>) -> Self {
+impl From<NewOrLoadError> for WalletCreationError {
+    fn from(error: NewOrLoadError) -> Self {
         match error {
             NewOrLoadError::Descriptor(_) => WalletCreationError::Descriptor,
-            NewOrLoadError::Write(_) => WalletCreationError::Write,
-            NewOrLoadError::Load(_) => WalletCreationError::Load,
+            NewOrLoadError::Persist(e) => WalletCreationError::Persist {
+                error_message: e.to_string(),
+            },
             NewOrLoadError::NotInitialized => WalletCreationError::NotInitialized,
-            NewOrLoadError::LoadedGenesisDoesNotMatch { .. } => {
-                WalletCreationError::LoadedGenesisDoesNotMatch
+            NewOrLoadError::LoadedGenesisDoesNotMatch { expected, got } => {
+                WalletCreationError::LoadedGenesisDoesNotMatch {
+                    expected: expected.to_string(),
+                    got: format!("{:?}", got),
+                }
             }
             NewOrLoadError::LoadedNetworkDoesNotMatch { expected, got } => {
                 WalletCreationError::LoadedNetworkDoesNotMatch { expected, got }
@@ -1332,6 +1369,10 @@ mod test {
                 "header height 123456 not found",
             ),
             (EsploraError::HeaderHashNotFound, "header hash not found"),
+            (
+                EsploraError::RequestAlreadyConsumed,
+                "the request has already been consumed",
+            ),
         ];
 
         for (error, expected_message) in cases {
@@ -1541,20 +1582,21 @@ mod test {
                 "error with descriptor".to_string(),
             ),
             (
-                WalletCreationError::Write,
-                "failed to write to persistence".to_string(),
-            ),
-            (
-                WalletCreationError::Load,
-                "failed to load from persistence".to_string(),
+                WalletCreationError::Persist {
+                    error_message: "persistence error".to_string(),
+                },
+                "failed to either write to or load from persistence, persistence error".to_string(),
             ),
             (
                 WalletCreationError::NotInitialized,
                 "wallet is not initialized, persistence backend is empty".to_string(),
             ),
             (
-                WalletCreationError::LoadedGenesisDoesNotMatch,
-                "loaded genesis hash does not match the expected one".to_string(),
+                WalletCreationError::LoadedGenesisDoesNotMatch {
+                    expected: "abc".to_string(),
+                    got: "def".to_string(),
+                },
+                "loaded genesis hash 'def' does not match the expected one 'abc'".to_string(),
             ),
             (
                 WalletCreationError::LoadedNetworkDoesNotMatch {

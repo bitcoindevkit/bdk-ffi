@@ -19,19 +19,20 @@ class LiveTxBuilderTest(unittest.TestCase):
             "./bdk_persistence.db",
             bdk.Network.TESTNET
         )
-        esploraClient: bdk.EsploraClient = bdk.EsploraClient(url = "https://esplora.testnet.kuutamo.cloud/")
-        update = esploraClient.full_scan(
-            wallet = wallet,
-            stop_gap = 10,
-            parallel_requests = 1
+        esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = "https://esplora.testnet.kuutamo.cloud/")
+        full_scan_request: bdk.FullScanRequest = wallet.start_full_scan()
+        update = esplora_client.full_scan(
+            full_scan_request=full_scan_request,
+            stop_gap=10,
+            parallel_requests=1
         )
         wallet.apply_update(update)
         
         self.assertGreater(wallet.get_balance().total, 0)
         
         recipient = bdk.Address(
-            address = "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989",
-            network = bdk.Network.TESTNET
+            address="tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989",
+            network=bdk.Network.TESTNET
         )
         
         psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).finish(wallet)
@@ -53,23 +54,24 @@ class LiveTxBuilderTest(unittest.TestCase):
             "./bdk_persistence.db",
             bdk.Network.TESTNET
         )
-        esploraClient: bdk.EsploraClient = bdk.EsploraClient(url = "https://esplora.testnet.kuutamo.cloud/")
-        update = esploraClient.full_scan(
-            wallet = wallet,
-            stop_gap = 10,
-            parallel_requests = 1
+        esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = "https://esplora.testnet.kuutamo.cloud/")
+        full_scan_request: bdk.FullScanRequest = wallet.start_full_scan()
+        update = esplora_client.full_scan(
+            full_scan_request=full_scan_request,
+            stop_gap=10,
+            parallel_requests=1
         )
         wallet.apply_update(update)
         
         self.assertGreater(wallet.get_balance().total, 0)
         
         recipient1 = bdk.Address(
-            address = "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989",
-            network = bdk.Network.TESTNET
+            address="tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989",
+            network=bdk.Network.TESTNET
         )
         recipient2 = bdk.Address(
-            address = "tb1qw2c3lxufxqe2x9s4rdzh65tpf4d7fssjgh8nv6",
-            network = bdk.Network.TESTNET
+            address="tb1qw2c3lxufxqe2x9s4rdzh65tpf4d7fssjgh8nv6",
+            network=bdk.Network.TESTNET
         )
         all_recipients = list(
             bdk.ScriptAmount(recipient1.script_pubkey, 4200),

@@ -42,7 +42,7 @@ class OfflineWalletTest {
             persistenceFilePath,
             Network.TESTNET
         )
-        val addressInfo: AddressInfo = wallet.getAddress(AddressIndex.New)
+        val addressInfo: AddressInfo = wallet.revealNextAddress(KeychainKind.EXTERNAL)
 
         assertTrue(addressInfo.address.isValidForNetwork(Network.TESTNET), "Address is not valid for testnet network")
         assertTrue(addressInfo.address.isValidForNetwork(Network.SIGNET), "Address is not valid for signet network")

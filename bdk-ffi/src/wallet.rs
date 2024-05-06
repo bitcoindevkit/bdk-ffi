@@ -4,7 +4,9 @@ use crate::error::{
     CalculateFeeError, CannotConnectError, CreateTxError, PersistenceError, SignerError,
     TxidParseError, WalletCreationError,
 };
-use crate::types::{AddressIndex, AddressInfo, Balance, CanonicalTx, LocalOutput, ScriptAmount};
+use crate::types::{
+    AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount, SyncRequest,
+};
 
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::Network;
@@ -141,6 +143,16 @@ impl Wallet {
 
     pub fn list_output(&self) -> Vec<LocalOutput> {
         self.get_wallet().list_output().map(|o| o.into()).collect()
+    }
+
+    pub fn start_full_scan(&self) -> Arc<FullScanRequest> {
+        let request = self.get_wallet().start_full_scan();
+        Arc::new(FullScanRequest(Mutex::new(Some(request))))
+    }
+
+    pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequest> {
+        let request = self.get_wallet().start_sync_with_revealed_spks();
+        Arc::new(SyncRequest(Mutex::new(Some(request))))
     }
 }
 
