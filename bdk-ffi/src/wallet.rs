@@ -2,8 +2,8 @@ use crate::bitcoin::Amount;
 use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateTxError, PersistenceError, SignerError,
-    TxidParseError, WalletCreationError,
+    CalculateFeeError, CannotConnectError, CreateTxError, DescriptorError, PersistenceError,
+    SignerError, TxidParseError, WalletCreationError,
 };
 use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount, SyncRequest,
@@ -43,6 +43,22 @@ impl Wallet {
 
         let wallet: BdkWallet =
             BdkWallet::new_or_load(&descriptor, change_descriptor.as_ref(), db, network)?;
+
+        Ok(Wallet {
+            inner_mutex: Mutex::new(wallet),
+        })
+    }
+
+    pub fn new_no_persist(
+        descriptor: Arc<Descriptor>,
+        change_descriptor: Option<Arc<Descriptor>>,
+        network: Network,
+    ) -> Result<Self, DescriptorError> {
+        let descriptor = descriptor.as_string_private();
+        let change_descriptor = change_descriptor.map(|d| d.as_string_private());
+
+        let wallet: BdkWallet =
+            BdkWallet::new_no_persist(&descriptor, change_descriptor.as_ref(), network)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),

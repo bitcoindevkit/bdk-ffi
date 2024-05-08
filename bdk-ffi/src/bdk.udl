@@ -271,6 +271,9 @@ interface Wallet {
   [Throws=WalletCreationError]
   constructor(Descriptor descriptor, Descriptor? change_descriptor, string persistence_backend_path, Network network);
 
+  [Name=new_no_persist, Throws=DescriptorError]
+  constructor(Descriptor descriptor, Descriptor? change_descriptor, Network network);
+
   [Throws=PersistenceError]
   AddressInfo reveal_next_address(KeychainKind keychain);
 
