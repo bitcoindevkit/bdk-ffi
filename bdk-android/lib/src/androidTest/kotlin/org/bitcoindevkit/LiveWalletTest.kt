@@ -29,6 +29,7 @@ class LiveWalletTest {
         val fullScanRequest: FullScanRequest = wallet.startFullScan()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
+        wallet.commit()
         println("Balance: ${wallet.getBalance().total}")
         val balance: Balance = wallet.getBalance()
         println("Balance: $balance")
@@ -52,8 +53,8 @@ class LiveWalletTest {
         val esploraClient = EsploraClient("https://esplora.testnet.kuutamo.cloud/")
         val fullScanRequest: FullScanRequest = wallet.startFullScan()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
-
         wallet.applyUpdate(update)
+        wallet.commit()
         println("Balance: ${wallet.getBalance().total}")
         println("New address: ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address}")
 

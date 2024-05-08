@@ -42,6 +42,7 @@ final class LiveTxBuilderTests: XCTestCase {
             parallelRequests: 1
         )
         try wallet.applyUpdate(update: update)
+        try wallet.commit()
 
         XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
 
@@ -78,7 +79,8 @@ final class LiveTxBuilderTests: XCTestCase {
             parallelRequests: 1
         )
         try wallet.applyUpdate(update: update)
-
+        try wallet.commit()
+        
         XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
 
         let recipient1: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .testnet)

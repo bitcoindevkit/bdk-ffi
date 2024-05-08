@@ -29,6 +29,7 @@ class LiveTxBuilderTest {
         val fullScanRequest: FullScanRequest = wallet.startFullScan()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
+        wallet.commit()
         println("Balance: ${wallet.getBalance().total}")
 
         assert(wallet.getBalance().total > 0uL)
@@ -52,6 +53,7 @@ class LiveTxBuilderTest {
         val fullScanRequest: FullScanRequest = wallet.startFullScan()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
+        wallet.commit()
         println("Balance: ${wallet.getBalance().total}")
 
         assert(wallet.getBalance().total > 0uL)

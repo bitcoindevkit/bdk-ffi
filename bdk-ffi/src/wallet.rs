@@ -69,18 +69,13 @@ impl Wallet {
             .map_err(CannotConnectError::from)
     }
 
-    // TODO: This is the fallible version of get_internal_address; should I rename it to get_internal_address?
-    //       It's a slight change of the API, the other option is to rename the get_address to try_get_address
-    // pub fn try_get_internal_address(
-    //     &self,
-    //     address_index: AddressIndex,
-    // ) -> Result<AddressInfo, PersistenceError> {
-    //     let address_info = self
-    //         .get_wallet()
-    //         .try_get_internal_address(address_index.into())?
-    //         .into();
-    //     Ok(address_info)
-    // }
+    pub fn commit(&self) -> Result<bool, PersistenceError> {
+        self.get_wallet()
+            .commit()
+            .map_err(|e| PersistenceError::Write {
+                error_message: e.to_string(),
+            })
+    }
 
     pub fn network(&self) -> Network {
         self.get_wallet().network()

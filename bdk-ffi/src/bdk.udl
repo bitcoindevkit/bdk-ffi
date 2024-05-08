@@ -267,6 +267,9 @@ interface Wallet {
   [Throws=CannotConnectError]
   void apply_update(Update update);
 
+  [Throws=PersistenceError]
+  boolean commit();
+
   boolean is_mine([ByRef] Script script);
 
   [Throws=SignerError]

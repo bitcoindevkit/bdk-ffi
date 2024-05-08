@@ -42,6 +42,7 @@ final class LiveWalletTests: XCTestCase {
             parallelRequests: 1
         )
         try wallet.applyUpdate(update: update)
+        try wallet.commit()
 
         XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0))
 
@@ -74,6 +75,7 @@ final class LiveWalletTests: XCTestCase {
             parallelRequests: 1
         )
         try wallet.applyUpdate(update: update)
+        try wallet.commit()
 
         XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
 

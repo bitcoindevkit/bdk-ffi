@@ -27,6 +27,7 @@ class LiveWalletTest(unittest.TestCase):
             parallel_requests=1
         )
         wallet.apply_update(update)
+        wallet.commit()
         
         self.assertGreater(wallet.get_balance().total, 0)
         
@@ -58,6 +59,7 @@ class LiveWalletTest(unittest.TestCase):
             parallel_requests=1
         )
         wallet.apply_update(update)
+        wallet.commit()
         
         self.assertGreater(wallet.get_balance().total, 0)
         
