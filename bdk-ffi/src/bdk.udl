@@ -204,7 +204,7 @@ interface PsbtError {
   Version(string error_message);
   PartialDataConsumption();
   Io(string error_message);
-  OtherPsbtError();
+  OtherPsbtErr();
 };
 
 [Error]

@@ -1,10 +1,15 @@
-use crate::bitcoin::{OutPoint};
+use crate::bitcoin::OutPoint;
 
+use bdk::bitcoin::address::Error as BdkAddressError;
 use bdk::bitcoin::address::ParseError;
+use bdk::bitcoin::amount::ParseAmountError as BdkParseAmountError;
 use bdk::bitcoin::bip32::Error as BdkBip32Error;
+use bdk::bitcoin::consensus::encode::Error as BdkEncodeError;
+use bdk::bitcoin::psbt::Error as BdkPsbtError;
+use bdk::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
 use bdk::bitcoin::Network;
-use bdk::bitcoin::psbt::Error as BdkPsbtError;
+use bdk::chain::local_chain::CannotConnectError as BdkCannotConnectError;
 use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk::descriptor::DescriptorError as BdkDescriptorError;
 use bdk::keys::bip39::Error as BdkBip39Error;
@@ -14,20 +19,11 @@ use bdk::wallet::error::CreateTxError as BdkCreateTxError;
 use bdk::wallet::signer::SignerError as BdkSignerError;
 use bdk::wallet::tx_builder::AddUtxoError;
 use bdk::wallet::NewOrLoadError;
+use bdk::KeychainKind;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_file_store::FileError as BdkFileError;
 use bitcoin_internals::hex::display::DisplayHex;
-
-use bdk::bitcoin::amount::ParseAmountError as BdkParseAmountError;
-
-use std::convert::TryInto;
-
-use bdk::bitcoin::address::Error as BdkAddressError;
-use bdk::bitcoin::consensus::encode::Error as BdkEncodeError;
-use bdk::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
-use bdk::chain::local_chain::CannotConnectError as BdkCannotConnectError;
-use bdk::KeychainKind;
 
 use std::convert::TryInto;
 
@@ -436,17 +432,13 @@ pub enum PsbtError {
     PsbtUtxoOutOfBounds,
 
     #[error("invalid key: {key}")]
-    InvalidKey {
-        key: String,
-    },
+    InvalidKey { key: String },
 
     #[error("non-proprietary key type found when proprietary key was expected")]
     InvalidProprietaryKey,
 
     #[error("duplicate key: {key}")]
-    DuplicateKey {
-        key: String,
-    },
+    DuplicateKey { key: String },
 
     #[error("the unsigned transaction has script sigs")]
     UnsignedTxHasScriptSigs,
@@ -465,28 +457,20 @@ pub enum PsbtError {
     UnexpectedUnsignedTx,
 
     #[error("non-standard sighash type: {sighash}")]
-    NonStandardSighashType {
-        sighash: u32,
-    },
+    NonStandardSighashType { sighash: u32 },
 
     #[error("invalid hash when parsing slice: {hash}")]
-    InvalidHash {
-        hash: String,
-    },
+    InvalidHash { hash: String },
 
     // Note: to provide the data returned in Rust, we need to dereference the fields
     #[error("preimage does not match")]
     InvalidPreimageHashPair,
 
     #[error("combine conflict: {xpub}")]
-    CombineInconsistentKeySources {
-        xpub: String,
-    },
+    CombineInconsistentKeySources { xpub: String },
 
     #[error("bitcoin consensus encoding error: {encoding_error}")]
-    ConsensusEncoding {
-        encoding_error: String,
-    },
+    ConsensusEncoding { encoding_error: String },
 
     #[error("PSBT has a negative fee which is not allowed")]
     NegativeFee,
@@ -495,27 +479,19 @@ pub enum PsbtError {
     FeeOverflow,
 
     #[error("invalid public key {error_message}")]
-    InvalidPublicKey {
-        error_message: String
-    },
+    InvalidPublicKey { error_message: String },
 
     #[error("invalid secp256k1 public key: {secp256k1_error}")]
-    InvalidSecp256k1PublicKey {
-        secp256k1_error: String
-    },
+    InvalidSecp256k1PublicKey { secp256k1_error: String },
 
     #[error("invalid xonly public key")]
     InvalidXOnlyPublicKey,
 
     #[error("invalid ECDSA signature: {error_message}")]
-    InvalidEcdsaSignature {
-        error_message: String
-    },
+    InvalidEcdsaSignature { error_message: String },
 
     #[error("invalid taproot signature: {error_message}")]
-    InvalidTaprootSignature {
-        error_message: String
-    },
+    InvalidTaprootSignature { error_message: String },
 
     #[error("invalid control block")]
     InvalidControlBlock,
@@ -527,28 +503,22 @@ pub enum PsbtError {
     Taproot,
 
     #[error("taproot tree error: {error_message}")]
-    TapTree {
-        error_message: String
-    },
+    TapTree { error_message: String },
 
     #[error("xpub key error")]
     XPubKey,
 
     #[error("version error: {error_message}")]
-    Version {
-        error_message: String
-    },
+    Version { error_message: String },
 
     #[error("data not consumed entirely when explicitly deserializing")]
     PartialDataConsumption,
 
     #[error("I/O error: {error_message}")]
-    Io {
-        error_message: String
-    },
+    Io { error_message: String },
 
     #[error("other PSBT error")]
-    OtherPsbtError,
+    OtherPsbtErr,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1113,9 +1083,13 @@ impl From<BdkPsbtError> for PsbtError {
             BdkPsbtError::MissingUtxo => PsbtError::MissingUtxo,
             BdkPsbtError::InvalidSeparator => PsbtError::InvalidSeparator,
             BdkPsbtError::PsbtUtxoOutOfbounds => PsbtError::PsbtUtxoOutOfBounds,
-            BdkPsbtError::InvalidKey(key) => PsbtError::InvalidKey { key: key.to_string() },
+            BdkPsbtError::InvalidKey(key) => PsbtError::InvalidKey {
+                key: key.to_string(),
+            },
             BdkPsbtError::InvalidProprietaryKey => PsbtError::InvalidProprietaryKey,
-            BdkPsbtError::DuplicateKey(key) => PsbtError::DuplicateKey { key: key.to_string() },
+            BdkPsbtError::DuplicateKey(key) => PsbtError::DuplicateKey {
+                key: key.to_string(),
+            },
             BdkPsbtError::UnsignedTxHasScriptSigs => PsbtError::UnsignedTxHasScriptSigs,
             BdkPsbtError::UnsignedTxHasScriptWitnesses => PsbtError::UnsignedTxHasScriptWitnesses,
             BdkPsbtError::MustHaveUnsignedTx => PsbtError::MustHaveUnsignedTx,
@@ -1123,31 +1097,49 @@ impl From<BdkPsbtError> for PsbtError {
             BdkPsbtError::UnexpectedUnsignedTx { .. } => PsbtError::UnexpectedUnsignedTx,
             BdkPsbtError::NonStandardSighashType(sighash) => {
                 PsbtError::NonStandardSighashType { sighash }
+            }
+            BdkPsbtError::InvalidHash(hash) => PsbtError::InvalidHash {
+                hash: hash.to_string(),
             },
-            BdkPsbtError::InvalidHash(hash) => PsbtError::InvalidHash { hash: hash.to_string() },
             BdkPsbtError::InvalidPreimageHashPair { .. } => PsbtError::InvalidPreimageHashPair,
             BdkPsbtError::CombineInconsistentKeySources(xpub) => {
-                PsbtError::CombineInconsistentKeySources { xpub: xpub.to_string() }
-            },
-            BdkPsbtError::ConsensusEncoding(encoding_error) => {
-                PsbtError::ConsensusEncoding { encoding_error: encoding_error.to_string() }
+                PsbtError::CombineInconsistentKeySources {
+                    xpub: xpub.to_string(),
+                }
+            }
+            BdkPsbtError::ConsensusEncoding(encoding_error) => PsbtError::ConsensusEncoding {
+                encoding_error: encoding_error.to_string(),
             },
             BdkPsbtError::NegativeFee => PsbtError::NegativeFee,
             BdkPsbtError::FeeOverflow => PsbtError::FeeOverflow,
-            BdkPsbtError::InvalidPublicKey(e) => PsbtError::InvalidPublicKey { error_message: e.to_string() },
-            BdkPsbtError::InvalidSecp256k1PublicKey(e) => PsbtError::InvalidSecp256k1PublicKey { secp256k1_error: e.to_string() },
+            BdkPsbtError::InvalidPublicKey(e) => PsbtError::InvalidPublicKey {
+                error_message: e.to_string(),
+            },
+            BdkPsbtError::InvalidSecp256k1PublicKey(e) => PsbtError::InvalidSecp256k1PublicKey {
+                secp256k1_error: e.to_string(),
+            },
             BdkPsbtError::InvalidXOnlyPublicKey => PsbtError::InvalidXOnlyPublicKey,
-            BdkPsbtError::InvalidEcdsaSignature(e) => PsbtError::InvalidEcdsaSignature { error_message: e.to_string() },
-            BdkPsbtError::InvalidTaprootSignature(e) => PsbtError::InvalidTaprootSignature { error_message: e.to_string() },
+            BdkPsbtError::InvalidEcdsaSignature(e) => PsbtError::InvalidEcdsaSignature {
+                error_message: e.to_string(),
+            },
+            BdkPsbtError::InvalidTaprootSignature(e) => PsbtError::InvalidTaprootSignature {
+                error_message: e.to_string(),
+            },
             BdkPsbtError::InvalidControlBlock => PsbtError::InvalidControlBlock,
             BdkPsbtError::InvalidLeafVersion => PsbtError::InvalidLeafVersion,
             BdkPsbtError::Taproot(_) => PsbtError::Taproot,
-            BdkPsbtError::TapTree(e) => PsbtError::TapTree { error_message: e.to_string() },
+            BdkPsbtError::TapTree(e) => PsbtError::TapTree {
+                error_message: e.to_string(),
+            },
             BdkPsbtError::XPubKey(_) => PsbtError::XPubKey,
-            BdkPsbtError::Version(e) => PsbtError::Version { error_message: e.to_string() },
+            BdkPsbtError::Version(e) => PsbtError::Version {
+                error_message: e.to_string(),
+            },
             BdkPsbtError::PartialDataConsumption => PsbtError::PartialDataConsumption,
-            BdkPsbtError::Io(e) => PsbtError::Io { error_message: e.to_string() },
-            _ => PsbtError::OtherPsbtError,
+            BdkPsbtError::Io(e) => PsbtError::Io {
+                error_message: e.to_string(),
+            },
+            _ => PsbtError::OtherPsbtErr,
         }
     }
 }
@@ -1265,8 +1257,8 @@ mod test {
     use crate::error::{
         AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError,
         DescriptorKeyError, ElectrumError, EsploraError, ExtractTxError, FeeRateError,
-        InspectError, ParseAmountError, PersistenceError, PsbtParseError, TransactionError,
-        TxidParseError, WalletCreationError,
+        InspectError, ParseAmountError, PersistenceError, PsbtError, PsbtParseError,
+        TransactionError, TxidParseError, WalletCreationError,
     };
     use crate::CalculateFeeError;
     use crate::OutPoint;
@@ -1933,30 +1925,51 @@ mod test {
     fn test_error_psbt() {
         let cases = vec![
             (PsbtError::InvalidMagic, "invalid magic"),
-            (PsbtError::MissingUtxo, "UTXO information is not present in PSBT"),
+            (
+                PsbtError::MissingUtxo,
+                "UTXO information is not present in PSBT",
+            ),
             (PsbtError::InvalidSeparator, "invalid separator"),
-            (PsbtError::PsbtUtxoOutOfBounds, "output index is out of bounds of non witness script output array"),
+            (
+                PsbtError::PsbtUtxoOutOfBounds,
+                "output index is out of bounds of non witness script output array",
+            ),
             (
                 PsbtError::InvalidKey {
                     key: "key".to_string(),
                 },
                 "invalid key: key",
             ),
-            (PsbtError::InvalidProprietaryKey, "non-proprietary key type found when proprietary key was expected"),
+            (
+                PsbtError::InvalidProprietaryKey,
+                "non-proprietary key type found when proprietary key was expected",
+            ),
             (
                 PsbtError::DuplicateKey {
                     key: "key".to_string(),
                 },
                 "duplicate key: key",
             ),
-            (PsbtError::UnsignedTxHasScriptSigs, "the unsigned transaction has script sigs"),
+            (
+                PsbtError::UnsignedTxHasScriptSigs,
+                "the unsigned transaction has script sigs",
+            ),
             (
                 PsbtError::UnsignedTxHasScriptWitnesses,
                 "the unsigned transaction has script witnesses",
             ),
-            (PsbtError::MustHaveUnsignedTx, "partially signed transactions must have an unsigned transaction"),
-            (PsbtError::NoMorePairs, "no more key-value pairs for this psbt map"),
-            (PsbtError::UnexpectedUnsignedTx, "different unsigned transaction"),
+            (
+                PsbtError::MustHaveUnsignedTx,
+                "partially signed transactions must have an unsigned transaction",
+            ),
+            (
+                PsbtError::NoMorePairs,
+                "no more key-value pairs for this psbt map",
+            ),
+            (
+                PsbtError::UnexpectedUnsignedTx,
+                "different unsigned transaction",
+            ),
             (
                 PsbtError::NonStandardSighashType { sighash: 200 },
                 "non-standard sighash type: 200",
@@ -1967,7 +1980,10 @@ mod test {
                 },
                 "invalid hash when parsing slice: abcde",
             ),
-            (PsbtError::InvalidPreimageHashPair, "preimage does not match"),
+            (
+                PsbtError::InvalidPreimageHashPair,
+                "preimage does not match",
+            ),
             (
                 PsbtError::CombineInconsistentKeySources {
                     xpub: "xpub".to_string(),
@@ -1980,8 +1996,14 @@ mod test {
                 },
                 "bitcoin consensus encoding error: encoding error",
             ),
-            (PsbtError::NegativeFee, "PSBT has a negative fee which is not allowed"),
-            (PsbtError::FeeOverflow, "integer overflow in fee calculation"),
+            (
+                PsbtError::NegativeFee,
+                "PSBT has a negative fee which is not allowed",
+            ),
+            (
+                PsbtError::FeeOverflow,
+                "integer overflow in fee calculation",
+            ),
             (
                 PsbtError::InvalidPublicKey {
                     error_message: "invalid public key".to_string(),
@@ -2023,14 +2045,17 @@ mod test {
                 },
                 "version error: version error",
             ),
-            (PsbtError::PartialDataConsumption, "data not consumed entirely when explicitly deserializing"),
+            (
+                PsbtError::PartialDataConsumption,
+                "data not consumed entirely when explicitly deserializing",
+            ),
             (
                 PsbtError::Io {
                     error_message: "io error".to_string(),
                 },
                 "I/O error: io error",
             ),
-            (PsbtError::OtherPsbtError, "other PSBT error"),
+            (PsbtError::OtherPsbtErr, "other PSBT error"),
         ];
 
         for (error, expected_message) in cases {

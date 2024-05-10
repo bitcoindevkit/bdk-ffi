@@ -222,8 +222,7 @@ impl Psbt {
     }
 
     pub(crate) fn fee(&self) -> Result<u64, PsbtError> {
-        self
-            .0
+        self.0
             .lock()
             .unwrap()
             .fee()
@@ -231,10 +230,7 @@ impl Psbt {
             .map_err(PsbtError::from)
     }
 
-    pub(crate) fn combine(
-        &self,
-        other: Arc<Psbt>,
-    ) -> Result<Arc<Psbt>, PsbtError> {
+    pub(crate) fn combine(&self, other: Arc<Psbt>) -> Result<Arc<Psbt>, PsbtError> {
         let mut original_psbt = self.0.lock().unwrap().clone();
         let other_psbt = other.0.lock().unwrap().clone();
         original_psbt.combine(other_psbt)?;
