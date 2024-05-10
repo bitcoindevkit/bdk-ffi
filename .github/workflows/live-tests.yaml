@@ -48,7 +48,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: "Build Swift package"
-        run: bash ./bdk-swift/build-local-swift.sh
+        working-directory: bdk-swift
+        run: bash ./build-local-swift.sh
 
       - name: "Run live Swift tests"
         working-directory: bdk-swift
