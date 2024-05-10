@@ -1,6 +1,9 @@
 import XCTest
 @testable import BitcoinDevKit
 
+let SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
+let TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
+
 final class LiveWalletTests: XCTestCase {
     var dbFilePath: URL!
 
@@ -26,15 +29,15 @@ final class LiveWalletTests: XCTestCase {
     func testSyncedBalance() throws {
         let descriptor = try Descriptor(
             descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
-            network: Network.testnet
+            network: Network.signet
         )
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: nil,
             persistenceBackendPath: dbFilePath.path,
-            network: .testnet
+            network: .signet
         )
-        let esploraClient = EsploraClient(url: "https://esplora.testnet.kuutamo.cloud/")
+        let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
         let fullScanRequest: FullScanRequest = wallet.startFullScan()
         let update = try esploraClient.fullScan(
             fullScanRequest: fullScanRequest,
@@ -59,15 +62,15 @@ final class LiveWalletTests: XCTestCase {
     func testBroadcastTransaction() throws {
         let descriptor = try Descriptor(
             descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
-            network: Network.testnet
+            network: Network.signet
         )
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: nil,
             persistenceBackendPath: dbFilePath.path,
-            network: .testnet
+            network: .signet
         )
-        let esploraClient = EsploraClient(url: "https://esplora.testnet.kuutamo.cloud/")
+        let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
         let fullScanRequest: FullScanRequest = wallet.startFullScan()
         let update = try esploraClient.fullScan(
             fullScanRequest: fullScanRequest,
@@ -81,7 +84,7 @@ final class LiveWalletTests: XCTestCase {
 
         print("Balance: \(wallet.getBalance().total)")
 
-        let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .testnet)
+        let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .signet)
         let psbt: Psbt = try
             TxBuilder()
                 .addRecipient(script: recipient.scriptPubkey(), amount: 4200)
