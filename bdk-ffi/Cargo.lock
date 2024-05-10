@@ -165,6 +165,7 @@ dependencies = [
  "bdk_esplora",
  "bdk_file_store",
  "bitcoin-internals",
+ "serde_json",
  "thiserror",
  "uniffi",
 ]

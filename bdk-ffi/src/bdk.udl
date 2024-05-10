@@ -657,6 +657,11 @@ interface Psbt {
 
   [Throws=PsbtError]
   u64 fee();
+
+  [Throws=PsbtError]
+  Psbt combine(Psbt other);
+
+  string json_serialize();
 };
 
 dictionary OutPoint {

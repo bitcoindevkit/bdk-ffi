@@ -18,6 +18,7 @@ use bdk::bitcoin::TxIn as BdkTxIn;
 use bdk::bitcoin::Txid;
 
 use std::io::Cursor;
+use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
@@ -230,19 +231,20 @@ impl Psbt {
             .map_err(PsbtError::from)
     }
 
-    //
-    // pub(crate) fn combine(
-    //     &self,
-    //     other: Arc<Psbt>,
-    // ) -> Result<Arc<Psbt>, > {
-    //     let other_psbt = other.inner.lock().unwrap().clone();
-    //     let mut original_psbt = self.inner.lock().unwrap().clone();
-    //
-    //     original_psbt.combine(other_psbt)?;
-    //     Ok(Arc::new(PartiallySignedTransaction {
-    //         inner: Mutex::new(original_psbt),
-    //     }))
-    // }
+    pub(crate) fn combine(
+        &self,
+        other: Arc<Psbt>,
+    ) -> Result<Arc<Psbt>, PsbtError> {
+        let mut original_psbt = self.0.lock().unwrap().clone();
+        let other_psbt = other.0.lock().unwrap().clone();
+        original_psbt.combine(other_psbt)?;
+        Ok(Arc::new(Psbt(Mutex::new(original_psbt))))
+    }
+
+    pub(crate) fn json_serialize(&self) -> String {
+        let psbt = self.0.lock().unwrap();
+        serde_json::to_string(psbt.deref()).unwrap()
+    }
 }
 
 impl From<BdkPsbt> for Psbt {
