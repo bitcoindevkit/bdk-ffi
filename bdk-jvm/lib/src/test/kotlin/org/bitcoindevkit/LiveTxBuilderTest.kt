@@ -33,7 +33,9 @@ class LiveTxBuilderTest {
         wallet.commit()
         println("Balance: ${wallet.getBalance().total}")
 
-        assert(wallet.getBalance().total > 0uL)
+        assert(wallet.getBalance().total > 0uL) {
+            "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
+        }
 
         val recipient: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.SIGNET)
         val psbt: Psbt = TxBuilder()
@@ -58,7 +60,9 @@ class LiveTxBuilderTest {
         wallet.commit()
         println("Balance: ${wallet.getBalance().total}")
 
-        assert(wallet.getBalance().total > 0uL)
+        assert(wallet.getBalance().total > 0uL) {
+            "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
+        }
 
         val recipient1: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.SIGNET)
         val recipient2: Address = Address("tb1qw2c3lxufxqe2x9s4rdzh65tpf4d7fssjgh8nv6", Network.SIGNET)

@@ -1,8 +1,8 @@
 import XCTest
 @testable import BitcoinDevKit
 
-let SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
-let TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
+private let SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
+private let TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 
 final class LiveWalletTests: XCTestCase {
     var dbFilePath: URL!
@@ -45,9 +45,14 @@ final class LiveWalletTests: XCTestCase {
             parallelRequests: 1
         )
         try wallet.applyUpdate(update: update)
-        try wallet.commit()
+        let _ = try wallet.commit()
+        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
 
-        XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0))
+        XCTAssertGreaterThan(
+            wallet.getBalance().total,
+            UInt64(0),
+            "Wallet must have positive balance, please send funds to \(address)"
+        )
 
         print("Transactions count: \(wallet.transactions().count)")
         let transactions = wallet.transactions().prefix(3)
@@ -78,9 +83,15 @@ final class LiveWalletTests: XCTestCase {
             parallelRequests: 1
         )
         try wallet.applyUpdate(update: update)
-        try wallet.commit()
-
-        XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
+        let _ = try wallet.commit()
+        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
+        
+        XCTAssertGreaterThan(
+            wallet.getBalance().total,
+            UInt64(0),
+            "Wallet must have positive balance, please send funds to \(address)"
+        )
+        
 
         print("Balance: \(wallet.getBalance().total)")
 

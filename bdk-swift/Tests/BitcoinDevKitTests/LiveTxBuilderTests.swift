@@ -1,8 +1,8 @@
 import XCTest
 @testable import BitcoinDevKit
 
-let SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
-let TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
+private let SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
+private let TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 
 final class LiveTxBuilderTests: XCTestCase {
     var dbFilePath: URL!
@@ -45,9 +45,14 @@ final class LiveTxBuilderTests: XCTestCase {
             parallelRequests: 1
         )
         try wallet.applyUpdate(update: update)
-        try wallet.commit()
+        let _ = try wallet.commit()
+        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
 
-        XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
+        XCTAssertGreaterThan(
+            wallet.getBalance().total,
+            UInt64(0),
+            "Wallet must have positive balance, please send funds to \(address)"
+        )
 
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .signet)
         let psbt: Psbt = try TxBuilder()
@@ -82,9 +87,14 @@ final class LiveTxBuilderTests: XCTestCase {
             parallelRequests: 1
         )
         try wallet.applyUpdate(update: update)
-        try wallet.commit()
-        
-        XCTAssertGreaterThan(wallet.getBalance().total, UInt64(0), "Wallet must have positive balance, please add funds")
+        let _ = try wallet.commit()
+        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
+
+        XCTAssertGreaterThan(
+            wallet.getBalance().total,
+            UInt64(0),
+            "Wallet must have positive balance, please send funds to \(address)"
+        )
 
         let recipient1: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .signet)
         let recipient2: Address = try Address(address: "tb1qw2c3lxufxqe2x9s4rdzh65tpf4d7fssjgh8nv6", network: .signet)
@@ -100,7 +110,7 @@ final class LiveTxBuilderTests: XCTestCase {
             .enableRbf()
             .finish(wallet: wallet)
 
-        try! wallet.sign(psbt: psbt)
+        let _ = try! wallet.sign(psbt: psbt)
 
         XCTAssertTrue(psbt.serialize().hasPrefix("cHNi"), "PSBT should start with cHNI")
     }

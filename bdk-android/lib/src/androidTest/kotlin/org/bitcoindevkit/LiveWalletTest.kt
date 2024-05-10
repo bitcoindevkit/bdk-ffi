@@ -37,7 +37,9 @@ class LiveWalletTest {
         val balance: Balance = wallet.getBalance()
         println("Balance: $balance")
 
-        assert(wallet.getBalance().total > 0uL)
+        assert(wallet.getBalance().total > 0uL) {
+            "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
+        }
 
         println("Transactions count: ${wallet.transactions().count()}")
         val transactions = wallet.transactions().take(3)
@@ -59,7 +61,6 @@ class LiveWalletTest {
         wallet.applyUpdate(update)
         wallet.commit()
         println("Balance: ${wallet.getBalance().total}")
-        println("New address: ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address}")
 
         assert(wallet.getBalance().total > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address} and try again."
@@ -82,7 +83,7 @@ class LiveWalletTest {
         println("Txid is: ${tx.txid()}")
 
         val txFee: ULong = wallet.calculateFee(tx)
-        println("Tx fee is: ${txFee}")
+        println("Tx fee is: $txFee")
 
         val feeRate: FeeRate = wallet.calculateFeeRate(tx)
         println("Tx fee rate is: ${feeRate.toSatPerVbCeil()} sat/vB")

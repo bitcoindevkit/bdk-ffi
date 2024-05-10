@@ -32,7 +32,11 @@ class LiveTxBuilderTest(unittest.TestCase):
         wallet.apply_update(update)
         wallet.commit()
         
-        self.assertGreater(wallet.get_balance().total, 0)
+        self.assertGreater(
+            wallet.get_balance().total,
+            0,
+            f"Wallet balance must be greater than 0! Please send funds to {wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL).address.as_string()} and try again."
+        )
         
         recipient = bdk.Address(
             address="tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989",
@@ -68,7 +72,11 @@ class LiveTxBuilderTest(unittest.TestCase):
         wallet.apply_update(update)
         wallet.commit()
         
-        self.assertGreater(wallet.get_balance().total, 0)
+        self.assertGreater(
+            wallet.get_balance().total, 
+            0,
+            f"Wallet balance must be greater than 0! Please send funds to {wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL).address.as_string()} and try again."
+        )
         
         recipient1 = bdk.Address(
             address="tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989",
