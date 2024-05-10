@@ -33,6 +33,7 @@ use crate::error::FeeRateError;
 use crate::error::InspectError;
 use crate::error::ParseAmountError;
 use crate::error::PersistenceError;
+use crate::error::PsbtError;
 use crate::error::PsbtParseError;
 use crate::error::SignerError;
 use crate::error::TransactionError;

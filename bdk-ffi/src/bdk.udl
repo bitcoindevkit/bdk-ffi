@@ -171,6 +171,43 @@ interface PersistenceError {
 };
 
 [Error]
+interface PsbtError {
+  InvalidMagic();
+  MissingUtxo();
+  InvalidSeparator();
+  PsbtUtxoOutOfBounds();
+  InvalidKey(string key);
+  InvalidProprietaryKey();
+  DuplicateKey(string key);
+  UnsignedTxHasScriptSigs();
+  UnsignedTxHasScriptWitnesses();
+  MustHaveUnsignedTx();
+  NoMorePairs();
+  UnexpectedUnsignedTx();
+  NonStandardSighashType(u32 sighash);
+  InvalidHash(string hash);
+  InvalidPreimageHashPair();
+  CombineInconsistentKeySources(string xpub);
+  ConsensusEncoding(string encoding_error);
+  NegativeFee();
+  FeeOverflow();
+  InvalidPublicKey(string error_message);
+  InvalidSecp256k1PublicKey(string secp256k1_error);
+  InvalidXOnlyPublicKey();
+  InvalidEcdsaSignature(string error_message);
+  InvalidTaprootSignature(string error_message);
+  InvalidControlBlock();
+  InvalidLeafVersion();
+  Taproot();
+  TapTree(string error_message);
+  XPubKey();
+  Version(string error_message);
+  PartialDataConsumption();
+  Io(string error_message);
+  OtherPsbtError();
+};
+
+[Error]
 interface PsbtParseError {
   PsbtEncoding(string error_message);
   Base64Encoding(string error_message);
