@@ -1,4 +1,4 @@
-use crate::error::{AddressError, FeeRateError, PsbtParseError, TransactionError};
+use crate::error::{AddressError, FeeRateError, PsbtError, PsbtParseError, TransactionError};
 
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk::bitcoin::amount::ParseAmountError;
@@ -219,6 +219,30 @@ impl Psbt {
         let transaction: Transaction = tx.into();
         Ok(Arc::new(transaction))
     }
+
+    pub(crate) fn fee(&self) -> Result<u64, PsbtError> {
+        self
+            .0
+            .lock()
+            .unwrap()
+            .fee()
+            .map(|fee| fee.to_sat())
+            .map_err(PsbtError::from)
+    }
+
+    //
+    // pub(crate) fn combine(
+    //     &self,
+    //     other: Arc<Psbt>,
+    // ) -> Result<Arc<Psbt>, > {
+    //     let other_psbt = other.inner.lock().unwrap().clone();
+    //     let mut original_psbt = self.inner.lock().unwrap().clone();
+    //
+    //     original_psbt.combine(other_psbt)?;
+    //     Ok(Arc::new(PartiallySignedTransaction {
+    //         inner: Mutex::new(original_psbt),
+    //     }))
+    // }
 }
 
 impl From<BdkPsbt> for Psbt {

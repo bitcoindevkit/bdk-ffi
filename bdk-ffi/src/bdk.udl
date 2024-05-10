@@ -654,6 +654,9 @@ interface Psbt {
 
   [Throws=ExtractTxError]
   Transaction extract_tx();
+
+  [Throws=PsbtError]
+  u64 fee();
 };
 
 dictionary OutPoint {
