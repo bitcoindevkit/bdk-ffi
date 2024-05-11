@@ -33,7 +33,7 @@ class LiveWalletTest(unittest.TestCase):
         wallet.commit()
         
         self.assertGreater(
-            wallet.get_balance().total,    
+            wallet.get_balance().total.to_sat(),
             0,
             f"Wallet balance must be greater than 0! Please send funds to {wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL).address.as_string()} and try again."
         )
@@ -69,7 +69,7 @@ class LiveWalletTest(unittest.TestCase):
         wallet.commit()
         
         self.assertGreater(
-            wallet.get_balance().total, 
+            wallet.get_balance().total.to_sat(),
             0,
             f"Wallet balance must be greater than 0! Please send funds to {wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL).address.as_string()} and try again."
         )

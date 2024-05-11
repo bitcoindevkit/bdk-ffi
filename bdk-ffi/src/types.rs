@@ -11,6 +11,8 @@ use bdk::LocalOutput as BdkLocalOutput;
 
 use std::sync::{Arc, Mutex};
 
+use crate::bitcoin::Amount;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChainPosition {
     Confirmed { height: u32, timestamp: u64 },
@@ -45,7 +47,7 @@ impl From<BdkCanonicalTx<'_, Arc<bdk::bitcoin::Transaction>, ConfirmationTimeHei
 
 pub struct ScriptAmount {
     pub script: Arc<Script>,
-    pub amount: u64,
+    pub amount: Arc<Amount>,
 }
 
 pub struct AddressInfo {
@@ -65,23 +67,23 @@ impl From<BdkAddressInfo> for AddressInfo {
 }
 
 pub struct Balance {
-    pub immature: u64,
-    pub trusted_pending: u64,
-    pub untrusted_pending: u64,
-    pub confirmed: u64,
-    pub trusted_spendable: u64,
-    pub total: u64,
+    pub immature: Arc<Amount>,
+    pub trusted_pending: Arc<Amount>,
+    pub untrusted_pending: Arc<Amount>,
+    pub confirmed: Arc<Amount>,
+    pub trusted_spendable: Arc<Amount>,
+    pub total: Arc<Amount>,
 }
 
 impl From<BdkBalance> for Balance {
     fn from(bdk_balance: BdkBalance) -> Self {
         Balance {
-            immature: bdk_balance.immature,
-            trusted_pending: bdk_balance.trusted_pending,
-            untrusted_pending: bdk_balance.untrusted_pending,
-            confirmed: bdk_balance.confirmed,
-            trusted_spendable: bdk_balance.trusted_spendable(),
-            total: bdk_balance.total(),
+            immature: Arc::new(bdk_balance.immature.into()),
+            trusted_pending: Arc::new(bdk_balance.trusted_pending.into()),
+            untrusted_pending: Arc::new(bdk_balance.untrusted_pending.into()),
+            confirmed: Arc::new(bdk_balance.confirmed.into()),
+            trusted_spendable: Arc::new(bdk_balance.trusted_spendable().into()),
+            total: Arc::new(bdk_balance.total().into()),
         }
     }
 }

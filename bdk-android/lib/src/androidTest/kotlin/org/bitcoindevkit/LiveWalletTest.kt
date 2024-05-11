@@ -33,11 +33,11 @@ class LiveWalletTest {
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
         wallet.commit()
-        println("Balance: ${wallet.getBalance().total}")
+        println("Balance: ${wallet.getBalance().total.toSat()}")
         val balance: Balance = wallet.getBalance()
         println("Balance: $balance")
 
-        assert(wallet.getBalance().total > 0uL) {
+        assert(wallet.getBalance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
         }
 
@@ -60,9 +60,9 @@ class LiveWalletTest {
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
         wallet.commit()
-        println("Balance: ${wallet.getBalance().total}")
+        println("Balance: ${wallet.getBalance().total.toSat()}")
 
-        assert(wallet.getBalance().total > 0uL) {
+        assert(wallet.getBalance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address} and try again."
         }
 

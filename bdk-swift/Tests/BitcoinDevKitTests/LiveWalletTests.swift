@@ -49,7 +49,7 @@ final class LiveWalletTests: XCTestCase {
         let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
 
         XCTAssertGreaterThan(
-            wallet.getBalance().total,
+            wallet.getBalance().total.toSat(),
             UInt64(0),
             "Wallet must have positive balance, please send funds to \(address)"
         )
@@ -87,18 +87,17 @@ final class LiveWalletTests: XCTestCase {
         let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
         
         XCTAssertGreaterThan(
-            wallet.getBalance().total,
+            wallet.getBalance().total.toSat(),
             UInt64(0),
             "Wallet must have positive balance, please send funds to \(address)"
         )
-        
 
         print("Balance: \(wallet.getBalance().total)")
 
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .signet)
         let psbt: Psbt = try
             TxBuilder()
-                .addRecipient(script: recipient.scriptPubkey(), amount: 4200)
+            .addRecipient(script: recipient.scriptPubkey(), amount: Amount.fromSat(fromSat: 4200))
                 .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2))
                 .finish(wallet: wallet)
 

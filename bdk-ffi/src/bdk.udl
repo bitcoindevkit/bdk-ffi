@@ -132,6 +132,19 @@ enum FeeRateError {
 };
 
 [Error]
+interface ParseAmountError {
+  Negative();
+  TooBig();
+  TooPrecise();
+  InvalidFormat();
+  InputTooLarge();
+  InvalidCharacter(string error_message);
+  UnknownDenomination(string error_message);
+  PossiblyConfusingDenomination(string error_message);
+  OtherParseAmountErr();
+};
+
+[Error]
 interface PersistenceError {
   Write(string error_message);
 };
@@ -185,6 +198,7 @@ interface WalletCreationError {
   NotInitialized();
   LoadedGenesisDoesNotMatch(string expected, string got);
   LoadedNetworkDoesNotMatch(Network expected, Network? got);
+  LoadedDescriptorDoesNotMatch(string got, KeychainKind keychain);
 };
 
 // ------------------------------------------------------------------------
@@ -203,17 +217,17 @@ dictionary AddressInfo {
 };
 
 dictionary Balance {
-  u64 immature;
+  Amount immature;
 
-  u64 trusted_pending;
+  Amount trusted_pending;
 
-  u64 untrusted_pending;
+  Amount untrusted_pending;
 
-  u64 confirmed;
+  Amount confirmed;
 
-  u64 trusted_spendable;
+  Amount trusted_spendable;
 
-  u64 total;
+  Amount total;
 };
 
 dictionary LocalOutput {
@@ -302,7 +316,7 @@ interface Update {};
 interface TxBuilder {
   constructor();
 
-  TxBuilder add_recipient([ByRef] Script script, u64 amount);
+  TxBuilder add_recipient([ByRef] Script script, Amount amount);
 
   TxBuilder set_recipients(sequence<ScriptAmount> recipients);
 
@@ -456,12 +470,12 @@ interface EsploraClient {
 
 dictionary ScriptAmount {
   Script script;
-  u64 amount;
+  Amount amount;
 };
 
 dictionary SentAndReceivedValues {
-    u64 sent;
-    u64 received;
+    Amount sent;
+    Amount received;
 };
 
 // ------------------------------------------------------------------------
@@ -541,6 +555,18 @@ interface Psbt {
 dictionary OutPoint {
   string txid;
   u32 vout;
+};
+
+interface Amount {
+  [Name=from_sat]
+  constructor(u64 from_sat);
+
+  [Name=from_btc, Throws=ParseAmountError]
+  constructor(f64 from_btc);
+
+  u64 to_sat();
+
+  f64 to_btc();
 };
 
 interface FeeRate {

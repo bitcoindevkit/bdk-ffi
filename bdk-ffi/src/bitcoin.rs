@@ -18,6 +18,43 @@ use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
+use bdk::bitcoin::amount::ParseAmountError;
+use bdk::bitcoin::Amount as BdkAmount;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Amount(pub(crate) BdkAmount);
+
+impl Amount {
+    pub fn from_sat(sat: u64) -> Self {
+        Amount(BdkAmount::from_sat(sat))
+    }
+
+    pub fn from_btc(btc: f64) -> Result<Self, ParseAmountError> {
+        let bdk_amount = BdkAmount::from_btc(btc).map_err(ParseAmountError::from)?;
+        Ok(Amount(bdk_amount))
+    }
+
+    pub fn to_sat(&self) -> u64 {
+        self.0.to_sat()
+    }
+
+    pub fn to_btc(&self) -> f64 {
+        self.0.to_btc()
+    }
+}
+
+impl From<Amount> for BdkAmount {
+    fn from(amount: Amount) -> Self {
+        amount.0
+    }
+}
+
+impl From<BdkAmount> for Amount {
+    fn from(amount: BdkAmount) -> Self {
+        Amount(amount)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Script(pub(crate) BdkScriptBuf);
 

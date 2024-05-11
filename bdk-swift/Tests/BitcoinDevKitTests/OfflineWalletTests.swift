@@ -60,6 +60,6 @@ final class OfflineWalletTests: XCTestCase {
             network: .testnet
         )
 
-        XCTAssertEqual(wallet.getBalance().total, 0)
+        XCTAssertEqual(wallet.getBalance().total.toSat(), 0)
     }
 }

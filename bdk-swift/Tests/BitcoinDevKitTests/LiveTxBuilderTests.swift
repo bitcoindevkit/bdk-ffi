@@ -49,14 +49,14 @@ final class LiveTxBuilderTests: XCTestCase {
         let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
 
         XCTAssertGreaterThan(
-            wallet.getBalance().total,
+            wallet.getBalance().total.toSat(),
             UInt64(0),
             "Wallet must have positive balance, please send funds to \(address)"
         )
 
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .signet)
         let psbt: Psbt = try TxBuilder()
-            .addRecipient(script: recipient.scriptPubkey(), amount: 4200)
+            .addRecipient(script: recipient.scriptPubkey(), amount: Amount.fromSat(fromSat: 4200))
             .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2))
             .finish(wallet: wallet)
 
@@ -91,7 +91,7 @@ final class LiveTxBuilderTests: XCTestCase {
         let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
 
         XCTAssertGreaterThan(
-            wallet.getBalance().total,
+            wallet.getBalance().total.toSat(),
             UInt64(0),
             "Wallet must have positive balance, please send funds to \(address)"
         )
@@ -99,8 +99,8 @@ final class LiveTxBuilderTests: XCTestCase {
         let recipient1: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .signet)
         let recipient2: Address = try Address(address: "tb1qw2c3lxufxqe2x9s4rdzh65tpf4d7fssjgh8nv6", network: .signet)
         let allRecipients: [ScriptAmount] = [
-            ScriptAmount(script: recipient1.scriptPubkey(), amount: 4200),
-            ScriptAmount(script: recipient2.scriptPubkey(), amount: 4200)
+            ScriptAmount(script: recipient1.scriptPubkey(), amount: Amount.fromSat(fromSat: 4200)),
+            ScriptAmount(script: recipient2.scriptPubkey(), amount: Amount.fromSat(fromSat: 4200))
         ]
 
         let psbt: Psbt = try TxBuilder()

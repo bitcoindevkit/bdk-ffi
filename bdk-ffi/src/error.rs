@@ -17,12 +17,15 @@ use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_file_store::FileError as BdkFileError;
 use bitcoin_internals::hex::display::DisplayHex;
 
+use bdk::bitcoin::amount::ParseAmountError as BdkParseAmountError;
+
 use std::convert::TryInto;
 
 use bdk::bitcoin::address::Error as BdkAddressError;
 use bdk::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk::chain::local_chain::CannotConnectError as BdkCannotConnectError;
+use bdk::KeychainKind;
 
 // ------------------------------------------------------------------------
 // error definitions
@@ -318,6 +321,37 @@ pub enum FeeRateError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum ParseAmountError {
+    #[error("amount is negative")]
+    Negative,
+
+    #[error("amount is too large")]
+    TooBig,
+
+    #[error("amount is too precise")]
+    TooPrecise,
+
+    #[error("invalid amount format")]
+    InvalidFormat,
+
+    #[error("input is too large")]
+    InputTooLarge,
+
+    #[error("invalid character: {error_message}")]
+    InvalidCharacter { error_message: String },
+
+    #[error("unknown denomination: {error_message}")]
+    UnknownDenomination { error_message: String },
+
+    #[error("possibly confusing denomination: {error_message}")]
+    PossiblyConfusingDenomination { error_message: String },
+
+    // Has to handle non-exhaustive
+    #[error("unknown parse amount error")]
+    OtherParseAmountErr,
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum PersistenceError {
     #[error("writing to persistence error: {error_message}")]
     Write { error_message: String },
@@ -434,6 +468,9 @@ pub enum WalletCreationError {
         expected: Network,
         got: Option<Network>,
     },
+
+    #[error("loaded descriptor '{got}' does not match what was provided '{keychain:?}'")]
+    LoadedDescriptorDoesNotMatch { got: String, keychain: KeychainKind },
 }
 
 // ------------------------------------------------------------------------
@@ -800,6 +837,28 @@ impl From<BdkExtractTxError> for ExtractTxError {
     }
 }
 
+impl From<BdkParseAmountError> for ParseAmountError {
+    fn from(error: BdkParseAmountError) -> Self {
+        match error {
+            BdkParseAmountError::Negative => ParseAmountError::Negative,
+            BdkParseAmountError::TooBig => ParseAmountError::TooBig,
+            BdkParseAmountError::InvalidFormat => ParseAmountError::InvalidFormat,
+            BdkParseAmountError::TooPrecise => ParseAmountError::TooPrecise,
+            BdkParseAmountError::InputTooLarge => ParseAmountError::InputTooLarge,
+            BdkParseAmountError::InvalidCharacter(c) => ParseAmountError::InvalidCharacter {
+                error_message: c.to_string(),
+            },
+            BdkParseAmountError::UnknownDenomination(s) => {
+                ParseAmountError::UnknownDenomination { error_message: s }
+            }
+            BdkParseAmountError::PossiblyConfusingDenomination(s) => {
+                ParseAmountError::PossiblyConfusingDenomination { error_message: s }
+            }
+            _ => ParseAmountError::OtherParseAmountErr,
+        }
+    }
+}
+
 impl From<std::io::Error> for PersistenceError {
     fn from(error: std::io::Error) -> Self {
         PersistenceError::Write {
@@ -902,6 +961,12 @@ impl From<NewOrLoadError> for WalletCreationError {
             NewOrLoadError::LoadedNetworkDoesNotMatch { expected, got } => {
                 WalletCreationError::LoadedNetworkDoesNotMatch { expected, got }
             }
+            NewOrLoadError::LoadedDescriptorDoesNotMatch { got, keychain } => {
+                WalletCreationError::LoadedDescriptorDoesNotMatch {
+                    got: format!("{:?}", got),
+                    keychain,
+                }
+            }
         }
     }
 }
@@ -914,13 +979,14 @@ impl From<NewOrLoadError> for WalletCreationError {
 mod test {
     use crate::error::{
         AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError,
-        DescriptorKeyError, EsploraError, ExtractTxError, FeeRateError, PersistenceError,
-        PsbtParseError, TransactionError, TxidParseError, WalletCreationError,
+        DescriptorKeyError, EsploraError, ExtractTxError, FeeRateError, ParseAmountError,
+        PersistenceError, PsbtParseError, TransactionError, TxidParseError, WalletCreationError,
     };
     use crate::CalculateFeeError;
     use crate::OutPoint;
     use crate::SignerError;
     use bdk::bitcoin::Network;
+    use bdk::KeychainKind;
 
     #[test]
     fn test_error_address() {
@@ -1419,6 +1485,43 @@ mod test {
     }
 
     #[test]
+    fn test_error_parse_amount() {
+        let cases = vec![
+            (ParseAmountError::Negative, "amount is negative"),
+            (ParseAmountError::TooBig, "amount is too large"),
+            (ParseAmountError::TooPrecise, "amount is too precise"),
+            (ParseAmountError::InvalidFormat, "invalid amount format"),
+            (ParseAmountError::InputTooLarge, "input is too large"),
+            (
+                ParseAmountError::InvalidCharacter {
+                    error_message: "invalid char".to_string(),
+                },
+                "invalid character: invalid char",
+            ),
+            (
+                ParseAmountError::UnknownDenomination {
+                    error_message: "unknown denom".to_string(),
+                },
+                "unknown denomination: unknown denom",
+            ),
+            (
+                ParseAmountError::PossiblyConfusingDenomination {
+                    error_message: "confusing denom".to_string(),
+                },
+                "possibly confusing denomination: confusing denom",
+            ),
+            (
+                ParseAmountError::OtherParseAmountErr,
+                "unknown parse amount error",
+            ),
+        ];
+
+        for (error, expected_message) in cases {
+            assert_eq!(error.to_string(), expected_message);
+        }
+    }
+
+    #[test]
     fn test_persistence_error() {
         let cases = vec![
             (
@@ -1604,6 +1707,13 @@ mod test {
                     got: Some(Network::Testnet),
                 },
                 "loaded network type is not bitcoin, got Some(Testnet)".to_string(),
+            ),
+            (
+                WalletCreationError::LoadedDescriptorDoesNotMatch {
+                    got: "def".to_string(),
+                    keychain: KeychainKind::External,
+                },
+                "loaded descriptor 'def' does not match what was provided 'External'".to_string(),
             ),
         ];
 

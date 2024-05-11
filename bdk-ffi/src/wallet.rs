@@ -1,3 +1,4 @@
+use crate::bitcoin::Amount;
 use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
@@ -8,6 +9,7 @@ use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount, SyncRequest,
 };
 
+use bdk::bitcoin::amount::Amount as BdkAmount;
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::Network;
 use bdk::bitcoin::Psbt as BdkPsbt;
@@ -82,7 +84,7 @@ impl Wallet {
     }
 
     pub fn get_balance(&self) -> Balance {
-        let bdk_balance: bdk::wallet::Balance = self.get_wallet().get_balance();
+        let bdk_balance = self.get_wallet().get_balance();
         Balance::from(bdk_balance)
     }
 
@@ -102,8 +104,11 @@ impl Wallet {
     }
 
     pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
-        let (sent, received): (u64, u64) = self.get_wallet().sent_and_received(&tx.into());
-        SentAndReceivedValues { sent, received }
+        let (sent, received) = self.get_wallet().sent_and_received(&tx.into());
+        SentAndReceivedValues {
+            sent: Arc::new(sent.into()),
+            received: Arc::new(received.into()),
+        }
     }
 
     pub fn transactions(&self) -> Vec<CanonicalTx> {
@@ -152,15 +157,15 @@ impl Wallet {
 }
 
 pub struct SentAndReceivedValues {
-    pub sent: u64,
-    pub received: u64,
+    pub sent: Arc<Amount>,
+    pub received: Arc<Amount>,
 }
 
 pub struct Update(pub(crate) BdkUpdate);
 
 #[derive(Clone, Debug)]
 pub struct TxBuilder {
-    pub(crate) recipients: Vec<(BdkScriptBuf, u64)>,
+    pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
     pub(crate) utxos: Vec<OutPoint>,
     pub(crate) unspendable: HashSet<OutPoint>,
     pub(crate) change_policy: ChangeSpendPolicy,
@@ -190,9 +195,9 @@ impl TxBuilder {
         }
     }
 
-    pub(crate) fn add_recipient(&self, script: &Script, amount: u64) -> Arc<Self> {
-        let mut recipients: Vec<(BdkScriptBuf, u64)> = self.recipients.clone();
-        recipients.append(&mut vec![(script.0.clone(), amount)]);
+    pub(crate) fn add_recipient(&self, script: &Script, amount: Arc<Amount>) -> Arc<Self> {
+        let mut recipients: Vec<(BdkScriptBuf, BdkAmount)> = self.recipients.clone();
+        recipients.append(&mut vec![(script.0.clone(), amount.0)]);
 
         Arc::new(TxBuilder {
             recipients,
@@ -203,7 +208,7 @@ impl TxBuilder {
     pub(crate) fn set_recipients(&self, recipients: Vec<ScriptAmount>) -> Arc<Self> {
         let recipients = recipients
             .iter()
-            .map(|script_amount| (script_amount.script.0.clone(), script_amount.amount))
+            .map(|script_amount| (script_amount.script.0.clone(), script_amount.amount.0)) //;
             .collect();
         Arc::new(TxBuilder {
             recipients,

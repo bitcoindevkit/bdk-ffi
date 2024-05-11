@@ -7,6 +7,7 @@ mod types;
 mod wallet;
 
 use crate::bitcoin::Address;
+use crate::bitcoin::Amount;
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
 use crate::bitcoin::Psbt;
@@ -25,6 +26,7 @@ use crate::error::DescriptorKeyError;
 use crate::error::EsploraError;
 use crate::error::ExtractTxError;
 use crate::error::FeeRateError;
+use crate::error::ParseAmountError;
 use crate::error::PersistenceError;
 use crate::error::PsbtParseError;
 use crate::error::SignerError;

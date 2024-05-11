@@ -31,9 +31,9 @@ class LiveWalletTest {
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
         wallet.commit()
-        println("Balance: ${wallet.getBalance().total}")
+        println("Balance: ${wallet.getBalance().total.toSat()}")
 
-        assert(wallet.getBalance().total > 0uL) {
+        assert(wallet.getBalance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
         }
 
@@ -56,16 +56,16 @@ class LiveWalletTest {
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
         wallet.commit()
-        println("Balance: ${wallet.getBalance().total}")
+        println("Balance: ${wallet.getBalance().total.toSat()}")
 
-        assert(wallet.getBalance().total > 0uL) {
+        assert(wallet.getBalance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
         }
 
         val recipient: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.SIGNET)
 
         val psbt: Psbt = TxBuilder()
-            .addRecipient(recipient.scriptPubkey(), 4200uL)
+            .addRecipient(recipient.scriptPubkey(), Amount.fromSat(4200uL))
             .feeRate(FeeRate.fromSatPerVb(2uL))
             .finish(wallet)
 

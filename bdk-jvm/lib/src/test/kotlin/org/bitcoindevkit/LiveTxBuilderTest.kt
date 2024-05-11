@@ -31,15 +31,15 @@ class LiveTxBuilderTest {
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
         wallet.commit()
-        println("Balance: ${wallet.getBalance().total}")
+        println("Balance: ${wallet.getBalance().total.toSat()}")
 
-        assert(wallet.getBalance().total > 0uL) {
+        assert(wallet.getBalance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
         }
 
         val recipient: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.SIGNET)
         val psbt: Psbt = TxBuilder()
-            .addRecipient(recipient.scriptPubkey(), 4200uL)
+            .addRecipient(recipient.scriptPubkey(), Amount.fromSat(4200uL))
             .feeRate(FeeRate.fromSatPerVb(2uL))
             .finish(wallet)
 
@@ -58,17 +58,17 @@ class LiveTxBuilderTest {
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
         wallet.commit()
-        println("Balance: ${wallet.getBalance().total}")
+        println("Balance: ${wallet.getBalance().total.toSat()}")
 
-        assert(wallet.getBalance().total > 0uL) {
+        assert(wallet.getBalance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
         }
 
         val recipient1: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.SIGNET)
         val recipient2: Address = Address("tb1qw2c3lxufxqe2x9s4rdzh65tpf4d7fssjgh8nv6", Network.SIGNET)
         val allRecipients: List<ScriptAmount> = listOf(
-            ScriptAmount(recipient1.scriptPubkey(), 4200uL),
-            ScriptAmount(recipient2.scriptPubkey(), 4200uL),
+            ScriptAmount(recipient1.scriptPubkey(), Amount.fromSat(4200uL)),
+            ScriptAmount(recipient2.scriptPubkey(), Amount.fromSat(4200uL)),
         )
 
         val psbt: Psbt = TxBuilder()
