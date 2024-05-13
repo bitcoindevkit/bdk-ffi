@@ -68,37 +68,37 @@ pub enum AddressError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Bip32Error {
-    #[error("Cannot derive from a hardened key")]
+    #[error("cannot derive from a hardened key")]
     CannotDeriveFromHardenedKey,
 
-    #[error("Secp256k1 error: {error_message}")]
+    #[error("secp256k1 error: {error_message}")]
     Secp256k1 { error_message: String },
 
-    #[error("Invalid child number: {child_number}")]
+    #[error("invalid child number: {child_number}")]
     InvalidChildNumber { child_number: u32 },
 
-    #[error("Invalid format for child number")]
+    #[error("invalid format for child number")]
     InvalidChildNumberFormat,
 
-    #[error("Invalid derivation path format")]
+    #[error("invalid derivation path format")]
     InvalidDerivationPathFormat,
 
-    #[error("Unknown version: {version}")]
+    #[error("unknown version: {version}")]
     UnknownVersion { version: String },
 
-    #[error("Wrong extended key length: {length}")]
+    #[error("wrong extended key length: {length}")]
     WrongExtendedKeyLength { length: u32 },
 
-    #[error("Base58 error: {error_message}")]
+    #[error("base58 error: {error_message}")]
     Base58 { error_message: String },
 
-    #[error("Hexadecimal conversion error: {error_message}")]
+    #[error("hexadecimal conversion error: {error_message}")]
     Hex { error_message: String },
 
-    #[error("Invalid public key hex length: {length}")]
+    #[error("invalid public key hex length: {length}")]
     InvalidPublicKeyHexLength { length: u32 },
 
-    #[error("Unknown error: {error_message}")]
+    #[error("unknown error: {error_message}")]
     UnknownError { error_message: String },
 }
 
@@ -137,70 +137,70 @@ pub enum CannotConnectError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum CreateTxError {
-    #[error("Descriptor error: {error_message}")]
+    #[error("descriptor error: {error_message}")]
     Descriptor { error_message: String },
 
-    #[error("Persistence failure: {error_message}")]
+    #[error("persistence failure: {error_message}")]
     Persist { error_message: String },
 
-    #[error("Policy error: {error_message}")]
+    #[error("policy error: {error_message}")]
     Policy { error_message: String },
 
-    #[error("Spending policy required for {kind}")]
+    #[error("spending policy required for {kind}")]
     SpendingPolicyRequired { kind: String },
 
-    #[error("Unsupported version 0")]
+    #[error("unsupported version 0")]
     Version0,
 
-    #[error("Unsupported version 1 with CSV")]
+    #[error("unsupported version 1 with csv")]
     Version1Csv,
 
-    #[error("Lock time conflict: requested {requested}, but required {required}")]
+    #[error("lock time conflict: requested {requested}, but required {required}")]
     LockTime { requested: String, required: String },
 
-    #[error("Transaction requires RBF sequence number")]
+    #[error("transaction requires rbf sequence number")]
     RbfSequence,
 
-    #[error("RBF sequence: {rbf}, CSV sequence: {csv}")]
+    #[error("rbf sequence: {rbf}, csv sequence: {csv}")]
     RbfSequenceCsv { rbf: String, csv: String },
 
-    #[error("Fee too low: {required} sat required")]
+    #[error("fee too low: {required} sat required")]
     FeeTooLow { required: u64 },
 
-    #[error("Fee rate too low: {required}")]
+    #[error("fee rate too low: {required}")]
     FeeRateTooLow { required: String },
 
-    #[error("No UTXOs selected for the transaction")]
+    #[error("no utxos selected for the transaction")]
     NoUtxosSelected,
 
-    #[error("Output value below dust limit at index {index}")]
+    #[error("output value below dust limit at index {index}")]
     OutputBelowDustLimit { index: u64 },
 
-    #[error("Change policy descriptor error")]
+    #[error("change policy descriptor error")]
     ChangePolicyDescriptor,
 
-    #[error("Coin selection failed: {error_message}")]
+    #[error("coin selection failed: {error_message}")]
     CoinSelection { error_message: String },
 
-    #[error("Insufficient funds: needed {needed} sat, available {available} sat")]
+    #[error("insufficient funds: needed {needed} sat, available {available} sat")]
     InsufficientFunds { needed: u64, available: u64 },
 
-    #[error("Transaction has no recipients")]
+    #[error("transaction has no recipients")]
     NoRecipients,
 
-    #[error("PSBT creation error: {error_message}")]
+    #[error("psbt creation error: {error_message}")]
     Psbt { error_message: String },
 
-    #[error("Missing key origin for: {key}")]
+    #[error("missing key origin for: {key}")]
     MissingKeyOrigin { key: String },
 
-    #[error("Reference to an unknown UTXO: {outpoint}")]
+    #[error("reference to an unknown utxo: {outpoint}")]
     UnknownUtxo { outpoint: String },
 
-    #[error("Missing non-witness UTXO for outpoint: {outpoint}")]
+    #[error("missing non-witness utxo for outpoint: {outpoint}")]
     MissingNonWitnessUtxo { outpoint: String },
 
-    #[error("Miniscript PSBT error: {error_message}")]
+    #[error("miniscript psbt error: {error_message}")]
     MiniscriptPsbt { error_message: String },
 }
 
@@ -227,19 +227,19 @@ pub enum DescriptorError {
     #[error("invalid descriptor character: {char}")]
     InvalidDescriptorCharacter { char: String },
 
-    #[error("BIP32 error: {error_message}")]
+    #[error("bip32 error: {error_message}")]
     Bip32 { error_message: String },
 
-    #[error("Base58 error: {error_message}")]
+    #[error("base58 error: {error_message}")]
     Base58 { error_message: String },
 
-    #[error("Key-related error: {error_message}")]
+    #[error("key-related error: {error_message}")]
     Pk { error_message: String },
 
-    #[error("Miniscript error: {error_message}")]
+    #[error("miniscript error: {error_message}")]
     Miniscript { error_message: String },
 
-    #[error("Hex decoding error: {error_message}")]
+    #[error("hex decoding error: {error_message}")]
     Hex { error_message: String },
 }
 
@@ -266,7 +266,7 @@ pub enum EsploraError {
     #[error("parsing error: {error_message}")]
     Parsing { error_message: String },
 
-    #[error("Invalid status code, unable to convert to u16: {error_message}")]
+    #[error("invalid status code, unable to convert to u16: {error_message}")]
     StatusCode { error_message: String },
 
     #[error("bitcoin encoding error: {error_message}")]
@@ -287,10 +287,10 @@ pub enum EsploraError {
     #[error("header hash not found")]
     HeaderHashNotFound,
 
-    #[error("invalid HTTP header name: {name}")]
+    #[error("invalid http header name: {name}")]
     InvalidHttpHeaderName { name: String },
 
-    #[error("invalid HTTP header value: {value}")]
+    #[error("invalid http header value: {value}")]
     InvalidHttpHeaderValue { value: String },
 
     #[error("the request has already been consumed")]
@@ -359,61 +359,61 @@ pub enum PersistenceError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum PsbtParseError {
-    #[error("error in internal PSBT data structure: {error_message}")]
+    #[error("error in internal psbt data structure: {error_message}")]
     PsbtEncoding { error_message: String },
 
-    #[error("error in PSBT base64 encoding: {error_message}")]
+    #[error("error in psbt base64 encoding: {error_message}")]
     Base64Encoding { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum SignerError {
-    #[error("Missing key for signing")]
+    #[error("missing key for signing")]
     MissingKey,
 
-    #[error("Invalid key provided")]
+    #[error("invalid key provided")]
     InvalidKey,
 
-    #[error("User canceled operation")]
+    #[error("user canceled operation")]
     UserCanceled,
 
-    #[error("Input index out of range")]
+    #[error("input index out of range")]
     InputIndexOutOfRange,
 
-    #[error("Missing non-witness UTXO information")]
+    #[error("missing non-witness utxo information")]
     MissingNonWitnessUtxo,
 
-    #[error("Invalid non-witness UTXO information provided")]
+    #[error("invalid non-witness utxo information provided")]
     InvalidNonWitnessUtxo,
 
-    #[error("Missing witness UTXO")]
+    #[error("missing witness utxo")]
     MissingWitnessUtxo,
 
-    #[error("Missing witness script")]
+    #[error("missing witness script")]
     MissingWitnessScript,
 
-    #[error("Missing HD keypath")]
+    #[error("missing hd keypath")]
     MissingHdKeypath,
 
-    #[error("Non-standard sighash type used")]
+    #[error("non-standard sighash type used")]
     NonStandardSighash,
 
-    #[error("Invalid sighash type provided")]
+    #[error("invalid sighash type provided")]
     InvalidSighash,
 
-    #[error("Error with sighash computation: {error_message}")]
+    #[error("error with sighash computation: {error_message}")]
     SighashError { error_message: String },
 
-    #[error("Miniscript Psbt error: {error_message}")]
+    #[error("miniscript psbt error: {error_message}")]
     MiniscriptPsbt { error_message: String },
 
-    #[error("External error: {error_message}")]
+    #[error("external error: {error_message}")]
     External { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum TransactionError {
-    #[error("IO error")]
+    #[error("io error")]
     Io,
 
     #[error("allocation of oversized vector")]
@@ -422,7 +422,7 @@ pub enum TransactionError {
     #[error("invalid checksum: expected={expected} actual={actual}")]
     InvalidChecksum { expected: String, actual: String },
 
-    #[error("non-minimal varint")]
+    #[error("non-minimal var int")]
     NonMinimalVarInt,
 
     #[error("parse failed")]
@@ -1038,57 +1038,57 @@ mod test {
         let cases = vec![
             (
                 Bip32Error::CannotDeriveFromHardenedKey,
-                "Cannot derive from a hardened key",
+                "cannot derive from a hardened key",
             ),
             (
                 Bip32Error::Secp256k1 {
                     error_message: "failure".to_string(),
                 },
-                "Secp256k1 error: failure",
+                "secp256k1 error: failure",
             ),
             (
                 Bip32Error::InvalidChildNumber { child_number: 123 },
-                "Invalid child number: 123",
+                "invalid child number: 123",
             ),
             (
                 Bip32Error::InvalidChildNumberFormat,
-                "Invalid format for child number",
+                "invalid format for child number",
             ),
             (
                 Bip32Error::InvalidDerivationPathFormat,
-                "Invalid derivation path format",
+                "invalid derivation path format",
             ),
             (
                 Bip32Error::UnknownVersion {
                     version: "0x123".to_string(),
                 },
-                "Unknown version: 0x123",
+                "unknown version: 0x123",
             ),
             (
                 Bip32Error::WrongExtendedKeyLength { length: 512 },
-                "Wrong extended key length: 512",
+                "wrong extended key length: 512",
             ),
             (
                 Bip32Error::Base58 {
                     error_message: "error".to_string(),
                 },
-                "Base58 error: error",
+                "base58 error: error",
             ),
             (
                 Bip32Error::Hex {
                     error_message: "error".to_string(),
                 },
-                "Hexadecimal conversion error: error",
+                "hexadecimal conversion error: error",
             ),
             (
                 Bip32Error::InvalidPublicKeyHexLength { length: 66 },
-                "Invalid public key hex length: 66",
+                "invalid public key hex length: 66",
             ),
             (
                 Bip32Error::UnknownError {
                     error_message: "mystery".to_string(),
                 },
-                "Unknown error: mystery",
+                "unknown error: mystery",
             ),
         ];
 
@@ -1176,111 +1176,111 @@ mod test {
                 CreateTxError::Descriptor {
                     error_message: "Descriptor failure".to_string(),
                 },
-                "Descriptor error: Descriptor failure",
+                "descriptor error: Descriptor failure",
             ),
             (
                 CreateTxError::Persist {
                     error_message: "Persistence error".to_string(),
                 },
-                "Persistence failure: Persistence error",
+                "persistence failure: Persistence error",
             ),
             (
                 CreateTxError::Policy {
                     error_message: "Policy violation".to_string(),
                 },
-                "Policy error: Policy violation",
+                "policy error: Policy violation",
             ),
             (
                 CreateTxError::SpendingPolicyRequired {
                     kind: "multisig".to_string(),
                 },
-                "Spending policy required for multisig",
+                "spending policy required for multisig",
             ),
-            (CreateTxError::Version0, "Unsupported version 0"),
-            (CreateTxError::Version1Csv, "Unsupported version 1 with CSV"),
+            (CreateTxError::Version0, "unsupported version 0"),
+            (CreateTxError::Version1Csv, "unsupported version 1 with csv"),
             (
                 CreateTxError::LockTime {
                     requested: "today".to_string(),
                     required: "tomorrow".to_string(),
                 },
-                "Lock time conflict: requested today, but required tomorrow",
+                "lock time conflict: requested today, but required tomorrow",
             ),
             (
                 CreateTxError::RbfSequence,
-                "Transaction requires RBF sequence number",
+                "transaction requires rbf sequence number",
             ),
             (
                 CreateTxError::RbfSequenceCsv {
                     rbf: "123".to_string(),
                     csv: "456".to_string(),
                 },
-                "RBF sequence: 123, CSV sequence: 456",
+                "rbf sequence: 123, csv sequence: 456",
             ),
             (
                 CreateTxError::FeeTooLow { required: 1000 },
-                "Fee too low: 1000 sat required",
+                "fee too low: 1000 sat required",
             ),
             (
                 CreateTxError::FeeRateTooLow {
                     required: "5 sat/vB".to_string(),
                 },
-                "Fee rate too low: 5 sat/vB",
+                "fee rate too low: 5 sat/vB",
             ),
             (
                 CreateTxError::NoUtxosSelected,
-                "No UTXOs selected for the transaction",
+                "no utxos selected for the transaction",
             ),
             (
                 CreateTxError::OutputBelowDustLimit { index: 2 },
-                "Output value below dust limit at index 2",
+                "output value below dust limit at index 2",
             ),
             (
                 CreateTxError::ChangePolicyDescriptor,
-                "Change policy descriptor error",
+                "change policy descriptor error",
             ),
             (
                 CreateTxError::CoinSelection {
                     error_message: "No suitable outputs".to_string(),
                 },
-                "Coin selection failed: No suitable outputs",
+                "coin selection failed: No suitable outputs",
             ),
             (
                 CreateTxError::InsufficientFunds {
                     needed: 5000,
                     available: 3000,
                 },
-                "Insufficient funds: needed 5000 sat, available 3000 sat",
+                "insufficient funds: needed 5000 sat, available 3000 sat",
             ),
-            (CreateTxError::NoRecipients, "Transaction has no recipients"),
+            (CreateTxError::NoRecipients, "transaction has no recipients"),
             (
                 CreateTxError::Psbt {
                     error_message: "PSBT creation failed".to_string(),
                 },
-                "PSBT creation error: PSBT creation failed",
+                "psbt creation error: PSBT creation failed",
             ),
             (
                 CreateTxError::MissingKeyOrigin {
                     key: "xpub...".to_string(),
                 },
-                "Missing key origin for: xpub...",
+                "missing key origin for: xpub...",
             ),
             (
                 CreateTxError::UnknownUtxo {
                     outpoint: "outpoint123".to_string(),
                 },
-                "Reference to an unknown UTXO: outpoint123",
+                "reference to an unknown utxo: outpoint123",
             ),
             (
                 CreateTxError::MissingNonWitnessUtxo {
                     outpoint: "outpoint456".to_string(),
                 },
-                "Missing non-witness UTXO for outpoint: outpoint456",
+                "missing non-witness utxo for outpoint: outpoint456",
             ),
             (
                 CreateTxError::MiniscriptPsbt {
                     error_message: "Miniscript error".to_string(),
                 },
-                "Miniscript PSBT error: Miniscript error",
+                "miniscript psbt error: Miniscript error",
             ),
         ];
 
@@ -1327,31 +1327,31 @@ mod test {
                 DescriptorError::Bip32 {
                     error_message: "Bip32 error".to_string(),
                 },
-                "BIP32 error: Bip32 error",
+                "bip32 error: Bip32 error",
             ),
             (
                 DescriptorError::Base58 {
                     error_message: "Base58 decode error".to_string(),
                 },
-                "Base58 error: Base58 decode error",
+                "base58 error: Base58 decode error",
             ),
             (
                 DescriptorError::Pk {
                     error_message: "Public key error".to_string(),
                 },
-                "Key-related error: Public key error",
+                "key-related error: Public key error",
             ),
             (
                 DescriptorError::Miniscript {
                     error_message: "Miniscript evaluation error".to_string(),
                 },
-                "Miniscript error: Miniscript evaluation error",
+                "miniscript error: Miniscript evaluation error",
             ),
             (
                 DescriptorError::Hex {
                     error_message: "Hexadecimal decoding error".to_string(),
                 },
-                "Hex decoding error: Hexadecimal decoding error",
+                "hex decoding error: Hexadecimal decoding error",
             ),
         ];
 
@@ -1403,7 +1403,7 @@ mod test {
                 EsploraError::StatusCode {
                     error_message: "code 1234567".to_string(),
                 },
-                "Invalid status code, unable to convert to u16: code 1234567",
+                "invalid status code, unable to convert to u16: code 1234567",
             ),
             (
                 EsploraError::Parsing {
@@ -1552,13 +1552,13 @@ mod test {
                 PsbtParseError::PsbtEncoding {
                     error_message: "invalid PSBT structure".to_string(),
                 },
-                "error in internal PSBT data structure: invalid PSBT structure",
+                "error in internal psbt data structure: invalid PSBT structure",
             ),
             (
                 PsbtParseError::Base64Encoding {
                     error_message: "base64 decode error".to_string(),
                 },
-                "error in PSBT base64 encoding: base64 decode error",
+                "error in psbt base64 encoding: base64 decode error",
             ),
         ];
 
@@ -1570,46 +1570,46 @@ mod test {
     #[test]
     fn test_signer_errors() {
         let errors = vec![
-            (SignerError::MissingKey, "Missing key for signing"),
-            (SignerError::InvalidKey, "Invalid key provided"),
-            (SignerError::UserCanceled, "User canceled operation"),
+            (SignerError::MissingKey, "missing key for signing"),
+            (SignerError::InvalidKey, "invalid key provided"),
+            (SignerError::UserCanceled, "user canceled operation"),
             (
                 SignerError::InputIndexOutOfRange,
-                "Input index out of range",
+                "input index out of range",
             ),
             (
                 SignerError::MissingNonWitnessUtxo,
-                "Missing non-witness UTXO information",
+                "missing non-witness utxo information",
             ),
             (
                 SignerError::InvalidNonWitnessUtxo,
-                "Invalid non-witness UTXO information provided",
+                "invalid non-witness utxo information provided",
             ),
-            (SignerError::MissingWitnessUtxo, "Missing witness UTXO"),
-            (SignerError::MissingWitnessScript, "Missing witness script"),
-            (SignerError::MissingHdKeypath, "Missing HD keypath"),
+            (SignerError::MissingWitnessUtxo, "missing witness utxo"),
+            (SignerError::MissingWitnessScript, "missing witness script"),
+            (SignerError::MissingHdKeypath, "missing hd keypath"),
             (
                 SignerError::NonStandardSighash,
-                "Non-standard sighash type used",
+                "non-standard sighash type used",
             ),
-            (SignerError::InvalidSighash, "Invalid sighash type provided"),
+            (SignerError::InvalidSighash, "invalid sighash type provided"),
             (
                 SignerError::SighashError {
                     error_message: "dummy error".into(),
                 },
-                "Error with sighash computation: dummy error",
+                "error with sighash computation: dummy error",
             ),
             (
                 SignerError::MiniscriptPsbt {
                     error_message: "psbt issue".into(),
                 },
-                "Miniscript Psbt error: psbt issue",
+                "miniscript psbt error: psbt issue",
             ),
             (
                 SignerError::External {
                     error_message: "external error".into(),
                 },
-                "External error: external error",
+                "external error: external error",
             ),
         ];
 
@@ -1621,7 +1621,7 @@ mod test {
     #[test]
     fn test_error_transaction() {
         let cases = vec![
-            (TransactionError::Io, "IO error"),
+            (TransactionError::Io, "io error"),
             (
                 TransactionError::OversizedVectorAllocation,
                 "allocation of oversized vector",
@@ -1633,7 +1633,7 @@ mod test {
                 },
                 "invalid checksum: expected=deadbeef actual=beadbeef",
             ),
-            (TransactionError::NonMinimalVarInt, "non-minimal varint"),
+            (TransactionError::NonMinimalVarInt, "non-minimal var int"),
             (TransactionError::ParseFailed, "parse failed"),
             (
                 TransactionError::UnsupportedSegwitFlag { flag: 1 },
