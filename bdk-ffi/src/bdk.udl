@@ -102,6 +102,26 @@ interface DescriptorKeyError {
 };
 
 [Error]
+interface ElectrumClientError {
+  IOError(string error_message);
+  Json(string error_message);
+  Hex(string error_message);
+  Protocol(string error_message);
+  Bitcoin(string error_message);
+  AlreadySubscribed();
+  NotSubscribed();
+  InvalidResponse(string error_message);
+  Message(string error_message);
+  InvalidDNSNameError(string domain);
+  MissingDomain();
+  AllAttemptsErrored();
+  SharedIOError(string error_message);
+  CouldntLockReader();
+  Mpsc();
+  CouldNotCreateConnection(string error_message);
+};
+
+[Error]
 interface EsploraError {
   Minreq(string error_message);
   HttpResponse(u16 status, string error_message);
@@ -465,6 +485,15 @@ interface EsploraClient {
 
   [Throws=EsploraError]
   void broadcast([ByRef] Transaction transaction);
+};
+
+// ------------------------------------------------------------------------
+// bdk_electrum crate
+// ------------------------------------------------------------------------
+
+interface ElectrumClient {
+  [Throws=ElectrumClientError]
+  constructor(string url);
 };
 
 // ------------------------------------------------------------------------

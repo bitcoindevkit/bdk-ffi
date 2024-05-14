@@ -13,6 +13,7 @@ use bdk::wallet::error::CreateTxError as BdkCreateTxError;
 use bdk::wallet::signer::SignerError as BdkSignerError;
 use bdk::wallet::tx_builder::AddUtxoError;
 use bdk::wallet::NewOrLoadError;
+use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_file_store::FileError as BdkFileError;
 use bitcoin_internals::hex::display::DisplayHex;
@@ -253,6 +254,57 @@ pub enum DescriptorKeyError {
 
     #[error("error bip 32 related: {error_message}")]
     Bip32 { error_message: String },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ElectrumClientError {
+    #[error("{error_message}")]
+    IOError { error_message: String },
+
+    #[error("{error_message}")]
+    Json { error_message: String },
+
+    #[error("{error_message}")]
+    Hex { error_message: String },
+
+    #[error("electrum server error: {error_message}")]
+    Protocol { error_message: String },
+
+    #[error("{error_message}")]
+    Bitcoin { error_message: String },
+
+    #[error("already subscribed to the notifications of an address")]
+    AlreadySubscribed,
+
+    #[error("not subscribed to the notifications of an address")]
+    NotSubscribed,
+
+    #[error("error during the deserialization of a response from the server: {error_message}")]
+    InvalidResponse { error_message: String },
+
+    #[error("{error_message}")]
+    Message { error_message: String },
+
+    #[error("invalid domain name {domain} not matching SSL certificate")]
+    InvalidDNSNameError { domain: String },
+
+    #[error("missing domain while it was explicitly asked to validate it")]
+    MissingDomain,
+
+    #[error("made one or multiple attempts, all errored")]
+    AllAttemptsErrored,
+
+    #[error("{error_message}")]
+    SharedIOError { error_message: String },
+
+    #[error("couldn't take a lock on the reader mutex. This means that there's already another reader thread is running")]
+    CouldntLockReader,
+
+    #[error("broken IPC communication channel: the other thread probably has exited")]
+    Mpsc,
+
+    #[error("{error_message}")]
+    CouldNotCreateConnection { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -499,6 +551,51 @@ impl From<BdkAddressError> for AddressError {
                 address: format!("{:?}", address),
             },
             _ => AddressError::OtherAddressErr,
+        }
+    }
+}
+
+impl From<BdkElectrumError> for ElectrumClientError {
+    fn from(error: BdkElectrumError) -> Self {
+        match error {
+            BdkElectrumError::IOError(e) => ElectrumClientError::IOError {
+                error_message: e.to_string(),
+            },
+            BdkElectrumError::JSON(e) => ElectrumClientError::Json {
+                error_message: e.to_string(),
+            },
+            BdkElectrumError::Hex(e) => ElectrumClientError::Hex {
+                error_message: e.to_string(),
+            },
+            BdkElectrumError::Protocol(e) => ElectrumClientError::Protocol {
+                error_message: e.to_string(),
+            },
+            BdkElectrumError::Bitcoin(e) => ElectrumClientError::Bitcoin {
+                error_message: e.to_string(),
+            },
+            BdkElectrumError::AlreadySubscribed(_) => ElectrumClientError::AlreadySubscribed,
+            BdkElectrumError::NotSubscribed(_) => ElectrumClientError::NotSubscribed,
+            BdkElectrumError::InvalidResponse(e) => ElectrumClientError::InvalidResponse {
+                error_message: e.to_string(),
+            },
+            BdkElectrumError::Message(e) => ElectrumClientError::Message {
+                error_message: e.to_string(),
+            },
+            BdkElectrumError::InvalidDNSNameError(domain) => {
+                ElectrumClientError::InvalidDNSNameError { domain }
+            }
+            BdkElectrumError::MissingDomain => ElectrumClientError::MissingDomain,
+            BdkElectrumError::AllAttemptsErrored(_) => ElectrumClientError::AllAttemptsErrored,
+            BdkElectrumError::SharedIOError(e) => ElectrumClientError::SharedIOError {
+                error_message: e.to_string(),
+            },
+            BdkElectrumError::CouldntLockReader => ElectrumClientError::CouldntLockReader,
+            BdkElectrumError::Mpsc => ElectrumClientError::Mpsc,
+            BdkElectrumError::CouldNotCreateConnection(error_message) => {
+                ElectrumClientError::CouldNotCreateConnection {
+                    error_message: error_message.to_string(),
+                }
+            }
         }
     }
 }
@@ -977,11 +1074,7 @@ impl From<NewOrLoadError> for WalletCreationError {
 
 #[cfg(test)]
 mod test {
-    use crate::error::{
-        AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError,
-        DescriptorKeyError, EsploraError, ExtractTxError, FeeRateError, ParseAmountError,
-        PersistenceError, PsbtParseError, TransactionError, TxidParseError, WalletCreationError,
-    };
+    use crate::error::{AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError, DescriptorKeyError, ElectrumClientError, EsploraError, ExtractTxError, FeeRateError, ParseAmountError, PersistenceError, PsbtParseError, TransactionError, TxidParseError, WalletCreationError};
     use crate::CalculateFeeError;
     use crate::OutPoint;
     use crate::SignerError;
@@ -1376,6 +1469,92 @@ mod test {
                 },
                 "error bip 32 related: BIP32 derivation error",
             ),
+        ];
+
+        for (error, expected_message) in cases {
+            assert_eq!(error.to_string(), expected_message);
+        }
+    }
+
+    #[test]
+    fn test_error_electrum_client() {
+        let cases = vec![
+            (
+                ElectrumClientError::IOError { error_message: "message".to_string(), },
+                "message",
+            ),
+            (
+                ElectrumClientError::Json { error_message: "message".to_string(), },
+                "message",
+            ),
+            (
+                ElectrumClientError::Hex { error_message: "message".to_string(), },
+                "message",
+            ),
+            (
+                ElectrumClientError::Protocol { error_message: "message".to_string(), },
+                "electrum server error: message",
+            ),
+            (
+                ElectrumClientError::Bitcoin {
+                    error_message: "message".to_string(),
+                },
+                "message",
+            ),
+            (
+                ElectrumClientError::AlreadySubscribed,
+                "already subscribed to the notifications of an address",
+            ),
+            (
+                ElectrumClientError::NotSubscribed,
+                "not subscribed to the notifications of an address",
+            ),
+            (
+                ElectrumClientError::InvalidResponse {
+                    error_message: "message".to_string(),
+                },
+                "error during the deserialization of a response from the server: message",
+            ),
+            (
+                ElectrumClientError::Message {
+                    error_message: "message".to_string(),
+                },
+                "message",
+            ),
+            (
+                ElectrumClientError::InvalidDNSNameError {
+                    domain: "domain".to_string(),
+                },
+                "invalid domain name domain not matching SSL certificate",
+            ),
+            (
+                ElectrumClientError::MissingDomain,
+                "missing domain while it was explicitly asked to validate it",
+            ),
+            (
+                ElectrumClientError::AllAttemptsErrored,
+                "made one or multiple attempts, all errored",
+            ),
+            (
+                ElectrumClientError::SharedIOError {
+                    error_message: "message".to_string(),
+                },
+                "message",
+            ),
+            (
+                ElectrumClientError::CouldntLockReader,
+                "couldn't take a lock on the reader mutex. This means that there's already another reader thread is running"
+            ),
+            (
+                ElectrumClientError::Mpsc,
+                "broken IPC communication channel: the other thread probably has exited",
+            ),
+            (
+                ElectrumClientError::CouldNotCreateConnection {
+                    error_message: "message".to_string(),
+                },
+                "message",
+            )
         ];
 
         for (error, expected_message) in cases {
