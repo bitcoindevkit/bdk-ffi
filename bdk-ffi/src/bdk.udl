@@ -119,6 +119,7 @@ interface ElectrumClientError {
   CouldntLockReader();
   Mpsc();
   CouldNotCreateConnection(string error_message);
+  RequestAlreadyConsumed();
 };
 
 [Error]
@@ -494,6 +495,9 @@ interface EsploraClient {
 interface ElectrumClient {
   [Throws=ElectrumClientError]
   constructor(string url);
+
+  [Throws=ElectrumClientError]
+  Update full_scan(FullScanRequest full_scan_request, u64 stop_gap, u64 batch_size, boolean fetch_prev_txouts);
 };
 
 // ------------------------------------------------------------------------

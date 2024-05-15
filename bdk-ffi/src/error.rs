@@ -305,6 +305,9 @@ pub enum ElectrumClientError {
 
     #[error("{error_message}")]
     CouldNotCreateConnection { error_message: String },
+
+    #[error("the request has already been consumed")]
+    RequestAlreadyConsumed,
 }
 
 #[derive(Debug, thiserror::Error)]
