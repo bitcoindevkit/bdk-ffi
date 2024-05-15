@@ -498,6 +498,9 @@ interface ElectrumClient {
 
   [Throws=ElectrumClientError]
   Update full_scan(FullScanRequest full_scan_request, u64 stop_gap, u64 batch_size, boolean fetch_prev_txouts);
+
+  [Throws=ElectrumClientError]
+  Update sync(SyncRequest sync_request, u64 batch_size, boolean fetch_prev_txouts);
 };
 
 // ------------------------------------------------------------------------

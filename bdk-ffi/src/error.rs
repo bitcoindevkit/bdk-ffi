@@ -1077,7 +1077,12 @@ impl From<NewOrLoadError> for WalletCreationError {
 
 #[cfg(test)]
 mod test {
-    use crate::error::{AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError, DescriptorKeyError, ElectrumClientError, EsploraError, ExtractTxError, FeeRateError, ParseAmountError, PersistenceError, PsbtParseError, TransactionError, TxidParseError, WalletCreationError};
+    use crate::error::{
+        AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError,
+        DescriptorKeyError, ElectrumClientError, EsploraError, ExtractTxError, FeeRateError,
+        ParseAmountError, PersistenceError, PsbtParseError, TransactionError, TxidParseError,
+        WalletCreationError,
+    };
     use crate::CalculateFeeError;
     use crate::OutPoint;
     use crate::SignerError;
