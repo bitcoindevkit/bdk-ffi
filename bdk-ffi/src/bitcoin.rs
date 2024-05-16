@@ -177,6 +177,10 @@ impl Transaction {
     pub fn output(&self) -> Vec<TxOut> {
         self.0.output.iter().map(|tx_out| tx_out.into()).collect()
     }
+
+    pub fn lock_time(&self) -> u32 {
+        self.0.lock_time.to_consensus_u32()
+    }
 }
 
 impl From<BdkTransaction> for Transaction {

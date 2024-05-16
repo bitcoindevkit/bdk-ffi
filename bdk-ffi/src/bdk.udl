@@ -586,6 +586,8 @@ interface Transaction {
   sequence<TxIn> input();
 
   sequence<TxOut> output();
+
+  u32 lock_time();
 };
 
 interface Psbt {
