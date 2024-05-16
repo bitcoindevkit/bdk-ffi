@@ -102,7 +102,7 @@ interface DescriptorKeyError {
 };
 
 [Error]
-interface ElectrumClientError {
+interface ElectrumError {
   IOError(string error_message);
   Json(string error_message);
   Hex(string error_message);
@@ -493,16 +493,16 @@ interface EsploraClient {
 // ------------------------------------------------------------------------
 
 interface ElectrumClient {
-  [Throws=ElectrumClientError]
+  [Throws=ElectrumError]
   constructor(string url);
 
-  [Throws=ElectrumClientError]
+  [Throws=ElectrumError]
   Update full_scan(FullScanRequest full_scan_request, u64 stop_gap, u64 batch_size, boolean fetch_prev_txouts);
 
-  [Throws=ElectrumClientError]
+  [Throws=ElectrumError]
   Update sync(SyncRequest sync_request, u64 batch_size, boolean fetch_prev_txouts);
 
-  [Throws=ElectrumClientError]
+  [Throws=ElectrumError]
   string broadcast([ByRef] Transaction transaction);
 };
 

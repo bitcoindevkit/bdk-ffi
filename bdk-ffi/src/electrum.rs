@@ -1,7 +1,7 @@
-use crate::error::ElectrumClientError;
+use crate::bitcoin::Transaction;
+use crate::error::ElectrumError;
 use crate::types::{FullScanRequest, SyncRequest};
 use crate::wallet::Update;
-use std::collections::BTreeMap;
 
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::chain::spk_client::FullScanRequest as BdkFullScanRequest;
@@ -12,13 +12,13 @@ use bdk::KeychainKind;
 use bdk_electrum::electrum_client::{Client as BdkBlockingClient, ElectrumApi};
 use bdk_electrum::{ElectrumExt, ElectrumFullScanResult, ElectrumSyncResult};
 
-use crate::bitcoin::Transaction;
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 pub struct ElectrumClient(BdkBlockingClient);
 
 impl ElectrumClient {
-    pub fn new(url: String) -> Result<Self, ElectrumClientError> {
+    pub fn new(url: String) -> Result<Self, ElectrumError> {
         let client = BdkBlockingClient::new(url.as_str())?;
         Ok(Self(client))
     }
@@ -29,14 +29,14 @@ impl ElectrumClient {
         stop_gap: u64,
         batch_size: u64,
         fetch_prev_txouts: bool,
-    ) -> Result<Arc<Update>, ElectrumClientError> {
+    ) -> Result<Arc<Update>, ElectrumError> {
         // using option and take is not ideal but the only way to take full ownership of the request
         let request: BdkFullScanRequest<KeychainKind> = request
             .0
             .lock()
             .unwrap()
             .take()
-            .ok_or(ElectrumClientError::RequestAlreadyConsumed)?;
+            .ok_or(ElectrumError::RequestAlreadyConsumed)?;
 
         let electrum_result: ElectrumFullScanResult<KeychainKind> = self.0.full_scan(
             request,
@@ -61,14 +61,14 @@ impl ElectrumClient {
         request: Arc<SyncRequest>,
         batch_size: u64,
         fetch_prev_txouts: bool,
-    ) -> Result<Arc<Update>, ElectrumClientError> {
+    ) -> Result<Arc<Update>, ElectrumError> {
         // using option and take is not ideal but the only way to take full ownership of the request
         let request: BdkSyncRequest = request
             .0
             .lock()
             .unwrap()
             .take()
-            .ok_or(ElectrumClientError::RequestAlreadyConsumed)?;
+            .ok_or(ElectrumError::RequestAlreadyConsumed)?;
 
         let electrum_result: ElectrumSyncResult =
             self.0
@@ -85,11 +85,11 @@ impl ElectrumClient {
         Ok(Arc::new(Update(update)))
     }
 
-    pub fn broadcast(&self, transaction: &Transaction) -> Result<String, ElectrumClientError> {
+    pub fn broadcast(&self, transaction: &Transaction) -> Result<String, ElectrumError> {
         let bdk_transaction: BdkTransaction = transaction.into();
         self.0
             .transaction_broadcast(&bdk_transaction)
-            .map_err(ElectrumClientError::from)
+            .map_err(ElectrumError::from)
             .map(|txid| txid.to_string())
     }
 }

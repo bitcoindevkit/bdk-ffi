@@ -257,7 +257,7 @@ pub enum DescriptorKeyError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ElectrumClientError {
+pub enum ElectrumError {
     #[error("{error_message}")]
     IOError { error_message: String },
 
@@ -558,44 +558,44 @@ impl From<BdkAddressError> for AddressError {
     }
 }
 
-impl From<BdkElectrumError> for ElectrumClientError {
+impl From<BdkElectrumError> for ElectrumError {
     fn from(error: BdkElectrumError) -> Self {
         match error {
-            BdkElectrumError::IOError(e) => ElectrumClientError::IOError {
+            BdkElectrumError::IOError(e) => ElectrumError::IOError {
                 error_message: e.to_string(),
             },
-            BdkElectrumError::JSON(e) => ElectrumClientError::Json {
+            BdkElectrumError::JSON(e) => ElectrumError::Json {
                 error_message: e.to_string(),
             },
-            BdkElectrumError::Hex(e) => ElectrumClientError::Hex {
+            BdkElectrumError::Hex(e) => ElectrumError::Hex {
                 error_message: e.to_string(),
             },
-            BdkElectrumError::Protocol(e) => ElectrumClientError::Protocol {
+            BdkElectrumError::Protocol(e) => ElectrumError::Protocol {
                 error_message: e.to_string(),
             },
-            BdkElectrumError::Bitcoin(e) => ElectrumClientError::Bitcoin {
+            BdkElectrumError::Bitcoin(e) => ElectrumError::Bitcoin {
                 error_message: e.to_string(),
             },
-            BdkElectrumError::AlreadySubscribed(_) => ElectrumClientError::AlreadySubscribed,
-            BdkElectrumError::NotSubscribed(_) => ElectrumClientError::NotSubscribed,
-            BdkElectrumError::InvalidResponse(e) => ElectrumClientError::InvalidResponse {
+            BdkElectrumError::AlreadySubscribed(_) => ElectrumError::AlreadySubscribed,
+            BdkElectrumError::NotSubscribed(_) => ElectrumError::NotSubscribed,
+            BdkElectrumError::InvalidResponse(e) => ElectrumError::InvalidResponse {
                 error_message: e.to_string(),
             },
-            BdkElectrumError::Message(e) => ElectrumClientError::Message {
+            BdkElectrumError::Message(e) => ElectrumError::Message {
                 error_message: e.to_string(),
             },
             BdkElectrumError::InvalidDNSNameError(domain) => {
-                ElectrumClientError::InvalidDNSNameError { domain }
+                ElectrumError::InvalidDNSNameError { domain }
             }
-            BdkElectrumError::MissingDomain => ElectrumClientError::MissingDomain,
-            BdkElectrumError::AllAttemptsErrored(_) => ElectrumClientError::AllAttemptsErrored,
-            BdkElectrumError::SharedIOError(e) => ElectrumClientError::SharedIOError {
+            BdkElectrumError::MissingDomain => ElectrumError::MissingDomain,
+            BdkElectrumError::AllAttemptsErrored(_) => ElectrumError::AllAttemptsErrored,
+            BdkElectrumError::SharedIOError(e) => ElectrumError::SharedIOError {
                 error_message: e.to_string(),
             },
-            BdkElectrumError::CouldntLockReader => ElectrumClientError::CouldntLockReader,
-            BdkElectrumError::Mpsc => ElectrumClientError::Mpsc,
+            BdkElectrumError::CouldntLockReader => ElectrumError::CouldntLockReader,
+            BdkElectrumError::Mpsc => ElectrumError::Mpsc,
             BdkElectrumError::CouldNotCreateConnection(error_message) => {
-                ElectrumClientError::CouldNotCreateConnection {
+                ElectrumError::CouldNotCreateConnection {
                     error_message: error_message.to_string(),
                 }
             }
@@ -1079,7 +1079,7 @@ impl From<NewOrLoadError> for WalletCreationError {
 mod test {
     use crate::error::{
         AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError,
-        DescriptorKeyError, ElectrumClientError, EsploraError, ExtractTxError, FeeRateError,
+        DescriptorKeyError, ElectrumError, EsploraError, ExtractTxError, FeeRateError,
         ParseAmountError, PersistenceError, PsbtParseError, TransactionError, TxidParseError,
         WalletCreationError,
     };
@@ -1488,77 +1488,77 @@ mod test {
     fn test_error_electrum_client() {
         let cases = vec![
             (
-                ElectrumClientError::IOError { error_message: "message".to_string(), },
+                ElectrumError::IOError { error_message: "message".to_string(), },
                 "message",
             ),
             (
-                ElectrumClientError::Json { error_message: "message".to_string(), },
+                ElectrumError::Json { error_message: "message".to_string(), },
                 "message",
             ),
             (
-                ElectrumClientError::Hex { error_message: "message".to_string(), },
+                ElectrumError::Hex { error_message: "message".to_string(), },
                 "message",
             ),
             (
-                ElectrumClientError::Protocol { error_message: "message".to_string(), },
+                ElectrumError::Protocol { error_message: "message".to_string(), },
                 "electrum server error: message",
             ),
             (
-                ElectrumClientError::Bitcoin {
+                ElectrumError::Bitcoin {
                     error_message: "message".to_string(),
                 },
                 "message",
             ),
             (
-                ElectrumClientError::AlreadySubscribed,
+                ElectrumError::AlreadySubscribed,
                 "already subscribed to the notifications of an address",
             ),
             (
-                ElectrumClientError::NotSubscribed,
+                ElectrumError::NotSubscribed,
                 "not subscribed to the notifications of an address",
             ),
             (
-                ElectrumClientError::InvalidResponse {
+                ElectrumError::InvalidResponse {
                     error_message: "message".to_string(),
                 },
                 "error during the deserialization of a response from the server: message",
             ),
             (
-                ElectrumClientError::Message {
+                ElectrumError::Message {
                     error_message: "message".to_string(),
                 },
                 "message",
             ),
             (
-                ElectrumClientError::InvalidDNSNameError {
+                ElectrumError::InvalidDNSNameError {
                     domain: "domain".to_string(),
                 },
                 "invalid domain name domain not matching SSL certificate",
             ),
             (
-                ElectrumClientError::MissingDomain,
+                ElectrumError::MissingDomain,
                 "missing domain while it was explicitly asked to validate it",
             ),
             (
-                ElectrumClientError::AllAttemptsErrored,
+                ElectrumError::AllAttemptsErrored,
                 "made one or multiple attempts, all errored",
             ),
             (
-                ElectrumClientError::SharedIOError {
+                ElectrumError::SharedIOError {
                     error_message: "message".to_string(),
                 },
                 "message",
             ),
             (
-                ElectrumClientError::CouldntLockReader,
+                ElectrumError::CouldntLockReader,
                 "couldn't take a lock on the reader mutex. This means that there's already another reader thread is running"
             ),
             (
-                ElectrumClientError::Mpsc,
+                ElectrumError::Mpsc,
                 "broken IPC communication channel: the other thread probably has exited",
             ),
             (
-                ElectrumClientError::CouldNotCreateConnection {
+                ElectrumError::CouldNotCreateConnection {
                     error_message: "message".to_string(),
                 },
                 "message",
