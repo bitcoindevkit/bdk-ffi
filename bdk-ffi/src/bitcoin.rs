@@ -13,13 +13,14 @@ use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::bitcoin::Psbt as BdkPsbt;
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::bitcoin::Txid;
+use bdk::bitcoin::TxIn as BdkTxIn;
+use bdk::bitcoin::amount::ParseAmountError;
+use bdk::bitcoin::Amount as BdkAmount;
 
 use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-use bdk::bitcoin::amount::ParseAmountError;
-use bdk::bitcoin::Amount as BdkAmount;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Amount(pub(crate) BdkAmount);
@@ -169,6 +170,10 @@ impl Transaction {
     pub fn serialize(&self) -> Vec<u8> {
         serialize(&self.0)
     }
+
+    pub fn input(&self) -> Vec<TxIn> {
+        self.0.input.iter().map(|tx_in| tx_in.into()).collect()
+    }
 }
 
 impl From<BdkTransaction> for Transaction {
@@ -235,6 +240,28 @@ impl From<&BdkOutPoint> for OutPoint {
         OutPoint {
             txid: outpoint.txid.to_string(),
             vout: outpoint.vout,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct TxIn {
+    pub previous_output: OutPoint,
+    pub script_sig: Arc<Script>,
+    pub sequence: u32,
+    pub witness: Vec<Vec<u8>>,
+}
+
+impl From<&BdkTxIn> for TxIn {
+    fn from(tx_in: &BdkTxIn) -> Self {
+        TxIn {
+            previous_output: OutPoint {
+                txid: tx_in.previous_output.txid.to_string(),
+                vout: tx_in.previous_output.vout,
+            },
+            script_sig: Arc::new(Script(tx_in.script_sig.clone())),
+            sequence: tx_in.sequence.0,
+            witness: tx_in.witness.to_vec(),
         }
     }
 }

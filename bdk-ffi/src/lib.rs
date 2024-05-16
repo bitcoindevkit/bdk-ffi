@@ -53,6 +53,7 @@ use crate::wallet::BumpFeeTxBuilder;
 use crate::wallet::SentAndReceivedValues;
 use crate::wallet::TxBuilder;
 use crate::wallet::Update;
+use crate::bitcoin::TxIn;
 use crate::wallet::Wallet;
 
 use bdk::bitcoin::Network;

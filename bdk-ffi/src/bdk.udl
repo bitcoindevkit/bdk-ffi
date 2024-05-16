@@ -582,6 +582,8 @@ interface Transaction {
   sequence<u8> serialize();
 
   u64 weight();
+
+  sequence<TxIn> input();
 };
 
 interface Psbt {
@@ -623,4 +625,11 @@ interface FeeRate {
   u64 to_sat_per_vb_floor();
 
   u64 to_sat_per_kwu();
+};
+
+dictionary TxIn {
+  OutPoint previous_output;
+  Script script_sig;
+  u32 sequence;
+  sequence<sequence<u8>> witness;
 };
