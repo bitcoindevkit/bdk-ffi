@@ -584,6 +584,8 @@ interface Transaction {
   u64 weight();
 
   sequence<TxIn> input();
+
+  sequence<TxOut> output();
 };
 
 interface Psbt {

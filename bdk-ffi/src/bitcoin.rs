@@ -1,26 +1,25 @@
 use crate::error::{AddressError, FeeRateError, PsbtParseError, TransactionError};
 
 use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
+use bdk::bitcoin::amount::ParseAmountError;
 use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk::bitcoin::consensus::encode::serialize;
 use bdk::bitcoin::consensus::Decodable;
 use bdk::bitcoin::psbt::ExtractTxError;
 use bdk::bitcoin::Address as BdkAddress;
+use bdk::bitcoin::Amount as BdkAmount;
 use bdk::bitcoin::FeeRate as BdkFeeRate;
 use bdk::bitcoin::Network;
 use bdk::bitcoin::OutPoint as BdkOutPoint;
 use bdk::bitcoin::Psbt as BdkPsbt;
 use bdk::bitcoin::Transaction as BdkTransaction;
-use bdk::bitcoin::Txid;
 use bdk::bitcoin::TxIn as BdkTxIn;
-use bdk::bitcoin::amount::ParseAmountError;
-use bdk::bitcoin::Amount as BdkAmount;
+use bdk::bitcoin::Txid;
 
 use std::io::Cursor;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Amount(pub(crate) BdkAmount);
@@ -173,6 +172,10 @@ impl Transaction {
 
     pub fn input(&self) -> Vec<TxIn> {
         self.0.input.iter().map(|tx_in| tx_in.into()).collect()
+    }
+
+    pub fn output(&self) -> Vec<TxOut> {
+        self.0.output.iter().map(|tx_out| tx_out.into()).collect()
     }
 }
 
