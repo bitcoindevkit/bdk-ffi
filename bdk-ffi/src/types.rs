@@ -1,5 +1,6 @@
 use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
 
+use bdk::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk::chain::spk_client::SyncRequest as BdkSyncRequest;
 use bdk::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
@@ -12,6 +13,7 @@ use bdk::LocalOutput as BdkLocalOutput;
 use std::sync::{Arc, Mutex};
 
 use crate::bitcoin::Amount;
+use crate::error::InspectError;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChainPosition {
@@ -112,6 +114,55 @@ impl From<BdkLocalOutput> for LocalOutput {
     }
 }
 
+// Callback for the FullScanRequest
+pub trait FullScanScriptInspector: Sync + Send {
+    fn inspect(&self, keychain: KeychainKind, index: u32, script: Arc<Script>);
+}
+
+// Callback for the SyncRequest
+pub trait SyncScriptInspector: Sync + Send {
+    fn inspect(&self, script: Arc<Script>, total: u64);
+}
+
 pub struct FullScanRequest(pub(crate) Mutex<Option<BdkFullScanRequest<KeychainKind>>>);
 
 pub struct SyncRequest(pub(crate) Mutex<Option<BdkSyncRequest>>);
+
+impl SyncRequest {
+    pub fn inspect_spks(
+        &self,
+        inspector: Box<dyn SyncScriptInspector>,
+    ) -> Result<Arc<Self>, InspectError> {
+        let mut guard = self.0.lock().unwrap();
+        if let Some(sync_request) = guard.take() {
+            let total = sync_request.spks.len() as u64;
+            let sync_request = sync_request.inspect_spks(move |spk| {
+                inspector.inspect(Arc::new(BdkScriptBuf::from(spk).into()), total)
+            });
+            Ok(Arc::new(SyncRequest(Mutex::new(Some(sync_request)))))
+        } else {
+            Err(InspectError::RequestAlreadyConsumed)
+        }
+    }
+}
+
+impl FullScanRequest {
+    pub fn inspect_spks_for_all_keychains(
+        &self,
+        inspector: Box<dyn FullScanScriptInspector>,
+    ) -> Result<Arc<Self>, InspectError> {
+        let mut guard = self.0.lock().unwrap();
+        if let Some(full_scan_request) = guard.take() {
+            let inspector = Arc::new(inspector);
+            let full_scan_request =
+                full_scan_request.inspect_spks_for_all_keychains(move |k, spk_i, script| {
+                    inspector.inspect(k, spk_i, Arc::new(BdkScriptBuf::from(script).into()))
+                });
+            Ok(Arc::new(FullScanRequest(Mutex::new(Some(
+                full_scan_request,
+            )))))
+        } else {
+            Err(InspectError::RequestAlreadyConsumed)
+        }
+    }
+}

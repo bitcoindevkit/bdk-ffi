@@ -177,6 +177,11 @@ interface PsbtParseError {
 };
 
 [Error]
+interface InspectError {
+  RequestAlreadyConsumed();
+};
+
+[Error]
 interface SignerError {
     MissingKey();
     InvalidKey();
@@ -274,9 +279,23 @@ dictionary CanonicalTx {
   ChainPosition chain_position;
 };
 
-interface FullScanRequest {};
+interface FullScanRequest {
+  [Throws=InspectError]
+  FullScanRequest inspect_spks_for_all_keychains(FullScanScriptInspector inspector);
+};
 
-interface SyncRequest {};
+interface SyncRequest {
+  [Throws=InspectError]
+  SyncRequest inspect_spks(SyncScriptInspector inspector);
+};
+
+callback interface SyncScriptInspector {
+  void inspect(Script script, u64 total);
+};
+
+callback interface FullScanScriptInspector {
+  void inspect(KeychainKind keychain, u32 index, Script script);
+};
 
 // ------------------------------------------------------------------------
 // bdk crate - wallet module

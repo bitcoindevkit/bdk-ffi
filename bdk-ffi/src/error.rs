@@ -376,6 +376,12 @@ pub enum FeeRateError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum InspectError {
+    #[error("the request has already been consumed")]
+    RequestAlreadyConsumed,
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum ParseAmountError {
     #[error("amount is negative")]
     Negative,
@@ -1080,8 +1086,8 @@ mod test {
     use crate::error::{
         AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError,
         DescriptorKeyError, ElectrumError, EsploraError, ExtractTxError, FeeRateError,
-        ParseAmountError, PersistenceError, PsbtParseError, TransactionError, TxidParseError,
-        WalletCreationError,
+        InspectError, ParseAmountError, PersistenceError, PsbtParseError, TransactionError,
+        TxidParseError, WalletCreationError,
     };
     use crate::CalculateFeeError;
     use crate::OutPoint;
@@ -1664,6 +1670,18 @@ mod test {
         let cases = vec![(
             FeeRateError::ArithmeticOverflow,
             "arithmetic overflow on feerate",
+        )];
+
+        for (error, expected_message) in cases {
+            assert_eq!(error.to_string(), expected_message);
+        }
+    }
+
+    #[test]
+    fn test_error_inspect() {
+        let cases = vec![(
+            InspectError::RequestAlreadyConsumed,
+            "the request has already been consumed",
         )];
 
         for (error, expected_message) in cases {
