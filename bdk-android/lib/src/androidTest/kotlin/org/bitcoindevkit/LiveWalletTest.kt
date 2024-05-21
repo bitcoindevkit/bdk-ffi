@@ -14,7 +14,7 @@ private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 @RunWith(AndroidJUnit4::class)
 class LiveWalletTest {
     private val persistenceFilePath = InstrumentationRegistry
-        .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence.db"
+        .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence2.db"
 
     @AfterTest
     fun cleanup() {
@@ -69,7 +69,7 @@ class LiveWalletTest {
         val recipient: Address = Address("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", Network.SIGNET)
 
         val psbt: Psbt = TxBuilder()
-            .addRecipient(recipient.scriptPubkey(), 4200uL)
+            .addRecipient(recipient.scriptPubkey(), Amount.fromSat(4200uL))
             .feeRate(FeeRate.fromSatPerVb(4uL))
             .finish(wallet)
 
