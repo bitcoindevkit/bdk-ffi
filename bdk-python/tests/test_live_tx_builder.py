@@ -13,7 +13,7 @@ class LiveTxBuilderTest(unittest.TestCase):
 
     def test_tx_builder(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(
-            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
+            "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
             bdk.Network.SIGNET
         )
         wallet: bdk.Wallet = bdk.Wallet(
@@ -43,22 +43,18 @@ class LiveTxBuilderTest(unittest.TestCase):
             network=bdk.Network.SIGNET
         )
         
-        psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).finish(wallet)
+        psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=bdk.Amount.from_sat(4200)).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).finish(wallet)
         
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
 
     def complex_tx_builder(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(
-            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
-            bdk.Network.SIGNET
-        )
-        change_descriptor: bdk.Descriptor = bdk.Descriptor(
-            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/1/*)",
+            "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
             bdk.Network.SIGNET
         )
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
-            change_descriptor,
+            None,
             "./bdk_persistence.db",
             bdk.Network.SIGNET
         )

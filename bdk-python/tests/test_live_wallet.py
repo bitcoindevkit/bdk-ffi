@@ -43,8 +43,8 @@ class LiveWalletTest(unittest.TestCase):
         for tx in transactions:
             sent_and_received = wallet.sent_and_received(tx.transaction)
             print(f"Transaction: {tx.transaction.txid()}")
-            print(f"Sent {sent_and_received.sent}")
-            print(f"Received {sent_and_received.received}")
+            print(f"Sent {sent_and_received.sent.to_sat()}")
+            print(f"Received {sent_and_received.received.to_sat()}")
 
 
     def test_broadcast_transaction(self):
@@ -79,8 +79,7 @@ class LiveWalletTest(unittest.TestCase):
             network=bdk.Network.SIGNET
         )
         
-        psbt: bdk.Psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=4200).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).finish(wallet)
-        # print(psbt.serialize())
+        psbt: bdk.Psbt = bdk.TxBuilder().add_recipient(script=recipient.script_pubkey(), amount=bdk.Amount.from_sat(4200)).fee_rate(fee_rate=bdk.FeeRate.from_sat_per_vb(2)).finish(wallet)
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
         
         walletDidSign = wallet.sign(psbt)
