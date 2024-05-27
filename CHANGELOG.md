@@ -4,7 +4,21 @@ Changelog information can also be found in each release's git tag (which can be 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.0-alpha.11]
-This release adds the new `Amount` type, as well as more fine-grain errors.
+This release brings the latest alpha 11 release of the Rust bdk_wallet library, as well as the new Electrum client, the new memory wallet, and a whole lot of new types and APIs across the library. Also of note are the much simpler-to-use full_scan and sync workflows for syncing wallets.
+
+Added:
+  - `Amount` type [#533]
+  - `TxIn` type [#536]
+  - `Transaction.input()` method [#536]
+  - `Transaction.output()` method [#536]
+  - `Transaction.lock_time()` method [#536]
+  - `Electrum` client [#535]
+  - Memory wallet [#528]
+
+[#528]: https://github.com/bitcoindevkit/bdk-ffi/pull/528
+[#533]: https://github.com/bitcoindevkit/bdk-ffi/pull/533
+[#535]: https://github.com/bitcoindevkit/bdk-ffi/pull/535
+[#536]: https://github.com/bitcoindevkit/bdk-ffi/pull/536
 
 ## [1.0.0-alpha.7]
 This release brings back into the 1.0 API a number of APIs from the 0.31 release, and adds the new flat file persistence feature, as well as more fine-grain errors.
@@ -248,6 +262,7 @@ Changelog
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[1.0.0-alpha.11]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.7...v1.0.0-alpha.11
 [1.0.0-alpha.7]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.2a...v1.0.0-alpha.7
 [1.0.0-alpha.2a]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.31.0...v1.0.0-alpha.2a
 [v0.31.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.30.0...v0.31.0
