@@ -1,19 +1,19 @@
+use crate::bitcoin::Amount;
 use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
+use crate::InspectError;
 
-use bdk::bitcoin::ScriptBuf as BdkScriptBuf;
-use bdk::chain::spk_client::FullScanRequest as BdkFullScanRequest;
-use bdk::chain::spk_client::SyncRequest as BdkSyncRequest;
-use bdk::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
-use bdk::chain::{ChainPosition as BdkChainPosition, ConfirmationTimeHeightAnchor};
-use bdk::wallet::AddressInfo as BdkAddressInfo;
-use bdk::wallet::Balance as BdkBalance;
-use bdk::KeychainKind;
-use bdk::LocalOutput as BdkLocalOutput;
+use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
+use bdk_wallet::bitcoin::Transaction as BdkTransaction;
+use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
+use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
+use bdk_wallet::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
+use bdk_wallet::chain::{ChainPosition as BdkChainPosition, ConfirmationTimeHeightAnchor};
+use bdk_wallet::wallet::AddressInfo as BdkAddressInfo;
+use bdk_wallet::wallet::Balance as BdkBalance;
+use bdk_wallet::KeychainKind;
+use bdk_wallet::LocalOutput as BdkLocalOutput;
 
 use std::sync::{Arc, Mutex};
-
-use crate::bitcoin::Amount;
-use crate::error::InspectError;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ChainPosition {
@@ -26,12 +26,8 @@ pub struct CanonicalTx {
     pub chain_position: ChainPosition,
 }
 
-impl From<BdkCanonicalTx<'_, Arc<bdk::bitcoin::Transaction>, ConfirmationTimeHeightAnchor>>
-    for CanonicalTx
-{
-    fn from(
-        tx: BdkCanonicalTx<'_, Arc<bdk::bitcoin::Transaction>, ConfirmationTimeHeightAnchor>,
-    ) -> Self {
+impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationTimeHeightAnchor>> for CanonicalTx {
+    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationTimeHeightAnchor>) -> Self {
         let chain_position = match tx.chain_position {
             BdkChainPosition::Confirmed(anchor) => ChainPosition::Confirmed {
                 height: anchor.confirmation_height,

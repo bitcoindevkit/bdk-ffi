@@ -18,10 +18,10 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk = { version = "1.0.0-alpha.11", features = ["all-keys", "keys-bip39"] }
-bdk_esplora = { version = "0.13.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
-bdk_electrum = { version = "0.13.0" }
-bdk_file_store = { version = "0.11.0" }
+bdk_wallet = { version = "1.0.0-alpha.12", features = ["all-keys", "keys-bip39"] }
+bdk_esplora = { version = "0.14.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
+bdk_electrum = { version = "0.14.0" }
+bdk_sqlite = { version = "0.1.0" }
 bdk_bitcoind_rpc = { version = "0.10.0" }
 
 uniffi = { version = "=0.27.1" }

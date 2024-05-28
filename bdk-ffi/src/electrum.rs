@@ -3,14 +3,15 @@ use crate::error::ElectrumError;
 use crate::types::{FullScanRequest, SyncRequest};
 use crate::wallet::Update;
 
-use bdk::bitcoin::Transaction as BdkTransaction;
-use bdk::chain::spk_client::FullScanRequest as BdkFullScanRequest;
-use bdk::chain::spk_client::FullScanResult as BdkFullScanResult;
-use bdk::chain::spk_client::SyncRequest as BdkSyncRequest;
-use bdk::chain::spk_client::SyncResult as BdkSyncResult;
-use bdk::KeychainKind;
 use bdk_electrum::electrum_client::{Client as BdkBlockingClient, ElectrumApi};
 use bdk_electrum::{ElectrumExt, ElectrumFullScanResult, ElectrumSyncResult};
+use bdk_wallet::bitcoin::Transaction as BdkTransaction;
+use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
+use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
+use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
+use bdk_wallet::chain::spk_client::SyncResult as BdkSyncResult;
+use bdk_wallet::wallet::Update as BdkUpdate;
+use bdk_wallet::KeychainKind;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -47,7 +48,7 @@ impl ElectrumClient {
         let full_scan_result: BdkFullScanResult<KeychainKind> =
             electrum_result.with_confirmation_time_height_anchor(&self.0)?;
 
-        let update = bdk::wallet::Update {
+        let update = BdkUpdate {
             last_active_indices: full_scan_result.last_active_indices,
             graph: full_scan_result.graph_update,
             chain: Some(full_scan_result.chain_update),
@@ -76,7 +77,7 @@ impl ElectrumClient {
         let sync_result: BdkSyncResult =
             electrum_result.with_confirmation_time_height_anchor(&self.0)?;
 
-        let update = bdk::wallet::Update {
+        let update = BdkUpdate {
             last_active_indices: BTreeMap::default(),
             graph: sync_result.graph_update,
             chain: Some(sync_result.chain_update),

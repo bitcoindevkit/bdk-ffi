@@ -14,7 +14,7 @@ private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 @RunWith(AndroidJUnit4::class)
 class LiveWalletTest {
     private val persistenceFilePath = InstrumentationRegistry
-        .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence2.db"
+        .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence2.sqlite"
 
     @AfterTest
     fun cleanup() {

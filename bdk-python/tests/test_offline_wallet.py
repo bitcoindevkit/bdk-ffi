@@ -5,8 +5,8 @@ import os
 class OfflineWalletTest(unittest.TestCase):
 
     def tearDown(self) -> None:
-        if os.path.exists("./bdk_persistence.db"):
-            os.remove("./bdk_persistence.db")
+        if os.path.exists("./bdk_persistence.sqlite"):
+            os.remove("./bdk_persistence.sqlite")
     
     def test_new_address(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(
@@ -16,7 +16,7 @@ class OfflineWalletTest(unittest.TestCase):
         wallet: Wallet = bdk.Wallet(
             descriptor,
             None,
-            "./bdk_persistence.db",
+            "./bdk_persistence.sqlite",
             bdk.Network.TESTNET
         )
         address_info: bdk.AddressInfo = wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL)
@@ -36,7 +36,7 @@ class OfflineWalletTest(unittest.TestCase):
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             None,
-            "./bdk_persistence.db",
+            "./bdk_persistence.sqlite",
             bdk.Network.TESTNET
         )
     

@@ -1,22 +1,22 @@
 use crate::error::{AddressError, FeeRateError, PsbtError, PsbtParseError, TransactionError};
 
-use bdk::bitcoin::address::{NetworkChecked, NetworkUnchecked};
-use bdk::bitcoin::amount::ParseAmountError;
-use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
-use bdk::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
-use bdk::bitcoin::consensus::encode::serialize;
-use bdk::bitcoin::consensus::Decodable;
-use bdk::bitcoin::psbt::ExtractTxError;
-use bdk::bitcoin::Address as BdkAddress;
-use bdk::bitcoin::Amount as BdkAmount;
-use bdk::bitcoin::FeeRate as BdkFeeRate;
-use bdk::bitcoin::Network;
-use bdk::bitcoin::OutPoint as BdkOutPoint;
-use bdk::bitcoin::Psbt as BdkPsbt;
-use bdk::bitcoin::Transaction as BdkTransaction;
-use bdk::bitcoin::TxIn as BdkTxIn;
-use bdk::bitcoin::Txid;
 use bdk_bitcoind_rpc::bitcoincore_rpc::jsonrpc::serde_json;
+use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
+use bdk_wallet::bitcoin::amount::ParseAmountError;
+use bdk_wallet::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
+use bdk_wallet::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
+use bdk_wallet::bitcoin::consensus::encode::serialize;
+use bdk_wallet::bitcoin::consensus::Decodable;
+use bdk_wallet::bitcoin::psbt::ExtractTxError;
+use bdk_wallet::bitcoin::Address as BdkAddress;
+use bdk_wallet::bitcoin::Amount as BdkAmount;
+use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
+use bdk_wallet::bitcoin::Network;
+use bdk_wallet::bitcoin::OutPoint as BdkOutPoint;
+use bdk_wallet::bitcoin::Psbt as BdkPsbt;
+use bdk_wallet::bitcoin::Transaction as BdkTransaction;
+use bdk_wallet::bitcoin::TxIn as BdkTxIn;
+use bdk_wallet::bitcoin::Txid;
 
 use std::io::Cursor;
 use std::ops::Deref;
@@ -82,7 +82,7 @@ pub struct Address(BdkAddress<NetworkChecked>);
 
 impl Address {
     pub fn new(address: String, network: Network) -> Result<Self, AddressError> {
-        let parsed_address = address.parse::<bdk::bitcoin::Address<NetworkUnchecked>>()?;
+        let parsed_address = address.parse::<bdk_wallet::bitcoin::Address<NetworkUnchecked>>()?;
         let network_checked_address = parsed_address.require_network(network)?;
 
         Ok(Address(network_checked_address))

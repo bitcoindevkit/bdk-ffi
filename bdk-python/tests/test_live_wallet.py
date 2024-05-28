@@ -8,8 +8,8 @@ TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 class LiveWalletTest(unittest.TestCase):
 
     def tearDown(self) -> None:
-        if os.path.exists("./bdk_persistence.db"):
-            os.remove("./bdk_persistence.db")
+        if os.path.exists("./bdk_persistence.sqlite"):
+            os.remove("./bdk_persistence.sqlite")
 
     def test_synced_balance(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(
@@ -19,7 +19,7 @@ class LiveWalletTest(unittest.TestCase):
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             None,
-            "./bdk_persistence.db",
+            "./bdk_persistence.sqlite",
             bdk.Network.SIGNET
         )
         esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = SIGNET_ESPLORA_URL)
@@ -55,7 +55,7 @@ class LiveWalletTest(unittest.TestCase):
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             None,
-            "./bdk_persistence.db",
+            "./bdk_persistence.sqlite",
             bdk.Network.SIGNET
         )
         esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = SIGNET_ESPLORA_URL)

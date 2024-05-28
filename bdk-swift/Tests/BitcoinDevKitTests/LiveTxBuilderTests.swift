@@ -11,7 +11,7 @@ final class LiveTxBuilderTests: XCTestCase {
         super.setUp()
         let fileManager = FileManager.default
         let documentDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let uniqueDbFileName = "bdk_persistence_\(UUID().uuidString).db"
+        let uniqueDbFileName = "bdk_persistence_\(UUID().uuidString).sqlite"
         dbFilePath = documentDirectory.appendingPathComponent(uniqueDbFileName)
 
         if fileManager.fileExists(atPath: dbFilePath.path) {

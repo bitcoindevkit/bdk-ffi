@@ -13,7 +13,7 @@ import kotlin.test.AfterTest
 @RunWith(AndroidJUnit4::class)
 class OfflineWalletTest {
     private val persistenceFilePath = InstrumentationRegistry
-        .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence1.db"
+        .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence1.sqlite"
 
     @AfterTest
     fun cleanup() {

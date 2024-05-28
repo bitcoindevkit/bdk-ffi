@@ -2,17 +2,18 @@ use crate::bitcoin::Transaction;
 use crate::error::EsploraError;
 use crate::types::{FullScanRequest, SyncRequest};
 use crate::wallet::Update;
-use std::collections::BTreeMap;
 
-use bdk::bitcoin::Transaction as BdkTransaction;
-use bdk::chain::spk_client::FullScanRequest as BdkFullScanRequest;
-use bdk::chain::spk_client::FullScanResult as BdkFullScanResult;
-use bdk::chain::spk_client::SyncRequest as BdkSyncRequest;
-use bdk::chain::spk_client::SyncResult as BdkSyncResult;
-use bdk::KeychainKind;
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
+use bdk_wallet::bitcoin::Transaction as BdkTransaction;
+use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
+use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
+use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
+use bdk_wallet::chain::spk_client::SyncResult as BdkSyncResult;
+use bdk_wallet::wallet::Update as BdkUpdate;
+use bdk_wallet::KeychainKind;
 
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 pub struct EsploraClient(BlockingClient);
@@ -41,7 +42,7 @@ impl EsploraClient {
             self.0
                 .full_scan(request, stop_gap as usize, parallel_requests as usize)?;
 
-        let update = bdk::wallet::Update {
+        let update = BdkUpdate {
             last_active_indices: result.last_active_indices,
             graph: result.graph_update,
             chain: Some(result.chain_update),
@@ -65,7 +66,7 @@ impl EsploraClient {
 
         let result: BdkSyncResult = self.0.sync(request, parallel_requests as usize)?;
 
-        let update = bdk::wallet::Update {
+        let update = BdkUpdate {
             last_active_indices: BTreeMap::default(),
             graph: result.graph_update,
             chain: Some(result.chain_update),

@@ -11,7 +11,7 @@ private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 class LiveWalletTest {
     private val persistenceFilePath = run {
         val currentDirectory = System.getProperty("user.dir")
-        "$currentDirectory/bdk_persistence.db"
+        "$currentDirectory/bdk_persistence.sqlite"
     }
 
     @AfterTest

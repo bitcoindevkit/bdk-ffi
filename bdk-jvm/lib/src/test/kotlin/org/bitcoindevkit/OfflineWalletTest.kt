@@ -10,7 +10,7 @@ import kotlin.test.assertFalse
 class OfflineWalletTest {
     private val persistenceFilePath = run {
         val currentDirectory = System.getProperty("user.dir")
-        "$currentDirectory/bdk_persistence.db"
+        "$currentDirectory/bdk_persistence.sqlite"
     }
 
     @AfterTest

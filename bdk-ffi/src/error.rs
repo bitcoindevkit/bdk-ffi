@@ -1,28 +1,28 @@
 use crate::bitcoin::OutPoint;
 
-use bdk::bitcoin::address::Error as BdkAddressError;
-use bdk::bitcoin::address::ParseError;
-use bdk::bitcoin::amount::ParseAmountError as BdkParseAmountError;
-use bdk::bitcoin::bip32::Error as BdkBip32Error;
-use bdk::bitcoin::consensus::encode::Error as BdkEncodeError;
-use bdk::bitcoin::psbt::Error as BdkPsbtError;
-use bdk::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
-use bdk::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
-use bdk::bitcoin::Network;
-use bdk::chain::local_chain::CannotConnectError as BdkCannotConnectError;
-use bdk::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
-use bdk::descriptor::DescriptorError as BdkDescriptorError;
-use bdk::keys::bip39::Error as BdkBip39Error;
-use bdk::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
-use bdk::wallet::error::BuildFeeBumpError;
-use bdk::wallet::error::CreateTxError as BdkCreateTxError;
-use bdk::wallet::signer::SignerError as BdkSignerError;
-use bdk::wallet::tx_builder::AddUtxoError;
-use bdk::wallet::NewOrLoadError;
-use bdk::KeychainKind;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
-use bdk_file_store::FileError as BdkFileError;
+use bdk_sqlite::rusqlite::Error as BdkSqliteError;
+use bdk_wallet::bitcoin::address::Error as BdkAddressError;
+use bdk_wallet::bitcoin::address::ParseError;
+use bdk_wallet::bitcoin::amount::ParseAmountError as BdkParseAmountError;
+use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
+use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
+use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
+use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
+use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
+use bdk_wallet::bitcoin::Network;
+use bdk_wallet::chain::local_chain::CannotConnectError as BdkCannotConnectError;
+use bdk_wallet::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
+use bdk_wallet::descriptor::DescriptorError as BdkDescriptorError;
+use bdk_wallet::keys::bip39::Error as BdkBip39Error;
+use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
+use bdk_wallet::wallet::error::BuildFeeBumpError;
+use bdk_wallet::wallet::error::CreateTxError as BdkCreateTxError;
+use bdk_wallet::wallet::signer::SignerError as BdkSignerError;
+use bdk_wallet::wallet::tx_builder::AddUtxoError;
+use bdk_wallet::wallet::NewOrLoadError;
+use bdk_wallet::KeychainKind;
 use bitcoin_internals::hex::display::DisplayHex;
 
 use std::convert::TryInto;
@@ -606,7 +606,7 @@ pub enum TxidParseError {
     InvalidTxid { txid: String },
 }
 
-// This error combines the Rust bdk::wallet::NewOrLoadError and bdk_file_store::FileError
+// This error combines the Rust bdk::wallet::NewOrLoadError and bdk_wallet::rusqlite::Error
 #[derive(Debug, thiserror::Error)]
 pub enum WalletCreationError {
     #[error("io error trying to read file: {error_message}")]
@@ -635,6 +635,9 @@ pub enum WalletCreationError {
 
     #[error("loaded descriptor '{got}' does not match what was provided '{keychain:?}'")]
     LoadedDescriptorDoesNotMatch { got: String, keychain: KeychainKind },
+
+    #[error("error with sqlite persistence: {error_message}")]
+    Sqlite { error_message: String },
 }
 
 // ------------------------------------------------------------------------
@@ -1208,15 +1211,23 @@ impl From<BdkEncodeError> for TransactionError {
     }
 }
 
-impl From<BdkFileError> for WalletCreationError {
-    fn from(error: BdkFileError) -> Self {
-        match error {
-            BdkFileError::Io(e) => WalletCreationError::Io {
-                error_message: e.to_string(),
-            },
-            BdkFileError::InvalidMagicBytes { got, expected } => {
-                WalletCreationError::InvalidMagicBytes { got, expected }
-            }
+// impl From<BdkFileError> for WalletCreationError {
+//     fn from(error: BdkFileError) -> Self {
+//         match error {
+//             BdkFileError::Io(e) => WalletCreationError::Io {
+//                 error_message: e.to_string(),
+//             },
+//             BdkFileError::InvalidMagicBytes { got, expected } => {
+//                 WalletCreationError::InvalidMagicBytes { got, expected }
+//             }
+//         }
+//     }
+// }
+
+impl From<BdkSqliteError> for WalletCreationError {
+    fn from(error: BdkSqliteError) -> Self {
+        WalletCreationError::Sqlite {
+            error_message: error.to_string(),
         }
     }
 }
@@ -1263,8 +1274,8 @@ mod test {
     use crate::CalculateFeeError;
     use crate::OutPoint;
     use crate::SignerError;
-    use bdk::bitcoin::Network;
-    use bdk::KeychainKind;
+    use bdk_wallet::bitcoin::Network;
+    use bdk_wallet::KeychainKind;
 
     #[test]
     fn test_error_address() {

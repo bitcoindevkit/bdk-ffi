@@ -9,22 +9,21 @@ use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount, SyncRequest,
 };
 
-use bdk::bitcoin::amount::Amount as BdkAmount;
-use bdk::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
-use bdk::bitcoin::Network;
-use bdk::bitcoin::Psbt as BdkPsbt;
-use bdk::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
-use bdk::wallet::tx_builder::ChangeSpendPolicy;
-use bdk::wallet::{ChangeSet, Update as BdkUpdate};
-use bdk::Wallet as BdkWallet;
-use bdk::{KeychainKind, SignOptions};
-use bdk_file_store::Store;
+use bdk_sqlite::rusqlite::Connection;
+use bdk_sqlite::Store;
+use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
+use bdk_wallet::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
+use bdk_wallet::bitcoin::Network;
+use bdk_wallet::bitcoin::Psbt as BdkPsbt;
+use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
+use bdk_wallet::wallet::tx_builder::ChangeSpendPolicy;
+use bdk_wallet::wallet::Update as BdkUpdate;
+use bdk_wallet::Wallet as BdkWallet;
+use bdk_wallet::{KeychainKind, SignOptions};
 
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
-
-const MAGIC_BYTES: &[u8] = "bdkffi".as_bytes();
 
 pub struct Wallet {
     inner_mutex: Mutex<BdkWallet>,
@@ -39,7 +38,8 @@ impl Wallet {
     ) -> Result<Self, WalletCreationError> {
         let descriptor = descriptor.as_string_private();
         let change_descriptor = change_descriptor.map(|d| d.as_string_private());
-        let db = Store::<ChangeSet>::open_or_create_new(MAGIC_BYTES, persistence_backend_path)?;
+        let connection = Connection::open(persistence_backend_path)?;
+        let db = Store::new(connection)?;
 
         let wallet: BdkWallet =
             BdkWallet::new_or_load(&descriptor, change_descriptor.as_ref(), db, network)?;
@@ -187,7 +187,7 @@ pub struct TxBuilder {
     pub(crate) change_policy: ChangeSpendPolicy,
     pub(crate) manually_selected_only: bool,
     pub(crate) fee_rate: Option<FeeRate>,
-    pub(crate) fee_absolute: Option<u64>,
+    pub(crate) fee_absolute: Option<Arc<Amount>>,
     pub(crate) drain_wallet: bool,
     pub(crate) drain_to: Option<BdkScriptBuf>,
     pub(crate) rbf: Option<RbfValue>,
@@ -296,7 +296,7 @@ impl TxBuilder {
         })
     }
 
-    pub(crate) fn fee_absolute(&self, fee_amount: u64) -> Arc<Self> {
+    pub(crate) fn fee_absolute(&self, fee_amount: Arc<Amount>) -> Arc<Self> {
         Arc::new(TxBuilder {
             fee_absolute: Some(fee_amount),
             ..self.clone()
@@ -356,8 +356,8 @@ impl TxBuilder {
         if let Some(fee_rate) = &self.fee_rate {
             tx_builder.fee_rate(fee_rate.0);
         }
-        if let Some(fee_amount) = self.fee_absolute {
-            tx_builder.fee_absolute(fee_amount);
+        if let Some(fee_amount) = &self.fee_absolute {
+            tx_builder.fee_absolute(fee_amount.0);
         }
         if self.drain_wallet {
             tx_builder.drain_wallet();

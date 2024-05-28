@@ -1,18 +1,18 @@
 use crate::error::{Bip32Error, Bip39Error, DescriptorKeyError};
 
-use bdk::bitcoin::bip32::DerivationPath as BdkDerivationPath;
-use bdk::bitcoin::key::Secp256k1;
-use bdk::bitcoin::secp256k1::rand;
-use bdk::bitcoin::secp256k1::rand::Rng;
-use bdk::bitcoin::Network;
-use bdk::keys::bip39::WordCount;
-use bdk::keys::bip39::{Language, Mnemonic as BdkMnemonic};
-use bdk::keys::{
+use bdk_wallet::bitcoin::bip32::DerivationPath as BdkDerivationPath;
+use bdk_wallet::bitcoin::key::Secp256k1;
+use bdk_wallet::bitcoin::secp256k1::rand;
+use bdk_wallet::bitcoin::secp256k1::rand::Rng;
+use bdk_wallet::bitcoin::Network;
+use bdk_wallet::keys::bip39::WordCount;
+use bdk_wallet::keys::bip39::{Language, Mnemonic as BdkMnemonic};
+use bdk_wallet::keys::{
     DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
     DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
 };
-use bdk::miniscript::descriptor::{DescriptorXKey, Wildcard};
-use bdk::miniscript::BareCtx;
+use bdk_wallet::miniscript::descriptor::{DescriptorXKey, Wildcard};
+use bdk_wallet::miniscript::BareCtx;
 
 use std::ops::Deref;
 use std::str::FromStr;
@@ -224,10 +224,9 @@ impl DescriptorPublicKey {
 
 #[cfg(test)]
 mod test {
-    use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
-    // use bdk::bitcoin::hashes::hex::ToHex;
     use crate::error::DescriptorKeyError;
-    use bdk::bitcoin::Network;
+    use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
+    use bdk_wallet::bitcoin::Network;
     use std::sync::Arc;
 
     fn get_inner() -> DescriptorSecretKey {

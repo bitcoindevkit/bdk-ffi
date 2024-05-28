@@ -262,6 +262,7 @@ interface WalletCreationError {
   LoadedGenesisDoesNotMatch(string expected, string got);
   LoadedNetworkDoesNotMatch(Network expected, Network? got);
   LoadedDescriptorDoesNotMatch(string got, KeychainKind keychain);
+  Sqlite(string error_message);
 };
 
 // ------------------------------------------------------------------------
@@ -416,7 +417,7 @@ interface TxBuilder {
 
   TxBuilder fee_rate([ByRef] FeeRate fee_rate);
 
-  TxBuilder fee_absolute(u64 fee);
+  TxBuilder fee_absolute(Amount fee);
 
   TxBuilder drain_wallet();
 
