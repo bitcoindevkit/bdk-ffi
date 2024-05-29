@@ -23,15 +23,15 @@ bdk_esplora = { version = "0.13.0", default-features = false, features = ["std",
 bdk_electrum = { version = "0.13.0" }
 bdk_file_store = { version = "0.11.0" }
 
-uniffi = { version = "=0.26.1" }
+uniffi = { version = "=0.27.1" }
 bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
 thiserror = "1.0.58"
 
 [build-dependencies]
-uniffi = { version = "=0.26.1", features = ["build"] }
+uniffi = { version = "=0.27.1", features = ["build"] }
 
 [dev-dependencies]
-uniffi = { version = "=0.26.1", features = ["bindgen-tests"] }
+uniffi = { version = "=0.27.1", features = ["bindgen-tests"] }
 assert_matches = "1.5.0"
 
 [profile.release-smaller]
