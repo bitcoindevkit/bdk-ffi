@@ -16,6 +16,7 @@ use bdk::bitcoin::Psbt as BdkPsbt;
 use bdk::bitcoin::Transaction as BdkTransaction;
 use bdk::bitcoin::TxIn as BdkTxIn;
 use bdk::bitcoin::Txid;
+use bdk_bitcoind_rpc::bitcoincore_rpc::jsonrpc::serde_json;
 
 use std::io::Cursor;
 use std::ops::Deref;

@@ -22,11 +22,11 @@ bdk = { version = "1.0.0-alpha.11", features = ["all-keys", "keys-bip39"] }
 bdk_esplora = { version = "0.13.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
 bdk_electrum = { version = "0.13.0" }
 bdk_file_store = { version = "0.11.0" }
+bdk_bitcoind_rpc = { version = "0.10.0" }
 
 uniffi = { version = "=0.27.1" }
 bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
 thiserror = "1.0.58"
-serde_json = "1.0.116"
 
 [build-dependencies]
 uniffi = { version = "=0.27.1", features = ["build"] }
