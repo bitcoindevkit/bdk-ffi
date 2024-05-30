@@ -1,5 +1,4 @@
-use crate::bitcoin::Amount;
-use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
+use crate::bitcoin::{Address, Amount, OutPoint, Transaction, TxOut};
 use crate::InspectError;
 
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
@@ -12,6 +11,7 @@ use bdk_wallet::wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
+use bitcoin_ffi::Script;
 
 use std::sync::{Arc, Mutex};
 

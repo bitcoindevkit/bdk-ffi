@@ -26,6 +26,8 @@ bdk_bitcoind_rpc = { version = "0.10.0" }
 
 uniffi = { version = "=0.27.1" }
 bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
+bitcoin-ffi = { git = "https://github.com/thunderbiscuit/bitcoin-ffi.git", rev = "59f880aa45478511f067953fa7e903e60ebb10d3" }
+# bitcoin-ffi = { version = "0.1.0", path = "../../bitcoin-ffi/" }
 thiserror = "1.0.58"
 
 [build-dependencies]

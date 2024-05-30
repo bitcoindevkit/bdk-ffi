@@ -1,5 +1,6 @@
 package org.bitcoindevkit
 
+import org.rustbitcoin.bitcoin.Script
 import kotlin.test.Test
 
 private const val SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"

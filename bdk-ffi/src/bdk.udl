@@ -587,12 +587,6 @@ dictionary SentAndReceivedValues {
 // bdk crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 
-interface Script {
-  constructor(sequence<u8> raw_output_script);
-
-  sequence<u8> to_bytes();
-};
-
 [NonExhaustive]
 enum Network {
   "Bitcoin",
@@ -710,3 +704,10 @@ dictionary TxIn {
   u32 sequence;
   sequence<sequence<u8>> witness;
 };
+
+// ------------------------------------------------------------------------
+// types defined in external crate rust-bitcoin-ffi
+// ------------------------------------------------------------------------
+
+[ExternalInterface="bitcoin_ffi"]
+typedef extern Script;
