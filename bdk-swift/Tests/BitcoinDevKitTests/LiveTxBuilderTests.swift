@@ -46,7 +46,7 @@ final class LiveTxBuilderTests: XCTestCase {
         )
         try wallet.applyUpdate(update: update)
         let _ = try wallet.commit()
-        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
+        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.description
 
         XCTAssertGreaterThan(
             wallet.getBalance().total.toSat(),
@@ -88,7 +88,7 @@ final class LiveTxBuilderTests: XCTestCase {
         )
         try wallet.applyUpdate(update: update)
         let _ = try wallet.commit()
-        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
+        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.description
 
         XCTAssertGreaterThan(
             wallet.getBalance().total.toSat(),

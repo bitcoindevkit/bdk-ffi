@@ -26,7 +26,7 @@ class OfflineWalletTest(unittest.TestCase):
         self.assertFalse(address_info.address.is_valid_for_network(bdk.Network.REGTEST), "Address is valid for regtest network, but it shouldn't be")
         self.assertFalse(address_info.address.is_valid_for_network(bdk.Network.BITCOIN), "Address is valid for bitcoin network, but it shouldn't be")
     
-        self.assertEqual("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address_info.address.as_string())
+        self.assertEqual("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address_info.address.__str__())
     
     def test_balance(self):
         descriptor: bdk.Descriptor = bdk.Descriptor(

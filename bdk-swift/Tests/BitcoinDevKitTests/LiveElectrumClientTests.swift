@@ -24,7 +24,7 @@ final class LiveElectrumClientTests: XCTestCase {
         )
         try wallet.applyUpdate(update: update)
         let _ = try wallet.commit()
-        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address.asString()
+        let address = try wallet.revealNextAddress(keychain: KeychainKind.external).address
 
         XCTAssertGreaterThan(
             wallet.getBalance().total.toSat(),

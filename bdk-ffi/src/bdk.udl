@@ -611,6 +611,7 @@ enum WordCount {
   "Words24",
 };
 
+[Traits=(Display)]
 interface Address {
   [Throws=AddressError]
   constructor(string address, Network network);
@@ -620,8 +621,6 @@ interface Address {
   Script script_pubkey();
 
   string to_qr_uri();
-
-  string as_string();
 
   boolean is_valid_for_network(Network network);
 };

@@ -1,4 +1,5 @@
 use crate::error::{AddressError, FeeRateError, PsbtError, PsbtParseError, TransactionError};
+use std::fmt::Display;
 
 use bdk_bitcoind_rpc::bitcoincore_rpc::jsonrpc::serde_json;
 use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
@@ -100,10 +101,6 @@ impl Address {
         self.0.to_qr_uri()
     }
 
-    pub fn as_string(&self) -> String {
-        self.0.to_string()
-    }
-
     pub fn is_valid_for_network(&self, network: Network) -> bool {
         let address_str = self.0.to_string();
         if let Ok(unchecked_address) = address_str.parse::<BdkAddress<NetworkUnchecked>>() {
@@ -111,6 +108,12 @@ impl Address {
         } else {
             false
         }
+    }
+}
+
+impl Display for Address {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

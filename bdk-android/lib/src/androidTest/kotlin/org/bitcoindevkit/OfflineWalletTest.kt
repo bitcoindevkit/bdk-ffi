@@ -53,7 +53,7 @@ class OfflineWalletTest {
 
         assertEquals(
             expected = "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e",
-            actual = addressInfo.address.asString()
+            actual = addressInfo.address.toString()
         )
     }
 

@@ -21,7 +21,7 @@ class LiveTransactionTests {
         println("Wallet balance: ${wallet.getBalance().total.toSat()}")
 
         assert(wallet.getBalance().total.toSat() > 0uL) {
-            "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address.asString()} and try again."
+            "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address} and try again."
         }
 
         val transaction: Transaction = wallet.transactions().first().transaction

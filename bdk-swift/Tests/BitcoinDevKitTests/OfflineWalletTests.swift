@@ -45,7 +45,7 @@ final class OfflineWalletTests: XCTestCase {
         XCTAssertFalse(addressInfo.address.isValidForNetwork(network: Network.bitcoin),
                       "Address is valid for bitcoin network, but it shouldn't be")
 
-        XCTAssertEqual(addressInfo.address.asString(), "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e")
+        XCTAssertEqual(addressInfo.address.description, "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e")
     }
     
     func testBalance() throws {
