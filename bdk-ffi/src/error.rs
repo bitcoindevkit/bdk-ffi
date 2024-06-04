@@ -1,8 +1,10 @@
 use crate::bitcoin::OutPoint;
+use crate::Network;
 
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
-use bdk_sqlite::rusqlite::Error as BdkSqliteError;
+use bdk_sqlite::rusqlite::Error as BdkRusqliteError;
+use bdk_sqlite::Error as BdkSqliteError;
 use bdk_wallet::bitcoin::address::Error as BdkAddressError;
 use bdk_wallet::bitcoin::address::ParseError;
 use bdk_wallet::bitcoin::amount::ParseAmountError as BdkParseAmountError;
@@ -11,7 +13,6 @@ use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
-use bdk_wallet::bitcoin::Network;
 use bdk_wallet::chain::local_chain::CannotConnectError as BdkCannotConnectError;
 use bdk_wallet::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk_wallet::descriptor::DescriptorError as BdkDescriptorError;
@@ -573,6 +574,17 @@ pub enum SignerError {
 
     #[error("external error: {error_message}")]
     External { error_message: String },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum SqliteError {
+    // This error is renamed from Network to InvalidNetwork to avoid conflict with the Network enum
+    // in uniffi.
+    #[error("invalid network, cannot change the one already stored in the database")]
+    InvalidNetwork { expected: Network, given: Network },
+
+    #[error("SQLite error: {rusqlite_error}")]
+    Sqlite { rusqlite_error: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1211,23 +1223,23 @@ impl From<BdkEncodeError> for TransactionError {
     }
 }
 
-// impl From<BdkFileError> for WalletCreationError {
-//     fn from(error: BdkFileError) -> Self {
-//         match error {
-//             BdkFileError::Io(e) => WalletCreationError::Io {
-//                 error_message: e.to_string(),
-//             },
-//             BdkFileError::InvalidMagicBytes { got, expected } => {
-//                 WalletCreationError::InvalidMagicBytes { got, expected }
-//             }
-//         }
-//     }
-// }
-
-impl From<BdkSqliteError> for WalletCreationError {
-    fn from(error: BdkSqliteError) -> Self {
+impl From<BdkRusqliteError> for WalletCreationError {
+    fn from(error: BdkRusqliteError) -> Self {
         WalletCreationError::Sqlite {
             error_message: error.to_string(),
+        }
+    }
+}
+
+impl From<BdkSqliteError> for SqliteError {
+    fn from(error: BdkSqliteError) -> Self {
+        match error {
+            BdkSqliteError::Network { expected, given } => {
+                SqliteError::InvalidNetwork { expected, given }
+            }
+            BdkSqliteError::Sqlite(e) => SqliteError::Sqlite {
+                rusqlite_error: e.to_string(),
+            },
         }
     }
 }

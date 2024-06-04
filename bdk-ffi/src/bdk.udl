@@ -237,6 +237,12 @@ interface SignerError {
 };
 
 [Error]
+interface SqliteError {
+  InvalidNetwork(Network expected, Network given);
+  Sqlite(string rusqlite_error);
+};
+
+[Error]
 interface TransactionError {
   Io();
   OversizedVectorAllocation();

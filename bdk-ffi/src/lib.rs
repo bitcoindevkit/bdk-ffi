@@ -36,6 +36,7 @@ use crate::error::PersistenceError;
 use crate::error::PsbtError;
 use crate::error::PsbtParseError;
 use crate::error::SignerError;
+use crate::error::SqliteError;
 use crate::error::TransactionError;
 use crate::error::TxidParseError;
 use crate::error::WalletCreationError;
