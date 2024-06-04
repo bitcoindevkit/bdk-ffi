@@ -5,8 +5,5 @@ cdylib_name = "bdkffi"
 [bindings.python]
 cdylib_name = "bdkffi"
 
-[bindings.ruby]
-cdylib_name = "bdkffi"
-
 [bindings.swift]
 cdylib_name = "bdkffi"
