@@ -11,4 +11,4 @@ test:
   swift test
 
 test-offline:
-  swift test --skip LiveWalletTests --skip LiveTxBuilderTests
+  swift test --skip LiveElectrumClientTests --skip LiveMemoryWalletTests --skip LiveTransactionTests --skip LiveTxBuilderTests --skip LiveWalletTests
