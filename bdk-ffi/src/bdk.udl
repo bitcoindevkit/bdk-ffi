@@ -616,6 +616,9 @@ interface Address {
   [Throws=AddressError]
   constructor(string address, Network network);
 
+  [Name=from_script, Throws=AddressError]
+  constructor(Script script, Network network);
+
   Network network();
 
   Script script_pubkey();

@@ -89,6 +89,12 @@ impl Address {
         Ok(Address(network_checked_address))
     }
 
+    pub fn from_script(script: Arc<Script>, network: Network) -> Result<Self, AddressError> {
+        let address = BdkAddress::from_script(&script.0.clone(), network)?;
+
+        Ok(Address(address))
+    }
+
     pub fn network(&self) -> Network {
         *self.0.network()
     }
