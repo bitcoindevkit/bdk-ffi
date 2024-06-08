@@ -127,7 +127,7 @@ pub struct SyncRequest(pub(crate) Mutex<Option<BdkSyncRequest>>);
 impl SyncRequest {
     pub fn inspect_spks(
         &self,
-        inspector: Box<dyn SyncScriptInspector>,
+        inspector: Arc<dyn SyncScriptInspector>,
     ) -> Result<Arc<Self>, InspectError> {
         let mut guard = self.0.lock().unwrap();
         if let Some(sync_request) = guard.take() {
@@ -145,7 +145,7 @@ impl SyncRequest {
 impl FullScanRequest {
     pub fn inspect_spks_for_all_keychains(
         &self,
-        inspector: Box<dyn FullScanScriptInspector>,
+        inspector: Arc<dyn FullScanScriptInspector>,
     ) -> Result<Arc<Self>, InspectError> {
         let mut guard = self.0.lock().unwrap();
         if let Some(full_scan_request) = guard.take() {

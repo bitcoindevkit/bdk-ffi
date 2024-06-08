@@ -333,11 +333,13 @@ interface SyncRequest {
   SyncRequest inspect_spks(SyncScriptInspector inspector);
 };
 
-callback interface SyncScriptInspector {
+[Trait, WithForeign]
+interface SyncScriptInspector {
   void inspect(Script script, u64 total);
 };
 
-callback interface FullScanScriptInspector {
+[Trait, WithForeign]
+interface FullScanScriptInspector {
   void inspect(KeychainKind keychain, u32 index, Script script);
 };
 
