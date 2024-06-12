@@ -49,7 +49,7 @@ jobs:
 
       - name: "Build Swift package"
         working-directory: bdk-swift
-        run: bash ./build-local-swift.sh
+        run: bash ./build-xcframework.sh
 
       - name: "Run live Swift tests"
         working-directory: bdk-swift

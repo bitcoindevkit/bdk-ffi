@@ -2,7 +2,7 @@ default:
   just --list
 
 build:
-  bash ./build-local-swift.sh
+  bash ./build-xcframework.sh
 
 clean:
   rm -rf ../bdk-ffi/target/

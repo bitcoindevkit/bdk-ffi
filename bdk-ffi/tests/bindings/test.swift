@@ -4,6 +4,6 @@
  */
 
 import Foundation
-import bdk
+import BitcoinDevKit
 
 let network = Network.testnet

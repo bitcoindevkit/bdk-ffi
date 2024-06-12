@@ -25,7 +25,7 @@ import BitcoinDevKit
 
 Swift Package Manager releases for `bdk-swift` are published to a separate repository (https://github.com/bitcoindevkit/bdk-swift), and that is where the releases are created for it. 
 
-The `bdk-swift/build-local-swift.sh` script can be used instead to create a version of the project for local testing.
+The `bdk-swift/build-xcframework.sh` script can be used instead to create a version of the project for local testing.
 
 ### How to test
 

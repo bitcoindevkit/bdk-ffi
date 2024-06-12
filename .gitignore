@@ -31,6 +31,8 @@ bdkFFI.h
 BitcoinDevKit.swift
 bdk.swift
 .build
+*.xcframework/
+Info.plist
 
 # Python related
 __pycache__

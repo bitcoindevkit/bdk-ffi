@@ -6,4 +6,5 @@ cdylib_name = "bdkffi"
 cdylib_name = "bdkffi"
 
 [bindings.swift]
+module_name = "BitcoinDevKit"
 cdylib_name = "bdkffi"
