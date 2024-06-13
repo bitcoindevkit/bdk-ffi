@@ -10,7 +10,7 @@ class OfflineDescriptorTest(unittest.TestCase):
 
         self.assertEqual(
             "tr([be1eec8f/86'/1'/0']tpubDCTtszwSxPx3tATqDrsSyqScPNnUChwQAVAkanuDUCJQESGBbkt68nXXKRDifYSDbeMa2Xg2euKbXaU3YphvGWftDE7ozRKPriT6vAo3xsc/0/*)#m7puekcx",
-            descriptor.as_string()
+            descriptor.__str__()
         )
 
 

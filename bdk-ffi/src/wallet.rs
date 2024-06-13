@@ -36,8 +36,8 @@ impl Wallet {
         persistence_backend_path: String,
         network: Network,
     ) -> Result<Self, WalletCreationError> {
-        let descriptor = descriptor.as_string_private();
-        let change_descriptor = change_descriptor.map(|d| d.as_string_private());
+        let descriptor = descriptor.to_string_with_secret();
+        let change_descriptor = change_descriptor.map(|d| d.to_string_with_secret());
         let connection = Connection::open(persistence_backend_path)?;
         let db = Store::new(connection)?;
 
@@ -54,8 +54,8 @@ impl Wallet {
         change_descriptor: Option<Arc<Descriptor>>,
         network: Network,
     ) -> Result<Self, DescriptorError> {
-        let descriptor = descriptor.as_string_private();
-        let change_descriptor = change_descriptor.map(|d| d.as_string_private());
+        let descriptor = descriptor.to_string_with_secret();
+        let change_descriptor = change_descriptor.map(|d| d.to_string_with_secret());
 
         let wallet: BdkWallet =
             BdkWallet::new_no_persist(&descriptor, change_descriptor.as_ref(), network)?;

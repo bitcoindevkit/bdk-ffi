@@ -1,6 +1,7 @@
 use crate::error::DescriptorError;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
+use std::fmt::Display;
 
 use bdk_wallet::bitcoin::bip32::Fingerprint;
 use bdk_wallet::bitcoin::key::Secp256k1;
@@ -260,14 +261,16 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn as_string_private(&self) -> String {
+    pub(crate) fn to_string_with_secret(&self) -> String {
         let descriptor = &self.extended_descriptor;
         let key_map = &self.key_map;
         descriptor.to_string_with_secret(key_map)
     }
+}
 
-    pub(crate) fn as_string(&self) -> String {
-        self.extended_descriptor.to_string()
+impl Display for Descriptor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.extended_descriptor)
     }
 }
 
@@ -321,10 +324,10 @@ mod test {
         let template_private_86 =
             Descriptor::new_bip86(&master, KeychainKind::External, Network::Testnet);
         // the extended public keys are the same when creating them manually as they are with the templates
-        println!("Template 49: {}", template_private_49.as_string());
-        println!("Template 44: {}", template_private_44.as_string());
-        println!("Template 84: {}", template_private_84.as_string());
-        println!("Template 86: {}", template_private_86.as_string());
+        println!("Template 49: {}", template_private_49);
+        println!("Template 44: {}", template_private_44);
+        println!("Template 84: {}", template_private_84);
+        println!("Template 86: {}", template_private_86);
         let template_public_44 = Descriptor::new_bip44_public(
             &handmade_public_44,
             "d1d04177".to_string(),
@@ -349,43 +352,43 @@ mod test {
             KeychainKind::External,
             Network::Testnet,
         );
-        println!("Template public 49: {}", template_public_49.as_string());
-        println!("Template public 44: {}", template_public_44.as_string());
-        println!("Template public 84: {}", template_public_84.as_string());
-        println!("Template public 86: {}", template_public_86.as_string());
-        // when using a public key, both as_string and as_string_private return the same string
+        println!("Template public 49: {}", template_public_49);
+        println!("Template public 44: {}", template_public_44);
+        println!("Template public 84: {}", template_public_84);
+        println!("Template public 86: {}", template_public_86);
+        // when using a public key, both to_string and as_string_private return the same string
         assert_eq!(
-            template_public_44.as_string_private(),
-            template_public_44.as_string()
+            template_public_44.to_string_with_secret(),
+            template_public_44.to_string()
         );
         assert_eq!(
-            template_public_49.as_string_private(),
-            template_public_49.as_string()
+            template_public_49.to_string_with_secret(),
+            template_public_49.to_string()
         );
         assert_eq!(
-            template_public_84.as_string_private(),
-            template_public_84.as_string()
+            template_public_84.to_string_with_secret(),
+            template_public_84.to_string()
         );
         assert_eq!(
-            template_public_86.as_string_private(),
-            template_public_86.as_string()
+            template_public_86.to_string_with_secret(),
+            template_public_86.to_string()
         );
-        // when using as_string on a private key, we get the same result as when using it on a public key
+        // when using to_string on a private key, we get the same result as when using it on a public key
         assert_eq!(
-            template_private_44.as_string(),
-            template_public_44.as_string()
-        );
-        assert_eq!(
-            template_private_49.as_string(),
-            template_public_49.as_string()
+            template_private_44.to_string(),
+            template_public_44.to_string()
         );
         assert_eq!(
-            template_private_84.as_string(),
-            template_public_84.as_string()
+            template_private_49.to_string(),
+            template_public_49.to_string()
         );
         assert_eq!(
-            template_private_86.as_string(),
-            template_public_86.as_string()
+            template_private_84.to_string(),
+            template_public_84.to_string()
+        );
+        assert_eq!(
+            template_private_86.to_string(),
+            template_public_86.to_string()
         );
     }
     #[test]

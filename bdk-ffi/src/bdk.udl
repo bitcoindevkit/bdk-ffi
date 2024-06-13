@@ -502,6 +502,7 @@ interface DescriptorPublicKey {
   string as_string();
 };
 
+[Traits=(Display)]
 interface Descriptor {
   [Throws=DescriptorError]
   constructor(string descriptor, Network network);
@@ -530,9 +531,7 @@ interface Descriptor {
   [Name=new_bip86_public]
   constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
-  string as_string();
-
-  string as_string_private();
+  string to_string_with_secret();
 };
 
 // ------------------------------------------------------------------------

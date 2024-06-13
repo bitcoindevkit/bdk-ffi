@@ -27,7 +27,7 @@ class OfflineWalletTest {
         val descriptorSecretKey: DescriptorSecretKey = DescriptorSecretKey(Network.TESTNET, mnemonic, null)
         val descriptor: Descriptor = Descriptor.newBip86(descriptorSecretKey, KeychainKind.EXTERNAL, Network.TESTNET)
 
-        assertTrue(descriptor.asString().startsWith("tr"), "Bip86 Descriptor does not start with 'tr'")
+        assertTrue(descriptor.toString().startsWith("tr"), "Bip86 Descriptor does not start with 'tr'")
     }
 
    @Test
