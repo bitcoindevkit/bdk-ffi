@@ -1,4 +1,5 @@
 use crate::error::{Bip32Error, Bip39Error, DescriptorKeyError};
+use std::fmt::Display;
 
 use bdk_wallet::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk_wallet::bitcoin::key::Secp256k1;
@@ -44,9 +45,11 @@ impl Mnemonic {
             .map(Mnemonic)
             .map_err(Bip39Error::from)
     }
+}
 
-    pub(crate) fn as_string(&self) -> String {
-        self.0.to_string()
+impl Display for Mnemonic {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
 

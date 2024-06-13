@@ -454,6 +454,7 @@ interface BumpFeeTxBuilder {
 // bdk crate - descriptor module
 // ------------------------------------------------------------------------
 
+[Traits=(Display)]
 interface Mnemonic {
   constructor(WordCount word_count);
 
@@ -462,8 +463,6 @@ interface Mnemonic {
 
   [Name=from_entropy, Throws=Bip39Error]
   constructor(sequence<u8> entropy);
-
-  string as_string();
 };
 
 interface DerivationPath {
