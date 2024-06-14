@@ -34,10 +34,10 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             environment(
                 // add build toolchain to PATH
                 Pair("PATH", "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
-                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=21"),
+                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=24"),
                 Pair("AR", "llvm-ar"),
-                Pair("CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER", "aarch64-linux-android21-clang"),
-                Pair("CC", "aarch64-linux-android21-clang")
+                Pair("CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER", "aarch64-linux-android24-clang"),
+                Pair("CC", "aarch64-linux-android24-clang")
             )
 
             doLast {
@@ -57,10 +57,10 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             environment(
                 // add build toolchain to PATH
                 Pair("PATH", "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
-                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=21"),
+                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=24"),
                 Pair("AR", "llvm-ar"),
-                Pair("CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER", "x86_64-linux-android21-clang"),
-                Pair("CC", "x86_64-linux-android21-clang")
+                Pair("CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER", "x86_64-linux-android24-clang"),
+                Pair("CC", "x86_64-linux-android24-clang")
             )
 
             doLast {
@@ -80,10 +80,10 @@ internal class UniFfiAndroidPlugin : Plugin<Project> {
             environment(
                 // add build toolchain to PATH
                 Pair("PATH", "${System.getenv("PATH")}:${System.getenv("ANDROID_NDK_ROOT")}/toolchains/llvm/prebuilt/$llvmArchPath/bin"),
-                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=21"),
+                Pair("CFLAGS", "-D__ANDROID_MIN_SDK_VERSION__=24"),
                 Pair("AR", "llvm-ar"),
-                Pair("CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER", "armv7a-linux-androideabi21-clang"),
-                Pair("CC", "armv7a-linux-androideabi21-clang")
+                Pair("CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER", "armv7a-linux-androideabi24-clang"),
+                Pair("CC", "armv7a-linux-androideabi24-clang")
             )
 
             doLast {
