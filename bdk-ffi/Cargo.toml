@@ -24,15 +24,15 @@ bdk_electrum = { version = "0.14.0" }
 bdk_sqlite = { version = "0.1.0" }
 bdk_bitcoind_rpc = { version = "0.10.0" }
 
-uniffi = { version = "=0.27.1" }
+uniffi = { version = "=0.28.0" }
 bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
 thiserror = "1.0.58"
 
 [build-dependencies]
-uniffi = { version = "=0.27.1", features = ["build"] }
+uniffi = { version = "=0.28.0", features = ["build"] }
 
 [dev-dependencies]
-uniffi = { version = "=0.27.1", features = ["bindgen-tests"] }
+uniffi = { version = "=0.28.0", features = ["bindgen-tests"] }
 assert_matches = "1.5.0"
 
 [profile.release-smaller]
