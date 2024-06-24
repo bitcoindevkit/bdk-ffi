@@ -14,6 +14,8 @@ import kotlin.test.AfterTest
 class OfflineWalletTest {
     private val persistenceFilePath = InstrumentationRegistry
         .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence1.sqlite"
+    private val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
+    private val changeDescriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)", Network.TESTNET)
 
     @AfterTest
     fun cleanup() {
@@ -34,14 +36,9 @@ class OfflineWalletTest {
 
    @Test
     fun testNewAddress() {
-        val descriptor: Descriptor = Descriptor(
-            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
-            Network.TESTNET
-        )
         val wallet: Wallet = Wallet(
             descriptor,
-            null,
-            persistenceFilePath,
+            changeDescriptor,
             Network.TESTNET
         )
         val addressInfo: AddressInfo = wallet.revealNextAddress(KeychainKind.EXTERNAL)
@@ -52,27 +49,22 @@ class OfflineWalletTest {
         assertFalse(addressInfo.address.isValidForNetwork(Network.BITCOIN), "Address is valid for bitcoin network, but it shouldn't be")
 
         assertEquals(
-            expected = "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e",
+            expected = "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989",
             actual = addressInfo.address.toString()
         )
     }
 
     @Test
     fun testBalance() {
-        val descriptor: Descriptor = Descriptor(
-            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
-            Network.TESTNET
-        )
         val wallet: Wallet = Wallet(
             descriptor,
-            null,
-            persistenceFilePath,
+            changeDescriptor,
             Network.TESTNET
         )
 
         assertEquals(
             expected = 0uL,
-            actual = wallet.getBalance().total.toSat()
+            actual = wallet.balance().total.toSat()
         )
     }
 }

@@ -2,6 +2,15 @@ import bdkpython as bdk
 import unittest
 import os
 
+descriptor: bdk.Descriptor = bdk.Descriptor(
+    "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
+    bdk.Network.TESTNET
+)
+change_descriptor: bdk.Descriptor = bdk.Descriptor(
+    "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)",
+    bdk.Network.TESTNET
+)
+
 class OfflineWalletTest(unittest.TestCase):
 
     def tearDown(self) -> None:
@@ -9,14 +18,9 @@ class OfflineWalletTest(unittest.TestCase):
             os.remove("./bdk_persistence.sqlite")
     
     def test_new_address(self):
-        descriptor: bdk.Descriptor = bdk.Descriptor(
-            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
-            bdk.Network.TESTNET
-        )
         wallet: Wallet = bdk.Wallet(
             descriptor,
-            None,
-            "./bdk_persistence.sqlite",
+            change_descriptor,
             bdk.Network.TESTNET
         )
         address_info: bdk.AddressInfo = wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL)
@@ -26,21 +30,16 @@ class OfflineWalletTest(unittest.TestCase):
         self.assertFalse(address_info.address.is_valid_for_network(bdk.Network.REGTEST), "Address is valid for regtest network, but it shouldn't be")
         self.assertFalse(address_info.address.is_valid_for_network(bdk.Network.BITCOIN), "Address is valid for bitcoin network, but it shouldn't be")
     
-        self.assertEqual("tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e", address_info.address.__str__())
+        self.assertEqual("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", address_info.address.__str__())
     
     def test_balance(self):
-        descriptor: bdk.Descriptor = bdk.Descriptor(
-            "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
-            bdk.Network.TESTNET
-        )
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
-            None,
-            "./bdk_persistence.sqlite",
+            change_descriptor,
             bdk.Network.TESTNET
         )
     
-        self.assertEqual(wallet.get_balance().total.to_sat(), 0)
+        self.assertEqual(wallet.balance().total.to_sat(), 0)
 
 if __name__ == '__main__':
     unittest.main()

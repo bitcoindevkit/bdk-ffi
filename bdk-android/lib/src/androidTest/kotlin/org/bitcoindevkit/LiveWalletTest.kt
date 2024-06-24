@@ -15,6 +15,8 @@ private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 class LiveWalletTest {
     private val persistenceFilePath = InstrumentationRegistry
         .getInstrumentation().targetContext.filesDir.path + "/bdk_persistence2.sqlite"
+    private val descriptor: Descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.SIGNET)
+    private val changeDescriptor: Descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)", Network.SIGNET)
 
     @AfterTest
     fun cleanup() {
@@ -26,18 +28,16 @@ class LiveWalletTest {
 
     @Test
     fun testSyncedBalance() {
-        val descriptor: Descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.SIGNET)
-        val wallet: Wallet = Wallet(descriptor, null, persistenceFilePath, Network.SIGNET)
+        val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
         val esploraClient: EsploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
-        wallet.commit()
-        println("Balance: ${wallet.getBalance().total.toSat()}")
-        val balance: Balance = wallet.getBalance()
+        println("Balance: ${wallet.balance().total.toSat()}")
+        val balance: Balance = wallet.balance()
         println("Balance: $balance")
 
-        assert(wallet.getBalance().total.toSat() > 0uL) {
+        assert(wallet.balance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address} and try again."
         }
 
@@ -45,7 +45,7 @@ class LiveWalletTest {
         val transactions = wallet.transactions().take(3)
         for (tx in transactions) {
             val sentAndReceived = wallet.sentAndReceived(tx.transaction)
-            println("Transaction: ${tx.transaction.txid()}")
+            println("Transaction: ${tx.transaction.computeTxid()}")
             println("Sent ${sentAndReceived.sent}")
             println("Received ${sentAndReceived.received}")
         }
@@ -53,16 +53,14 @@ class LiveWalletTest {
 
     @Test
     fun testBroadcastTransaction() {
-        val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.SIGNET)
-        val wallet = Wallet(descriptor, null, persistenceFilePath, Network.SIGNET)
+        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
-        wallet.commit()
-        println("Balance: ${wallet.getBalance().total.toSat()}")
+        println("Balance: ${wallet.balance().total.toSat()}")
 
-        assert(wallet.getBalance().total.toSat() > 0uL) {
+        assert(wallet.balance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address} and try again."
         }
 
@@ -80,10 +78,10 @@ class LiveWalletTest {
         assertTrue(walletDidSign)
 
         val tx: Transaction = psbt.extractTx()
-        println("Txid is: ${tx.txid()}")
+        println("Txid is: ${tx.computeTxid()}")
 
-        val txFee: ULong = wallet.calculateFee(tx)
-        println("Tx fee is: $txFee")
+        val txFee: Amount = wallet.calculateFee(tx)
+        println("Tx fee is: ${txFee.toSat()}")
 
         val feeRate: FeeRate = wallet.calculateFeeRate(tx)
         println("Tx fee rate is: ${feeRate.toSatPerVbCeil()} sat/vB")

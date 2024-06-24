@@ -5,6 +5,15 @@ import os
 SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
 TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 
+descriptor: bdk.Descriptor = bdk.Descriptor(
+    "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
+    bdk.Network.TESTNET
+)
+change_descriptor: bdk.Descriptor = bdk.Descriptor(
+    "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)",
+    bdk.Network.TESTNET
+)
+
 class LiveTxBuilderTest(unittest.TestCase):
 
     def tearDown(self) -> None:
@@ -18,8 +27,7 @@ class LiveTxBuilderTest(unittest.TestCase):
         )
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
-            None,
-            "./bdk_persistence.sqlite",
+            change_descriptor,
             bdk.Network.SIGNET
         )
         esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = SIGNET_ESPLORA_URL)
@@ -30,10 +38,9 @@ class LiveTxBuilderTest(unittest.TestCase):
             parallel_requests=1
         )
         wallet.apply_update(update)
-        wallet.commit()
         
         self.assertGreater(
-            wallet.get_balance().total.to_sat(),
+            wallet.balance().total.to_sat(),
             0,
             f"Wallet balance must be greater than 0! Please send funds to {wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL).address} and try again."
         )
@@ -48,14 +55,9 @@ class LiveTxBuilderTest(unittest.TestCase):
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
 
     def complex_tx_builder(self):
-        descriptor: bdk.Descriptor = bdk.Descriptor(
-            "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
-            bdk.Network.SIGNET
-        )
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
-            None,
-            "./bdk_persistence.sqlite",
+            change_descriptor,
             bdk.Network.SIGNET
         )
         esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = SIGNET_ESPLORA_URL)
@@ -66,10 +68,9 @@ class LiveTxBuilderTest(unittest.TestCase):
             parallel_requests=1
         )
         wallet.apply_update(update)
-        wallet.commit()
         
         self.assertGreater(
-            wallet.get_balance().total.to_sat(),
+            wallet.balance().total.to_sat(),
             0,
             f"Wallet balance must be greater than 0! Please send funds to {wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL).address} and try again."
         )

@@ -1,6 +1,15 @@
 import XCTest
 @testable import BitcoinDevKit
 
+private let descriptor = try! Descriptor(
+    descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", 
+    network: Network.signet
+)
+private let changeDescriptor = try! Descriptor(
+    descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)", 
+    network: Network.signet
+)
+
 final class OfflineWalletTests: XCTestCase {
     var dbFilePath: URL!
 
@@ -24,17 +33,12 @@ final class OfflineWalletTests: XCTestCase {
     }
 
     func testNewAddress() throws {
-        let descriptor: Descriptor = try Descriptor(
-            descriptor: "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
-            network: Network.testnet
-        )
         let wallet = try Wallet(
             descriptor: descriptor,
-            changeDescriptor: nil,
-            persistenceBackendPath: dbFilePath.path,
+            changeDescriptor: changeDescriptor,
             network: .testnet
         )
-        let addressInfo: AddressInfo = try wallet.revealNextAddress(keychain: KeychainKind.external)
+        let addressInfo: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
 
         XCTAssertTrue(addressInfo.address.isValidForNetwork(network: Network.testnet),
                      "Address is not valid for testnet network")
@@ -45,21 +49,16 @@ final class OfflineWalletTests: XCTestCase {
         XCTAssertFalse(addressInfo.address.isValidForNetwork(network: Network.bitcoin),
                       "Address is valid for bitcoin network, but it shouldn't be")
 
-        XCTAssertEqual(addressInfo.address.description, "tb1qzg4mckdh50nwdm9hkzq06528rsu73hjxxzem3e")
+        XCTAssertEqual(addressInfo.address.description, "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989")
     }
     
     func testBalance() throws {
-        let descriptor: Descriptor = try Descriptor(
-            descriptor: "wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3iuEmKjTiEGjG6KnuFNKKJb5A6ZUCUZKdvLdSDWofKi4ToRCwb9poe1XdqfUnP4jaJjCB2Zwv11ZLgSbnZSNecE/0/*)",
-            network: Network.testnet
-        )
         let wallet = try Wallet(
             descriptor: descriptor,
-            changeDescriptor: nil,
-            persistenceBackendPath: dbFilePath.path,
+            changeDescriptor: changeDescriptor,
             network: .testnet
         )
 
-        XCTAssertEqual(wallet.getBalance().total.toSat(), 0)
+        XCTAssertEqual(wallet.balance().total.toSat(), 0)
     }
 }

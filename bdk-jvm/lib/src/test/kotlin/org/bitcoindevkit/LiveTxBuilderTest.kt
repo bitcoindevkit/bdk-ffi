@@ -13,6 +13,14 @@ class LiveTxBuilderTest {
         val currentDirectory = System.getProperty("user.dir")
         "$currentDirectory/bdk_persistence.sqlite"
     }
+    private val descriptor: Descriptor = Descriptor(
+        "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
+        Network.SIGNET
+    )
+    private val changeDescriptor: Descriptor = Descriptor(
+        "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)",
+        Network.SIGNET
+    )
 
     @AfterTest
     fun cleanup() {
@@ -25,15 +33,14 @@ class LiveTxBuilderTest {
     @Test
     fun testTxBuilder() {
         val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
-        val wallet = Wallet(descriptor, null, persistenceFilePath, Network.SIGNET)
+        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
-        wallet.commit()
-        println("Balance: ${wallet.getBalance().total.toSat()}")
+        println("Balance: ${wallet.balance().total.toSat()}")
 
-        assert(wallet.getBalance().total.toSat() > 0uL) {
+        assert(wallet.balance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address} and try again."
         }
 
@@ -50,17 +57,14 @@ class LiveTxBuilderTest {
 
     @Test
     fun complexTxBuilder() {
-        val externalDescriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
-        val changeDescriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)", Network.TESTNET)
-        val wallet = Wallet(externalDescriptor, changeDescriptor, persistenceFilePath, Network.SIGNET)
+        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
-        wallet.commit()
-        println("Balance: ${wallet.getBalance().total.toSat()}")
+        println("Balance: ${wallet.balance().total.toSat()}")
 
-        assert(wallet.getBalance().total.toSat() > 0uL) {
+        assert(wallet.balance().total.toSat() > 0uL) {
             "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address} and try again."
         }
 
