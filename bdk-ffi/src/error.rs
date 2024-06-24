@@ -1,12 +1,12 @@
 use crate::bitcoin::OutPoint;
 use crate::Network;
 
+use bdk_bitcoind_rpc::bitcoincore_rpc::bitcoin::address::ParseError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
-use bdk_sqlite::rusqlite::Error as BdkRusqliteError;
 use bdk_sqlite::Error as BdkSqliteError;
-use bdk_wallet::bitcoin::address::Error as BdkAddressError;
-use bdk_wallet::bitcoin::address::ParseError;
+use bdk_wallet::bitcoin::address::FromScriptError as BdkFromScriptError;
+use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
 use bdk_wallet::bitcoin::amount::ParseAmountError as BdkParseAmountError;
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
@@ -22,7 +22,7 @@ use bdk_wallet::wallet::error::BuildFeeBumpError;
 use bdk_wallet::wallet::error::CreateTxError as BdkCreateTxError;
 use bdk_wallet::wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::wallet::tx_builder::AddUtxoError;
-use bdk_wallet::wallet::NewOrLoadError;
+use bdk_wallet::wallet::{NewError, NewOrLoadError};
 use bdk_wallet::KeychainKind;
 use bitcoin_internals::hex::display::DisplayHex;
 
@@ -33,7 +33,7 @@ use std::convert::TryInto;
 // ------------------------------------------------------------------------
 
 #[derive(Debug, thiserror::Error)]
-pub enum AddressError {
+pub enum AddressParseError {
     #[error("base58 address encoding error")]
     Base58,
 
@@ -46,25 +46,24 @@ pub enum AddressError {
     #[error("witness program error: {error_message}")]
     WitnessProgram { error_message: String },
 
-    #[error("an uncompressed pubkey was used where it is not allowed")]
-    UncompressedPubkey,
+    #[error("tried to parse an unknown hrp")]
+    UnknownHrp,
 
-    #[error("script size exceed 520 bytes")]
-    ExcessiveScriptSize,
+    #[error("legacy address base58 string")]
+    LegacyAddressTooLong,
 
-    #[error("script is not p2pkh, p2sh, or witness program")]
-    UnrecognizedScript,
+    #[error("legacy address base58 data")]
+    InvalidBase58PayloadLength,
 
-    #[error("address {address} is not valid on {required}")]
-    NetworkValidation {
-        required: Network,
-        found: Network,
-        address: String,
-    },
+    #[error("segwit address bech32 string")]
+    InvalidLegacyPrefix,
 
-    // This is required because the bdk::bitcoin::address::Error is non-exhaustive
-    #[error("other address error")]
-    OtherAddressErr,
+    #[error("validation error")]
+    NetworkValidation,
+
+    // This error is required because the bdk::bitcoin::address::ParseError is non-exhaustive
+    #[error("other address parse error")]
+    OtherAddressParseErr,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -126,8 +125,8 @@ pub enum CalculateFeeError {
     #[error("missing transaction output: {out_points:?}")]
     MissingTxOut { out_points: Vec<OutPoint> },
 
-    #[error("negative fee value: {fee}")]
-    NegativeFee { fee: i64 },
+    #[error("negative fee value: {amount}")]
+    NegativeFee { amount: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -140,9 +139,6 @@ pub enum CannotConnectError {
 pub enum CreateTxError {
     #[error("descriptor error: {error_message}")]
     Descriptor { error_message: String },
-
-    #[error("persistence failure: {error_message}")]
-    Persist { error_message: String },
 
     #[error("policy error: {error_message}")]
     Policy { error_message: String },
@@ -165,8 +161,8 @@ pub enum CreateTxError {
     #[error("rbf sequence: {rbf}, csv sequence: {csv}")]
     RbfSequenceCsv { rbf: String, csv: String },
 
-    #[error("fee too low: {required} sat required")]
-    FeeTooLow { required: u64 },
+    #[error("fee too low: required {required}")]
+    FeeTooLow { required: String },
 
     #[error("fee rate too low: {required}")]
     FeeRateTooLow { required: String },
@@ -242,6 +238,9 @@ pub enum DescriptorError {
 
     #[error("hex decoding error: {error_message}")]
     Hex { error_message: String },
+
+    #[error("external and internal descriptors are the same")]
+    ExternalAndInternalAreTheSame,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -376,6 +375,22 @@ pub enum FeeRateError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum FromScriptError {
+    #[error("script is not a p2pkh, p2sh or witness program")]
+    UnrecognizedScript,
+
+    #[error("witness program error: {error_message}")]
+    WitnessProgram { error_message: String },
+
+    #[error("witness version construction error: {error_message}")]
+    WitnessVersion { error_message: String },
+
+    // This error is required because the bdk::bitcoin::address::FromScriptError is non-exhaustive
+    #[error("other from script error")]
+    OtherFromScriptErr,
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum InspectError {
     #[error("the request has already been consumed")]
     RequestAlreadyConsumed,
@@ -383,29 +398,20 @@ pub enum InspectError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParseAmountError {
-    #[error("amount is negative")]
-    Negative,
+    #[error("amount out of range")]
+    OutOfRange,
 
-    #[error("amount is too large")]
-    TooBig,
-
-    #[error("amount is too precise")]
+    #[error("amount has a too high precision")]
     TooPrecise,
 
-    #[error("invalid amount format")]
-    InvalidFormat,
+    #[error("the input has too few digits")]
+    MissingDigits,
 
-    #[error("input is too large")]
+    #[error("the input is too large")]
     InputTooLarge,
 
     #[error("invalid character: {error_message}")]
     InvalidCharacter { error_message: String },
-
-    #[error("unknown denomination: {error_message}")]
-    UnknownDenomination { error_message: String },
-
-    #[error("possibly confusing denomination: {error_message}")]
-    PossiblyConfusingDenomination { error_message: String },
 
     // Has to handle non-exhaustive
     #[error("unknown parse amount error")]
@@ -566,8 +572,14 @@ pub enum SignerError {
     #[error("invalid sighash type provided")]
     InvalidSighash,
 
-    #[error("error with sighash computation: {error_message}")]
-    SighashError { error_message: String },
+    #[error("error while computing the hash to sign a P2WPKH input: {error_message}")]
+    SighashP2wpkh { error_message: String },
+
+    #[error("error while computing the hash to sign a taproot input: {error_message}")]
+    SighashTaproot { error_message: String },
+
+    #[error("Error while computing the hash, out of bounds access on the transaction inputs: {error_message}")]
+    TxInputsIndexError { error_message: String },
 
     #[error("miniscript psbt error: {error_message}")]
     MiniscriptPsbt { error_message: String },
@@ -578,8 +590,8 @@ pub enum SignerError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum SqliteError {
-    // This error is renamed from Network to InvalidNetwork to avoid conflict with the Network enum
-    // in uniffi.
+    // NOTE: This error is renamed from Network to InvalidNetwork to avoid conflict with the Network
+    //       enum in uniffi.
     #[error("invalid network, cannot change the one already stored in the database")]
     InvalidNetwork { expected: Network, given: Network },
 
@@ -618,24 +630,14 @@ pub enum TxidParseError {
     InvalidTxid { txid: String },
 }
 
-// This error combines the Rust bdk::wallet::NewOrLoadError and bdk_wallet::rusqlite::Error
+// This error combines the Rust bdk_wallet::wallet::NewError and bdk_wallet::wallet::NewOrLoadError
 #[derive(Debug, thiserror::Error)]
 pub enum WalletCreationError {
-    #[error("io error trying to read file: {error_message}")]
-    Io { error_message: String },
+    // From NewError and NewOrLoadError
+    #[error("error with descriptor: {error_message}")]
+    Descriptor { error_message: String },
 
-    #[error("file has invalid magic bytes: expected={expected:?} got={got:?}")]
-    InvalidMagicBytes { got: Vec<u8>, expected: Vec<u8> },
-
-    #[error("error with descriptor")]
-    Descriptor,
-
-    #[error("failed to either write to or load from persistence, {error_message}")]
-    Persist { error_message: String },
-
-    #[error("wallet is not initialized, persistence backend is empty")]
-    NotInitialized,
-
+    // From NewOrLoadError
     #[error("loaded genesis hash '{got}' does not match the expected one '{expected}'")]
     LoadedGenesisDoesNotMatch { expected: String, got: String },
 
@@ -647,40 +649,11 @@ pub enum WalletCreationError {
 
     #[error("loaded descriptor '{got}' does not match what was provided '{keychain:?}'")]
     LoadedDescriptorDoesNotMatch { got: String, keychain: KeychainKind },
-
-    #[error("error with sqlite persistence: {error_message}")]
-    Sqlite { error_message: String },
 }
 
 // ------------------------------------------------------------------------
 // error conversions
 // ------------------------------------------------------------------------
-
-impl From<BdkAddressError> for AddressError {
-    fn from(error: BdkAddressError) -> Self {
-        match error {
-            BdkAddressError::WitnessVersion(error_message) => AddressError::WitnessVersion {
-                error_message: error_message.to_string(),
-            },
-            BdkAddressError::WitnessProgram(e) => AddressError::WitnessProgram {
-                error_message: e.to_string(),
-            },
-            BdkAddressError::UncompressedPubkey => AddressError::UncompressedPubkey,
-            BdkAddressError::ExcessiveScriptSize => AddressError::ExcessiveScriptSize,
-            BdkAddressError::UnrecognizedScript => AddressError::UnrecognizedScript,
-            BdkAddressError::NetworkValidation {
-                required,
-                found,
-                address,
-            } => AddressError::NetworkValidation {
-                required,
-                found,
-                address: format!("{:?}", address),
-            },
-            _ => AddressError::OtherAddressErr,
-        }
-    }
-}
 
 impl From<BdkElectrumError> for ElectrumError {
     fn from(error: BdkElectrumError) -> Self {
@@ -727,18 +700,25 @@ impl From<BdkElectrumError> for ElectrumError {
     }
 }
 
-impl From<ParseError> for AddressError {
-    fn from(error: ParseError) -> Self {
+impl From<BdkParseError> for AddressParseError {
+    fn from(error: BdkParseError) -> Self {
         match error {
-            ParseError::Base58(_) => AddressError::Base58,
-            ParseError::Bech32(_) => AddressError::Bech32,
-            ParseError::WitnessVersion(e) => AddressError::WitnessVersion {
+            BdkParseError::Base58(_) => AddressParseError::Base58,
+            BdkParseError::Bech32(_) => AddressParseError::Bech32,
+            BdkParseError::WitnessVersion(e) => AddressParseError::WitnessVersion {
                 error_message: e.to_string(),
             },
-            ParseError::WitnessProgram(e) => AddressError::WitnessProgram {
+            BdkParseError::WitnessProgram(e) => AddressParseError::WitnessProgram {
                 error_message: e.to_string(),
             },
-            _ => AddressError::OtherAddressErr,
+            ParseError::UnknownHrp(_) => AddressParseError::UnknownHrp,
+            ParseError::LegacyAddressTooLong(_) => AddressParseError::LegacyAddressTooLong,
+            ParseError::InvalidBase58PayloadLength(_) => {
+                AddressParseError::InvalidBase58PayloadLength
+            }
+            ParseError::InvalidLegacyPrefix(_) => AddressParseError::InvalidLegacyPrefix,
+            ParseError::NetworkValidation(_) => AddressParseError::NetworkValidation,
+            _ => AddressParseError::OtherAddressParseErr,
         }
     }
 }
@@ -803,7 +783,9 @@ impl From<BdkCalculateFeeError> for CalculateFeeError {
             BdkCalculateFeeError::MissingTxOut(out_points) => CalculateFeeError::MissingTxOut {
                 out_points: out_points.iter().map(|op| op.into()).collect(),
             },
-            BdkCalculateFeeError::NegativeFee(fee) => CalculateFeeError::NegativeFee { fee },
+            BdkCalculateFeeError::NegativeFee(signed_amount) => CalculateFeeError::NegativeFee {
+                amount: signed_amount.to_string(),
+            },
         }
     }
 }
@@ -822,9 +804,9 @@ impl From<BdkCreateTxError> for CreateTxError {
             BdkCreateTxError::Descriptor(e) => CreateTxError::Descriptor {
                 error_message: e.to_string(),
             },
-            BdkCreateTxError::Persist(e) => CreateTxError::Persist {
-                error_message: e.to_string(),
-            },
+            // BdkCreateTxError::Persist(e) => CreateTxError::Persist {
+            //     error_message: e.to_string(),
+            // },
             BdkCreateTxError::Policy(e) => CreateTxError::Policy {
                 error_message: e.to_string(),
             },
@@ -847,7 +829,9 @@ impl From<BdkCreateTxError> for CreateTxError {
                 rbf: rbf.to_string(),
                 csv: csv.to_string(),
             },
-            BdkCreateTxError::FeeTooLow { required } => CreateTxError::FeeTooLow { required },
+            BdkCreateTxError::FeeTooLow { required } => CreateTxError::FeeTooLow {
+                required: required.to_string(),
+            },
             BdkCreateTxError::FeeRateTooLow { required } => CreateTxError::FeeRateTooLow {
                 required: required.to_string(),
             },
@@ -855,13 +839,13 @@ impl From<BdkCreateTxError> for CreateTxError {
             BdkCreateTxError::OutputBelowDustLimit(index) => CreateTxError::OutputBelowDustLimit {
                 index: index as u64,
             },
-            BdkCreateTxError::ChangePolicyDescriptor => CreateTxError::ChangePolicyDescriptor,
+            // BdkCreateTxError::ChangePolicyDescriptor => CreateTxError::ChangePolicyDescriptor,
             BdkCreateTxError::CoinSelection(e) => CreateTxError::CoinSelection {
                 error_message: e.to_string(),
             },
-            BdkCreateTxError::InsufficientFunds { needed, available } => {
-                CreateTxError::InsufficientFunds { needed, available }
-            }
+            // BdkCreateTxError::InsufficientFunds { needed, available } => {
+            //     CreateTxError::InsufficientFunds { needed, available }
+            // }
             BdkCreateTxError::NoRecipients => CreateTxError::NoRecipients,
             BdkCreateTxError::Psbt(e) => CreateTxError::Psbt {
                 error_message: e.to_string(),
@@ -949,6 +933,9 @@ impl From<BdkDescriptorError> for DescriptorError {
             BdkDescriptorError::Hex(e) => DescriptorError::Hex {
                 error_message: e.to_string(),
             },
+            BdkDescriptorError::ExternalAndInternalAreTheSame => {
+                DescriptorError::ExternalAndInternalAreTheSame
+            }
         }
     }
 }
@@ -1061,23 +1048,31 @@ impl From<BdkExtractTxError> for ExtractTxError {
     }
 }
 
+impl From<BdkFromScriptError> for FromScriptError {
+    fn from(error: BdkFromScriptError) -> Self {
+        match error {
+            BdkFromScriptError::UnrecognizedScript => FromScriptError::UnrecognizedScript,
+            BdkFromScriptError::WitnessProgram(e) => FromScriptError::WitnessProgram {
+                error_message: e.to_string(),
+            },
+            BdkFromScriptError::WitnessVersion(e) => FromScriptError::WitnessVersion {
+                error_message: e.to_string(),
+            },
+            _ => FromScriptError::OtherFromScriptErr,
+        }
+    }
+}
+
 impl From<BdkParseAmountError> for ParseAmountError {
     fn from(error: BdkParseAmountError) -> Self {
         match error {
-            BdkParseAmountError::Negative => ParseAmountError::Negative,
-            BdkParseAmountError::TooBig => ParseAmountError::TooBig,
-            BdkParseAmountError::InvalidFormat => ParseAmountError::InvalidFormat,
-            BdkParseAmountError::TooPrecise => ParseAmountError::TooPrecise,
-            BdkParseAmountError::InputTooLarge => ParseAmountError::InputTooLarge,
+            BdkParseAmountError::OutOfRange(_) => ParseAmountError::OutOfRange,
+            BdkParseAmountError::TooPrecise(_) => ParseAmountError::TooPrecise,
+            BdkParseAmountError::MissingDigits(_) => ParseAmountError::MissingDigits,
+            BdkParseAmountError::InputTooLarge(_) => ParseAmountError::InputTooLarge,
             BdkParseAmountError::InvalidCharacter(c) => ParseAmountError::InvalidCharacter {
                 error_message: c.to_string(),
             },
-            BdkParseAmountError::UnknownDenomination(s) => {
-                ParseAmountError::UnknownDenomination { error_message: s }
-            }
-            BdkParseAmountError::PossiblyConfusingDenomination(s) => {
-                ParseAmountError::PossiblyConfusingDenomination { error_message: s }
-            }
             _ => ParseAmountError::OtherParseAmountErr,
         }
     }
@@ -1189,11 +1184,17 @@ impl From<BdkSignerError> for SignerError {
             BdkSignerError::MissingHdKeypath => SignerError::MissingHdKeypath,
             BdkSignerError::NonStandardSighash => SignerError::NonStandardSighash,
             BdkSignerError::InvalidSighash => SignerError::InvalidSighash,
-            BdkSignerError::SighashError(e) => SignerError::SighashError {
+            BdkSignerError::SighashP2wpkh(e) => SignerError::SighashP2wpkh {
+                error_message: e.to_string(),
+            },
+            BdkSignerError::SighashTaproot(e) => SignerError::SighashTaproot {
+                error_message: e.to_string(),
+            },
+            BdkSignerError::TxInputsIndexError(e) => SignerError::TxInputsIndexError {
                 error_message: e.to_string(),
             },
             BdkSignerError::MiniscriptPsbt(e) => SignerError::MiniscriptPsbt {
-                error_message: format!("{:?}", e),
+                error_message: e.to_string(),
             },
             BdkSignerError::External(e) => SignerError::External { error_message: e },
         }
@@ -1223,14 +1224,6 @@ impl From<BdkEncodeError> for TransactionError {
     }
 }
 
-impl From<BdkRusqliteError> for WalletCreationError {
-    fn from(error: BdkRusqliteError) -> Self {
-        WalletCreationError::Sqlite {
-            error_message: error.to_string(),
-        }
-    }
-}
-
 impl From<BdkSqliteError> for SqliteError {
     fn from(error: BdkSqliteError) -> Self {
         match error {
@@ -1244,14 +1237,28 @@ impl From<BdkSqliteError> for SqliteError {
     }
 }
 
+impl From<bdk_sqlite::rusqlite::Error> for SqliteError {
+    fn from(error: bdk_sqlite::rusqlite::Error) -> Self {
+        SqliteError::Sqlite {
+            rusqlite_error: error.to_string(),
+        }
+    }
+}
+
+impl From<NewError> for WalletCreationError {
+    fn from(error: NewError) -> Self {
+        WalletCreationError::Descriptor {
+            error_message: error.to_string(),
+        }
+    }
+}
+
 impl From<NewOrLoadError> for WalletCreationError {
     fn from(error: NewOrLoadError) -> Self {
         match error {
-            NewOrLoadError::Descriptor(_) => WalletCreationError::Descriptor,
-            NewOrLoadError::Persist(e) => WalletCreationError::Persist {
+            NewOrLoadError::Descriptor(e) => WalletCreationError::Descriptor {
                 error_message: e.to_string(),
             },
-            NewOrLoadError::NotInitialized => WalletCreationError::NotInitialized,
             NewOrLoadError::LoadedGenesisDoesNotMatch { expected, got } => {
                 WalletCreationError::LoadedGenesisDoesNotMatch {
                     expected: expected.to_string(),
@@ -1278,61 +1285,11 @@ impl From<NewOrLoadError> for WalletCreationError {
 #[cfg(test)]
 mod test {
     use crate::error::{
-        AddressError, Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError,
-        DescriptorKeyError, ElectrumError, EsploraError, ExtractTxError, FeeRateError,
-        InspectError, ParseAmountError, PersistenceError, PsbtError, PsbtParseError,
-        TransactionError, TxidParseError, WalletCreationError,
+        Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError,
+        ElectrumError, EsploraError, ExtractTxError, FeeRateError, InspectError, PersistenceError,
+        PsbtError, PsbtParseError, TransactionError, TxidParseError,
     };
-    use crate::CalculateFeeError;
-    use crate::OutPoint;
     use crate::SignerError;
-    use bdk_wallet::bitcoin::Network;
-    use bdk_wallet::KeychainKind;
-
-    #[test]
-    fn test_error_address() {
-        let cases = vec![
-            (AddressError::Base58, "base58 address encoding error"),
-            (AddressError::Bech32, "bech32 address encoding error"),
-            (
-                AddressError::WitnessVersion {
-                    error_message: "version error".to_string(),
-                },
-                "witness version conversion/parsing error: version error",
-            ),
-            (
-                AddressError::WitnessProgram {
-                    error_message: "program error".to_string(),
-                },
-                "witness program error: program error",
-            ),
-            (
-                AddressError::UncompressedPubkey,
-                "an uncompressed pubkey was used where it is not allowed",
-            ),
-            (
-                AddressError::ExcessiveScriptSize,
-                "script size exceed 520 bytes",
-            ),
-            (
-                AddressError::UnrecognizedScript,
-                "script is not p2pkh, p2sh, or witness program",
-            ),
-            (
-                AddressError::NetworkValidation {
-                    required: Network::Bitcoin,
-                    found: Network::Testnet,
-                    address: "1BitcoinEaterAddressDontSendf59kuE".to_string(),
-                },
-                "address 1BitcoinEaterAddressDontSendf59kuE is not valid on bitcoin",
-            ),
-            (AddressError::OtherAddressErr, "other address error"),
-        ];
-
-        for (error, expected_message) in cases {
-            assert_eq!(error.to_string(), expected_message);
-        }
-    }
 
     #[test]
     fn test_error_bip32() {
@@ -1428,166 +1385,10 @@ mod test {
     }
 
     #[test]
-    fn test_error_calculate_fee() {
-        let out_points: Vec<OutPoint> = vec![
-            OutPoint {
-                txid: "0000000000000000000000000000000000000000000000000000000000000001"
-                    .to_string(),
-                vout: 0,
-            },
-            OutPoint {
-                txid: "0000000000000000000000000000000000000000000000000000000000000002"
-                    .to_string(),
-                vout: 1,
-            },
-        ];
-
-        let cases = vec![
-            (
-                CalculateFeeError::MissingTxOut {
-                    out_points: out_points.clone(),
-                },
-                format!(
-                    "missing transaction output: [{:?}, {:?}]",
-                    out_points[0], out_points[1]
-                ),
-            ),
-            (
-                CalculateFeeError::NegativeFee { fee: -100 },
-                "negative fee value: -100".to_string(),
-            ),
-        ];
-
-        for (error, expected_message) in cases {
-            assert_eq!(error.to_string(), expected_message);
-        }
-    }
-
-    #[test]
     fn test_error_cannot_connect() {
         let error = CannotConnectError::Include { height: 42 };
 
         assert_eq!(format!("{}", error), "cannot include height: 42");
-    }
-
-    #[test]
-    fn test_error_create_tx() {
-        let cases = vec![
-            (
-                CreateTxError::Descriptor {
-                    error_message: "Descriptor failure".to_string(),
-                },
-                "descriptor error: Descriptor failure",
-            ),
-            (
-                CreateTxError::Persist {
-                    error_message: "Persistence error".to_string(),
-                },
-                "persistence failure: Persistence error",
-            ),
-            (
-                CreateTxError::Policy {
-                    error_message: "Policy violation".to_string(),
-                },
-                "policy error: Policy violation",
-            ),
-            (
-                CreateTxError::SpendingPolicyRequired {
-                    kind: "multisig".to_string(),
-                },
-                "spending policy required for multisig",
-            ),
-            (CreateTxError::Version0, "unsupported version 0"),
-            (CreateTxError::Version1Csv, "unsupported version 1 with csv"),
-            (
-                CreateTxError::LockTime {
-                    requested: "today".to_string(),
-                    required: "tomorrow".to_string(),
-                },
-                "lock time conflict: requested today, but required tomorrow",
-            ),
-            (
-                CreateTxError::RbfSequence,
-                "transaction requires rbf sequence number",
-            ),
-            (
-                CreateTxError::RbfSequenceCsv {
-                    rbf: "123".to_string(),
-                    csv: "456".to_string(),
-                },
-                "rbf sequence: 123, csv sequence: 456",
-            ),
-            (
-                CreateTxError::FeeTooLow { required: 1000 },
-                "fee too low: 1000 sat required",
-            ),
-            (
-                CreateTxError::FeeRateTooLow {
-                    required: "5 sat/vB".to_string(),
-                },
-                "fee rate too low: 5 sat/vB",
-            ),
-            (
-                CreateTxError::NoUtxosSelected,
-                "no utxos selected for the transaction",
-            ),
-            (
-                CreateTxError::OutputBelowDustLimit { index: 2 },
-                "output value below dust limit at index 2",
-            ),
-            (
-                CreateTxError::ChangePolicyDescriptor,
-                "change policy descriptor error",
-            ),
-            (
-                CreateTxError::CoinSelection {
-                    error_message: "No suitable outputs".to_string(),
-                },
-                "coin selection failed: No suitable outputs",
-            ),
-            (
-                CreateTxError::InsufficientFunds {
-                    needed: 5000,
-                    available: 3000,
-                },
-                "insufficient funds: needed 5000 sat, available 3000 sat",
-            ),
-            (CreateTxError::NoRecipients, "transaction has no recipients"),
-            (
-                CreateTxError::Psbt {
-                    error_message: "PSBT creation failed".to_string(),
-                },
-                "psbt creation error: PSBT creation failed",
-            ),
-            (
-                CreateTxError::MissingKeyOrigin {
-                    key: "xpub...".to_string(),
-                },
-                "missing key origin for: xpub...",
-            ),
-            (
-                CreateTxError::UnknownUtxo {
-                    outpoint: "outpoint123".to_string(),
-                },
-                "reference to an unknown utxo: outpoint123",
-            ),
-            (
-                CreateTxError::MissingNonWitnessUtxo {
-                    outpoint: "outpoint456".to_string(),
-                },
-                "missing non-witness utxo for outpoint: outpoint456",
-            ),
-            (
-                CreateTxError::MiniscriptPsbt {
-                    error_message: "Miniscript error".to_string(),
-                },
-                "miniscript psbt error: Miniscript error",
-            ),
-        ];
-
-        for (error, expected_message) in cases {
-            assert_eq!(error.to_string(), expected_message);
-        }
     }
 
     #[test]
@@ -1884,43 +1685,6 @@ mod test {
     }
 
     #[test]
-    fn test_error_parse_amount() {
-        let cases = vec![
-            (ParseAmountError::Negative, "amount is negative"),
-            (ParseAmountError::TooBig, "amount is too large"),
-            (ParseAmountError::TooPrecise, "amount is too precise"),
-            (ParseAmountError::InvalidFormat, "invalid amount format"),
-            (ParseAmountError::InputTooLarge, "input is too large"),
-            (
-                ParseAmountError::InvalidCharacter {
-                    error_message: "invalid char".to_string(),
-                },
-                "invalid character: invalid char",
-            ),
-            (
-                ParseAmountError::UnknownDenomination {
-                    error_message: "unknown denom".to_string(),
-                },
-                "unknown denomination: unknown denom",
-            ),
-            (
-                ParseAmountError::PossiblyConfusingDenomination {
-                    error_message: "confusing denom".to_string(),
-                },
-                "possibly confusing denomination: confusing denom",
-            ),
-            (
-                ParseAmountError::OtherParseAmountErr,
-                "unknown parse amount error",
-            ),
-        ];
-
-        for (error, expected_message) in cases {
-            assert_eq!(error.to_string(), expected_message);
-        }
-    }
-
-    #[test]
     fn test_persistence_error() {
         let cases = vec![
             (
@@ -2135,12 +1899,6 @@ mod test {
             ),
             (SignerError::InvalidSighash, "invalid sighash type provided"),
             (
-                SignerError::SighashError {
-                    error_message: "dummy error".into(),
-                },
-                "error with sighash computation: dummy error",
-            ),
-            (
                 SignerError::MiniscriptPsbt {
                     error_message: "psbt issue".into(),
                 },
@@ -2202,64 +1960,6 @@ mod test {
 
         for (error, expected_message) in cases {
             assert_eq!(error.to_string(), expected_message);
-        }
-    }
-
-    #[test]
-    fn test_error_wallet_creation() {
-        let errors = vec![
-            (
-                WalletCreationError::Io {
-                    error_message: "io error".to_string(),
-                },
-                "io error trying to read file: io error".to_string(),
-            ),
-            (
-                WalletCreationError::InvalidMagicBytes {
-                    got: vec![1, 2, 3, 4],
-                    expected: vec![4, 3, 2, 1],
-                },
-                "file has invalid magic bytes: expected=[4, 3, 2, 1] got=[1, 2, 3, 4]".to_string(),
-            ),
-            (
-                WalletCreationError::Descriptor,
-                "error with descriptor".to_string(),
-            ),
-            (
-                WalletCreationError::Persist {
-                    error_message: "persistence error".to_string(),
-                },
-                "failed to either write to or load from persistence, persistence error".to_string(),
-            ),
-            (
-                WalletCreationError::NotInitialized,
-                "wallet is not initialized, persistence backend is empty".to_string(),
-            ),
-            (
-                WalletCreationError::LoadedGenesisDoesNotMatch {
-                    expected: "abc".to_string(),
-                    got: "def".to_string(),
-                },
-                "loaded genesis hash 'def' does not match the expected one 'abc'".to_string(),
-            ),
-            (
-                WalletCreationError::LoadedNetworkDoesNotMatch {
-                    expected: Network::Bitcoin,
-                    got: Some(Network::Testnet),
-                },
-                "loaded network type is not bitcoin, got Some(Testnet)".to_string(),
-            ),
-            (
-                WalletCreationError::LoadedDescriptorDoesNotMatch {
-                    got: "def".to_string(),
-                    keychain: KeychainKind::External,
-                },
-                "loaded descriptor 'def' does not match what was provided 'External'".to_string(),
-            ),
-        ];
-
-        for (error, expected) in errors {
-            assert_eq!(error.to_string(), expected);
         }
     }
 }

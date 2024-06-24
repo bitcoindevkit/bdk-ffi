@@ -5,16 +5,17 @@ namespace bdk {};
 // ------------------------------------------------------------------------
 
 [Error]
-interface AddressError {
+interface AddressParseError {
   Base58();
   Bech32();
   WitnessVersion(string error_message);
   WitnessProgram(string error_message);
-  UncompressedPubkey();
-  ExcessiveScriptSize();
-  UnrecognizedScript();
-  NetworkValidation(Network required, Network found, string address);
-  OtherAddressErr();
+  UnknownHrp();
+  LegacyAddressTooLong();
+  InvalidBase58PayloadLength();
+  InvalidLegacyPrefix();
+  NetworkValidation();
+  OtherAddressParseErr();
 };
 
 [Error]
@@ -44,7 +45,7 @@ interface Bip39Error {
 [Error]
 interface CalculateFeeError {
   MissingTxOut(sequence<OutPoint> out_points);
-  NegativeFee(i64 fee);
+  NegativeFee(string amount);
 };
 
 [Error]
@@ -55,7 +56,6 @@ interface CannotConnectError {
 [Error]
 interface CreateTxError {
   Descriptor(string error_message);
-  Persist(string error_message);
   Policy(string error_message);
   SpendingPolicyRequired(string kind);
   Version0();
@@ -63,7 +63,7 @@ interface CreateTxError {
   LockTime(string requested, string required);
   RbfSequence();
   RbfSequenceCsv(string rbf, string csv);
-  FeeTooLow(u64 required);
+  FeeTooLow(string required);
   FeeRateTooLow(string required);
   NoUtxosSelected();
   OutputBelowDustLimit(u64 index);
@@ -92,6 +92,7 @@ interface DescriptorError {
     Pk(string error_message);
     Miniscript(string error_message);
     Hex(string error_message);
+    ExternalAndInternalAreTheSame();
 };
 
 [Error]
@@ -153,15 +154,20 @@ enum FeeRateError {
 };
 
 [Error]
+interface FromScriptError {
+  UnrecognizedScript();
+  WitnessProgram(string error_message);
+  WitnessVersion(string error_message);
+  OtherFromScriptErr();
+};
+
+[Error]
 interface ParseAmountError {
-  Negative();
-  TooBig();
+  OutOfRange();
   TooPrecise();
-  InvalidFormat();
+  MissingDigits();
   InputTooLarge();
   InvalidCharacter(string error_message);
-  UnknownDenomination(string error_message);
-  PossiblyConfusingDenomination(string error_message);
   OtherParseAmountErr();
 };
 
@@ -231,7 +237,9 @@ interface SignerError {
     MissingHdKeypath();
     NonStandardSighash();
     InvalidSighash();
-    SighashError(string error_message);
+    SighashP2wpkh(string error_message);
+    SighashTaproot(string error_message);
+    TxInputsIndexError(string error_message);
     MiniscriptPsbt(string error_message);
     External(string error_message);
 };
@@ -260,19 +268,14 @@ interface TxidParseError {
 
 [Error]
 interface WalletCreationError {
-  Io(string error_message);
-  InvalidMagicBytes(sequence<u8> got, sequence<u8> expected);
-  Descriptor();
-  Persist(string error_message);
-  NotInitialized();
+  Descriptor(string error_message);
   LoadedGenesisDoesNotMatch(string expected, string got);
   LoadedNetworkDoesNotMatch(Network expected, Network? got);
   LoadedDescriptorDoesNotMatch(string got, KeychainKind keychain);
-  Sqlite(string error_message);
 };
 
 // ------------------------------------------------------------------------
-// bdk crate - types module
+// bdk_wallet crate - types module
 // ------------------------------------------------------------------------
 
 enum KeychainKind {
@@ -343,8 +346,10 @@ interface FullScanScriptInspector {
   void inspect(KeychainKind keychain, u32 index, Script script);
 };
 
+interface ChangeSet {};
+
 // ------------------------------------------------------------------------
-// bdk crate - wallet module
+// bdk_wallet crate - wallet module
 // ------------------------------------------------------------------------
 
 enum ChangeSpendPolicy {
@@ -355,23 +360,19 @@ enum ChangeSpendPolicy {
 
 interface Wallet {
   [Throws=WalletCreationError]
-  constructor(Descriptor descriptor, Descriptor? change_descriptor, string persistence_backend_path, Network network);
+  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
 
-  [Name=new_no_persist, Throws=DescriptorError]
-  constructor(Descriptor descriptor, Descriptor? change_descriptor, Network network);
+  // [Name=new_or_load, Throws=WalletCreationError]
+  // constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
 
-  [Throws=PersistenceError]
   AddressInfo reveal_next_address(KeychainKind keychain);
 
   Network network();
 
-  Balance get_balance();
+  Balance balance();
 
   [Throws=CannotConnectError]
   void apply_update(Update update);
-
-  [Throws=PersistenceError]
-  boolean commit();
 
   boolean is_mine([ByRef] Script script);
 
@@ -386,7 +387,7 @@ interface Wallet {
   CanonicalTx? get_tx(string txid);
 
   [Throws=CalculateFeeError]
-  u64 calculate_fee([ByRef] Transaction tx);
+  Amount calculate_fee([ByRef] Transaction tx);
 
   [Throws=CalculateFeeError]
   FeeRate calculate_fee_rate([ByRef] Transaction tx);
@@ -398,6 +399,8 @@ interface Wallet {
   FullScanRequest start_full_scan();
 
   SyncRequest start_sync_with_revealed_spks();
+
+  ChangeSet? take_staged();
 };
 
 interface Update {};
@@ -448,6 +451,18 @@ interface BumpFeeTxBuilder {
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
+};
+
+// ------------------------------------------------------------------------
+// bdk_sqlite crate
+// ------------------------------------------------------------------------
+
+interface SqliteStore {
+  [Throws=SqliteError]
+  constructor(string path);
+
+  [Throws=SqliteError]
+  void write([ByRef] ChangeSet change_set);
 };
 
 // ------------------------------------------------------------------------
@@ -584,7 +599,7 @@ dictionary SentAndReceivedValues {
 };
 
 // ------------------------------------------------------------------------
-// bdk crate - bitcoin re-exports
+// bdk_wallet crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 
 interface Script {
@@ -611,13 +626,11 @@ enum WordCount {
 
 [Traits=(Display)]
 interface Address {
-  [Throws=AddressError]
+  [Throws=AddressParseError]
   constructor(string address, Network network);
 
-  [Name=from_script, Throws=AddressError]
+  [Name=from_script, Throws=FromScriptError]
   constructor(Script script, Network network);
-
-  Network network();
 
   Script script_pubkey();
 
@@ -630,7 +643,7 @@ interface Transaction {
   [Throws=TransactionError]
   constructor(sequence<u8> transaction_bytes);
 
-  string txid();
+  string compute_txid();
 
   u64 total_size();
 

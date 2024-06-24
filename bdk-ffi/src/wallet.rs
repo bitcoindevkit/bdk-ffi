@@ -2,20 +2,20 @@ use crate::bitcoin::Amount;
 use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateTxError, DescriptorError, PersistenceError,
-    SignerError, TxidParseError, WalletCreationError,
+    CalculateFeeError, CannotConnectError, CreateTxError, SignerError, TxidParseError,
+    WalletCreationError,
 };
 use crate::types::{
-    AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount, SyncRequest,
+    AddressInfo, Balance, CanonicalTx, ChangeSet, FullScanRequest, LocalOutput, ScriptAmount,
+    SyncRequest,
 };
 
-use bdk_sqlite::rusqlite::Connection;
-use bdk_sqlite::Store;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
+// use bdk_wallet::chain::{CombinedChangeSet, ConfirmationTimeHeightAnchor};
 use bdk_wallet::wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::wallet::Update as BdkUpdate;
 use bdk_wallet::Wallet as BdkWallet;
@@ -32,53 +32,37 @@ pub struct Wallet {
 impl Wallet {
     pub fn new(
         descriptor: Arc<Descriptor>,
-        change_descriptor: Option<Arc<Descriptor>>,
-        persistence_backend_path: String,
+        change_descriptor: Arc<Descriptor>,
         network: Network,
     ) -> Result<Self, WalletCreationError> {
         let descriptor = descriptor.to_string_with_secret();
-        let change_descriptor = change_descriptor.map(|d| d.to_string_with_secret());
-        let connection = Connection::open(persistence_backend_path)?;
-        let db = Store::new(connection)?;
-
-        let wallet: BdkWallet =
-            BdkWallet::new_or_load(&descriptor, change_descriptor.as_ref(), db, network)?;
+        let change_descriptor = change_descriptor.to_string_with_secret();
+        let wallet: BdkWallet = BdkWallet::new(&descriptor, &change_descriptor, network)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
         })
     }
 
-    pub fn new_no_persist(
-        descriptor: Arc<Descriptor>,
-        change_descriptor: Option<Arc<Descriptor>>,
-        network: Network,
-    ) -> Result<Self, DescriptorError> {
-        let descriptor = descriptor.to_string_with_secret();
-        let change_descriptor = change_descriptor.map(|d| d.to_string_with_secret());
-
-        let wallet: BdkWallet =
-            BdkWallet::new_no_persist(&descriptor, change_descriptor.as_ref(), network)?;
-
-        Ok(Wallet {
-            inner_mutex: Mutex::new(wallet),
-        })
-    }
+    // pub fn new_or_load(
+    //     descriptor: Arc<Descriptor>,
+    //     change_descriptor: Option<Arc<Descriptor>>,
+    //     change_set: Option<CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>>,
+    //     network: Network,
+    // ) -> Result<Self, WalletCreationError> {
+    //     let descriptor = descriptor.to_string_with_secret();
+    //     let change_descriptor = change_descriptor.to_string_with_secret();
+    //     let wallet: BdkWallet = BdkWallet::new_or_load(&descriptor, &change_descriptor, network)?;
+    //
+    //     Ok(Wallet { inner_mutex: Mutex::new(wallet) })
+    // }
 
     pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
         self.inner_mutex.lock().expect("wallet")
     }
 
-    pub fn reveal_next_address(
-        &self,
-        keychain_kind: KeychainKind,
-    ) -> Result<AddressInfo, PersistenceError> {
-        self.get_wallet()
-            .reveal_next_address(keychain_kind)
-            .map(|address_info| address_info.into())
-            .map_err(|e| PersistenceError::Write {
-                error_message: e.to_string(),
-            })
+    pub fn reveal_next_address(&self, keychain_kind: KeychainKind) -> AddressInfo {
+        self.get_wallet().reveal_next_address(keychain_kind).into()
     }
 
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
@@ -87,20 +71,12 @@ impl Wallet {
             .map_err(CannotConnectError::from)
     }
 
-    pub fn commit(&self) -> Result<bool, PersistenceError> {
-        self.get_wallet()
-            .commit()
-            .map_err(|e| PersistenceError::Write {
-                error_message: e.to_string(),
-            })
-    }
-
     pub fn network(&self) -> Network {
         self.get_wallet().network()
     }
 
-    pub fn get_balance(&self) -> Balance {
-        let bdk_balance = self.get_wallet().get_balance();
+    pub fn balance(&self) -> Balance {
+        let bdk_balance = self.get_wallet().balance();
         Balance::from(bdk_balance)
     }
 
@@ -140,9 +116,11 @@ impl Wallet {
         Ok(self.get_wallet().get_tx(txid).map(|tx| tx.into()))
     }
 
-    pub fn calculate_fee(&self, tx: &Transaction) -> Result<u64, CalculateFeeError> {
+    pub fn calculate_fee(&self, tx: &Transaction) -> Result<Arc<Amount>, CalculateFeeError> {
         self.get_wallet()
             .calculate_fee(&tx.into())
+            .map(Amount::from)
+            .map(Arc::new)
             .map_err(|e| e.into())
     }
 
@@ -169,6 +147,12 @@ impl Wallet {
     pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequest> {
         let request = self.get_wallet().start_sync_with_revealed_spks();
         Arc::new(SyncRequest(Mutex::new(Some(request))))
+    }
+
+    pub fn take_staged(&self) -> Option<Arc<ChangeSet>> {
+        self.get_wallet()
+            .take_staged()
+            .map(|change_set| Arc::new(change_set.into()))
     }
 }
 

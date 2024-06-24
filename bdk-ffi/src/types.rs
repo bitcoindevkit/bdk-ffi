@@ -13,6 +13,7 @@ use bdk_wallet::wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 
+use bdk_electrum::bdk_chain::CombinedChangeSet;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -83,6 +84,14 @@ impl From<BdkBalance> for Balance {
             trusted_spendable: Arc::new(bdk_balance.trusted_spendable().into()),
             total: Arc::new(bdk_balance.total().into()),
         }
+    }
+}
+
+pub struct ChangeSet(pub(crate) CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>);
+
+impl From<CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>> for ChangeSet {
+    fn from(change_set: CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>) -> Self {
+        ChangeSet(change_set)
     }
 }
 

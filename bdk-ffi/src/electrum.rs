@@ -3,8 +3,8 @@ use crate::error::ElectrumError;
 use crate::types::{FullScanRequest, SyncRequest};
 use crate::wallet::Update;
 
-use bdk_electrum::electrum_client::{Client as BdkBlockingClient, ElectrumApi};
-use bdk_electrum::{ElectrumExt, ElectrumFullScanResult, ElectrumSyncResult};
+use bdk_electrum::BdkElectrumClient as BdkBdkElectrumClient;
+use bdk_electrum::{ElectrumFullScanResult, ElectrumSyncResult};
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
@@ -16,11 +16,16 @@ use bdk_wallet::KeychainKind;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-pub struct ElectrumClient(BdkBlockingClient);
+// NOTE: We are keeping our naming convention where the alias of the inner type is the Rust type
+//       prefixed with `Bdk`. In this case the inner type is `BdkElectrumClient`, so the alias is
+//       funnily enough named `BdkBdkElectrumClient`.
+pub struct ElectrumClient(BdkBdkElectrumClient<bdk_electrum::electrum_client::Client>);
 
 impl ElectrumClient {
     pub fn new(url: String) -> Result<Self, ElectrumError> {
-        let client = BdkBlockingClient::new(url.as_str())?;
+        let inner_client: bdk_electrum::electrum_client::Client =
+            bdk_electrum::electrum_client::Client::new(url.as_str())?;
+        let client = BdkBdkElectrumClient::new(inner_client);
         Ok(Self(client))
     }
 

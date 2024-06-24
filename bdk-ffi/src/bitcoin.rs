@@ -1,5 +1,6 @@
-use crate::error::{AddressError, FeeRateError, PsbtError, PsbtParseError, TransactionError};
-use std::fmt::Display;
+use crate::error::{
+    AddressParseError, FeeRateError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
+};
 
 use bdk_bitcoind_rpc::bitcoincore_rpc::jsonrpc::serde_json;
 use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
@@ -8,6 +9,7 @@ use bdk_wallet::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
+use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::Address as BdkAddress;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
@@ -19,7 +21,7 @@ use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::Txid;
 
-use std::io::Cursor;
+use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -82,21 +84,17 @@ impl From<BdkScriptBuf> for Script {
 pub struct Address(BdkAddress<NetworkChecked>);
 
 impl Address {
-    pub fn new(address: String, network: Network) -> Result<Self, AddressError> {
+    pub fn new(address: String, network: Network) -> Result<Self, AddressParseError> {
         let parsed_address = address.parse::<bdk_wallet::bitcoin::Address<NetworkUnchecked>>()?;
         let network_checked_address = parsed_address.require_network(network)?;
 
         Ok(Address(network_checked_address))
     }
 
-    pub fn from_script(script: Arc<Script>, network: Network) -> Result<Self, AddressError> {
+    pub fn from_script(script: Arc<Script>, network: Network) -> Result<Self, FromScriptError> {
         let address = BdkAddress::from_script(&script.0.clone(), network)?;
 
         Ok(Address(address))
-    }
-
-    pub fn network(&self) -> Network {
-        *self.0.network()
     }
 
     pub fn script_pubkey(&self) -> Arc<Script> {
@@ -145,8 +143,8 @@ impl Transaction {
         Ok(Transaction(tx))
     }
 
-    pub fn txid(&self) -> String {
-        self.0.txid().to_string()
+    pub fn compute_txid(&self) -> String {
+        self.0.compute_txid().to_string()
     }
 
     pub fn weight(&self) -> u64 {
@@ -374,11 +372,6 @@ mod tests {
             docs_address_testnet.is_valid_for_network(Network::Regtest),
             "Address should be valid for Regtest"
         );
-        assert_ne!(
-            docs_address_testnet.network(),
-            Network::Bitcoin,
-            "Address should not be parsed as Bitcoin"
-        );
 
         let docs_address_mainnet_str = "32iVBEu4dxkUQk9dJbZUiBiQdmypcEyJRf";
         let docs_address_mainnet =
@@ -386,21 +379,6 @@ mod tests {
         assert!(
             docs_address_mainnet.is_valid_for_network(Network::Bitcoin),
             "Address should be valid for Bitcoin"
-        );
-        assert_ne!(
-            docs_address_mainnet.network(),
-            Network::Testnet,
-            "Address should not be valid for Testnet"
-        );
-        assert_ne!(
-            docs_address_mainnet.network(),
-            Network::Signet,
-            "Address should not be valid for Signet"
-        );
-        assert_ne!(
-            docs_address_mainnet.network(),
-            Network::Regtest,
-            "Address should not be valid for Regtest"
         );
 
         // ====Bech32====
