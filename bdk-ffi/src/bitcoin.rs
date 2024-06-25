@@ -4,7 +4,6 @@ use std::fmt::Display;
 use bdk_bitcoind_rpc::bitcoincore_rpc::jsonrpc::serde_json;
 use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk_wallet::bitcoin::amount::ParseAmountError;
-use bdk_wallet::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
@@ -18,6 +17,7 @@ use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::Txid;
+use bitcoin_ffi::Script;
 
 use std::io::Cursor;
 use std::ops::Deref;
@@ -58,25 +58,25 @@ impl From<BdkAmount> for Amount {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Script(pub(crate) BdkScriptBuf);
-
-impl Script {
-    pub fn new(raw_output_script: Vec<u8>) -> Self {
-        let script: BdkScriptBuf = raw_output_script.into();
-        Script(script)
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        self.0.to_bytes()
-    }
-}
-
-impl From<BdkScriptBuf> for Script {
-    fn from(script: BdkScriptBuf) -> Self {
-        Script(script)
-    }
-}
+// #[derive(Clone, Debug, PartialEq, Eq)]
+// pub struct Script(pub(crate) BdkScriptBuf);
+//
+// impl Script {
+//     pub fn new(raw_output_script: Vec<u8>) -> Self {
+//         let script: BdkScriptBuf = raw_output_script.into();
+//         Script(script)
+//     }
+//
+//     pub fn to_bytes(&self) -> Vec<u8> {
+//         self.0.to_bytes()
+//     }
+// }
+//
+// impl From<BdkScriptBuf> for Script {
+//     fn from(script: BdkScriptBuf) -> Self {
+//         Script(script)
+//     }
+// }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Address(BdkAddress<NetworkChecked>);

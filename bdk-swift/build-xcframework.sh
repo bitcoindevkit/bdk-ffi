@@ -5,6 +5,8 @@
 
 HEADERPATH="Sources/BitcoinDevKit/BitcoinDevKitFFI.h"
 MODMAPPATH="Sources/BitcoinDevKit/BitcoinDevKitFFI.modulemap"
+HEADERPATH_BITCOIN_FFI="Sources/BitcoinDevKit/BitcoinFFI.h"
+MODMAPPATH_BITCOIN_FFI="Sources/BitcoinDevKit/BitcoinFFI.modulemap"
 TARGETDIR="../bdk-ffi/target"
 OUTDIR="."
 RELDIR="release-smaller"
@@ -44,7 +46,10 @@ cd ../bdk-swift/ || exit
 # move bdk-ffi static lib header files to temporary directory
 mkdir -p "${NEW_HEADER_DIR}"
 mv "${HEADERPATH}" "${NEW_HEADER_DIR}"
+mv "${HEADERPATH_BITCOIN_FFI}" "${NEW_HEADER_DIR}"
 mv "${MODMAPPATH}" "${NEW_HEADER_DIR}/module.modulemap"
+echo -e "\n" >> "${NEW_HEADER_DIR}/module.modulemap"
+cat "${MODMAPPATH_BITCOIN_FFI}" >> "${NEW_HEADER_DIR}/module.modulemap"
 
 # remove old xcframework directory
 rm -rf "${OUTDIR}/${NAME}.xcframework"

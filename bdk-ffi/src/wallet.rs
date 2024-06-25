@@ -1,5 +1,5 @@
 use crate::bitcoin::Amount;
-use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
+use crate::bitcoin::{FeeRate, OutPoint, Psbt, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateTxError, DescriptorError, PersistenceError,
@@ -20,6 +20,7 @@ use bdk_wallet::wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::wallet::Update as BdkUpdate;
 use bdk_wallet::Wallet as BdkWallet;
 use bdk_wallet::{KeychainKind, SignOptions};
+use bitcoin_ffi::Script;
 
 use std::collections::HashSet;
 use std::str::FromStr;
