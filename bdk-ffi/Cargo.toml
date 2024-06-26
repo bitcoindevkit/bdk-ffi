@@ -22,7 +22,8 @@ bdk_wallet = { version = "1.0.0-alpha.13", features = ["all-keys", "keys-bip39"]
 bdk_esplora = { version = "0.15.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
 # NOTE: This is a temporary workaround to use the electrum-client with the use-rustls-ring feature. It points to a fork
 #       of bdk in which the bdk_electrum library uses the electrum-client with the use-rustls-ring feature.
-bdk_electrum = { git = "https://github.com/thunderbiscuit/bdk/", package = "bdk_electrum", branch = "feature/electrum-client-ring-feature" }
+#bdk_electrum = { git = "https://github.com/thunderbiscuit/bdk/", package = "bdk_electrum", rev = "1367d5c7c939ffd1190c08ef3fba4f8cc2b3622f", features = ["use-rustls-ring"] }
+bdk_electrum = { git = "https://github.com/thunderbiscuit/bdk/", package = "bdk_electrum", branch = "feature/electrum-client-ring", features = ["use-rustls-ring"] }
 # bdk_electrum = { version = "0.15.0" }
 bdk_sqlite = { version = "0.2.0" }
 bdk_bitcoind_rpc = { version = "0.12.0" }

@@ -205,7 +205,7 @@ dependencies = [
 [[package]]
 name = "bdk_electrum"
 version = "0.15.0"
-source = "git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-client-ring-feature#31ddf1b4b600e9bf10e622cb0dee7ff158439b48"
+source = "git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-client-ring#1367d5c7c939ffd1190c08ef3fba4f8cc2b3622f"
 dependencies = [
  "bdk_chain",
  "electrum-client",
@@ -485,7 +485,7 @@ checksum = "0b6a852b24ab71dffc585bcb46eaf7959d175cb865a7152e35b348d1b2960422"
 [[package]]
 name = "electrum-client"
 version = "0.20.0"
-source = "git+https://github.com/thunderbiscuit/rust-electrum-client/?branch=feature/ring-feature#7576e1b6d1f298d270526d740b8508923f3fb790"
+source = "git+https://github.com/thunderbiscuit/rust-electrum-client/?branch=feature/rustls-ring#c7a96f7264348537f4b57dd149fd114f22844b16"
 dependencies = [
  "bitcoin",
  "byteorder",
@@ -1016,9 +1016,9 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "subtle"
-version = "2.6.0"
+version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d0208408ba0c3df17ed26eb06992cb1a1268d41b2c0e12e65203fbe3972cee5"
+checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "syn"
