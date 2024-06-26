@@ -362,8 +362,8 @@ interface Wallet {
   [Throws=WalletCreationError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
 
-  // [Name=new_or_load, Throws=WalletCreationError]
-  // constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
+  [Name=new_or_load, Throws=WalletCreationError]
+  constructor(Descriptor descriptor, Descriptor change_descriptor, ChangeSet? change_set, Network network);
 
   AddressInfo reveal_next_address(KeychainKind keychain);
 
@@ -463,6 +463,9 @@ interface SqliteStore {
 
   [Throws=SqliteError]
   void write([ByRef] ChangeSet change_set);
+
+  [Throws=SqliteError]
+  ChangeSet? read();
 };
 
 // ------------------------------------------------------------------------

@@ -641,12 +641,14 @@ pub enum WalletCreationError {
     #[error("loaded genesis hash '{got}' does not match the expected one '{expected}'")]
     LoadedGenesisDoesNotMatch { expected: String, got: String },
 
+    // From NewOrLoadError
     #[error("loaded network type is not {expected}, got {got:?}")]
     LoadedNetworkDoesNotMatch {
         expected: Network,
         got: Option<Network>,
     },
 
+    // From NewOrLoadError
     #[error("loaded descriptor '{got}' does not match what was provided '{keychain:?}'")]
     LoadedDescriptorDoesNotMatch { got: String, keychain: KeychainKind },
 }

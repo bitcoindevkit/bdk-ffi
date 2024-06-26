@@ -15,7 +15,7 @@ use bdk_wallet::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
-// use bdk_wallet::chain::{CombinedChangeSet, ConfirmationTimeHeightAnchor};
+use bdk_wallet::chain::{CombinedChangeSet, ConfirmationTimeHeightAnchor};
 use bdk_wallet::wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::wallet::Update as BdkUpdate;
 use bdk_wallet::Wallet as BdkWallet;
@@ -44,18 +44,23 @@ impl Wallet {
         })
     }
 
-    // pub fn new_or_load(
-    //     descriptor: Arc<Descriptor>,
-    //     change_descriptor: Option<Arc<Descriptor>>,
-    //     change_set: Option<CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>>,
-    //     network: Network,
-    // ) -> Result<Self, WalletCreationError> {
-    //     let descriptor = descriptor.to_string_with_secret();
-    //     let change_descriptor = change_descriptor.to_string_with_secret();
-    //     let wallet: BdkWallet = BdkWallet::new_or_load(&descriptor, &change_descriptor, network)?;
-    //
-    //     Ok(Wallet { inner_mutex: Mutex::new(wallet) })
-    // }
+    pub fn new_or_load(
+        descriptor: Arc<Descriptor>,
+        change_descriptor: Arc<Descriptor>,
+        change_set: Option<Arc<ChangeSet>>,
+        network: Network,
+    ) -> Result<Self, WalletCreationError> {
+        let descriptor = descriptor.to_string_with_secret();
+        let change_descriptor = change_descriptor.to_string_with_secret();
+        let change_set: Option<CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>> =
+            change_set.map(|cs| cs.0.clone());
+        let wallet: BdkWallet =
+            BdkWallet::new_or_load(&descriptor, &change_descriptor, change_set, network)?;
+
+        Ok(Wallet {
+            inner_mutex: Mutex::new(wallet),
+        })
+    }
 
     pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
         self.inner_mutex.lock().expect("wallet")
