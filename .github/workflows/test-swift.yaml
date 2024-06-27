@@ -18,6 +18,9 @@ jobs:
       - name: "Checkout"
         uses: actions/checkout@v3
 
+      - name: "Set macOS deployment target"
+        run: echo "export MACOSX_DEPLOYMENT_TARGET=12.0" >> $GITHUB_ENV
+
       - name: "Build Swift package"
         working-directory: bdk-swift
         run: bash ./build-xcframework.sh
