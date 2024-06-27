@@ -205,7 +205,7 @@ dependencies = [
 [[package]]
 name = "bdk_electrum"
 version = "0.15.0"
-source = "git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-client-ring#1367d5c7c939ffd1190c08ef3fba4f8cc2b3622f"
+source = "git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-client-ring-ffi-alpha13#1d745e492d53937c6c405e5564798dbd8ef1c1ed"
 dependencies = [
  "bdk_chain",
  "electrum-client",
