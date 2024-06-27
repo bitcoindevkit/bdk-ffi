@@ -806,9 +806,6 @@ impl From<BdkCreateTxError> for CreateTxError {
             BdkCreateTxError::Descriptor(e) => CreateTxError::Descriptor {
                 error_message: e.to_string(),
             },
-            // BdkCreateTxError::Persist(e) => CreateTxError::Persist {
-            //     error_message: e.to_string(),
-            // },
             BdkCreateTxError::Policy(e) => CreateTxError::Policy {
                 error_message: e.to_string(),
             },
@@ -841,13 +838,9 @@ impl From<BdkCreateTxError> for CreateTxError {
             BdkCreateTxError::OutputBelowDustLimit(index) => CreateTxError::OutputBelowDustLimit {
                 index: index as u64,
             },
-            // BdkCreateTxError::ChangePolicyDescriptor => CreateTxError::ChangePolicyDescriptor,
             BdkCreateTxError::CoinSelection(e) => CreateTxError::CoinSelection {
                 error_message: e.to_string(),
             },
-            // BdkCreateTxError::InsufficientFunds { needed, available } => {
-            //     CreateTxError::InsufficientFunds { needed, available }
-            // }
             BdkCreateTxError::NoRecipients => CreateTxError::NoRecipients,
             BdkCreateTxError::Psbt(e) => CreateTxError::Psbt {
                 error_message: e.to_string(),
