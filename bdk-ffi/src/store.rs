@@ -8,23 +8,19 @@ use bdk_wallet::KeychainKind;
 
 use std::sync::{Arc, Mutex, MutexGuard};
 
-pub struct SqliteStore {
-    inner_mutex: Mutex<BdkSqliteStore<KeychainKind, ConfirmationTimeHeightAnchor>>,
-}
+pub struct SqliteStore(Mutex<BdkSqliteStore<KeychainKind, ConfirmationTimeHeightAnchor>>);
 
 impl SqliteStore {
     pub fn new(path: String) -> Result<Self, SqliteError> {
         let connection = Connection::open(path)?;
         let db = Store::new(connection)?;
-        Ok(Self {
-            inner_mutex: Mutex::new(db),
-        })
+        Ok(Self(Mutex::new(db)))
     }
 
     pub(crate) fn get_store(
         &self,
     ) -> MutexGuard<BdkSqliteStore<KeychainKind, ConfirmationTimeHeightAnchor>> {
-        self.inner_mutex.lock().expect("sqlite store")
+        self.0.lock().expect("sqlite store")
     }
 
     pub fn write(&self, changeset: &ChangeSet) -> Result<(), SqliteError> {
