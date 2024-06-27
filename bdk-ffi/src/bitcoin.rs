@@ -319,7 +319,7 @@ impl From<&BdkTxOut> for TxOut {
 }
 
 #[derive(Clone, Debug)]
-pub struct FeeRate(pub BdkFeeRate);
+pub struct FeeRate(pub(crate) BdkFeeRate);
 
 impl FeeRate {
     pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {

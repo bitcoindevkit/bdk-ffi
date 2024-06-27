@@ -19,7 +19,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-pub(crate) struct Mnemonic(pub(crate) BdkMnemonic);
+pub(crate) struct Mnemonic(BdkMnemonic);
 
 impl Mnemonic {
     pub(crate) fn new(word_count: WordCount) -> Self {
