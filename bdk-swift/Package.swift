@@ -33,6 +33,10 @@ let package = Package(
         ),
         .testTarget(
             name: "BitcoinDevKitTests",
-            dependencies: ["BitcoinDevKit"]),
+            dependencies: ["BitcoinDevKit"],
+            resources: [
+                .copy("Resources/pre_existing_wallet_persistence_test.sqlite")
+            ]
+        ),
     ]
 )
