@@ -5,8 +5,6 @@ use crate::error::{
 use bdk_bitcoind_rpc::bitcoincore_rpc::jsonrpc::serde_json;
 use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk_wallet::bitcoin::amount::ParseAmountError;
-use bdk_wallet::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
-use bdk_wallet::bitcoin::blockdata::transaction::TxOut as BdkTxOut;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
@@ -17,8 +15,10 @@ use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::OutPoint as BdkOutPoint;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
+use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
+use bdk_wallet::bitcoin::TxOut as BdkTxOut;
 use bdk_wallet::bitcoin::Txid;
 
 use std::fmt::Display;

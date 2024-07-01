@@ -11,9 +11,9 @@ use crate::types::{
 };
 
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
-use bdk_wallet::bitcoin::blockdata::script::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
+use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk_wallet::chain::{CombinedChangeSet, ConfirmationTimeHeightAnchor};
 use bdk_wallet::wallet::tx_builder::ChangeSpendPolicy;
