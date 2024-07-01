@@ -7,7 +7,7 @@ jobs:
     runs-on: macos-12
     steps:
       - name: "Checkout publishing branch"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Cache"
         uses: actions/cache@v3
@@ -19,7 +19,7 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
       - name: "Set up JDK"
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
@@ -36,7 +36,7 @@ jobs:
           ./gradlew buildJvmLib
 
       - name: "Upload macOS native libraries for reuse in publishing job"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artifact-macos
           path: /Users/runner/work/bdk-ffi/bdk-ffi/bdk-jvm/lib/src/main/resources/
@@ -46,10 +46,10 @@ jobs:
     runs-on: windows-2022
     steps:
       - name: "Checkout publishing branch"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Set up JDK"
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
@@ -66,7 +66,7 @@ jobs:
           ./gradlew buildJvmLib
 
       - name: "Upload Windows native libraries for reuse in publishing job"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artifact-windows
           path: D:\a\bdk-ffi\bdk-ffi\bdk-jvm\lib\src\main\resources\
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: "Checkout publishing branch"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Cache"
         uses: actions/cache@v3
@@ -89,7 +89,7 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
       - name: "Set up JDK"
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
@@ -115,7 +115,7 @@ jobs:
           path: ./bdk-jvm/lib/src/main/resources/
 
       - name: "Upload library code and binaries"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artifact-full
           path: ./bdk-jvm/lib/
