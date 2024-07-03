@@ -751,6 +751,18 @@ pub enum TxidParseError {
     InvalidTxid { txid: String },
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum LightClientBuilderError {
+    #[error("the database could not be opened or created: {reason}")]
+    DatabaseError { reason: String },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum LightClientError {
+    #[error("the node is no longer running")]
+    NodeStopped,
+}
+
 // ------------------------------------------------------------------------
 // error conversions
 // ------------------------------------------------------------------------
@@ -1447,6 +1459,20 @@ impl From<BdkSqliteError> for SqliteError {
         SqliteError::Sqlite {
             rusqlite_error: error.to_string(),
         }
+    }
+}
+
+impl From<bdk_kyoto::builder::BuilderError> for LightClientBuilderError {
+    fn from(value: bdk_kyoto::builder::BuilderError) -> Self {
+        LightClientBuilderError::DatabaseError {
+            reason: value.to_string(),
+        }
+    }
+}
+
+impl From<bdk_kyoto::kyoto::ClientError> for LightClientError {
+    fn from(_value: bdk_kyoto::kyoto::ClientError) -> Self {
+        LightClientError::NodeStopped
     }
 }
 
