@@ -1,4 +1,8 @@
-namespace bdk {};
+namespace bdk {
+  NodePair build_light_client(Wallet wallet, sequence<Peer> peers, u8 connections, u32? recovery_height, string data_dir, NodeMessageHandler? logger);
+
+  void run_node(LightNode node);
+};
 
 // ------------------------------------------------------------------------
 // bdk crate - error module
@@ -725,4 +729,42 @@ dictionary TxIn {
   Script script_sig;
   u32 sequence;
   sequence<sequence<u8>> witness;
+};
+
+interface LightClient {
+  [Async]
+  Update? update();
+};
+
+interface LightNode {
+  [Async]
+  void run();
+};
+
+dictionary NodePair {
+  LightNode node;
+  LightClient client;
+};
+
+[Enum]
+interface Peer {
+  V4(u8 q1, u8 q2, u8 q3, u8 q4);
+  V6(string addr);
+};
+
+[Trait, WithForeign]
+interface NodeMessageHandler {
+  void handle_dialog(string dialog);
+
+  void handle_warning(string warning);
+
+  void handle_state_change(NodeState state);
+};
+
+enum NodeState {
+  "Behind",
+  "HeadersSynced",
+  "FilterHeadersSynced",
+  "FiltersSynced",
+  "TransactionsSynced"
 };

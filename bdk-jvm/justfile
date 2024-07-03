@@ -1,8 +1,8 @@
 default:
   just --list
 
-build:
-  ./gradlew buildJvmLib
+build-macos:
+  bash ./scripts/build-macos-aarch64.sh
 
 clean:
   rm -rf ../bdk-ffi/target/

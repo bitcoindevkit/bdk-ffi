@@ -56,11 +56,13 @@ java {
 dependencies {
     implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("androidx.appcompat:appcompat:1.4.0")
     implementation("androidx.core:core-ktx:1.7.0")
     api("org.slf4j:slf4j-api:1.7.30")
 
     androidTestImplementation("com.github.tony19:logback-android:2.0.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     androidTestImplementation("org.jetbrains.kotlin:kotlin-test:1.6.10")
