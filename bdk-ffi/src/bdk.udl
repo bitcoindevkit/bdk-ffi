@@ -330,6 +330,20 @@ interface TxidParseError {
   InvalidTxid(string txid);
 };
 
+/// Errors that may occur building a light client.
+[Error]
+interface LightClientBuilderError {
+  /// A database could not be opened or created.
+  DatabaseError(string reason);
+};
+
+/// Errors that may occur sending messages to a node.
+[Error]
+enum LightClientError {
+  /// The node is not currently running.
+  "NodeStopped",
+};
+
 // ------------------------------------------------------------------------
 // bdk_wallet crate - types module
 // ------------------------------------------------------------------------
@@ -1298,6 +1312,229 @@ interface AddressData {
     P2pkh(string pubkey_hash);
     P2sh(string script_hash);
     Segwit(WitnessProgram witness_program);
+};
+
+// ------------------------------------------------------------------------
+// bdk-kyoto crate
+// ------------------------------------------------------------------------
+
+/// Build a BIP 157/158 light client to fetch transactions for a `Wallet`.
+///
+/// Options:
+/// * List of `Peer`: Bitcoin full-nodes for the light client to connect to. May be empty.
+/// * `connections`: The number of connections for the light client to maintain.
+/// * `scan_type`: Sync, recover, or start a new wallet. For more information see [`ScanType`].
+/// * `data_dir`: Optional directory to store block headers and peers.
+///
+/// A note on recovering wallets. Developers should allow users to provide an
+/// approximate recovery height and an estimated number of transactions for the
+/// wallet. When determining how many scripts to check filters for, the `Wallet`
+/// `lookahead` value will be used. To ensure all transactions are recovered, the 
+/// `lookahead` should be roughly the number of transactions in the wallet history.
+interface LightClientBuilder {
+  /// Start a new [`LightClientBuilder`]
+  constructor();
+
+  /// The number of connections for the light client to maintain. Default is two.
+  LightClientBuilder connections(u8 connections);
+
+  /// Directory to store block headers and peers. If none is provided, the current
+  /// working directory will be used.
+  LightClientBuilder data_dir(string data_dir);
+
+  /// Select between syncing, recovering, or scanning for new wallets.
+  LightClientBuilder scan_type(ScanType scan_type);
+
+  /// Bitcoin full-nodes to attempt a connection with.
+  LightClientBuilder peers(sequence<Peer> peers);
+
+  /// Construct a [`LightClient`] for a [`Wallet`].
+  [Throws=LightClientBuilderError]
+  LightClient build([ByRef] Wallet wallet);
+};
+
+/// A [`Client`] handles wallet updates from a [`LightNode`].
+interface Client {
+  /// Return the next available log message from a node. If none is returned, the node has stopped.
+  [Async, Throws=LightClientError]
+  Log next_log();
+
+  /// Return the next available warning message from a node. If none is returned, the node has stopped.
+  [Async, Throws=LightClientError]
+  Warning next_warning();
+
+  /// Return an [`Update`]. This is method returns once the node syncs to the rest of
+  /// the network or a new block has been gossiped.
+  [Async]
+  Update? update();
+
+  /// Add scripts for the node to watch for as they are revealed. Typically used after creating
+  /// a transaction or revealing a receive address.
+  ///
+  /// Note that only future blocks will be checked for these scripts, not past blocks.
+  [Async, Throws=LightClientError]
+  void add_revealed_scripts([ByRef] Wallet wallet);
+
+  /// The minimum fee rate required to broadcast a transcation to all connected peers.
+  [Async, Throws=LightClientError]
+  FeeRate min_broadcast_feerate();
+
+  /// Broadcast a transaction to the network, erroring if the node has stopped running.
+  [Async, Throws=LightClientError]
+  void broadcast([ByRef] Transaction transaction);
+
+  /// Check if the node is still running in the background.
+  [Async]
+  boolean is_running();
+
+  /// Stop the [`LightNode`]. Errors if the node is already stopped.
+  [Async, Throws=LightClientError]
+  void shutdown();
+};
+
+/// A [`LightNode`] gathers transactions for a [`Wallet`].
+/// To receive [`Update`] for [`Wallet`], refer to the
+/// [`Client`]. The [`LightNode`] will run until instructed
+/// to stop.
+interface LightNode {
+  /// Start the node on a detached OS thread and immediately return.
+  void run();
+};
+
+/// Receive a [`Client`] and [`LightNode`].
+dictionary LightClient {
+  /// Publish events to the node, like broadcasting transactions or adding scripts.
+  Client client;
+
+  /// The node to run and fetch transactions for a [`Wallet`].
+  LightNode node;
+};
+
+/// Sync a wallet from the last known block hash, recover a wallet from a specified height,
+/// or perform an expedited block header download for a new wallet.
+[Enum]
+interface ScanType {
+  /// Perform an expedited header and filter download for a new wallet.
+  /// If this option is not set, and the wallet has no history, the
+  /// entire chain will be scanned for script inclusions.
+  New();
+
+  /// Sync an existing wallet from the last stored chain checkpoint.
+  Sync();
+  
+  /// Recover an existing wallet by scanning from the specified height.
+  Recovery(u32 from_height);
+};
+
+/// A peer to connect to over the Bitcoin peer-to-peer network.
+dictionary Peer {
+  /// The IP address to reach the node.
+  IpAddress address;
+
+  /// The port to reach the node. If none is provided, the default
+  /// port for the selected network will be used.
+  u16? port;
+
+  /// Does the remote node offer encrypted peer-to-peer connection.
+  boolean v2_transport;
+};
+
+/// An IP address to connect to over TCP.
+interface IpAddress {
+  /// Build an IPv4 address.
+  [Name=from_ipv4]
+  constructor(u8 q1, u8 q2, u8 q3, u8 q4);
+
+  /// Build an IPv6 address.
+  [Name=from_ipv6]
+  constructor(u16 a, u16 b, u16 c, u16 d, u16 e, u16 f, u16 g, u16 h);
+};
+
+/// A log message from the node.
+[Enum]
+interface Log {
+  /// A human-readable debug message.
+  Debug(string log);
+
+  /// All the required connections have been met. This is subject to change.
+  ConnectionsMet();
+
+  /// A percentage value of filters that have been scanned.
+  Progress(f32 progress);
+
+  /// A state in the node syncing process.
+  StateUpdate(NodeState node_state);
+
+  /// A transaction was broadcast over the wire.
+  /// The transaction may or may not be rejected by recipient nodes.
+  TxSent(string txid);
+};
+
+/// Warnings a node may issue while running.
+[Enum]
+interface Warning {
+  /// The node is looking for connections to peers.
+  NeedConnections();
+
+  /// A connection to a peer timed out.
+  PeerTimedOut();
+
+  /// The node was unable to connect to a peer in the database.
+  CouldNotConnect();
+
+  /// A connection was maintained, but the peer does not signal for compact block filers.
+  NoCompactFilters();
+
+  /// The node has been waiting for new inv and will find new peers to avoid block withholding.
+  PotentialStaleTip();
+
+  /// A peer sent us a peer-to-peer message the node did not request.
+  UnsolicitedMessage();
+
+  /// The provided starting height is deeper than the database history.
+  /// This should not occur under normal use.
+  InvalidStartHeight();
+
+  /// The headers in the database do not link together.
+  /// Recoverable by deleting the database.
+  CorruptedHeaders();
+
+  /// A transaction got rejected, likely for being an insufficient fee or non-standard transaction.
+  TransactionRejected(string txid, string? reason);
+
+  /// A database failed to persist some data and may retry again.
+  FailedPersistence(string warning);
+
+  /// The peer sent us a potential fork.
+  EvaluatingFork();
+
+  /// The peer database has no values.
+  EmptyPeerDatabase();
+
+  /// An unexpected error occured processing a peer-to-peer message.
+  UnexpectedSyncError(string warning);
+
+  /// The node failed to respond to a message sent from the client.
+  RequestFailed();
+};
+
+/// The state of the node with respect to connected peers.
+[Remote]
+enum NodeState {
+  /// Behind on block headers according to our peers.
+  "Behind",
+
+  /// Downloading compact block filter headers.
+  "HeadersSynced",
+
+  /// Scanning compact block filters.
+  "FilterHeadersSynced",
+
+  /// Asking for blocks with matches.
+  "FiltersSynced",
+
+  /// Found all known transactions to the wallet.
+  "TransactionsSynced"
 };
 
 // ------------------------------------------------------------------------

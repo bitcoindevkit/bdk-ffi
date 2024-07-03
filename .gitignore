@@ -10,6 +10,8 @@ local.properties
 *.log
 *.dylib
 *.so
+*.db
+*/data/signet
 .DS_Store
 testdb
 .lsp

@@ -39,6 +39,7 @@ tasks.test {
         exclude("**/LiveTransactionTest.class")
         exclude("**/LiveTxBuilderTest.class")
         exclude("**/LiveWalletTest.class")
+        exclude("**/LiveKyotoTest.class")
     }
 }
 
@@ -63,6 +64,7 @@ tasks.withType<Test> {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("net.java.dev.jna:jna:5.14.0")
     api("org.slf4j:slf4j-api:1.7.30")
 
