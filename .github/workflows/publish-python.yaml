@@ -1,22 +1,17 @@
 name: Publish bdkpython to PyPI
 on: [workflow_dispatch]
 
-# We use manylinux2014 because older CentOS versions used by 2010 and 1 have a very old glibc version, which
-# makes it very hard to use GitHub's javascript actions (checkout, upload-artifact, etc).
-# They mount their own nodejs interpreter inside your container, but since that's not statically linked it
-# tries to load glibc and fails because it requires a more recent version.
-
 jobs:
-  build-manylinux2014-x86_64-wheels:
-    name: "Build Manylinux 2014 x86_64 wheel"
+  build-manylinux_2_28-x86_64-wheels:
+    name: "Build Manylinux 2.28 x86_64 wheel"
     runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python
     container:
-      image: quay.io/pypa/manylinux2014_x86_64
+      image: quay.io/pypa/manylinux_2_28_x86_64
       env:
-        PLAT: manylinux2014_x86_64
+        PLAT: manylinux_2_28_x86_64
         PYBIN: "/opt/python/${{ matrix.python }}/bin"
     strategy:
       matrix:
@@ -43,11 +38,11 @@ jobs:
       - name: "Build wheel"
         # Specifying the plat-name argument is necessary to build a wheel with the correct name,
         # see issue #350 for more information
-        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_17_x86_64 --verbose
+        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_28_x86_64 --verbose
 
       - uses: actions/upload-artifact@v3
         with:
-          name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
+          name: bdkpython-manylinux_2_28_x86_64-${{ matrix.python }}
           path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-macos-arm64-wheels:
@@ -168,7 +163,7 @@ jobs:
     defaults:
       run:
         working-directory: bdk-python
-    needs: [build-manylinux2014-x86_64-wheels, build-macos-arm64-wheels, build-macos-x86_64-wheels, build-windows-wheels]
+    needs: [build-manylinux_2_28-x86_64-wheels, build-macos-arm64-wheels, build-macos-x86_64-wheels, build-windows-wheels]
     steps:
       - name: "Checkout"
         uses: actions/checkout@v3
