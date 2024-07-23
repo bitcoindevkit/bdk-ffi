@@ -435,6 +435,8 @@ interface Update {};
 interface TxBuilder {
   constructor();
 
+  TxBuilder add_global_xpubs();
+
   TxBuilder add_recipient([ByRef] Script script, Amount amount);
 
   TxBuilder set_recipients(sequence<ScriptAmount> recipients);
