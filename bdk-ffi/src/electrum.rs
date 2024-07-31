@@ -1,17 +1,16 @@
 use crate::bitcoin::Transaction;
 use crate::error::ElectrumError;
+use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
-use crate::wallet::Update;
 
+use bdk_core::spk_client::FullScanRequest as BdkFullScanRequest;
+use bdk_core::spk_client::FullScanResult as BdkFullScanResult;
+use bdk_core::spk_client::SyncRequest as BdkSyncRequest;
+use bdk_core::spk_client::SyncResult as BdkSyncResult;
 use bdk_electrum::BdkElectrumClient as BdkBdkElectrumClient;
-use bdk_electrum::{ElectrumFullScanResult, ElectrumSyncResult};
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
-use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
-use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
-use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
-use bdk_wallet::chain::spk_client::SyncResult as BdkSyncResult;
-use bdk_wallet::wallet::Update as BdkUpdate;
 use bdk_wallet::KeychainKind;
+use bdk_wallet::Update as BdkUpdate;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -44,19 +43,17 @@ impl ElectrumClient {
             .take()
             .ok_or(ElectrumError::RequestAlreadyConsumed)?;
 
-        let electrum_result: ElectrumFullScanResult<KeychainKind> = self.0.full_scan(
+        let full_scan_result: BdkFullScanResult<KeychainKind> = self.0.full_scan(
             request,
             stop_gap as usize,
             batch_size as usize,
             fetch_prev_txouts,
         )?;
-        let full_scan_result: BdkFullScanResult<KeychainKind> =
-            electrum_result.with_confirmation_time_height_anchor(&self.0)?;
 
         let update = BdkUpdate {
             last_active_indices: full_scan_result.last_active_indices,
-            graph: full_scan_result.graph_update,
-            chain: Some(full_scan_result.chain_update),
+            tx_update: full_scan_result.tx_update,
+            chain: full_scan_result.chain_update,
         };
 
         Ok(Arc::new(Update(update)))
@@ -69,23 +66,21 @@ impl ElectrumClient {
         fetch_prev_txouts: bool,
     ) -> Result<Arc<Update>, ElectrumError> {
         // using option and take is not ideal but the only way to take full ownership of the request
-        let request: BdkSyncRequest = request
+        let request: BdkSyncRequest<(KeychainKind, u32)> = request
             .0
             .lock()
             .unwrap()
             .take()
             .ok_or(ElectrumError::RequestAlreadyConsumed)?;
 
-        let electrum_result: ElectrumSyncResult =
+        let sync_result: BdkSyncResult =
             self.0
                 .sync(request, batch_size as usize, fetch_prev_txouts)?;
-        let sync_result: BdkSyncResult =
-            electrum_result.with_confirmation_time_height_anchor(&self.0)?;
 
         let update = BdkUpdate {
             last_active_indices: BTreeMap::default(),
-            graph: sync_result.graph_update,
-            chain: Some(sync_result.chain_update),
+            tx_update: sync_result.tx_update,
+            chain: sync_result.chain_update,
         };
 
         Ok(Arc::new(Update(update)))

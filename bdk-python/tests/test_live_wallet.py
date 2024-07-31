@@ -21,13 +21,15 @@ class LiveWalletTest(unittest.TestCase):
             os.remove("./bdk_persistence.sqlite")
 
     def test_synced_balance(self):
+        connection: bdk.Connection = bdk.Connection.new_in_memory()
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             change_descriptor,
-            bdk.Network.SIGNET
+            bdk.Network.SIGNET,
+            connection
         )
         esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = SIGNET_ESPLORA_URL)
-        full_scan_request: bdk.FullScanRequest = wallet.start_full_scan()
+        full_scan_request: bdk.FullScanRequest = wallet.start_full_scan().build()
         update = esplora_client.full_scan(
             full_scan_request=full_scan_request,
             stop_gap=10,
@@ -51,13 +53,15 @@ class LiveWalletTest(unittest.TestCase):
 
 
     def test_broadcast_transaction(self):
+        connection: bdk.Connection = bdk.Connection.new_in_memory()
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             change_descriptor,
-            bdk.Network.SIGNET
+            bdk.Network.SIGNET,
+            connection
         )
         esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = SIGNET_ESPLORA_URL)
-        full_scan_request: bdk.FullScanRequest = wallet.start_full_scan()
+        full_scan_request: bdk.FullScanRequest = wallet.start_full_scan().build()
         update = esplora_client.full_scan(
             full_scan_request=full_scan_request,
             stop_gap=10,

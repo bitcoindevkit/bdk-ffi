@@ -1,7 +1,7 @@
 use crate::bitcoin::Transaction;
 use crate::error::EsploraError;
+use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
-use crate::wallet::Update;
 
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
@@ -10,8 +10,8 @@ use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
 use bdk_wallet::chain::spk_client::SyncResult as BdkSyncResult;
-use bdk_wallet::wallet::Update as BdkUpdate;
 use bdk_wallet::KeychainKind;
+use bdk_wallet::Update as BdkUpdate;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -44,8 +44,8 @@ impl EsploraClient {
 
         let update = BdkUpdate {
             last_active_indices: result.last_active_indices,
-            graph: result.graph_update,
-            chain: Some(result.chain_update),
+            tx_update: result.tx_update,
+            chain: result.chain_update,
         };
 
         Ok(Arc::new(Update(update)))
@@ -57,7 +57,7 @@ impl EsploraClient {
         parallel_requests: u64,
     ) -> Result<Arc<Update>, EsploraError> {
         // using option and take is not ideal but the only way to take full ownership of the request
-        let request: BdkSyncRequest = request
+        let request: BdkSyncRequest<(KeychainKind, u32)> = request
             .0
             .lock()
             .unwrap()
@@ -68,8 +68,8 @@ impl EsploraClient {
 
         let update = BdkUpdate {
             last_active_indices: BTreeMap::default(),
-            graph: result.graph_update,
-            chain: Some(result.chain_update),
+            tx_update: result.tx_update,
+            chain: result.chain_update,
         };
 
         Ok(Arc::new(Update(update)))

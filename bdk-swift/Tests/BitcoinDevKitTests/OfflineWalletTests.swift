@@ -10,32 +10,14 @@ final class OfflineWalletTests: XCTestCase {
         descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)", 
         network: Network.signet
     )
-    var dbFilePath: URL!
-
-    override func setUpWithError() throws {
-        super.setUp()
-        let fileManager = FileManager.default
-        let documentDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let uniqueDbFileName = "bdk_persistence_\(UUID().uuidString).sqlite"
-        dbFilePath = documentDirectory.appendingPathComponent(uniqueDbFileName)
-
-        if fileManager.fileExists(atPath: dbFilePath.path) {
-            try fileManager.removeItem(at: dbFilePath)
-        }
-    }
-
-    override func tearDownWithError() throws {
-        let fileManager = FileManager.default
-        if fileManager.fileExists(atPath: dbFilePath.path) {
-            try fileManager.removeItem(at: dbFilePath)
-        }
-    }
-
+    
     func testNewAddress() throws {
+        let connection = try Connection.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
-            network: .testnet
+            network: .signet,
+            connection: connection
         )
         let addressInfo: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
 
@@ -52,10 +34,12 @@ final class OfflineWalletTests: XCTestCase {
     }
     
     func testBalance() throws {
+        let connection = try Connection.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
-            network: .testnet
+            network: .signet,
+            connection: connection
         )
 
         XCTAssertEqual(wallet.balance().total.toSat(), 0)

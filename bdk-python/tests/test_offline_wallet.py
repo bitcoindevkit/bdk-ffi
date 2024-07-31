@@ -18,10 +18,12 @@ class OfflineWalletTest(unittest.TestCase):
             os.remove("./bdk_persistence.sqlite")
     
     def test_new_address(self):
-        wallet: Wallet = bdk.Wallet(
+        connection: bdk.Connection = bdk.Connection.new_in_memory()
+        wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             change_descriptor,
-            bdk.Network.TESTNET
+            bdk.Network.TESTNET,
+            connection
         )
         address_info: bdk.AddressInfo = wallet.reveal_next_address(bdk.KeychainKind.EXTERNAL)
     
@@ -33,10 +35,12 @@ class OfflineWalletTest(unittest.TestCase):
         self.assertEqual("tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", address_info.address.__str__())
     
     def test_balance(self):
+        connection: bdk.Connection = bdk.Connection.new_in_memory()
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             change_descriptor,
-            bdk.Network.TESTNET
+            bdk.Network.TESTNET,
+            connection
         )
     
         self.assertEqual(wallet.balance().total.to_sat(), 0)

@@ -1,32 +1,31 @@
-use crate::bitcoin::Amount;
-use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
+use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateTxError, SignerError, TxidParseError,
-    WalletCreationError,
+    CalculateFeeError, CannotConnectError, CreateTxError, CreateWithPersistError,
+    LoadWithPersistError, SignerError, SqliteError, TxidParseError,
 };
-use crate::types::{
-    AddressInfo, Balance, CanonicalTx, ChangeSet, FullScanRequest, LocalOutput, ScriptAmount,
-    SyncRequest,
-};
+use crate::store::Connection;
+use crate::types::{AddressInfo, Balance, CanonicalTx, LocalOutput, ScriptAmount};
+use crate::types::{FullScanRequestBuilder, SyncRequestBuilder, Update};
 
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
-use bdk_wallet::chain::{CombinedChangeSet, ConfirmationTimeHeightAnchor};
-use bdk_wallet::wallet::tx_builder::ChangeSpendPolicy;
-use bdk_wallet::wallet::Update as BdkUpdate;
+use bdk_wallet::rusqlite::Connection as BdkConnection;
+use bdk_wallet::tx_builder::ChangeSpendPolicy;
+use bdk_wallet::PersistedWallet;
 use bdk_wallet::Wallet as BdkWallet;
 use bdk_wallet::{KeychainKind, SignOptions};
 
+use std::borrow::BorrowMut;
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub struct Wallet {
-    inner_mutex: Mutex<BdkWallet>,
+    inner_mutex: Mutex<PersistedWallet<BdkConnection>>,
 }
 
 impl Wallet {
@@ -34,35 +33,45 @@ impl Wallet {
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         network: Network,
-    ) -> Result<Self, WalletCreationError> {
+        connection: Arc<Connection>,
+    ) -> Result<Self, CreateWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let wallet: BdkWallet = BdkWallet::new(&descriptor, &change_descriptor, network)?;
+        let mut binding = connection.get_store();
+        let db: &mut BdkConnection = binding.borrow_mut();
+
+        let wallet: PersistedWallet<BdkConnection> =
+            BdkWallet::create(descriptor, change_descriptor)
+                .network(network)
+                .create_wallet(db)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
         })
     }
 
-    pub fn new_or_load(
+    pub fn load(
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
-        change_set: Option<Arc<ChangeSet>>,
-        network: Network,
-    ) -> Result<Self, WalletCreationError> {
+        connection: Arc<Connection>,
+    ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let change_set: Option<CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>> =
-            change_set.map(|cs| cs.0.clone());
-        let wallet: BdkWallet =
-            BdkWallet::new_or_load(&descriptor, &change_descriptor, change_set, network)?;
+        let mut binding = connection.get_store();
+        let db: &mut BdkConnection = binding.borrow_mut();
+
+        let wallet: PersistedWallet<BdkConnection> = BdkWallet::load()
+            .descriptor(KeychainKind::External, Some(descriptor))
+            .descriptor(KeychainKind::Internal, Some(change_descriptor))
+            .load_wallet(db)?
+            .ok_or(LoadWithPersistError::CouldNotLoad)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
         })
     }
 
-    pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
+    pub(crate) fn get_wallet(&self) -> MutexGuard<PersistedWallet<BdkConnection>> {
         self.inner_mutex.lock().expect("wallet")
     }
 
@@ -85,8 +94,8 @@ impl Wallet {
         Balance::from(bdk_balance)
     }
 
-    pub fn is_mine(&self, script: &Script) -> bool {
-        self.get_wallet().is_mine(&script.0)
+    pub fn is_mine(&self, script: Arc<Script>) -> bool {
+        self.get_wallet().is_mine(script.0.clone())
     }
 
     pub(crate) fn sign(
@@ -144,20 +153,25 @@ impl Wallet {
         self.get_wallet().list_output().map(|o| o.into()).collect()
     }
 
-    pub fn start_full_scan(&self) -> Arc<FullScanRequest> {
-        let request = self.get_wallet().start_full_scan();
-        Arc::new(FullScanRequest(Mutex::new(Some(request))))
+    pub fn start_full_scan(&self) -> Arc<FullScanRequestBuilder> {
+        let builder = self.get_wallet().start_full_scan();
+        Arc::new(FullScanRequestBuilder(Mutex::new(Some(builder))))
     }
 
-    pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequest> {
-        let request = self.get_wallet().start_sync_with_revealed_spks();
-        Arc::new(SyncRequest(Mutex::new(Some(request))))
+    pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequestBuilder> {
+        let builder = self.get_wallet().start_sync_with_revealed_spks();
+        Arc::new(SyncRequestBuilder(Mutex::new(Some(builder))))
     }
 
-    pub fn take_staged(&self) -> Option<Arc<ChangeSet>> {
+    // pub fn persist(&self, connection: Connection) -> Result<bool, FfiGenericError> {
+    pub fn persist(&self, connection: Arc<Connection>) -> Result<bool, SqliteError> {
+        let mut binding = connection.get_store();
+        let db: &mut BdkConnection = binding.borrow_mut();
         self.get_wallet()
-            .take_staged()
-            .map(|change_set| Arc::new(change_set.into()))
+            .persist(db)
+            .map_err(|e| SqliteError::Sqlite {
+                rusqlite_error: e.to_string(),
+            })
     }
 }
 
@@ -165,8 +179,6 @@ pub struct SentAndReceivedValues {
     pub sent: Arc<Amount>,
     pub received: Arc<Amount>,
 }
-
-pub struct Update(pub(crate) BdkUpdate);
 
 #[derive(Clone, Debug)]
 pub struct TxBuilder {
@@ -401,7 +413,7 @@ impl BumpFeeTxBuilder {
         })
     }
 
-    pub(crate) fn finish(&self, wallet: &Wallet) -> Result<Arc<Psbt>, CreateTxError> {
+    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
             outpoint: self.txid.clone(),
         })?;
@@ -423,304 +435,8 @@ impl BumpFeeTxBuilder {
         Ok(Arc::new(psbt.into()))
     }
 }
-
 #[derive(Clone, Debug)]
 pub enum RbfValue {
     Default,
     Value(u32),
 }
-
-// #[cfg(test)]
-// mod test {
-//     use crate::database::DatabaseConfig;
-//     use crate::descriptor::Descriptor;
-//     use crate::keys::{DescriptorSecretKey, Mnemonic};
-//     use crate::wallet::{AddressIndex, TxBuilder, Wallet};
-//     use crate::Script;
-//     use assert_matches::assert_matches;
-//     use bdk::bitcoin::{Address, Network};
-//     // use bdk::wallet::get_funded_wallet;
-//     use bdk::KeychainKind;
-//     use std::str::FromStr;
-//     use std::sync::{Arc, Mutex};
-//
-//     // #[test]
-//     // fn test_drain_wallet() {
-//     //     let test_wpkh = "wpkh(cVpPVruEDdmutPzisEsYvtST1usBR3ntr8pXSyt6D2YYqXRyPcFW)";
-//     //     let (funded_wallet, _, _) = get_funded_wallet(test_wpkh);
-//     //     let test_wallet = Wallet {
-//     //         inner_mutex: Mutex::new(funded_wallet),
-//     //     };
-//     //     let drain_to_address = "tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt".to_string();
-//     //     let drain_to_script = crate::Address::new(drain_to_address)
-//     //         .unwrap()
-//     //         .script_pubkey();
-//     //     let tx_builder = TxBuilder::new()
-//     //         .drain_wallet()
-//     //         .drain_to(drain_to_script.clone());
-//     //     assert!(tx_builder.drain_wallet);
-//     //     assert_eq!(tx_builder.drain_to, Some(drain_to_script.inner.clone()));
-//     //
-//     //     let tx_builder_result = tx_builder.finish(&test_wallet).unwrap();
-//     //     let psbt = tx_builder_result.psbt.inner.lock().unwrap().clone();
-//     //     let tx_details = tx_builder_result.transaction_details;
-//     //
-//     //     // confirm one input with 50,000 sats
-//     //     assert_eq!(psbt.inputs.len(), 1);
-//     //     let input_value = psbt
-//     //         .inputs
-//     //         .get(0)
-//     //         .cloned()
-//     //         .unwrap()
-//     //         .non_witness_utxo
-//     //         .unwrap()
-//     //         .output
-//     //         .get(0)
-//     //         .unwrap()
-//     //         .value;
-//     //     assert_eq!(input_value, 50_000_u64);
-//     //
-//     //     // confirm one output to correct address with all sats - fee
-//     //     assert_eq!(psbt.outputs.len(), 1);
-//     //     let output_address = Address::from_script(
-//     //         &psbt
-//     //             .unsigned_tx
-//     //             .output
-//     //             .get(0)
-//     //             .cloned()
-//     //             .unwrap()
-//     //             .script_pubkey,
-//     //         Network::Testnet,
-//     //     )
-//     //     .unwrap();
-//     //     assert_eq!(
-//     //         output_address,
-//     //         Address::from_str("tb1ql7w62elx9ucw4pj5lgw4l028hmuw80sndtntxt").unwrap()
-//     //     );
-//     //     let output_value = psbt.unsigned_tx.output.get(0).cloned().unwrap().value;
-//     //     assert_eq!(output_value, 49_890_u64); // input - fee
-//     //
-//     //     assert_eq!(
-//     //         tx_details.txid,
-//     //         "312f1733badab22dc26b8dcbc83ba5629fb7b493af802e8abe07d865e49629c5"
-//     //     );
-//     //     assert_eq!(tx_details.received, 0);
-//     //     assert_eq!(tx_details.sent, 50000);
-//     //     assert!(tx_details.fee.is_some());
-//     //     assert_eq!(tx_details.fee.unwrap(), 110);
-//     //     assert!(tx_details.confirmation_time.is_none());
-//     // }
-//
-//     #[test]
-//     fn test_peek_reset_address() {
-//         let test_wpkh = "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)";
-//         let descriptor = Descriptor::new(test_wpkh.to_string(), Network::Regtest).unwrap();
-//         let change_descriptor = Descriptor::new(
-//             test_wpkh.to_string().replace("/0/*", "/1/*"),
-//             Network::Regtest,
-//         )
-//         .unwrap();
-//
-//         let wallet = Wallet::new(
-//             Arc::new(descriptor),
-//             Some(Arc::new(change_descriptor)),
-//             Network::Regtest,
-//             DatabaseConfig::Memory,
-//         )
-//         .unwrap();
-//
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::Peek { index: 2 })
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1q5g0mq6dkmwzvxscqwgc932jhgcxuqqkjv09tkj"
-//         );
-//
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::Peek { index: 1 })
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
-//         );
-//
-//         // new index still 0
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::New)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
-//         );
-//
-//         // new index now 1
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::New)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
-//         );
-//
-//         // new index now 2
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::New)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1q5g0mq6dkmwzvxscqwgc932jhgcxuqqkjv09tkj"
-//         );
-//
-//         // peek index 1
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::Peek { index: 1 })
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
-//         );
-//
-//         // reset to index 0
-//         // assert_eq!(
-//         //     wallet
-//         //         .get_address(AddressIndex::Reset { index: 0 })
-//         //         .unwrap()
-//         //         .address
-//         //         .as_string(),
-//         //     "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
-//         // );
-//
-//         // new index 1 again
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::New)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
-//         );
-//     }
-//
-//     #[test]
-//     fn test_get_address() {
-//         let test_wpkh = "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)";
-//         let descriptor = Descriptor::new(test_wpkh.to_string(), Network::Regtest).unwrap();
-//         let change_descriptor = Descriptor::new(
-//             test_wpkh.to_string().replace("/0/*", "/1/*"),
-//             Network::Regtest,
-//         )
-//         .unwrap();
-//
-//         let wallet = Wallet::new(
-//             Arc::new(descriptor),
-//             Some(Arc::new(change_descriptor)),
-//             Network::Regtest,
-//             DatabaseConfig::Memory,
-//         )
-//         .unwrap();
-//
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::New)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1qqjn9gky9mkrm3c28e5e87t5akd3twg6xezp0tv"
-//         );
-//
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::New)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
-//         );
-//
-//         assert_eq!(
-//             wallet
-//                 .get_address(AddressIndex::LastUnused)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1q0xs7dau8af22rspp4klya4f7lhggcnqfun2y3a"
-//         );
-//
-//         assert_eq!(
-//             wallet
-//                 .get_internal_address(AddressIndex::New)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1qpmz73cyx00r4a5dea469j40ax6d6kqyd67nnpj"
-//         );
-//
-//         assert_eq!(
-//             wallet
-//                 .get_internal_address(AddressIndex::New)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"
-//         );
-//
-//         assert_eq!(
-//             wallet
-//                 .get_internal_address(AddressIndex::LastUnused)
-//                 .unwrap()
-//                 .address
-//                 .as_string(),
-//             "bcrt1qaux734vuhykww9632v8cmdnk7z2mw5lsf74v6k"
-//         );
-//     }
-//
-//     #[test]
-//     fn test_is_mine() {
-//         // is_mine should return true for addresses generated by the wallet
-//         let mnemonic: Mnemonic = Mnemonic::from_string("chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect".to_string()).unwrap();
-//         let secret_key: DescriptorSecretKey =
-//             DescriptorSecretKey::new(Network::Testnet, Arc::new(mnemonic), None);
-//         let descriptor: Descriptor = Descriptor::new_bip84(
-//             Arc::new(secret_key),
-//             KeychainKind::External,
-//             Network::Testnet,
-//         );
-//         let wallet: Wallet = Wallet::new(
-//             Arc::new(descriptor),
-//             None,
-//             Network::Testnet,
-//             DatabaseConfig::Memory,
-//         )
-//         .unwrap();
-//
-//         // let address = wallet.get_address(AddressIndex::New).unwrap();
-//         // let script: Arc<Script> = address.address.script_pubkey();
-//
-//         // let is_mine_1: bool = wallet.is_mine(script).unwrap();
-//         // assert!(is_mine_1);
-//
-//         // is_mine returns false when provided a script that is not in the wallet
-//         let other_wpkh = "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)";
-//         let other_descriptor = Descriptor::new(other_wpkh.to_string(), Network::Testnet).unwrap();
-//
-//         let other_wallet = Wallet::new(
-//             Arc::new(other_descriptor),
-//             None,
-//             Network::Testnet,
-//             DatabaseConfig::Memory,
-//         )
-//         .unwrap();
-//
-//         let other_address = other_wallet.get_address(AddressIndex::New).unwrap();
-//         let other_script: Arc<Script> = other_address.address.script_pubkey();
-//         let is_mine_2: bool = wallet.is_mine(other_script).unwrap();
-//         assert_matches!(is_mine_2, false);
-//     }
-// }

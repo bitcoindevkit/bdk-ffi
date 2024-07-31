@@ -27,9 +27,10 @@ class LiveTxBuilderTest {
 
     @Test
     fun testTxBuilder() {
-        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
+        var conn: Connection = Connection.newInMemory()
+        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, conn)
         val esploraClient: EsploraClient = EsploraClient(SIGNET_ESPLORA_URL)
-        val fullScanRequest: FullScanRequest = wallet.startFullScan()
+        val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
         println("Balance: ${wallet.balance().total.toSat()}")
@@ -50,9 +51,10 @@ class LiveTxBuilderTest {
 
     @Test
     fun complexTxBuilder() {
-        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
+        var conn: Connection = Connection.newInMemory()
+        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, conn)
         val esploraClient: EsploraClient = EsploraClient(SIGNET_ESPLORA_URL)
-        val fullScanRequest: FullScanRequest = wallet.startFullScan()
+        val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
 

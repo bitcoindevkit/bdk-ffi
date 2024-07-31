@@ -35,13 +35,15 @@ final class LiveTxBuilderTests: XCTestCase {
     }
 
     func testTxBuilder() throws {
+        let connection = try Connection.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
-            network: .signet
+            network: .signet,
+            connection: connection
         )
         let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
-        let fullScanRequest: FullScanRequest = wallet.startFullScan()
+        let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
         let update = try esploraClient.fullScan(
             fullScanRequest: fullScanRequest,
             stopGap: 10,
@@ -75,13 +77,15 @@ final class LiveTxBuilderTests: XCTestCase {
             descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)",
             network: Network.signet
         )
+        let connection = try Connection.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
-            network: .signet
+            network: .signet,
+            connection: connection
         )
         let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
-        let fullScanRequest: FullScanRequest = wallet.startFullScan()
+        let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
         let update = try esploraClient.fullScan(
             fullScanRequest: fullScanRequest,
             stopGap: 10,

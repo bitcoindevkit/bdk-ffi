@@ -32,12 +32,14 @@ class LiveTxBuilderTest {
 
     @Test
     fun testTxBuilder() {
+        val connection: Connection = Connection(persistenceFilePath)
         val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.TESTNET)
-        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
+        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, connection)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
-        val fullScanRequest: FullScanRequest = wallet.startFullScan()
+        val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
+        wallet.persist(connection)
         println("Balance: ${wallet.balance().total.toSat()}")
 
         assert(wallet.balance().total.toSat() > 0uL) {
@@ -57,11 +59,13 @@ class LiveTxBuilderTest {
 
     @Test
     fun complexTxBuilder() {
-        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
+        val connection: Connection = Connection(persistenceFilePath)
+        val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, connection)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
-        val fullScanRequest: FullScanRequest = wallet.startFullScan()
+        val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
         val update = esploraClient.fullScan(fullScanRequest, 10uL, 1uL)
         wallet.applyUpdate(update)
+        wallet.persist(connection)
         println("Balance: ${wallet.balance().total.toSat()}")
 
         assert(wallet.balance().total.toSat() > 0uL) {

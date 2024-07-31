@@ -1,17 +1,11 @@
 package org.bitcoindevkit
 
-import java.io.File
-import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
 class OfflineWalletTest {
-    private val persistenceFilePath = run {
-        val currentDirectory = System.getProperty("user.dir")
-        "$currentDirectory/bdk_persistence.sqlite"
-    }
     private val descriptor: Descriptor = Descriptor(
         "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
         Network.TESTNET
@@ -20,14 +14,6 @@ class OfflineWalletTest {
         "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)",
         Network.TESTNET
     )
-
-    @AfterTest
-    fun cleanup() {
-        val file = File(persistenceFilePath)
-        if (file.exists()) {
-            file.delete()
-        }
-    }
 
     @Test
     fun testDescriptorBip86() {
@@ -39,11 +25,13 @@ class OfflineWalletTest {
     }
 
    @Test
-    fun testNewAddress() {
+   fun testNewAddress() {
+        var conn: Connection = Connection.newInMemory()
         val wallet: Wallet = Wallet(
             descriptor,
             changeDescriptor,
-            Network.TESTNET
+            Network.TESTNET,
+            conn
         )
         val addressInfo: AddressInfo = wallet.revealNextAddress(KeychainKind.EXTERNAL)
 
@@ -60,10 +48,12 @@ class OfflineWalletTest {
 
     @Test
     fun testBalance() {
+        var conn: Connection = Connection.newInMemory()
         val wallet: Wallet = Wallet(
             descriptor,
             changeDescriptor,
-            Network.TESTNET
+            Network.TESTNET,
+            conn
         )
 
         assertEquals(

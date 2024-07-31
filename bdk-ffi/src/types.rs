@@ -1,25 +1,45 @@
 use crate::bitcoin::Amount;
 use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
-use crate::InspectError;
+use crate::error::RequestBuilderError;
 
-use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
+use bdk_core::spk_client::SyncItem;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
+use bdk_wallet::chain::spk_client::FullScanRequestBuilder as BdkFullScanRequestBuilder;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
+use bdk_wallet::chain::spk_client::SyncRequestBuilder as BdkSyncRequestBuilder;
 use bdk_wallet::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
-use bdk_wallet::chain::{ChainPosition as BdkChainPosition, ConfirmationTimeHeightAnchor};
-use bdk_wallet::wallet::AddressInfo as BdkAddressInfo;
-use bdk_wallet::wallet::Balance as BdkBalance;
+use bdk_wallet::chain::{
+    ChainPosition as BdkChainPosition, ConfirmationBlockTime as BdkConfirmationBlockTime,
+};
+use bdk_wallet::AddressInfo as BdkAddressInfo;
+use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
+use bdk_wallet::Update as BdkUpdate;
 
-use bdk_electrum::bdk_chain::CombinedChangeSet;
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 pub enum ChainPosition {
-    Confirmed { height: u32, timestamp: u64 },
-    Unconfirmed { timestamp: u64 },
+    Confirmed {
+        confirmation_block_time: ConfirmationBlockTime,
+    },
+    Unconfirmed {
+        timestamp: u64,
+    },
+}
+
+#[derive(Debug)]
+pub struct ConfirmationBlockTime {
+    pub block_id: BlockId,
+    pub confirmation_time: u64,
+}
+
+#[derive(Debug)]
+pub struct BlockId {
+    pub height: u32,
+    pub hash: String,
 }
 
 pub struct CanonicalTx {
@@ -27,13 +47,21 @@ pub struct CanonicalTx {
     pub chain_position: ChainPosition,
 }
 
-impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationTimeHeightAnchor>> for CanonicalTx {
-    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationTimeHeightAnchor>) -> Self {
+impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for CanonicalTx {
+    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>) -> Self {
         let chain_position = match tx.chain_position {
-            BdkChainPosition::Confirmed(anchor) => ChainPosition::Confirmed {
-                height: anchor.confirmation_height,
-                timestamp: anchor.confirmation_time,
-            },
+            BdkChainPosition::Confirmed(anchor) => {
+                let block_id = BlockId {
+                    height: anchor.block_id.height,
+                    hash: anchor.block_id.hash.to_string(),
+                };
+                ChainPosition::Confirmed {
+                    confirmation_block_time: ConfirmationBlockTime {
+                        block_id,
+                        confirmation_time: anchor.confirmation_time,
+                    },
+                }
+            }
             BdkChainPosition::Unconfirmed(timestamp) => ChainPosition::Unconfirmed { timestamp },
         };
 
@@ -87,14 +115,6 @@ impl From<BdkBalance> for Balance {
     }
 }
 
-pub struct ChangeSet(pub(crate) CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>);
-
-impl From<CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>> for ChangeSet {
-    fn from(change_set: CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>) -> Self {
-        ChangeSet(change_set)
-    }
-}
-
 pub struct LocalOutput {
     pub outpoint: OutPoint,
     pub txout: TxOut,
@@ -129,45 +149,78 @@ pub trait SyncScriptInspector: Sync + Send {
     fn inspect(&self, script: Arc<Script>, total: u64);
 }
 
+pub struct FullScanRequestBuilder(
+    pub(crate) Mutex<Option<BdkFullScanRequestBuilder<KeychainKind>>>,
+);
+
+pub struct SyncRequestBuilder(pub(crate) Mutex<Option<BdkSyncRequestBuilder<(KeychainKind, u32)>>>);
+
 pub struct FullScanRequest(pub(crate) Mutex<Option<BdkFullScanRequest<KeychainKind>>>);
 
-pub struct SyncRequest(pub(crate) Mutex<Option<BdkSyncRequest>>);
+pub struct SyncRequest(pub(crate) Mutex<Option<BdkSyncRequest<(KeychainKind, u32)>>>);
 
-impl SyncRequest {
+impl SyncRequestBuilder {
     pub fn inspect_spks(
         &self,
         inspector: Arc<dyn SyncScriptInspector>,
-    ) -> Result<Arc<Self>, InspectError> {
-        let mut guard = self.0.lock().unwrap();
-        if let Some(sync_request) = guard.take() {
-            let total = sync_request.spks.len() as u64;
-            let sync_request = sync_request.inspect_spks(move |spk| {
-                inspector.inspect(Arc::new(BdkScriptBuf::from(spk).into()), total)
-            });
-            Ok(Arc::new(SyncRequest(Mutex::new(Some(sync_request)))))
-        } else {
-            Err(InspectError::RequestAlreadyConsumed)
-        }
+    ) -> Result<Arc<Self>, RequestBuilderError> {
+        let guard = self
+            .0
+            .lock()
+            .unwrap()
+            .take()
+            .ok_or(RequestBuilderError::RequestAlreadyConsumed)?;
+        let sync_request_builder = guard.inspect({
+            move |script, progress| {
+                if let SyncItem::Spk(_, spk) = script {
+                    inspector.inspect(Arc::new(Script(spk.to_owned())), progress.total() as u64)
+                }
+            }
+        });
+        Ok(Arc::new(SyncRequestBuilder(Mutex::new(Some(
+            sync_request_builder,
+        )))))
+    }
+
+    pub fn build(&self) -> Result<Arc<SyncRequest>, RequestBuilderError> {
+        let guard = self
+            .0
+            .lock()
+            .unwrap()
+            .take()
+            .ok_or(RequestBuilderError::RequestAlreadyConsumed)?;
+        Ok(Arc::new(SyncRequest(Mutex::new(Some(guard.build())))))
     }
 }
 
-impl FullScanRequest {
+impl FullScanRequestBuilder {
     pub fn inspect_spks_for_all_keychains(
         &self,
         inspector: Arc<dyn FullScanScriptInspector>,
-    ) -> Result<Arc<Self>, InspectError> {
-        let mut guard = self.0.lock().unwrap();
-        if let Some(full_scan_request) = guard.take() {
-            let inspector = Arc::new(inspector);
-            let full_scan_request =
-                full_scan_request.inspect_spks_for_all_keychains(move |k, spk_i, script| {
-                    inspector.inspect(k, spk_i, Arc::new(BdkScriptBuf::from(script).into()))
-                });
-            Ok(Arc::new(FullScanRequest(Mutex::new(Some(
-                full_scan_request,
-            )))))
-        } else {
-            Err(InspectError::RequestAlreadyConsumed)
-        }
+    ) -> Result<Arc<Self>, RequestBuilderError> {
+        let guard = self
+            .0
+            .lock()
+            .unwrap()
+            .take()
+            .ok_or(RequestBuilderError::RequestAlreadyConsumed)?;
+        let full_scan_request_builder = guard.inspect(move |keychain, index, script| {
+            inspector.inspect(keychain, index, Arc::new(Script(script.to_owned())))
+        });
+        Ok(Arc::new(FullScanRequestBuilder(Mutex::new(Some(
+            full_scan_request_builder,
+        )))))
+    }
+
+    pub fn build(&self) -> Result<Arc<FullScanRequest>, RequestBuilderError> {
+        let guard = self
+            .0
+            .lock()
+            .unwrap()
+            .take()
+            .ok_or(RequestBuilderError::RequestAlreadyConsumed)?;
+        Ok(Arc::new(FullScanRequest(Mutex::new(Some(guard.build())))))
     }
 }
+
+pub struct Update(pub(crate) BdkUpdate);

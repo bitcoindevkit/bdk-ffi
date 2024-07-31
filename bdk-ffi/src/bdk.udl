@@ -79,6 +79,13 @@ interface CreateTxError {
 };
 
 [Error]
+interface CreateWithPersistError {
+  Persist(string error_message);
+  DataAlreadyExists();
+  Descriptor(string error_message);
+};
+
+[Error]
 interface DescriptorError {
     InvalidHdKeyPath();
     InvalidDescriptorChecksum();
@@ -162,6 +169,13 @@ interface FromScriptError {
 };
 
 [Error]
+interface LoadWithPersistError {
+    Persist(string error_message);
+    InvalidChangeSet(string error_message);
+    CouldNotLoad();
+};
+
+[Error]
 interface ParseAmountError {
   OutOfRange();
   TooPrecise();
@@ -220,7 +234,7 @@ interface PsbtParseError {
 };
 
 [Error]
-interface InspectError {
+interface RequestBuilderError {
   RequestAlreadyConsumed();
 };
 
@@ -242,11 +256,11 @@ interface SignerError {
     TxInputsIndexError(string error_message);
     MiniscriptPsbt(string error_message);
     External(string error_message);
+    Psbt(string error_message);
 };
 
 [Error]
 interface SqliteError {
-  InvalidNetwork(Network expected, Network given);
   Sqlite(string rusqlite_error);
 };
 
@@ -264,14 +278,6 @@ interface TransactionError {
 [Error]
 interface TxidParseError {
   InvalidTxid(string txid);
-};
-
-[Error]
-interface WalletCreationError {
-  Descriptor(string error_message);
-  LoadedGenesisDoesNotMatch(string expected, string got);
-  LoadedNetworkDoesNotMatch(Network expected, Network? got);
-  LoadedDescriptorDoesNotMatch(string got, KeychainKind keychain);
 };
 
 // ------------------------------------------------------------------------
@@ -317,8 +323,18 @@ dictionary TxOut {
 
 [Enum]
 interface ChainPosition {
-  Confirmed(u32 height, u64 timestamp);
+  Confirmed(ConfirmationBlockTime confirmation_block_time);
   Unconfirmed(u64 timestamp);
+};
+
+dictionary ConfirmationBlockTime {
+  BlockId block_id;
+  u64 confirmation_time;
+};
+
+dictionary BlockId {
+  u32 height;
+  string hash;
 };
 
 dictionary CanonicalTx {
@@ -326,15 +342,25 @@ dictionary CanonicalTx {
   ChainPosition chain_position;
 };
 
-interface FullScanRequest {
-  [Throws=InspectError]
-  FullScanRequest inspect_spks_for_all_keychains(FullScanScriptInspector inspector);
+interface FullScanRequestBuilder {
+  [Throws=RequestBuilderError]
+  FullScanRequestBuilder inspect_spks_for_all_keychains(FullScanScriptInspector inspector);
+
+  [Throws=RequestBuilderError]
+  FullScanRequest build();
 };
 
-interface SyncRequest {
-  [Throws=InspectError]
-  SyncRequest inspect_spks(SyncScriptInspector inspector);
+interface SyncRequestBuilder {
+  [Throws=RequestBuilderError]
+  SyncRequestBuilder inspect_spks(SyncScriptInspector inspector);
+
+  [Throws=RequestBuilderError]
+  SyncRequest build();
 };
+
+interface FullScanRequest {};
+
+interface SyncRequest {};
 
 [Trait, WithForeign]
 interface SyncScriptInspector {
@@ -359,11 +385,11 @@ enum ChangeSpendPolicy {
 };
 
 interface Wallet {
-  [Throws=WalletCreationError]
-  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
+  [Throws=CreateWithPersistError]
+  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
 
-  [Name=new_or_load, Throws=WalletCreationError]
-  constructor(Descriptor descriptor, Descriptor change_descriptor, ChangeSet? change_set, Network network);
+  [Name=load, Throws=LoadWithPersistError]
+  constructor(Descriptor descriptor, Descriptor change_descriptor, Connection connection);
 
   AddressInfo reveal_next_address(KeychainKind keychain);
 
@@ -374,7 +400,7 @@ interface Wallet {
   [Throws=CannotConnectError]
   void apply_update(Update update);
 
-  boolean is_mine([ByRef] Script script);
+  boolean is_mine(Script script);
 
   [Throws=SignerError]
   boolean sign(Psbt psbt);
@@ -396,11 +422,12 @@ interface Wallet {
 
   sequence<LocalOutput> list_output();
 
-  FullScanRequest start_full_scan();
+  FullScanRequestBuilder start_full_scan();
 
-  SyncRequest start_sync_with_revealed_spks();
+  SyncRequestBuilder start_sync_with_revealed_spks();
 
-  ChangeSet? take_staged();
+  [Throws=SqliteError]
+  boolean persist(Connection connection);
 };
 
 interface Update {};
@@ -457,15 +484,12 @@ interface BumpFeeTxBuilder {
 // bdk_sqlite crate
 // ------------------------------------------------------------------------
 
-interface SqliteStore {
+interface Connection {
   [Throws=SqliteError]
   constructor(string path);
 
-  [Throws=SqliteError]
-  void write([ByRef] ChangeSet change_set);
-
-  [Throws=SqliteError]
-  ChangeSet? read();
+  [Name=new_in_memory, Throws=SqliteError]
+  constructor();
 };
 
 // ------------------------------------------------------------------------

@@ -16,9 +16,10 @@ class LiveElectrumClientTest {
 
     @Test
     fun testSyncedBalance() {
-        val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET)
+        var conn: Connection = Connection.newInMemory()
+        val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, conn)
         val electrumClient: ElectrumClient = ElectrumClient(SIGNET_ELECTRUM_URL)
-        val fullScanRequest: FullScanRequest = wallet.startFullScan()
+        val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
         val update = electrumClient.fullScan(fullScanRequest, 10uL, 10uL, false)
         wallet.applyUpdate(update)
         println("Balance: ${wallet.balance().total.toSat()}")

@@ -26,13 +26,11 @@ final class OfflinePersistenceTests: XCTestCase {
     }
 
     func testPersistence() throws {
-        let sqliteStore = try! SqliteStore(path: dbFilePath.path)
-        let initialChangeSet = try! sqliteStore.read()
-        let wallet = try Wallet.newOrLoad(
+        let connection = try Connection(path: dbFilePath.path)
+        let wallet = try Wallet.load(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
-            changeSet: initialChangeSet,
-            network: .signet
+            connection: connection
         )
         let nextAddress: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
         print("Address: \(nextAddress)")

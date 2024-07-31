@@ -36,10 +36,12 @@ class OfflineWalletTest {
 
    @Test
     fun testNewAddress() {
+        val conn = Connection.newInMemory()
         val wallet: Wallet = Wallet(
             descriptor,
             changeDescriptor,
-            Network.TESTNET
+            Network.TESTNET,
+            conn
         )
         val addressInfo: AddressInfo = wallet.revealNextAddress(KeychainKind.EXTERNAL)
 
@@ -56,10 +58,12 @@ class OfflineWalletTest {
 
     @Test
     fun testBalance() {
+        var conn: Connection = Connection.newInMemory()
         val wallet: Wallet = Wallet(
             descriptor,
             changeDescriptor,
-            Network.TESTNET
+            Network.TESTNET,
+            conn
         )
 
         assertEquals(

@@ -18,14 +18,11 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk_wallet = { version = "1.0.0-alpha.13", features = ["all-keys", "keys-bip39"] }
-bdk_esplora = { version = "0.15.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
-# NOTE: This is a temporary workaround to use the electrum-client with the use-rustls-ring feature. It points to a fork
-#       of bdk in which the bdk_electrum library uses the electrum-client with the use-rustls-ring feature.
-bdk_electrum = { git = "https://github.com/thunderbiscuit/bdk/", package = "bdk_electrum", branch = "feature/electrum-client-ring-ffi-alpha13", default-features = false, features = ["use-rustls-ring"] }
-# bdk_electrum = { version = "0.15.0" }
-bdk_sqlite = { version = "0.2.0" }
-bdk_bitcoind_rpc = { version = "0.12.0" }
+bdk_wallet = { version = "1.0.0-beta.2", features = ["all-keys", "keys-bip39", "rusqlite"] }
+bdk_core = { version = "0.1.0" }
+bdk_esplora = { version = "0.17.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
+bdk_electrum = { version = "0.17.0", default-features = false, features = ["use-rustls-ring"] }
+bdk_bitcoind_rpc = { version = "0.14.0" }
 bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
 
 uniffi = { version = "=0.28.0" }

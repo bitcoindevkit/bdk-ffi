@@ -20,15 +20,12 @@ class OfflinePersistenceTest {
 
     @Test
     fun testPersistence() {
-        val sqliteStore: SqliteStore = SqliteStore(persistenceFilePath)
-        val initialChangeSet: ChangeSet? = sqliteStore.read()
-        requireNotNull(initialChangeSet) { "ChangeSet should not be null after loading a valid database" }
+        val connection = Connection(persistenceFilePath)
 
-        val wallet: Wallet = Wallet.newOrLoad(
+        val wallet: Wallet = Wallet.load(
             descriptor,
             changeDescriptor,
-            initialChangeSet,
-            Network.SIGNET,
+            connection
         )
         val addressInfo: AddressInfo = wallet.revealNextAddress(KeychainKind.EXTERNAL)
         println("Address: $addressInfo")
