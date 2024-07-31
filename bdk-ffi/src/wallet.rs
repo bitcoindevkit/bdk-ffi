@@ -170,6 +170,7 @@ pub struct Update(pub(crate) BdkUpdate);
 
 #[derive(Clone, Debug)]
 pub struct TxBuilder {
+    pub(crate) add_global_xpubs: bool,
     pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
     pub(crate) utxos: Vec<OutPoint>,
     pub(crate) unspendable: HashSet<OutPoint>,
@@ -186,6 +187,7 @@ pub struct TxBuilder {
 impl TxBuilder {
     pub(crate) fn new() -> Self {
         TxBuilder {
+            add_global_xpubs: false,
             recipients: Vec::new(),
             utxos: Vec::new(),
             unspendable: HashSet::new(),
@@ -198,6 +200,13 @@ impl TxBuilder {
             rbf: None,
             // data: Vec::new(),
         }
+    }
+
+    pub(crate) fn add_global_xpubs(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            add_global_xpubs: true,
+            ..self.clone()
+        })
     }
 
     pub(crate) fn add_recipient(&self, script: &Script, amount: Arc<Amount>) -> Arc<Self> {
@@ -324,6 +333,9 @@ impl TxBuilder {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
+        if self.add_global_xpubs {
+            tx_builder.add_global_xpubs();
+        }
         for (script, amount) in &self.recipients {
             tx_builder.add_recipient(script.clone(), *amount);
         }
