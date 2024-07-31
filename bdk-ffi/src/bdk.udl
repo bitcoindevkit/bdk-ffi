@@ -391,6 +391,8 @@ interface Wallet {
   [Name=load, Throws=LoadWithPersistError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Connection connection);
 
+  u32? derivation_index(KeychainKind keychain);
+
   AddressInfo reveal_next_address(KeychainKind keychain);
 
   Network network();

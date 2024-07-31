@@ -85,6 +85,10 @@ impl Wallet {
             .map_err(CannotConnectError::from)
     }
 
+    pub(crate) fn derivation_index(&self, keychain: KeychainKind) -> Option<u32> {
+        self.get_wallet().derivation_index(keychain)
+    }
+
     pub fn network(&self) -> Network {
         self.get_wallet().network()
     }
