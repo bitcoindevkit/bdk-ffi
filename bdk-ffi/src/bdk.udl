@@ -365,6 +365,8 @@ interface Wallet {
   [Name=new_or_load, Throws=WalletCreationError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, ChangeSet? change_set, Network network);
 
+  u32? derivation_index(KeychainKind keychain);
+
   AddressInfo reveal_next_address(KeychainKind keychain);
 
   Network network();
