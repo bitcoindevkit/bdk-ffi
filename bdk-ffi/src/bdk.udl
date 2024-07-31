@@ -360,10 +360,10 @@ enum ChangeSpendPolicy {
 
 interface Wallet {
   [Throws=WalletCreationError]
-  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
+  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
 
-  [Name=new_or_load, Throws=WalletCreationError]
-  constructor(Descriptor descriptor, Descriptor change_descriptor, ChangeSet? change_set, Network network);
+  [Name=load, Throws=WalletCreationError]
+  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
 
   AddressInfo reveal_next_address(KeychainKind keychain);
 
@@ -400,7 +400,8 @@ interface Wallet {
 
   SyncRequest start_sync_with_revealed_spks();
 
-  ChangeSet? take_staged();
+  [Throws=PersistenceError]
+  void persist(Connection connection);
 };
 
 interface Update {};
@@ -457,15 +458,9 @@ interface BumpFeeTxBuilder {
 // bdk_sqlite crate
 // ------------------------------------------------------------------------
 
-interface SqliteStore {
+interface Connection {
   [Throws=SqliteError]
   constructor(string path);
-
-  [Throws=SqliteError]
-  void write([ByRef] ChangeSet change_set);
-
-  [Throws=SqliteError]
-  ChangeSet? read();
 };
 
 // ------------------------------------------------------------------------

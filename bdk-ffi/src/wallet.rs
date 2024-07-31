@@ -2,9 +2,9 @@ use crate::bitcoin::Amount;
 use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateTxError, SignerError, TxidParseError,
-    WalletCreationError,
+    CalculateFeeError, CannotConnectError, CreateTxError, PersistenceError, SignerError, TxidParseError, WalletCreationError
 };
+use crate::store::Connection;
 use crate::types::{
     AddressInfo, Balance, CanonicalTx, ChangeSet, FullScanRequest, LocalOutput, ScriptAmount,
     SyncRequest,
@@ -15,9 +15,9 @@ use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
-use bdk_wallet::chain::{CombinedChangeSet, ConfirmationTimeHeightAnchor};
-use bdk_wallet::wallet::tx_builder::ChangeSpendPolicy;
-use bdk_wallet::wallet::Update as BdkUpdate;
+use bdk_wallet::chain::{ConfirmationBlockTime, Persisted};
+use bdk_wallet::tx_builder::ChangeSpendPolicy;
+use bdk_wallet::Update as BdkUpdate;
 use bdk_wallet::Wallet as BdkWallet;
 use bdk_wallet::{KeychainKind, SignOptions};
 
@@ -26,36 +26,50 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub struct Wallet {
-    inner_mutex: Mutex<BdkWallet>,
+    inner_mutex: Mutex<Persisted<BdkWallet>>,
 }
 
 impl Wallet {
-    pub fn new(
+    pub fn create(
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         network: Network,
+        connection: Connection,
     ) -> Result<Self, WalletCreationError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let wallet: BdkWallet = BdkWallet::new(&descriptor, &change_descriptor, network)?;
+        let wallet: Persisted<BdkWallet> = BdkWallet::create(descriptor, change_descriptor)
+            .network(network)
+            .create_wallet(connection.get_store())?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
         })
     }
 
-    pub fn new_or_load(
+    pub fn load(
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         change_set: Option<Arc<ChangeSet>>,
         network: Network,
+        connection: Connection,
     ) -> Result<Self, WalletCreationError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let change_set: Option<CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>> =
+        let change_set: Option<ChangeSet<KeychainKind, ConfirmationBlockTime>> =
             change_set.map(|cs| cs.0.clone());
-        let wallet: BdkWallet =
-            BdkWallet::new_or_load(&descriptor, &change_descriptor, change_set, network)?;
+        let opt_wallet = BdkWallet::load()
+            .descriptors(descriptor, change_descriptor)
+            .network(network)
+            .load_wallet(connection.get_store())?;
+        let wallet: Persisted<BdkWallet> = match opt_wallet {
+            Some(w) => w,
+            None => {
+                BdkWallet::create(descriptor, change_descriptor)
+                    .network(network)
+                    .create_wallet(connection.get_store())?
+            },
+        };
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -154,10 +168,8 @@ impl Wallet {
         Arc::new(SyncRequest(Mutex::new(Some(request))))
     }
 
-    pub fn take_staged(&self) -> Option<Arc<ChangeSet>> {
-        self.get_wallet()
-            .take_staged()
-            .map(|change_set| Arc::new(change_set.into()))
+    pub fn persist(&self, connection: Connection) -> Result<(), PersistenceError> {
+        self.get_wallet().persist(connection.get_store())?
     }
 }
 

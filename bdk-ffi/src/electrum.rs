@@ -3,14 +3,14 @@ use crate::error::ElectrumError;
 use crate::types::{FullScanRequest, SyncRequest};
 use crate::wallet::Update;
 
+use bdk_electrum::bdk_chain::spk_client::{FullScanResult, SyncResult};
 use bdk_electrum::BdkElectrumClient as BdkBdkElectrumClient;
-use bdk_electrum::{ElectrumFullScanResult, ElectrumSyncResult};
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
 use bdk_wallet::chain::spk_client::SyncResult as BdkSyncResult;
-use bdk_wallet::wallet::Update as BdkUpdate;
+use bdk_wallet::Update as BdkUpdate;
 use bdk_wallet::KeychainKind;
 
 use std::collections::BTreeMap;
@@ -44,7 +44,7 @@ impl ElectrumClient {
             .take()
             .ok_or(ElectrumError::RequestAlreadyConsumed)?;
 
-        let electrum_result: ElectrumFullScanResult<KeychainKind> = self.0.full_scan(
+        let electrum_result: FullScanResult<KeychainKind> = self.0.full_scan(
             request,
             stop_gap as usize,
             batch_size as usize,
@@ -76,7 +76,7 @@ impl ElectrumClient {
             .take()
             .ok_or(ElectrumError::RequestAlreadyConsumed)?;
 
-        let electrum_result: ElectrumSyncResult =
+        let electrum_result: SyncResult =
             self.0
                 .sync(request, batch_size as usize, fetch_prev_txouts)?;
         let sync_result: BdkSyncResult =

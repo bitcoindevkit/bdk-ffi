@@ -10,8 +10,8 @@ use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
 use bdk_wallet::chain::spk_client::SyncResult as BdkSyncResult;
-use bdk_wallet::wallet::Update as BdkUpdate;
 use bdk_wallet::KeychainKind;
+use bdk_wallet::Update as BdkUpdate;
 
 use std::collections::BTreeMap;
 use std::sync::Arc;

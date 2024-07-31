@@ -7,13 +7,13 @@ use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
 use bdk_wallet::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
-use bdk_wallet::chain::{ChainPosition as BdkChainPosition, ConfirmationTimeHeightAnchor};
-use bdk_wallet::wallet::AddressInfo as BdkAddressInfo;
-use bdk_wallet::wallet::Balance as BdkBalance;
+use bdk_wallet::chain::{ChainPosition as BdkChainPosition, ConfirmationBlockTime};
+use bdk_wallet::AddressInfo as BdkAddressInfo;
+use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 
-use bdk_electrum::bdk_chain::CombinedChangeSet;
+pub(crate) use bdk_wallet::ChangeSet;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,8 +27,8 @@ pub struct CanonicalTx {
     pub chain_position: ChainPosition,
 }
 
-impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationTimeHeightAnchor>> for CanonicalTx {
-    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationTimeHeightAnchor>) -> Self {
+impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationBlockTime>> for CanonicalTx {
+    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationBlockTime>) -> Self {
         let chain_position = match tx.chain_position {
             BdkChainPosition::Confirmed(anchor) => ChainPosition::Confirmed {
                 height: anchor.confirmation_height,
@@ -84,14 +84,6 @@ impl From<BdkBalance> for Balance {
             trusted_spendable: Arc::new(bdk_balance.trusted_spendable().into()),
             total: Arc::new(bdk_balance.total().into()),
         }
-    }
-}
-
-pub struct ChangeSet(pub(crate) CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>);
-
-impl From<CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>> for ChangeSet {
-    fn from(change_set: CombinedChangeSet<KeychainKind, ConfirmationTimeHeightAnchor>) -> Self {
-        ChangeSet(change_set)
     }
 }
 

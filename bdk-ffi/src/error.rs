@@ -4,7 +4,6 @@ use crate::Network;
 use bdk_bitcoind_rpc::bitcoincore_rpc::bitcoin::address::ParseError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
-use bdk_sqlite::Error as BdkSqliteError;
 use bdk_wallet::bitcoin::address::FromScriptError as BdkFromScriptError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
 use bdk_wallet::bitcoin::amount::ParseAmountError as BdkParseAmountError;
@@ -16,14 +15,15 @@ use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
 use bdk_wallet::chain::local_chain::CannotConnectError as BdkCannotConnectError;
 use bdk_wallet::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk_wallet::descriptor::DescriptorError as BdkDescriptorError;
+use bdk_wallet::error::BuildFeeBumpError;
+use bdk_wallet::error::CreateTxError as BdkCreateTxError;
 use bdk_wallet::keys::bip39::Error as BdkBip39Error;
 use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
-use bdk_wallet::wallet::error::BuildFeeBumpError;
-use bdk_wallet::wallet::error::CreateTxError as BdkCreateTxError;
-use bdk_wallet::wallet::signer::SignerError as BdkSignerError;
-use bdk_wallet::wallet::tx_builder::AddUtxoError;
-use bdk_wallet::wallet::{NewError, NewOrLoadError};
+use bdk_wallet::rusqlite::Error as BdkSqliteError;
+use bdk_wallet::signer::SignerError as BdkSignerError;
+use bdk_wallet::tx_builder::AddUtxoError;
 use bdk_wallet::KeychainKind;
+use bdk_wallet::LoadError;
 use bitcoin_internals::hex::display::DisplayHex;
 
 use std::convert::TryInto;
@@ -586,14 +586,15 @@ pub enum SignerError {
 
     #[error("external error: {error_message}")]
     External { error_message: String },
+
+    #[error("Psbt error: {error_message}")]
+    Psbt { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum SqliteError {
     // NOTE: This error is renamed from Network to InvalidNetwork to avoid conflict with the Network
     //       enum in uniffi.
-    #[error("invalid network, cannot change the one already stored in the database")]
-    InvalidNetwork { expected: Network, given: Network },
 
     #[error("SQLite error: {rusqlite_error}")]
     Sqlite { rusqlite_error: String },
@@ -636,21 +637,14 @@ pub enum WalletCreationError {
     // From NewError and NewOrLoadError
     #[error("error with descriptor: {error_message}")]
     Descriptor { error_message: String },
-
-    // From NewOrLoadError
-    #[error("loaded genesis hash '{got}' does not match the expected one '{expected}'")]
-    LoadedGenesisDoesNotMatch { expected: String, got: String },
-
-    // From NewOrLoadError
-    #[error("loaded network type is not {expected}, got {got:?}")]
-    LoadedNetworkDoesNotMatch {
-        expected: Network,
-        got: Option<Network>,
-    },
-
-    // From NewOrLoadError
-    #[error("loaded descriptor '{got}' does not match what was provided '{keychain:?}'")]
-    LoadedDescriptorDoesNotMatch { got: String, keychain: KeychainKind },
+    #[error("data loaded from persistence is missing network type.")]
+    MissingNetwork,
+    #[error("data loaded from persistence is missing genesis hash.")]
+    MissingGenesis,
+    #[error("data loaded from persistence is missing descriptor: {error_message}")]
+    MissingDescriptor { error_message: String },
+    #[error("data loaded is unexpected: {error_message}")]
+    Mismatch { error_message: String },
 }
 
 // ------------------------------------------------------------------------
@@ -1179,19 +1173,14 @@ impl From<BdkSignerError> for SignerError {
             BdkSignerError::MissingHdKeypath => SignerError::MissingHdKeypath,
             BdkSignerError::NonStandardSighash => SignerError::NonStandardSighash,
             BdkSignerError::InvalidSighash => SignerError::InvalidSighash,
-            BdkSignerError::SighashP2wpkh(e) => SignerError::SighashP2wpkh {
-                error_message: e.to_string(),
-            },
             BdkSignerError::SighashTaproot(e) => SignerError::SighashTaproot {
-                error_message: e.to_string(),
-            },
-            BdkSignerError::TxInputsIndexError(e) => SignerError::TxInputsIndexError {
                 error_message: e.to_string(),
             },
             BdkSignerError::MiniscriptPsbt(e) => SignerError::MiniscriptPsbt {
                 error_message: e.to_string(),
             },
             BdkSignerError::External(e) => SignerError::External { error_message: e },
+            BdkSignerError::Psbt(e) => SignerError::Psbt { error_message: e.to_string() },
         }
     }
 }
@@ -1221,49 +1210,33 @@ impl From<BdkEncodeError> for TransactionError {
 
 impl From<BdkSqliteError> for SqliteError {
     fn from(error: BdkSqliteError) -> Self {
-        match error {
-            BdkSqliteError::Network { expected, given } => {
-                SqliteError::InvalidNetwork { expected, given }
-            }
-            BdkSqliteError::Sqlite(e) => SqliteError::Sqlite {
-                rusqlite_error: e.to_string(),
-            },
-        }
-    }
-}
-
-impl From<bdk_sqlite::rusqlite::Error> for SqliteError {
-    fn from(error: bdk_sqlite::rusqlite::Error) -> Self {
         SqliteError::Sqlite {
             rusqlite_error: error.to_string(),
         }
     }
 }
 
-impl From<NewError> for WalletCreationError {
-    fn from(error: NewError) -> Self {
+impl From<DescriptorError> for WalletCreationError {
+    fn from(error: DescriptorError) -> Self {
         WalletCreationError::Descriptor {
             error_message: error.to_string(),
         }
     }
 }
 
-impl From<NewOrLoadError> for WalletCreationError {
-    fn from(error: NewOrLoadError) -> Self {
+impl From<LoadError> for WalletCreationError {
+    fn from(error: LoadError) -> Self {
         match error {
-            NewOrLoadError::Descriptor(e) => WalletCreationError::Descriptor {
+            LoadError::Descriptor(e) => WalletCreationError::Descriptor {
                 error_message: e.to_string(),
             },
-            NewOrLoadError::LoadedGenesisDoesNotMatch { expected, got } => {
-                WalletCreationError::LoadedGenesisDoesNotMatch {
-                    expected: expected.to_string(),
-                    got: format!("{:?}", got),
-                }
+            LoadError::MissingGenesis => {
+                WalletCreationError::MissingGenesis 
             }
-            NewOrLoadError::LoadedNetworkDoesNotMatch { expected, got } => {
+            LoadError::LoadedNetworkDoesNotMatch { expected, got } => {
                 WalletCreationError::LoadedNetworkDoesNotMatch { expected, got }
             }
-            NewOrLoadError::LoadedDescriptorDoesNotMatch { got, keychain } => {
+            LoadError::LoadedDescriptorDoesNotMatch { got, keychain } => {
                 WalletCreationError::LoadedDescriptorDoesNotMatch {
                     got: format!("{:?}", got),
                     keychain,

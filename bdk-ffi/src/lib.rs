@@ -47,7 +47,7 @@ use crate::keys::DerivationPath;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
-use crate::store::SqliteStore;
+use crate::store::Connection;
 use crate::types::AddressInfo;
 use crate::types::Balance;
 use crate::types::CanonicalTx;
@@ -67,7 +67,7 @@ use crate::wallet::Wallet;
 
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;
-use bdk_wallet::wallet::tx_builder::ChangeSpendPolicy;
+use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::KeychainKind;
 
 uniffi::include_scaffolding!("bdk");

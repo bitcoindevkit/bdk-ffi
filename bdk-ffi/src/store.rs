@@ -1,39 +1,18 @@
+use bdk_wallet::rusqlite::Connection as BdkConnection;
+
+use std::{borrow::BorrowMut, sync::Mutex};
+
 use crate::error::SqliteError;
-use crate::types::ChangeSet;
 
-use bdk_sqlite::rusqlite::Connection;
-use bdk_sqlite::{Store as BdkSqliteStore, Store};
-use bdk_wallet::chain::ConfirmationTimeHeightAnchor;
-use bdk_wallet::KeychainKind;
+pub struct Connection(Mutex<BdkConnection>);
 
-use std::sync::{Arc, Mutex, MutexGuard};
-
-pub struct SqliteStore(Mutex<BdkSqliteStore<KeychainKind, ConfirmationTimeHeightAnchor>>);
-
-impl SqliteStore {
+impl Connection {
     pub fn new(path: String) -> Result<Self, SqliteError> {
-        let connection = Connection::open(path)?;
-        let db = Store::new(connection)?;
-        Ok(Self(Mutex::new(db)))
+        let connection = BdkConnection::open(path)?;
+        Ok(Self(Mutex::new(connection)))
     }
 
-    pub(crate) fn get_store(
-        &self,
-    ) -> MutexGuard<BdkSqliteStore<KeychainKind, ConfirmationTimeHeightAnchor>> {
-        self.0.lock().expect("sqlite store")
-    }
-
-    pub fn write(&self, changeset: &ChangeSet) -> Result<(), SqliteError> {
-        self.get_store()
-            .write(&changeset.0)
-            .map_err(SqliteError::from)
-    }
-
-    pub fn read(&self) -> Result<Option<Arc<ChangeSet>>, SqliteError> {
-        self.get_store()
-            .read()
-            .map_err(SqliteError::from)
-            .map(|optional_bdk_change_set| optional_bdk_change_set.map(ChangeSet::from))
-            .map(|optional_change_set| optional_change_set.map(Arc::new))
+    pub(crate) fn get_store(&self) -> &mut BdkConnection {
+        self.0.borrow_mut()
     }
 }
