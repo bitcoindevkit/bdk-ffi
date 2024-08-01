@@ -374,7 +374,7 @@ enum ChangeSpendPolicy {
 };
 
 interface Wallet {
-  [Name=create, Throws=FfiGenericError]
+  [Throws=FfiGenericError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
 
   [Name=load, Throws=FfiGenericError]
@@ -419,7 +419,7 @@ interface Wallet {
 };
 
 interface WalletNoPersist {
-  [Name=create, Throws=FfiGenericError]
+  [Throws=FfiGenericError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
 
   AddressInfo reveal_next_address(KeychainKind keychain);

@@ -15,7 +15,6 @@ use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 
-pub(crate) use bdk_wallet::ChangeSet;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug)]

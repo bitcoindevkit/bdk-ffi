@@ -52,7 +52,6 @@ use crate::types::Balance;
 use crate::types::BlockId;
 use crate::types::CanonicalTx;
 use crate::types::ChainPosition;
-use crate::types::ChangeSet;
 use crate::types::ConfirmationBlockTime;
 use crate::types::FullScanRequest;
 use crate::types::FullScanScriptInspector;
@@ -68,6 +67,7 @@ use crate::wallet::Wallet;
 use crate::wallet::WalletNoPersist;
 use crate::error::FfiGenericError;
 
+use bdk_wallet::ChangeSet;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
