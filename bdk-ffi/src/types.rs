@@ -7,7 +7,9 @@ use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
 use bdk_wallet::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
-use bdk_wallet::chain::{ChainPosition as BdkChainPosition, ConfirmationBlockTime};
+use bdk_wallet::chain::{
+    ChainPosition as BdkChainPosition, ConfirmationBlockTime as BdkConfirmationBlockTime,
+};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
@@ -16,10 +18,26 @@ use bdk_wallet::LocalOutput as BdkLocalOutput;
 pub(crate) use bdk_wallet::ChangeSet;
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug)]
 pub enum ChainPosition {
-    Confirmed { height: u32, timestamp: u64 },
-    Unconfirmed { timestamp: u64 },
+    Confirmed {
+        confirmation_block_time: ConfirmationBlockTime,
+    },
+    Unconfirmed {
+        timestamp: u64,
+    },
+}
+
+#[derive(Debug)]
+pub struct ConfirmationBlockTime {
+    pub block_id: BlockId,
+    pub confirmation_time: u64,
+}
+
+#[derive(Debug)]
+pub struct BlockId {
+    pub height: u32,
+    pub hash: String,
 }
 
 pub struct CanonicalTx {
@@ -27,13 +45,21 @@ pub struct CanonicalTx {
     pub chain_position: ChainPosition,
 }
 
-impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationBlockTime>> for CanonicalTx {
-    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, ConfirmationBlockTime>) -> Self {
+impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for CanonicalTx {
+    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>) -> Self {
         let chain_position = match tx.chain_position {
-            BdkChainPosition::Confirmed(anchor) => ChainPosition::Confirmed {
-                height: anchor.confirmation_height,
-                timestamp: anchor.confirmation_time,
-            },
+            BdkChainPosition::Confirmed(anchor) => {
+                let block_id = BlockId {
+                    height: anchor.block_id.height,
+                    hash: anchor.block_id.hash.to_string(),
+                };
+                ChainPosition::Confirmed {
+                    confirmation_block_time: ConfirmationBlockTime {
+                        block_id,
+                        confirmation_time: anchor.confirmation_time,
+                    },
+                }
+            }
             BdkChainPosition::Unconfirmed(timestamp) => ChainPosition::Unconfirmed { timestamp },
         };
 

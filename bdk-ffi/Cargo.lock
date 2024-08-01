@@ -198,9 +198,6 @@ checksum = "50d03673ebb8fe45a2d65dbb24f1fa810dcbf7d350ef7dae084ebad312e2cae7"
 dependencies = [
  "bitcoin",
  "miniscript",
- "rusqlite",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -210,6 +207,9 @@ source = "git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-cli
 dependencies = [
  "bitcoin",
  "miniscript",
+ "rusqlite",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -224,10 +224,9 @@ dependencies = [
 [[package]]
 name = "bdk_esplora"
 version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "204670408e48e7a1058002fb63965c1a1822d6b0b36dcc1c268b45b9b98887ca"
+source = "git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-client-ring#513ea22a736543a958c29c3a8ca480ed59d694a0"
 dependencies = [
- "bdk_chain 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bdk_chain 0.17.0 (git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-client-ring)",
  "esplora-client",
  "miniscript",
 ]
@@ -235,10 +234,9 @@ dependencies = [
 [[package]]
 name = "bdk_wallet"
 version = "1.0.0-beta.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49d37a46443951e1a587c433420657a7448bce4a601116869c90d29111281b3e"
+source = "git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-client-ring#513ea22a736543a958c29c3a8ca480ed59d694a0"
 dependencies = [
- "bdk_chain 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bdk_chain 0.17.0 (git+https://github.com/thunderbiscuit/bdk/?branch=feature/electrum-client-ring)",
  "bip39",
  "bitcoin",
  "miniscript",

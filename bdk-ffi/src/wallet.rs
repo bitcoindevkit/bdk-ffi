@@ -2,11 +2,12 @@ use crate::bitcoin::Amount;
 use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateTxError, PersistenceError, SignerError, TxidParseError, WalletCreationError
+    CalculateFeeError, CannotConnectError, CreateTxError, FfiGenericError,
+    SignerError, TxidParseError,
 };
 use crate::store::Connection;
 use crate::types::{
-    AddressInfo, Balance, CanonicalTx, ChangeSet, FullScanRequest, LocalOutput, ScriptAmount,
+    AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount,
     SyncRequest,
 };
 
@@ -15,15 +16,22 @@ use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
-use bdk_wallet::chain::{ConfirmationBlockTime, Persisted};
+use bdk_wallet::chain::Persisted;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
-use bdk_wallet::Update as BdkUpdate;
 use bdk_wallet::Wallet as BdkWallet;
 use bdk_wallet::{KeychainKind, SignOptions};
+use bdk_wallet::Update as BdkUpdate;
+use bdk_wallet::rusqlite::Connection as BdkConnection;
+use bdk_wallet::TxBuilder as BdkTxBuilder;
 
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
+use std::borrow::BorrowMut;
+
+pub struct WalletNoPersist {
+    inner_mutex: Mutex<BdkWallet>,
+}
 
 pub struct Wallet {
     inner_mutex: Mutex<Persisted<BdkWallet>>,
@@ -34,13 +42,18 @@ impl Wallet {
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         network: Network,
-        connection: Connection,
-    ) -> Result<Self, WalletCreationError> {
+        connection: Arc<Connection>,
+    ) -> Result<Self, FfiGenericError> {
+    // ) -> Result<Self, WalletCreationError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
+        let mut binding = connection.get_store();
+        let db: &mut BdkConnection = binding.borrow_mut();
+
         let wallet: Persisted<BdkWallet> = BdkWallet::create(descriptor, change_descriptor)
             .network(network)
-            .create_wallet(connection.get_store())?;
+            .create_wallet(db)
+            .expect("wallet creation failed");
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -50,33 +63,23 @@ impl Wallet {
     pub fn load(
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
-        change_set: Option<Arc<ChangeSet>>,
-        network: Network,
         connection: Connection,
-    ) -> Result<Self, WalletCreationError> {
+    ) -> Result<Option<Wallet>, FfiGenericError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let change_set: Option<ChangeSet<KeychainKind, ConfirmationBlockTime>> =
-            change_set.map(|cs| cs.0.clone());
-        let opt_wallet = BdkWallet::load()
-            .descriptors(descriptor, change_descriptor)
-            .network(network)
-            .load_wallet(connection.get_store())?;
-        let wallet: Persisted<BdkWallet> = match opt_wallet {
-            Some(w) => w,
-            None => {
-                BdkWallet::create(descriptor, change_descriptor)
-                    .network(network)
-                    .create_wallet(connection.get_store())?
-            },
-        };
+        let mut binding = connection.get_store();
+        let db: &mut BdkConnection = binding.borrow_mut();
 
-        Ok(Wallet {
+        let wallet: Option<Persisted<BdkWallet>> = BdkWallet::load()
+            .descriptors(descriptor, change_descriptor)
+            .load_wallet(db)?;
+
+        Some(Wallet {
             inner_mutex: Mutex::new(wallet),
         })
     }
 
-    pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
+    pub(crate) fn get_wallet(&self) -> MutexGuard<Persisted<BdkWallet>> {
         self.inner_mutex.lock().expect("wallet")
     }
 
@@ -99,8 +102,8 @@ impl Wallet {
         Balance::from(bdk_balance)
     }
 
-    pub fn is_mine(&self, script: &Script) -> bool {
-        self.get_wallet().is_mine(&script.0)
+    pub fn is_mine(&self, script: Arc<Script>) -> bool {
+        self.get_wallet().is_mine(script.0.clone())
     }
 
     pub(crate) fn sign(
@@ -168,8 +171,13 @@ impl Wallet {
         Arc::new(SyncRequest(Mutex::new(Some(request))))
     }
 
-    pub fn persist(&self, connection: Connection) -> Result<(), PersistenceError> {
-        self.get_wallet().persist(connection.get_store())?
+    // pub fn persist(&self, connection: Connection) -> Result<bool, FfiGenericError> {
+    pub fn persist(&self, connection: Arc<Connection>) -> bool {
+        // self.get_wallet().persist(connection.get_store())
+        // self.get_wallet().persist(connection.get_store()).map_err(FfiGenericError::GenericError)
+        self.get_wallet()
+            .persist(&mut *connection.get_store())
+            .expect("persist failed")
     }
 }
 
@@ -332,6 +340,7 @@ impl TxBuilder {
         })
     }
 
+    // pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
@@ -382,6 +391,22 @@ impl TxBuilder {
         Ok(Arc::new(psbt.into()))
     }
 }
+
+// pub trait CanTxBuild: Send + Sync + 'static {
+//     fn build_tx(&self) -> BdkTxBuilder<bdk_wallet::coin_selection::BranchAndBoundCoinSelection>;
+// }
+//
+// impl CanTxBuild for Wallet {
+//     fn build_tx(&self) -> BdkTxBuilder<bdk_wallet::coin_selection::BranchAndBoundCoinSelection> {
+//         self.get_wallet().build_tx()
+//     }
+// }
+//
+// impl CanTxBuild for WalletNoPersist {
+//     fn build_tx(&self) -> BdkTxBuilder<bdk_wallet::coin_selection::BranchAndBoundCoinSelection> {
+//         self.get_wallet().build_tx()
+//     }
+// }
 
 #[derive(Clone)]
 pub(crate) struct BumpFeeTxBuilder {

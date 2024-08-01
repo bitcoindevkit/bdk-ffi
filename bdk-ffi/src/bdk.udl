@@ -5,6 +5,11 @@ namespace bdk {};
 // ------------------------------------------------------------------------
 
 [Error]
+interface FfiGenericError {
+  GenericError();
+};
+
+[Error]
 interface AddressParseError {
   Base58();
   Bech32();
@@ -242,11 +247,11 @@ interface SignerError {
     TxInputsIndexError(string error_message);
     MiniscriptPsbt(string error_message);
     External(string error_message);
+    Psbt(string error_message);
 };
 
 [Error]
 interface SqliteError {
-  InvalidNetwork(Network expected, Network given);
   Sqlite(string rusqlite_error);
 };
 
@@ -266,13 +271,13 @@ interface TxidParseError {
   InvalidTxid(string txid);
 };
 
-[Error]
-interface WalletCreationError {
-  Descriptor(string error_message);
-  LoadedGenesisDoesNotMatch(string expected, string got);
-  LoadedNetworkDoesNotMatch(Network expected, Network? got);
-  LoadedDescriptorDoesNotMatch(string got, KeychainKind keychain);
-};
+// [Error]
+// interface WalletCreationError {
+//   Descriptor(string error_message);
+//   LoadedGenesisDoesNotMatch(string expected, string got);
+//   LoadedNetworkDoesNotMatch(Network expected, Network? got);
+//   LoadedDescriptorDoesNotMatch(string got, KeychainKind keychain);
+// };
 
 // ------------------------------------------------------------------------
 // bdk_wallet crate - types module
@@ -317,8 +322,18 @@ dictionary TxOut {
 
 [Enum]
 interface ChainPosition {
-  Confirmed(u32 height, u64 timestamp);
+  Confirmed(ConfirmationBlockTime confirmation_block_time);
   Unconfirmed(u64 timestamp);
+};
+
+dictionary ConfirmationBlockTime {
+  BlockId block_id;
+  u64 confirmation_time;
+};
+
+dictionary BlockId {
+  u32 height;
+  string hash;
 };
 
 dictionary CanonicalTx {
@@ -359,11 +374,11 @@ enum ChangeSpendPolicy {
 };
 
 interface Wallet {
-  [Throws=WalletCreationError]
+  [Name=create, Throws=FfiGenericError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
 
-  [Name=load, Throws=WalletCreationError]
-  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
+  // [Name=load, Throws=FfiGenericError]
+  // constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
 
   AddressInfo reveal_next_address(KeychainKind keychain);
 
@@ -374,7 +389,7 @@ interface Wallet {
   [Throws=CannotConnectError]
   void apply_update(Update update);
 
-  boolean is_mine([ByRef] Script script);
+  boolean is_mine(Script script);
 
   [Throws=SignerError]
   boolean sign(Psbt psbt);
@@ -400,8 +415,7 @@ interface Wallet {
 
   SyncRequest start_sync_with_revealed_spks();
 
-  [Throws=PersistenceError]
-  void persist(Connection connection);
+  boolean persist(Connection connection);
 };
 
 interface Update {};
@@ -459,7 +473,7 @@ interface BumpFeeTxBuilder {
 // ------------------------------------------------------------------------
 
 interface Connection {
-  [Throws=SqliteError]
+  [Throws=FfiGenericError]
   constructor(string path);
 };
 
