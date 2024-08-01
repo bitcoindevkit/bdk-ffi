@@ -24,11 +24,14 @@ bdk_esplora = { version = "0.15.0", default-features = false, features = ["std",
 #       of bdk in which the bdk_electrum library uses the electrum-client with the use-rustls-ring feature.
 bdk_electrum = { git = "https://github.com/thunderbiscuit/bdk/", package = "bdk_electrum", branch = "feature/electrum-client-ring-ffi-alpha13", default-features = false, features = ["use-rustls-ring"] }
 # bdk_electrum = { version = "0.15.0" }
+bdk_kyoto = { git = "https://github.com/ValuedMammal/bdk-kyoto.git", rev = "31507d5b5361b0d8753ad16722eb5245a3f4a4b9", default-features = false }
+#bdk_kyoto = { path = "../../bdk-kyoto" }
 bdk_sqlite = { version = "0.2.0" }
 bdk_bitcoind_rpc = { version = "0.12.0" }
 bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
 
 uniffi = { version = "=0.28.0" }
+tokio = { version = "1", default-features = false, features = [ "rt-multi-thread", "sync" ] }
 thiserror = "1.0.58"
 
 [build-dependencies]

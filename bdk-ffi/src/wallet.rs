@@ -63,7 +63,7 @@ impl Wallet {
     }
 
     pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
-        self.inner_mutex.lock().expect("wallet")
+        self.inner_mutex.lock().unwrap()
     }
 
     pub fn reveal_next_address(&self, keychain_kind: KeychainKind) -> AddressInfo {
