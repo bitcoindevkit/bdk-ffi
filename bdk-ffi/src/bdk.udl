@@ -377,8 +377,8 @@ interface Wallet {
   [Name=create, Throws=FfiGenericError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
 
-  // [Name=load, Throws=FfiGenericError]
-  // constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
+  [Name=load, Throws=FfiGenericError]
+  constructor(Descriptor descriptor, Descriptor change_descriptor, Connection connection);
 
   AddressInfo reveal_next_address(KeychainKind keychain);
 
@@ -416,6 +416,46 @@ interface Wallet {
   SyncRequest start_sync_with_revealed_spks();
 
   boolean persist(Connection connection);
+};
+
+interface WalletNoPersist {
+  [Name=create, Throws=FfiGenericError]
+  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
+
+  AddressInfo reveal_next_address(KeychainKind keychain);
+
+  Network network();
+
+  Balance balance();
+
+  [Throws=CannotConnectError]
+  void apply_update(Update update);
+
+  boolean is_mine(Script script);
+
+  [Throws=SignerError]
+  boolean sign(Psbt psbt);
+
+  SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
+
+  sequence<CanonicalTx> transactions();
+
+  [Throws=TxidParseError]
+  CanonicalTx? get_tx(string txid);
+
+  [Throws=CalculateFeeError]
+  Amount calculate_fee([ByRef] Transaction tx);
+
+  [Throws=CalculateFeeError]
+  FeeRate calculate_fee_rate([ByRef] Transaction tx);
+
+  sequence<LocalOutput> list_unspent();
+
+  sequence<LocalOutput> list_output();
+
+  FullScanRequest start_full_scan();
+
+  SyncRequest start_sync_with_revealed_spks();
 };
 
 interface Update {};

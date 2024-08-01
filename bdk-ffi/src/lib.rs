@@ -65,6 +65,7 @@ use crate::wallet::SentAndReceivedValues;
 use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
+use crate::wallet::WalletNoPersist;
 use crate::error::FfiGenericError;
 
 use bdk_wallet::bitcoin::Network;
