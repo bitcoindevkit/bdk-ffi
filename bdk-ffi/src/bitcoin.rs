@@ -9,6 +9,7 @@ use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
+use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Address as BdkAddress;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
@@ -20,6 +21,7 @@ use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
 use bdk_wallet::bitcoin::Txid;
+use bdk_wallet::miniscript::psbt::PsbtExt as MiniscriptPsbtExt;
 
 use std::fmt::Display;
 use std::ops::Deref;
@@ -221,6 +223,15 @@ impl Psbt {
     pub(crate) fn serialize(&self) -> String {
         let psbt = self.0.lock().unwrap().clone();
         psbt.to_string()
+    }
+
+    pub(crate) fn finalize(&self) -> Result<Arc<Psbt>, PsbtError> {
+        let secp = Secp256k1::new();
+        let result = self.0.lock().unwrap().clone().finalize(&secp);
+        match result {
+            Ok(psbt) => Ok(Arc::new(Psbt::from(psbt))),
+            Err((_psbt, _errors)) => Err(PsbtError::OtherPsbtErr),
+        }
     }
 
     pub(crate) fn extract_tx(&self) -> Result<Arc<Transaction>, ExtractTxError> {
