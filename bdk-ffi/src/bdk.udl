@@ -495,6 +495,9 @@ interface TxBuilder {
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
+
+  [Throws=CreateTxError]
+  Psbt finish_no_persist([ByRef] WalletNoPersist wallet);
 };
 
 interface BumpFeeTxBuilder {
@@ -506,6 +509,9 @@ interface BumpFeeTxBuilder {
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
+
+  [Throws=CreateTxError]
+  Psbt finish_no_persist([ByRef] WalletNoPersist wallet);
 };
 
 // ------------------------------------------------------------------------

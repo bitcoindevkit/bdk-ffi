@@ -376,58 +376,66 @@ impl TxBuilder {
             ..self.clone()
         })
     }
+}
 
-    // pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
-    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
-        // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
-        let mut wallet = wallet.get_wallet();
-        let mut tx_builder = wallet.build_tx();
-        for (script, amount) in &self.recipients {
-            tx_builder.add_recipient(script.clone(), *amount);
-        }
-        tx_builder.change_policy(self.change_policy);
-        if !self.utxos.is_empty() {
-            let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
-            tx_builder
-                .add_utxos(&bdk_utxos)
-                .map_err(CreateTxError::from)?;
-        }
-        if !self.unspendable.is_empty() {
-            let bdk_unspendable: Vec<BdkOutPoint> =
-                self.unspendable.iter().map(BdkOutPoint::from).collect();
-            tx_builder.unspendable(bdk_unspendable);
-        }
-        if self.manually_selected_only {
-            tx_builder.manually_selected_only();
-        }
-        if let Some(fee_rate) = &self.fee_rate {
-            tx_builder.fee_rate(fee_rate.0);
-        }
-        if let Some(fee_amount) = &self.fee_absolute {
-            tx_builder.fee_absolute(fee_amount.0);
-        }
-        if self.drain_wallet {
-            tx_builder.drain_wallet();
-        }
-        if let Some(script) = &self.drain_to {
-            tx_builder.drain_to(script.clone());
-        }
-        if let Some(rbf) = &self.rbf {
-            match *rbf {
-                RbfValue::Default => {
-                    tx_builder.enable_rbf();
+macro_rules! impl_tx_finish {
+    ($tx_builder:ident, $wallet:ident, $func_name:ident) => {
+        impl $tx_builder {
+            pub(crate) fn $func_name(&self, wallet: &Arc<$wallet>) -> Result<Arc<Psbt>, CreateTxError> {
+                // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
+                let mut wallet = wallet.get_wallet();
+                let mut tx_builder = wallet.build_tx();
+                for (script, amount) in &self.recipients {
+                    tx_builder.add_recipient(script.clone(), *amount);
                 }
-                RbfValue::Value(nsequence) => {
-                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
+                tx_builder.change_policy(self.change_policy);
+                if !self.utxos.is_empty() {
+                    let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
+                    tx_builder
+                        .add_utxos(&bdk_utxos)
+                        .map_err(CreateTxError::from)?;
                 }
+                if !self.unspendable.is_empty() {
+                    let bdk_unspendable: Vec<BdkOutPoint> =
+                        self.unspendable.iter().map(BdkOutPoint::from).collect();
+                    tx_builder.unspendable(bdk_unspendable);
+                }
+                if self.manually_selected_only {
+                    tx_builder.manually_selected_only();
+                }
+                if let Some(fee_rate) = &self.fee_rate {
+                    tx_builder.fee_rate(fee_rate.0);
+                }
+                if let Some(fee_amount) = &self.fee_absolute {
+                    tx_builder.fee_absolute(fee_amount.0);
+                }
+                if self.drain_wallet {
+                    tx_builder.drain_wallet();
+                }
+                if let Some(script) = &self.drain_to {
+                    tx_builder.drain_to(script.clone());
+                }
+                if let Some(rbf) = &self.rbf {
+                    match *rbf {
+                        RbfValue::Default => {
+                            tx_builder.enable_rbf();
+                        }
+                        RbfValue::Value(nsequence) => {
+                            tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
+                        }
+                    }
+                }
+        
+                let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
+        
+                Ok(Arc::new(psbt.into()))
             }
         }
-
-        let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
-
-        Ok(Arc::new(psbt.into()))
-    }
+    };
 }
+
+impl_tx_finish!(TxBuilder, Wallet, finish);
+impl_tx_finish!(TxBuilder, WalletNoPersist, finish_no_persist);
 
 #[derive(Clone)]
 pub(crate) struct BumpFeeTxBuilder {
@@ -458,29 +466,38 @@ impl BumpFeeTxBuilder {
             ..self.clone()
         })
     }
+}
 
-    pub(crate) fn finish(&self, wallet: &Wallet) -> Result<Arc<Psbt>, CreateTxError> {
-        let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
-            outpoint: self.txid.clone(),
-        })?;
-        let mut wallet = wallet.get_wallet();
-        let mut tx_builder = wallet.build_fee_bump(txid).map_err(CreateTxError::from)?;
-        tx_builder.fee_rate(self.fee_rate.0);
-        if let Some(rbf) = &self.rbf {
-            match *rbf {
-                RbfValue::Default => {
-                    tx_builder.enable_rbf();
+macro_rules! impl_tx_bump {
+    ($tx_bumper:ident, $wallet:ident, $func_name:ident) => {
+        impl $tx_bumper {
+            pub(crate) fn $func_name(&self, wallet: &$wallet) -> Result<Arc<Psbt>, CreateTxError> {
+                let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
+                    outpoint: self.txid.clone(),
+                })?;
+                let mut wallet = wallet.get_wallet();
+                let mut tx_builder = wallet.build_fee_bump(txid).map_err(CreateTxError::from)?;
+                tx_builder.fee_rate(self.fee_rate.0);
+                if let Some(rbf) = &self.rbf {
+                    match *rbf {
+                        RbfValue::Default => {
+                            tx_builder.enable_rbf();
+                        }
+                        RbfValue::Value(nsequence) => {
+                            tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
+                        }
+                    }
                 }
-                RbfValue::Value(nsequence) => {
-                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
-                }
+                let psbt: BdkPsbt = tx_builder.finish()?;
+        
+                Ok(Arc::new(psbt.into()))
             }
         }
-        let psbt: BdkPsbt = tx_builder.finish()?;
-
-        Ok(Arc::new(psbt.into()))
-    }
+    };
 }
+
+impl_tx_bump!(BumpFeeTxBuilder, Wallet, finish);
+impl_tx_bump!(BumpFeeTxBuilder, WalletNoPersist, finish_no_persist);
 
 #[derive(Clone, Debug)]
 pub enum RbfValue {
