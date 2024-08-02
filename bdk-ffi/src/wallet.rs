@@ -2,13 +2,12 @@ use crate::bitcoin::Amount;
 use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateTxError, FfiGenericError,
-    SignerError, TxidParseError,
+    CalculateFeeError, CannotConnectError, CreateTxError, FfiGenericError, SignerError,
+    TxidParseError,
 };
 use crate::store::Connection;
 use crate::types::{
-    AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount,
-    SyncRequest,
+    AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount, SyncRequest,
 };
 
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
@@ -17,16 +16,16 @@ use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk_wallet::chain::Persisted;
+use bdk_wallet::rusqlite::Connection as BdkConnection;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
+use bdk_wallet::Update as BdkUpdate;
 use bdk_wallet::Wallet as BdkWallet;
 use bdk_wallet::{KeychainKind, SignOptions};
-use bdk_wallet::Update as BdkUpdate;
-use bdk_wallet::rusqlite::Connection as BdkConnection;
 
+use std::borrow::BorrowMut;
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
-use std::borrow::BorrowMut;
 
 pub struct Wallet {
     inner_mutex: Mutex<Persisted<BdkWallet>>,
@@ -70,7 +69,8 @@ impl Wallet {
 
         let wallet: Persisted<BdkWallet> = BdkWallet::load()
             .descriptors(descriptor, change_descriptor)
-            .load_wallet(db).map_err(|_| FfiGenericError::GenericError)
+            .load_wallet(db)
+            .map_err(|_| FfiGenericError::GenericError)
             .unwrap()
             .ok_or(FfiGenericError::GenericError)?;
 
@@ -87,9 +87,7 @@ impl Wallet {
     pub fn persist(&self, connection: Arc<Connection>) -> bool {
         let mut binding = connection.get_store();
         let db: &mut BdkConnection = binding.borrow_mut();
-        self.get_wallet()
-            .persist(db)
-            .expect("persist failed")
+        self.get_wallet().persist(db).expect("persist failed")
     }
 }
 
@@ -123,26 +121,26 @@ macro_rules! impl_wallet {
             pub fn reveal_next_address(&self, keychain_kind: KeychainKind) -> AddressInfo {
                 self.get_wallet().reveal_next_address(keychain_kind).into()
             }
-        
+
             pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
                 self.get_wallet()
                     .apply_update(update.0.clone())
                     .map_err(CannotConnectError::from)
             }
-        
+
             pub fn network(&self) -> Network {
                 self.get_wallet().network()
             }
-        
+
             pub fn balance(&self) -> Balance {
                 let bdk_balance = self.get_wallet().balance();
                 Balance::from(bdk_balance)
             }
-        
+
             pub fn is_mine(&self, script: Arc<Script>) -> bool {
                 self.get_wallet().is_mine(script.0.clone())
             }
-        
+
             pub(crate) fn sign(
                 &self,
                 psbt: Arc<Psbt>,
@@ -153,7 +151,7 @@ macro_rules! impl_wallet {
                     .sign(&mut psbt, SignOptions::default())
                     .map_err(SignerError::from)
             }
-        
+
             pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
                 let (sent, received) = self.get_wallet().sent_and_received(&tx.into());
                 SentAndReceivedValues {
@@ -161,48 +159,54 @@ macro_rules! impl_wallet {
                     received: Arc::new(received.into()),
                 }
             }
-        
+
             pub fn transactions(&self) -> Vec<CanonicalTx> {
                 self.get_wallet()
                     .transactions()
                     .map(|tx| tx.into())
                     .collect()
             }
-        
+
             pub fn get_tx(&self, txid: String) -> Result<Option<CanonicalTx>, TxidParseError> {
-                let txid =
-                    Txid::from_str(txid.as_str()).map_err(|_| TxidParseError::InvalidTxid { txid })?;
+                let txid = Txid::from_str(txid.as_str())
+                    .map_err(|_| TxidParseError::InvalidTxid { txid })?;
                 Ok(self.get_wallet().get_tx(txid).map(|tx| tx.into()))
             }
-        
-            pub fn calculate_fee(&self, tx: &Transaction) -> Result<Arc<Amount>, CalculateFeeError> {
+
+            pub fn calculate_fee(
+                &self,
+                tx: &Transaction,
+            ) -> Result<Arc<Amount>, CalculateFeeError> {
                 self.get_wallet()
                     .calculate_fee(&tx.into())
                     .map(Amount::from)
                     .map(Arc::new)
                     .map_err(|e| e.into())
             }
-        
-            pub fn calculate_fee_rate(&self, tx: &Transaction) -> Result<Arc<FeeRate>, CalculateFeeError> {
+
+            pub fn calculate_fee_rate(
+                &self,
+                tx: &Transaction,
+            ) -> Result<Arc<FeeRate>, CalculateFeeError> {
                 self.get_wallet()
                     .calculate_fee_rate(&tx.into())
                     .map(|bdk_fee_rate| Arc::new(FeeRate(bdk_fee_rate)))
                     .map_err(|e| e.into())
             }
-        
+
             pub fn list_unspent(&self) -> Vec<LocalOutput> {
                 self.get_wallet().list_unspent().map(|o| o.into()).collect()
             }
-        
+
             pub fn list_output(&self) -> Vec<LocalOutput> {
                 self.get_wallet().list_output().map(|o| o.into()).collect()
             }
-        
+
             pub fn start_full_scan(&self) -> Arc<FullScanRequest> {
                 let request = self.get_wallet().start_full_scan();
                 Arc::new(FullScanRequest(Mutex::new(Some(request))))
             }
-        
+
             pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequest> {
                 let request = self.get_wallet().start_sync_with_revealed_spks();
                 Arc::new(SyncRequest(Mutex::new(Some(request))))

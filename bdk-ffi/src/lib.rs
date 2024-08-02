@@ -31,6 +31,7 @@ use crate::error::ElectrumError;
 use crate::error::EsploraError;
 use crate::error::ExtractTxError;
 use crate::error::FeeRateError;
+use crate::error::FfiGenericError;
 use crate::error::FromScriptError;
 use crate::error::InspectError;
 use crate::error::ParseAmountError;
@@ -65,12 +66,11 @@ use crate::wallet::TxBuilder;
 use crate::wallet::Update;
 use crate::wallet::Wallet;
 use crate::wallet::WalletNoPersist;
-use crate::error::FfiGenericError;
 
-use bdk_wallet::ChangeSet;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
+use bdk_wallet::ChangeSet;
 use bdk_wallet::KeychainKind;
 
 uniffi::include_scaffolding!("bdk");
