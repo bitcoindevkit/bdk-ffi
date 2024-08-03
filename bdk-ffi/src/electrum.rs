@@ -1,7 +1,7 @@
 use crate::bitcoin::Transaction;
 use crate::error::ElectrumError;
+use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
-use crate::wallet::Update;
 
 use bdk_electrum::bdk_chain::spk_client::SyncResult;
 use bdk_electrum::BdkElectrumClient as BdkBdkElectrumClient;

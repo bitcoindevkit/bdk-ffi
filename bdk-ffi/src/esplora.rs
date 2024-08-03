@@ -1,7 +1,7 @@
 use crate::bitcoin::Transaction;
 use crate::error::EsploraError;
+use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
-use crate::wallet::Update;
 
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;

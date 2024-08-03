@@ -1,13 +1,15 @@
-use crate::error::FfiGenericError;
+use crate::error::SqliteError;
+
 use bdk_wallet::rusqlite::Connection as BdkConnection;
+
 use std::sync::Mutex;
 use std::sync::MutexGuard;
 
 pub struct Connection(Mutex<BdkConnection>);
 
 impl Connection {
-    pub fn new(path: String) -> Result<Self, FfiGenericError> {
-        let connection = BdkConnection::open(path).expect("must open connection");
+    pub fn new(path: String) -> Result<Self, SqliteError> {
+        let connection = BdkConnection::open(path)?;
         Ok(Self(Mutex::new(connection)))
     }
 

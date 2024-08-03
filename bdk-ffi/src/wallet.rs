@@ -1,29 +1,23 @@
 use crate::bitcoin::Amount;
-use crate::bitcoin::{FeeRate, OutPoint, Psbt, Script, Transaction};
+use crate::bitcoin::{FeeRate, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateTxError, FfiGenericError, SignerError,
-    TxidParseError,
+    CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
+    FfiGenericError, LoadWithPersistError, SignerError, TxidParseError,
 };
 use crate::store::Connection;
-use crate::types::{
-    AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount, SyncRequest,
-};
+use crate::types::SentAndReceivedValues;
+use crate::types::Update;
+use crate::types::{AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, SyncRequest};
 
-use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::Network;
-use bdk_wallet::bitcoin::Psbt as BdkPsbt;
-use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
-use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
+use bdk_wallet::bitcoin::Txid;
 use bdk_wallet::chain::Persisted;
 use bdk_wallet::rusqlite::Connection as BdkConnection;
-use bdk_wallet::tx_builder::ChangeSpendPolicy;
-use bdk_wallet::Update as BdkUpdate;
 use bdk_wallet::Wallet as BdkWallet;
 use bdk_wallet::{KeychainKind, SignOptions};
 
 use std::borrow::BorrowMut;
-use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -41,7 +35,7 @@ impl Wallet {
         change_descriptor: Arc<Descriptor>,
         network: Network,
         connection: Arc<Connection>,
-    ) -> Result<Self, FfiGenericError> {
+    ) -> Result<Self, CreateWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
         let mut binding = connection.get_store();
@@ -49,8 +43,7 @@ impl Wallet {
 
         let wallet: Persisted<BdkWallet> = BdkWallet::create(descriptor, change_descriptor)
             .network(network)
-            .create_wallet(db)
-            .expect("wallet creation failed");
+            .create_wallet(db)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -61,22 +54,21 @@ impl Wallet {
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         connection: Arc<Connection>,
-    ) -> Result<Wallet, FfiGenericError> {
+    ) -> Result<Option<Wallet>, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
         let mut binding = connection.get_store();
         let db: &mut BdkConnection = binding.borrow_mut();
 
-        let wallet: Persisted<BdkWallet> = BdkWallet::load()
+        let wallet: Option<Persisted<BdkWallet>> = BdkWallet::load()
             .descriptors(descriptor, change_descriptor)
-            .load_wallet(db)
-            .map_err(|_| FfiGenericError::GenericError)
-            .unwrap()
-            .ok_or(FfiGenericError::GenericError)?;
+            .load_wallet(db)?;
 
-        Ok(Wallet {
-            inner_mutex: Mutex::new(wallet),
-        })
+        wallet
+            .map(|w| Wallet {
+                inner_mutex: Mutex::new(Some(w)),
+            })
+            .ok_or(Ok(None))
     }
 
     pub(crate) fn get_wallet(&self) -> MutexGuard<Persisted<BdkWallet>> {
@@ -96,14 +88,13 @@ impl WalletNoPersist {
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         network: Network,
-    ) -> Result<Self, FfiGenericError> {
+    ) -> Result<Self, DescriptorError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
 
         let wallet: BdkWallet = BdkWallet::create(descriptor, change_descriptor)
             .network(network)
-            .create_wallet_no_persist()
-            .expect("wallet creation failed");
+            .create_wallet_no_persist()?;
 
         Ok(WalletNoPersist {
             inner_mutex: Mutex::new(wallet),
@@ -425,9 +416,9 @@ macro_rules! impl_tx_finish {
                         }
                     }
                 }
-        
+
                 let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
-        
+
                 Ok(Arc::new(psbt.into()))
             }
         }
@@ -489,7 +480,7 @@ macro_rules! impl_tx_bump {
                     }
                 }
                 let psbt: BdkPsbt = tx_builder.finish()?;
-        
+
                 Ok(Arc::new(psbt.into()))
             }
         }

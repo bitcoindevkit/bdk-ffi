@@ -12,6 +12,7 @@ use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
 use bdk_wallet::chain::local_chain::CannotConnectError as BdkCannotConnectError;
+use bdk_wallet::chain::rusqlite::Error as BdkSqliteError;
 use bdk_wallet::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk_wallet::descriptor::DescriptorError as BdkDescriptorError;
 use bdk_wallet::error::BuildFeeBumpError;
@@ -20,8 +21,10 @@ use bdk_wallet::keys::bip39::Error as BdkBip39Error;
 use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddUtxoError;
+use bdk_wallet::CreateWithPersistError as BdkCreateWithPersistError;
 use bitcoin_internals::hex::display::DisplayHex;
 
+use bdk_electrum::bdk_chain;
 use std::convert::TryInto;
 
 // ------------------------------------------------------------------------
@@ -207,6 +210,15 @@ pub enum CreateTxError {
 
     #[error("miniscript psbt error: {error_message}")]
     MiniscriptPsbt { error_message: String },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CreateWithPersistError {
+    #[error("sqlite persistence error: {error_message}")]
+    Persist { error_message: String },
+
+    #[error("the loaded changeset cannot construct wallet: {error_message}")]
+    Descriptor { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -402,6 +414,15 @@ pub enum FromScriptError {
 pub enum InspectError {
     #[error("the request has already been consumed")]
     RequestAlreadyConsumed,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum LoadWithPersistError {
+    #[error("sqlite persistence error: {error_message}")]
+    Persist { error_message: String },
+
+    #[error("the loaded changeset cannot construct wallet: {error_message}")]
+    InvalidChangeSet { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -601,9 +622,7 @@ pub enum SignerError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum SqliteError {
-    // NOTE: This error is renamed from Network to InvalidNetwork to avoid conflict with the Network
-    //       enum in uniffi.
-    #[error("SQLite error: {rusqlite_error}")]
+    #[error("sqlite error: {rusqlite_error}")]
     Sqlite { rusqlite_error: String },
 }
 
@@ -856,6 +875,19 @@ impl From<BdkCreateTxError> for CreateTxError {
                 }
             }
             BdkCreateTxError::MiniscriptPsbt(e) => CreateTxError::MiniscriptPsbt {
+                error_message: e.to_string(),
+            },
+        }
+    }
+}
+
+impl From<BdkCreateWithPersistError<bdk_chain::rusqlite::Error>> for CreateWithPersistError {
+    fn from(error: BdkCreateWithPersistError<bdk_chain::rusqlite::Error>) -> Self {
+        match error {
+            BdkCreateWithPersistError::Persist(e) => CreateWithPersistError::Persist {
+                error_message: e.to_string(),
+            },
+            BdkCreateWithPersistError::Descriptor(e) => CreateWithPersistError::Descriptor {
                 error_message: e.to_string(),
             },
         }
@@ -1217,13 +1249,13 @@ impl From<BdkEncodeError> for TransactionError {
     }
 }
 
-// impl From<BdkSqliteError> for SqliteError {
-//     fn from(error: BdkSqliteError) -> Self {
-//         SqliteError::Sqlite {
-//             rusqlite_error: error.to_string(),
-//         }
-//     }
-// }
+impl From<BdkSqliteError> for SqliteError {
+    fn from(error: BdkSqliteError) -> Self {
+        SqliteError::Sqlite {
+            rusqlite_error: error.to_string(),
+        }
+    }
+}
 
 impl From<DescriptorError> for WalletCreationError {
     fn from(error: DescriptorError) -> Self {
@@ -1232,28 +1264,6 @@ impl From<DescriptorError> for WalletCreationError {
         }
     }
 }
-
-// impl From<LoadError> for WalletCreationError {
-//     fn from(error: LoadError) -> Self {
-//         match error {
-//             LoadError::Descriptor(e) => WalletCreationError::Descriptor {
-//                 error_message: e.to_string(),
-//             },
-//             LoadError::MissingGenesis => {
-//                 WalletCreationError::MissingGenesis
-//             }
-//             LoadError::LoadedNetworkDoesNotMatch { expected, got } => {
-//                 WalletCreationError::LoadedNetworkDoesNotMatch { expected, got }
-//             }
-//             LoadError::LoadedDescriptorDoesNotMatch { got, keychain } => {
-//                 WalletCreationError::LoadedDescriptorDoesNotMatch {
-//                     got: format!("{:?}", got),
-//                     keychain,
-//                 }
-//             }
-//         }
-//     }
-// }
 
 // ------------------------------------------------------------------------
 // error tests
