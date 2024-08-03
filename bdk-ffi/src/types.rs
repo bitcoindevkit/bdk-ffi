@@ -14,6 +14,7 @@ use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
+use bdk_wallet::Update as BdkUpdate;
 
 use std::sync::{Arc, Mutex};
 
@@ -188,3 +189,5 @@ impl FullScanRequest {
         }
     }
 }
+
+pub struct Update(pub(crate) BdkUpdate);

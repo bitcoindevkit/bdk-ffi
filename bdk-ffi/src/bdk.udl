@@ -173,6 +173,13 @@ interface FromScriptError {
 };
 
 [Error]
+interface LoadWithPersistError {
+    Persist(string error_message);
+    InvalidChangeSet(string error_message);
+    CouldNotLoad();
+};
+
+[Error]
 interface ParseAmountError {
   OutOfRange();
   TooPrecise();
@@ -383,7 +390,7 @@ interface Wallet {
   [Throws=CreateWithPersistError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Network network, Connection connection);
 
-  [Name=load, Throws=FfiGenericError]
+  [Name=load, Throws=LoadWithPersistError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Connection connection);
 
   AddressInfo reveal_next_address(KeychainKind keychain);

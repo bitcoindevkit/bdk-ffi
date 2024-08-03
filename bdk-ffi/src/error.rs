@@ -22,6 +22,7 @@ use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptor
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddUtxoError;
 use bdk_wallet::CreateWithPersistError as BdkCreateWithPersistError;
+use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
 use bitcoin_internals::hex::display::DisplayHex;
 
 use bdk_electrum::bdk_chain;
@@ -423,6 +424,9 @@ pub enum LoadWithPersistError {
 
     #[error("the loaded changeset cannot construct wallet: {error_message}")]
     InvalidChangeSet { error_message: String },
+
+    #[error("could not load")]
+    CouldNotLoad,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1087,6 +1091,19 @@ impl From<BdkFromScriptError> for FromScriptError {
                 error_message: e.to_string(),
             },
             _ => FromScriptError::OtherFromScriptErr,
+        }
+    }
+}
+
+impl From<BdkLoadWithPersistError<bdk_chain::rusqlite::Error>> for LoadWithPersistError {
+    fn from(error: BdkLoadWithPersistError<bdk_chain::rusqlite::Error>) -> Self {
+        match error {
+            BdkLoadWithPersistError::Persist(e) => LoadWithPersistError::Persist {
+                error_message: e.to_string(),
+            },
+            BdkLoadWithPersistError::InvalidChangeSet(e) => LoadWithPersistError::InvalidChangeSet {
+                error_message: e.to_string(),
+            },
         }
     }
 }

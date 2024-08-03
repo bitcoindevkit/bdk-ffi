@@ -1,25 +1,31 @@
-use crate::bitcoin::Amount;
-use crate::bitcoin::{FeeRate, Psbt, Script, Transaction};
+use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
-    FfiGenericError, LoadWithPersistError, SignerError, TxidParseError,
+    CalculateFeeError, CannotConnectError, CreateTxError, SignerError,
+    TxidParseError, CreateWithPersistError, DescriptorError, LoadWithPersistError,
 };
 use crate::store::Connection;
-use crate::types::SentAndReceivedValues;
+use crate::types::{
+    AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, ScriptAmount, SyncRequest,
+};
 use crate::types::Update;
-use crate::types::{AddressInfo, Balance, CanonicalTx, FullScanRequest, LocalOutput, SyncRequest};
 
+use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::Network;
-use bdk_wallet::bitcoin::Txid;
+use bdk_wallet::bitcoin::Psbt as BdkPsbt;
+use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
+use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk_wallet::chain::Persisted;
 use bdk_wallet::rusqlite::Connection as BdkConnection;
+use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::Wallet as BdkWallet;
 use bdk_wallet::{KeychainKind, SignOptions};
 
 use std::borrow::BorrowMut;
+use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
+
 
 pub struct Wallet {
     inner_mutex: Mutex<Persisted<BdkWallet>>,
@@ -54,21 +60,20 @@ impl Wallet {
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         connection: Arc<Connection>,
-    ) -> Result<Option<Wallet>, LoadWithPersistError> {
+    ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
         let mut binding = connection.get_store();
         let db: &mut BdkConnection = binding.borrow_mut();
 
-        let wallet: Option<Persisted<BdkWallet>> = BdkWallet::load()
+        let wallet: Persisted<BdkWallet> = BdkWallet::load()
             .descriptors(descriptor, change_descriptor)
-            .load_wallet(db)?;
+            .load_wallet(db)?
+            .ok_or(LoadWithPersistError::CouldNotLoad)?;
 
-        wallet
-            .map(|w| Wallet {
-                inner_mutex: Mutex::new(Some(w)),
-            })
-            .ok_or(Ok(None))
+        Ok(Wallet {
+            inner_mutex: Mutex::new(wallet),
+        })
     }
 
     pub(crate) fn get_wallet(&self) -> MutexGuard<Persisted<BdkWallet>> {
@@ -213,8 +218,6 @@ pub struct SentAndReceivedValues {
     pub sent: Arc<Amount>,
     pub received: Arc<Amount>,
 }
-
-pub struct Update(pub(crate) BdkUpdate);
 
 #[derive(Clone, Debug)]
 pub struct TxBuilder {
