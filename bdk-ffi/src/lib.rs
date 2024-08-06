@@ -66,7 +66,6 @@ use crate::wallet::SentAndReceivedValues;
 use crate::types::SyncRequest;
 use crate::types::SyncScriptInspector;
 use crate::wallet::Wallet;
-use crate::wallet::WalletNoPersist;
 use crate::error::LoadWithPersistError;
 
 use bdk_wallet::bitcoin::Network;

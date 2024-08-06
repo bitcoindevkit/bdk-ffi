@@ -2,7 +2,7 @@ use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateTxError, SignerError,
-    TxidParseError, CreateWithPersistError, DescriptorError, LoadWithPersistError,
+    TxidParseError, CreateWithPersistError, LoadWithPersistError,
 };
 use crate::store::Connection;
 use crate::types::{
@@ -29,10 +29,6 @@ use std::sync::{Arc, Mutex, MutexGuard};
 
 pub struct Wallet {
     inner_mutex: Mutex<Persisted<BdkWallet>>,
-}
-
-pub struct WalletNoPersist {
-    inner_mutex: Mutex<BdkWallet>,
 }
 
 impl Wallet {
@@ -80,139 +76,108 @@ impl Wallet {
         self.inner_mutex.lock().expect("wallet")
     }
 
+    pub fn reveal_next_address(&self, keychain_kind: KeychainKind) -> AddressInfo {
+        self.get_wallet().reveal_next_address(keychain_kind).into()
+    }
+
+    pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
+        self.get_wallet()
+            .apply_update(update.0.clone())
+            .map_err(CannotConnectError::from)
+    }
+
+    pub fn network(&self) -> Network {
+        self.get_wallet().network()
+    }
+
+    pub fn balance(&self) -> Balance {
+        let bdk_balance = self.get_wallet().balance();
+        Balance::from(bdk_balance)
+    }
+
+    pub fn is_mine(&self, script: Arc<Script>) -> bool {
+        self.get_wallet().is_mine(script.0.clone())
+    }
+
+    pub(crate) fn sign(
+        &self,
+        psbt: Arc<Psbt>,
+        // sign_options: Option<SignOptions>,
+    ) -> Result<bool, SignerError> {
+        let mut psbt = psbt.0.lock().unwrap();
+        self.get_wallet()
+            .sign(&mut psbt, SignOptions::default())
+            .map_err(SignerError::from)
+    }
+
+    pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
+        let (sent, received) = self.get_wallet().sent_and_received(&tx.into());
+        SentAndReceivedValues {
+            sent: Arc::new(sent.into()),
+            received: Arc::new(received.into()),
+        }
+    }
+
+    pub fn transactions(&self) -> Vec<CanonicalTx> {
+        self.get_wallet()
+            .transactions()
+            .map(|tx| tx.into())
+            .collect()
+    }
+
+    pub fn get_tx(&self, txid: String) -> Result<Option<CanonicalTx>, TxidParseError> {
+        let txid = Txid::from_str(txid.as_str())
+            .map_err(|_| TxidParseError::InvalidTxid { txid })?;
+        Ok(self.get_wallet().get_tx(txid).map(|tx| tx.into()))
+    }
+
+    pub fn calculate_fee(
+        &self,
+        tx: &Transaction,
+    ) -> Result<Arc<Amount>, CalculateFeeError> {
+        self.get_wallet()
+            .calculate_fee(&tx.into())
+            .map(Amount::from)
+            .map(Arc::new)
+            .map_err(|e| e.into())
+    }
+
+    pub fn calculate_fee_rate(
+        &self,
+        tx: &Transaction,
+    ) -> Result<Arc<FeeRate>, CalculateFeeError> {
+        self.get_wallet()
+            .calculate_fee_rate(&tx.into())
+            .map(|bdk_fee_rate| Arc::new(FeeRate(bdk_fee_rate)))
+            .map_err(|e| e.into())
+    }
+
+    pub fn list_unspent(&self) -> Vec<LocalOutput> {
+        self.get_wallet().list_unspent().map(|o| o.into()).collect()
+    }
+
+    pub fn list_output(&self) -> Vec<LocalOutput> {
+        self.get_wallet().list_output().map(|o| o.into()).collect()
+    }
+
+    pub fn start_full_scan(&self) -> Arc<FullScanRequest> {
+        let request = self.get_wallet().start_full_scan();
+        Arc::new(FullScanRequest(Mutex::new(Some(request))))
+    }
+
+    pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequest> {
+        let request = self.get_wallet().start_sync_with_revealed_spks();
+        Arc::new(SyncRequest(Mutex::new(Some(request))))
+    }
+
     // pub fn persist(&self, connection: Connection) -> Result<bool, FfiGenericError> {
     pub fn persist(&self, connection: Arc<Connection>) -> bool {
         let mut binding = connection.get_store();
         let db: &mut BdkConnection = binding.borrow_mut();
         self.get_wallet().persist(db).expect("persist failed")
     }
+
 }
-
-impl WalletNoPersist {
-    pub fn new(
-        descriptor: Arc<Descriptor>,
-        change_descriptor: Arc<Descriptor>,
-        network: Network,
-    ) -> Result<Self, DescriptorError> {
-        let descriptor = descriptor.to_string_with_secret();
-        let change_descriptor = change_descriptor.to_string_with_secret();
-
-        let wallet: BdkWallet = BdkWallet::create(descriptor, change_descriptor)
-            .network(network)
-            .create_wallet_no_persist()?;
-
-        Ok(WalletNoPersist {
-            inner_mutex: Mutex::new(wallet),
-        })
-    }
-
-    pub(crate) fn get_wallet(&self) -> MutexGuard<BdkWallet> {
-        self.inner_mutex.lock().expect("wallet")
-    }
-}
-
-macro_rules! impl_wallet {
-    ($w:ident) => {
-        impl $w {
-            pub fn reveal_next_address(&self, keychain_kind: KeychainKind) -> AddressInfo {
-                self.get_wallet().reveal_next_address(keychain_kind).into()
-            }
-
-            pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
-                self.get_wallet()
-                    .apply_update(update.0.clone())
-                    .map_err(CannotConnectError::from)
-            }
-
-            pub fn network(&self) -> Network {
-                self.get_wallet().network()
-            }
-
-            pub fn balance(&self) -> Balance {
-                let bdk_balance = self.get_wallet().balance();
-                Balance::from(bdk_balance)
-            }
-
-            pub fn is_mine(&self, script: Arc<Script>) -> bool {
-                self.get_wallet().is_mine(script.0.clone())
-            }
-
-            pub(crate) fn sign(
-                &self,
-                psbt: Arc<Psbt>,
-                // sign_options: Option<SignOptions>,
-            ) -> Result<bool, SignerError> {
-                let mut psbt = psbt.0.lock().unwrap();
-                self.get_wallet()
-                    .sign(&mut psbt, SignOptions::default())
-                    .map_err(SignerError::from)
-            }
-
-            pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
-                let (sent, received) = self.get_wallet().sent_and_received(&tx.into());
-                SentAndReceivedValues {
-                    sent: Arc::new(sent.into()),
-                    received: Arc::new(received.into()),
-                }
-            }
-
-            pub fn transactions(&self) -> Vec<CanonicalTx> {
-                self.get_wallet()
-                    .transactions()
-                    .map(|tx| tx.into())
-                    .collect()
-            }
-
-            pub fn get_tx(&self, txid: String) -> Result<Option<CanonicalTx>, TxidParseError> {
-                let txid = Txid::from_str(txid.as_str())
-                    .map_err(|_| TxidParseError::InvalidTxid { txid })?;
-                Ok(self.get_wallet().get_tx(txid).map(|tx| tx.into()))
-            }
-
-            pub fn calculate_fee(
-                &self,
-                tx: &Transaction,
-            ) -> Result<Arc<Amount>, CalculateFeeError> {
-                self.get_wallet()
-                    .calculate_fee(&tx.into())
-                    .map(Amount::from)
-                    .map(Arc::new)
-                    .map_err(|e| e.into())
-            }
-
-            pub fn calculate_fee_rate(
-                &self,
-                tx: &Transaction,
-            ) -> Result<Arc<FeeRate>, CalculateFeeError> {
-                self.get_wallet()
-                    .calculate_fee_rate(&tx.into())
-                    .map(|bdk_fee_rate| Arc::new(FeeRate(bdk_fee_rate)))
-                    .map_err(|e| e.into())
-            }
-
-            pub fn list_unspent(&self) -> Vec<LocalOutput> {
-                self.get_wallet().list_unspent().map(|o| o.into()).collect()
-            }
-
-            pub fn list_output(&self) -> Vec<LocalOutput> {
-                self.get_wallet().list_output().map(|o| o.into()).collect()
-            }
-
-            pub fn start_full_scan(&self) -> Arc<FullScanRequest> {
-                let request = self.get_wallet().start_full_scan();
-                Arc::new(FullScanRequest(Mutex::new(Some(request))))
-            }
-
-            pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequest> {
-                let request = self.get_wallet().start_sync_with_revealed_spks();
-                Arc::new(SyncRequest(Mutex::new(Some(request))))
-            }
-        }
-    };
-}
-
-impl_wallet!(Wallet);
-impl_wallet!(WalletNoPersist);
 
 pub struct SentAndReceivedValues {
     pub sent: Arc<Amount>,
@@ -370,66 +335,57 @@ impl TxBuilder {
             ..self.clone()
         })
     }
-}
 
-macro_rules! impl_tx_finish {
-    ($tx_builder:ident, $wallet:ident, $func_name:ident) => {
-        impl $tx_builder {
-            pub(crate) fn $func_name(&self, wallet: &Arc<$wallet>) -> Result<Arc<Psbt>, CreateTxError> {
-                // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
-                let mut wallet = wallet.get_wallet();
-                let mut tx_builder = wallet.build_tx();
-                for (script, amount) in &self.recipients {
-                    tx_builder.add_recipient(script.clone(), *amount);
+    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
+        // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
+        let mut wallet = wallet.get_wallet();
+        let mut tx_builder = wallet.build_tx();
+        for (script, amount) in &self.recipients {
+            tx_builder.add_recipient(script.clone(), *amount);
+        }
+        tx_builder.change_policy(self.change_policy);
+        if !self.utxos.is_empty() {
+            let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
+            tx_builder
+                .add_utxos(&bdk_utxos)
+                .map_err(CreateTxError::from)?;
+        }
+        if !self.unspendable.is_empty() {
+            let bdk_unspendable: Vec<BdkOutPoint> =
+                self.unspendable.iter().map(BdkOutPoint::from).collect();
+            tx_builder.unspendable(bdk_unspendable);
+        }
+        if self.manually_selected_only {
+            tx_builder.manually_selected_only();
+        }
+        if let Some(fee_rate) = &self.fee_rate {
+            tx_builder.fee_rate(fee_rate.0);
+        }
+        if let Some(fee_amount) = &self.fee_absolute {
+            tx_builder.fee_absolute(fee_amount.0);
+        }
+        if self.drain_wallet {
+            tx_builder.drain_wallet();
+        }
+        if let Some(script) = &self.drain_to {
+            tx_builder.drain_to(script.clone());
+        }
+        if let Some(rbf) = &self.rbf {
+            match *rbf {
+                RbfValue::Default => {
+                    tx_builder.enable_rbf();
                 }
-                tx_builder.change_policy(self.change_policy);
-                if !self.utxos.is_empty() {
-                    let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
-                    tx_builder
-                        .add_utxos(&bdk_utxos)
-                        .map_err(CreateTxError::from)?;
+                RbfValue::Value(nsequence) => {
+                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
                 }
-                if !self.unspendable.is_empty() {
-                    let bdk_unspendable: Vec<BdkOutPoint> =
-                        self.unspendable.iter().map(BdkOutPoint::from).collect();
-                    tx_builder.unspendable(bdk_unspendable);
-                }
-                if self.manually_selected_only {
-                    tx_builder.manually_selected_only();
-                }
-                if let Some(fee_rate) = &self.fee_rate {
-                    tx_builder.fee_rate(fee_rate.0);
-                }
-                if let Some(fee_amount) = &self.fee_absolute {
-                    tx_builder.fee_absolute(fee_amount.0);
-                }
-                if self.drain_wallet {
-                    tx_builder.drain_wallet();
-                }
-                if let Some(script) = &self.drain_to {
-                    tx_builder.drain_to(script.clone());
-                }
-                if let Some(rbf) = &self.rbf {
-                    match *rbf {
-                        RbfValue::Default => {
-                            tx_builder.enable_rbf();
-                        }
-                        RbfValue::Value(nsequence) => {
-                            tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
-                        }
-                    }
-                }
-
-                let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
-
-                Ok(Arc::new(psbt.into()))
             }
         }
-    };
-}
 
-impl_tx_finish!(TxBuilder, Wallet, finish);
-impl_tx_finish!(TxBuilder, WalletNoPersist, finish_no_persist);
+        let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
+
+        Ok(Arc::new(psbt.into()))
+    }
+}
 
 #[derive(Clone)]
 pub(crate) struct BumpFeeTxBuilder {
@@ -460,39 +416,29 @@ impl BumpFeeTxBuilder {
             ..self.clone()
         })
     }
-}
 
-macro_rules! impl_tx_bump {
-    ($tx_bumper:ident, $wallet:ident, $func_name:ident) => {
-        impl $tx_bumper {
-            pub(crate) fn $func_name(&self, wallet: &$wallet) -> Result<Arc<Psbt>, CreateTxError> {
-                let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
-                    outpoint: self.txid.clone(),
-                })?;
-                let mut wallet = wallet.get_wallet();
-                let mut tx_builder = wallet.build_fee_bump(txid).map_err(CreateTxError::from)?;
-                tx_builder.fee_rate(self.fee_rate.0);
-                if let Some(rbf) = &self.rbf {
-                    match *rbf {
-                        RbfValue::Default => {
-                            tx_builder.enable_rbf();
-                        }
-                        RbfValue::Value(nsequence) => {
-                            tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
-                        }
-                    }
+    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
+        let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
+            outpoint: self.txid.clone(),
+        })?;
+        let mut wallet = wallet.get_wallet();
+        let mut tx_builder = wallet.build_fee_bump(txid).map_err(CreateTxError::from)?;
+        tx_builder.fee_rate(self.fee_rate.0);
+        if let Some(rbf) = &self.rbf {
+            match *rbf {
+                RbfValue::Default => {
+                    tx_builder.enable_rbf();
                 }
-                let psbt: BdkPsbt = tx_builder.finish()?;
-
-                Ok(Arc::new(psbt.into()))
+                RbfValue::Value(nsequence) => {
+                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
+                }
             }
         }
-    };
+        let psbt: BdkPsbt = tx_builder.finish()?;
+
+        Ok(Arc::new(psbt.into()))
+    }
 }
-
-impl_tx_bump!(BumpFeeTxBuilder, Wallet, finish);
-impl_tx_bump!(BumpFeeTxBuilder, WalletNoPersist, finish_no_persist);
-
 #[derive(Clone, Debug)]
 pub enum RbfValue {
     Default,

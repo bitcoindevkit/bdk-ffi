@@ -431,46 +431,6 @@ interface Wallet {
   boolean persist(Connection connection);
 };
 
-interface WalletNoPersist {
-  [Throws=DescriptorError]
-  constructor(Descriptor descriptor, Descriptor change_descriptor, Network network);
-
-  AddressInfo reveal_next_address(KeychainKind keychain);
-
-  Network network();
-
-  Balance balance();
-
-  [Throws=CannotConnectError]
-  void apply_update(Update update);
-
-  boolean is_mine(Script script);
-
-  [Throws=SignerError]
-  boolean sign(Psbt psbt);
-
-  SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
-
-  sequence<CanonicalTx> transactions();
-
-  [Throws=TxidParseError]
-  CanonicalTx? get_tx(string txid);
-
-  [Throws=CalculateFeeError]
-  Amount calculate_fee([ByRef] Transaction tx);
-
-  [Throws=CalculateFeeError]
-  FeeRate calculate_fee_rate([ByRef] Transaction tx);
-
-  sequence<LocalOutput> list_unspent();
-
-  sequence<LocalOutput> list_output();
-
-  FullScanRequest start_full_scan();
-
-  SyncRequest start_sync_with_revealed_spks();
-};
-
 interface Update {};
 
 interface TxBuilder {
@@ -508,9 +468,6 @@ interface TxBuilder {
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
-
-  [Throws=CreateTxError]
-  Psbt finish_no_persist([ByRef] WalletNoPersist wallet);
 };
 
 interface BumpFeeTxBuilder {
@@ -522,9 +479,6 @@ interface BumpFeeTxBuilder {
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
-
-  [Throws=CreateTxError]
-  Psbt finish_no_persist([ByRef] WalletNoPersist wallet);
 };
 
 // ------------------------------------------------------------------------
@@ -534,6 +488,9 @@ interface BumpFeeTxBuilder {
 interface Connection {
   [Throws=SqliteError]
   constructor(string path);
+  
+  [Name=new_in_memory, Throws=SqliteError]
+  constructor();
 };
 
 // ------------------------------------------------------------------------
