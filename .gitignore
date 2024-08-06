@@ -15,6 +15,7 @@ xcuserdata
 .idea/
 .editorconfig
 bdk.kt
+bitcoin.kt
 
 # Swift related
 /.build
@@ -33,6 +34,11 @@ bdk.swift
 .build
 *.xcframework/
 Info.plist
+BitcoinFFI.h
+Bitcoin.swift
+BitcoinFFi.modulemap
+bdkffi.xcframework
 
 # Python related
 __pycache__
+bitcoin.py

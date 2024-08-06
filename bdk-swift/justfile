@@ -11,4 +11,8 @@ test:
   swift test
 
 test-offline:
+<<<<<<< HEAD
   swift test --skip LiveElectrumClientTests --skip LiveMemoryWalletTests --skip LiveTransactionTests --skip LiveTxBuilderTests --skip LiveWalletTests
+=======
+  swift test --skip LiveElectrumClientTests --skip LiveMemoryWalletTests --skip LiveTransactionTests --skip LiveTxBuilderTests --skip LiveWalletTests
+>>>>>>> 63bfcba (temp 4: fix the swift package)
