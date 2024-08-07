@@ -25,10 +25,12 @@ class LiveTxBuilderTest(unittest.TestCase):
             "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
             bdk.Network.SIGNET
         )
+        connection: bdk.Connection = bdk.Connection.new_in_memory()
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             change_descriptor,
-            bdk.Network.SIGNET
+            bdk.Network.SIGNET,
+            connection
         )
         esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = SIGNET_ESPLORA_URL)
         full_scan_request: bdk.FullScanRequest = wallet.start_full_scan()
@@ -55,10 +57,12 @@ class LiveTxBuilderTest(unittest.TestCase):
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
 
     def complex_tx_builder(self):
+        connection: bdk.Connection = bdk.Connection.new_in_memory()
         wallet: bdk.Wallet = bdk.Wallet(
             descriptor,
             change_descriptor,
-            bdk.Network.SIGNET
+            bdk.Network.SIGNET,
+            connection
         )
         esplora_client: bdk.EsploraClient = bdk.EsploraClient(url = SIGNET_ESPLORA_URL)
         full_scan_request: bdk.FullScanRequest = wallet.start_full_scan()
