@@ -38,4 +38,28 @@ final class OfflinePersistenceTests: XCTestCase {
         XCTAssertTrue(nextAddress.address.description == "tb1qan3lldunh37ma6c0afeywgjyjgnyc8uz975zl2")
         XCTAssertTrue(nextAddress.index == 7)
     }
+
+    func testPersistenceWithDescriptor() throws {
+        let connection = try Connection(path: dbFilePath.path)
+        
+        let descriptorPub = try Descriptor(
+            descriptor: "wpkh([9122d9e0/84'/1'/0']tpubDCYVtmaSaDzTxcgvoP5AHZNbZKZzrvoNH9KARep88vESc6MxRqAp4LmePc2eeGX6XUxBcdhAmkthWTDqygPz2wLAyHWisD299Lkdrj5egY6/0/*)#zpaanzgu",
+            network: Network.signet
+        )
+        let changeDescriptorPub = try Descriptor(
+            descriptor: "wpkh([9122d9e0/84'/1'/0']tpubDCYVtmaSaDzTxcgvoP5AHZNbZKZzrvoNH9KARep88vESc6MxRqAp4LmePc2eeGX6XUxBcdhAmkthWTDqygPz2wLAyHWisD299Lkdrj5egY6/1/*)#n4cuwhcy",
+            network: Network.signet
+        )
+        
+        let wallet = try Wallet.load(
+            descriptor: descriptorPub,
+            changeDescriptor: changeDescriptorPub,
+            connection: connection
+        )
+        let nextAddress: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
+        print("Address: \(nextAddress)")
+        
+        XCTAssertEqual(nextAddress.index, 7)
+        XCTAssertEqual(nextAddress.address.description, "tb1qan3lldunh37ma6c0afeywgjyjgnyc8uz975zl2")
+    }
 }

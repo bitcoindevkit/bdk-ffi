@@ -40,4 +40,35 @@ class OfflinePersistenceTest {
             actual = addressInfo.address.toString(),
         )
     }
+
+    @Test
+    fun testPersistenceWithDescriptor() {
+        val connection = Connection(persistenceFilePath)
+
+        val descriptorPub = Descriptor(
+            "wpkh([9122d9e0/84'/1'/0']tpubDCYVtmaSaDzTxcgvoP5AHZNbZKZzrvoNH9KARep88vESc6MxRqAp4LmePc2eeGX6XUxBcdhAmkthWTDqygPz2wLAyHWisD299Lkdrj5egY6/0/*)#zpaanzgu",
+            Network.SIGNET
+        )
+        val changeDescriptorPub = Descriptor(
+            "wpkh([9122d9e0/84'/1'/0']tpubDCYVtmaSaDzTxcgvoP5AHZNbZKZzrvoNH9KARep88vESc6MxRqAp4LmePc2eeGX6XUxBcdhAmkthWTDqygPz2wLAyHWisD299Lkdrj5egY6/1/*)#n4cuwhcy",
+            Network.SIGNET
+        )
+
+        val wallet: Wallet = Wallet.load(
+            descriptorPub,
+            changeDescriptorPub,
+            connection
+        )
+        val addressInfo: AddressInfo = wallet.revealNextAddress(KeychainKind.EXTERNAL)
+        println("Address: $addressInfo")
+
+        assertEquals(
+            expected = 7u,
+            actual = addressInfo.index,
+        )
+        assertEquals(
+            expected = "tb1qan3lldunh37ma6c0afeywgjyjgnyc8uz975zl2",
+            actual = addressInfo.address.toString(),
+        )
+    }
 }

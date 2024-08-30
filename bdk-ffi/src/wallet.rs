@@ -68,6 +68,7 @@ impl Wallet {
         let wallet: PersistedWallet<BdkConnection> = BdkWallet::load()
             .descriptor(KeychainKind::External, Some(descriptor))
             .descriptor(KeychainKind::Internal, Some(change_descriptor))
+            .extract_keys()
             .load_wallet(db)?
             .ok_or(LoadWithPersistError::CouldNotLoad)?;
 
