@@ -156,11 +156,6 @@ interface ExtractTxError {
 };
 
 [Error]
-enum FeeRateError {
-  "ArithmeticOverflow"
-};
-
-[Error]
 interface FromScriptError {
   UnrecognizedScript();
   WitnessProgram(string error_message);
@@ -173,16 +168,6 @@ interface LoadWithPersistError {
     Persist(string error_message);
     InvalidChangeSet(string error_message);
     CouldNotLoad();
-};
-
-[Error]
-interface ParseAmountError {
-  OutOfRange();
-  TooPrecise();
-  MissingDigits();
-  InputTooLarge();
-  InvalidCharacter(string error_message);
-  OtherParseAmountErr();
 };
 
 [Error]
@@ -633,20 +618,6 @@ dictionary SentAndReceivedValues {
 // bdk_wallet crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 
-interface Script {
-  constructor(sequence<u8> raw_output_script);
-
-  sequence<u8> to_bytes();
-};
-
-[NonExhaustive]
-enum Network {
-  "Bitcoin",
-  "Testnet",
-  "Signet",
-  "Regtest",
-};
-
 enum WordCount {
   "Words12",
   "Words15",
@@ -717,40 +688,37 @@ interface Psbt {
   string json_serialize();
 };
 
-dictionary OutPoint {
-  string txid;
-  u32 vout;
-};
-
-interface Amount {
-  [Name=from_sat]
-  constructor(u64 from_sat);
-
-  [Name=from_btc, Throws=ParseAmountError]
-  constructor(f64 from_btc);
-
-  u64 to_sat();
-
-  f64 to_btc();
-};
-
-interface FeeRate {
-  [Name=from_sat_per_vb, Throws=FeeRateError]
-  constructor(u64 sat_per_vb);
-
-  [Name=from_sat_per_kwu]
-  constructor(u64 sat_per_kwu);
-
-  u64 to_sat_per_vb_ceil();
-
-  u64 to_sat_per_vb_floor();
-
-  u64 to_sat_per_kwu();
-};
-
 dictionary TxIn {
   OutPoint previous_output;
   Script script_sig;
   u32 sequence;
   sequence<sequence<u8>> witness;
 };
+
+// ------------------------------------------------------------------------
+// types defined in external crate bitcoin-ffi
+// ------------------------------------------------------------------------
+
+[ExternalInterface="bitcoin_ffi"]
+typedef extern Script;
+
+[External="bitcoin_ffi"]
+typedef extern Network;
+
+[ExternalInterface="bitcoin_ffi"]
+typedef extern Amount;
+
+[ExternalInterface="bitcoin_ffi"]
+typedef extern FeeRate;
+
+[External="bitcoin_ffi"]
+typedef extern Txid;
+
+[External="bitcoin_ffi"]
+typedef extern OutPoint;
+
+[ExternalInterface="bitcoin_ffi"]
+typedef extern FeeRateError;
+
+[ExternalInterface="bitcoin_ffi"]
+typedef extern ParseAmountError;

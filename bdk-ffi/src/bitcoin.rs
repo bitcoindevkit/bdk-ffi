@@ -1,84 +1,27 @@
 use crate::error::{
-    AddressParseError, FeeRateError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
+    AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
 };
+
+use bitcoin_ffi::OutPoint;
+use bitcoin_ffi::Script;
 
 use bdk_bitcoind_rpc::bitcoincore_rpc::jsonrpc::serde_json;
 use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
-use bdk_wallet::bitcoin::amount::ParseAmountError;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::Address as BdkAddress;
-use bdk_wallet::bitcoin::Amount as BdkAmount;
-use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
 use bdk_wallet::bitcoin::Network;
-use bdk_wallet::bitcoin::OutPoint as BdkOutPoint;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
-use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
-use bdk_wallet::bitcoin::Txid;
 
 use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Amount(pub(crate) BdkAmount);
-
-impl Amount {
-    pub fn from_sat(sat: u64) -> Self {
-        Amount(BdkAmount::from_sat(sat))
-    }
-
-    pub fn from_btc(btc: f64) -> Result<Self, ParseAmountError> {
-        let bdk_amount = BdkAmount::from_btc(btc).map_err(ParseAmountError::from)?;
-        Ok(Amount(bdk_amount))
-    }
-
-    pub fn to_sat(&self) -> u64 {
-        self.0.to_sat()
-    }
-
-    pub fn to_btc(&self) -> f64 {
-        self.0.to_btc()
-    }
-}
-
-impl From<Amount> for BdkAmount {
-    fn from(amount: Amount) -> Self {
-        amount.0
-    }
-}
-
-impl From<BdkAmount> for Amount {
-    fn from(amount: BdkAmount) -> Self {
-        Amount(amount)
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Script(pub(crate) BdkScriptBuf);
-
-impl Script {
-    pub fn new(raw_output_script: Vec<u8>) -> Self {
-        let script: BdkScriptBuf = raw_output_script.into();
-        Script(script)
-    }
-
-    pub fn to_bytes(&self) -> Vec<u8> {
-        self.0.to_bytes()
-    }
-}
-
-impl From<BdkScriptBuf> for Script {
-    fn from(script: BdkScriptBuf) -> Self {
-        Script(script)
-    }
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Address(BdkAddress<NetworkChecked>);
@@ -257,30 +200,6 @@ impl From<BdkPsbt> for Psbt {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct OutPoint {
-    pub txid: String,
-    pub vout: u32,
-}
-
-impl From<&OutPoint> for BdkOutPoint {
-    fn from(outpoint: &OutPoint) -> Self {
-        BdkOutPoint {
-            txid: Txid::from_str(&outpoint.txid).unwrap(),
-            vout: outpoint.vout,
-        }
-    }
-}
-
-impl From<&BdkOutPoint> for OutPoint {
-    fn from(outpoint: &BdkOutPoint) -> Self {
-        OutPoint {
-            txid: outpoint.txid.to_string(),
-            vout: outpoint.vout,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct TxIn {
     pub previous_output: OutPoint,
@@ -293,7 +212,7 @@ impl From<&BdkTxIn> for TxIn {
     fn from(tx_in: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
-                txid: tx_in.previous_output.txid.to_string(),
+                txid: tx_in.previous_output.txid,
                 vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script(tx_in.script_sig.clone())),
@@ -315,35 +234,6 @@ impl From<&BdkTxOut> for TxOut {
             value: tx_out.value.to_sat(),
             script_pubkey: Arc::new(Script(tx_out.script_pubkey.clone())),
         }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct FeeRate(pub(crate) BdkFeeRate);
-
-impl FeeRate {
-    pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
-        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
-        match fee_rate {
-            Some(fee_rate) => Ok(FeeRate(fee_rate)),
-            None => Err(FeeRateError::ArithmeticOverflow),
-        }
-    }
-
-    pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
-        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
-    }
-
-    pub fn to_sat_per_vb_ceil(&self) -> u64 {
-        self.0.to_sat_per_vb_ceil()
-    }
-
-    pub fn to_sat_per_vb_floor(&self) -> u64 {
-        self.0.to_sat_per_vb_floor()
-    }
-
-    pub fn to_sat_per_kwu(&self) -> u64 {
-        self.0.to_sat_per_kwu()
     }
 }
 

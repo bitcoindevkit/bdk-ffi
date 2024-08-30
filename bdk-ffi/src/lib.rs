@@ -9,11 +9,7 @@ mod types;
 mod wallet;
 
 use crate::bitcoin::Address;
-use crate::bitcoin::Amount;
-use crate::bitcoin::FeeRate;
-use crate::bitcoin::OutPoint;
 use crate::bitcoin::Psbt;
-use crate::bitcoin::Script;
 use crate::bitcoin::Transaction;
 use crate::bitcoin::TxIn;
 use crate::bitcoin::TxOut;
@@ -31,10 +27,8 @@ use crate::error::DescriptorKeyError;
 use crate::error::ElectrumError;
 use crate::error::EsploraError;
 use crate::error::ExtractTxError;
-use crate::error::FeeRateError;
 use crate::error::FromScriptError;
 use crate::error::LoadWithPersistError;
-use crate::error::ParseAmountError;
 use crate::error::PersistenceError;
 use crate::error::PsbtError;
 use crate::error::PsbtParseError;
@@ -69,7 +63,12 @@ use crate::wallet::SentAndReceivedValues;
 use crate::wallet::TxBuilder;
 use crate::wallet::Wallet;
 
-use bdk_wallet::bitcoin::Network;
+use bitcoin_ffi::Amount;
+use bitcoin_ffi::FeeRate;
+use bitcoin_ffi::Network;
+use bitcoin_ffi::OutPoint;
+use bitcoin_ffi::Script;
+
 use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::ChangeSet;

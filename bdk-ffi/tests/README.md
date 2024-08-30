@@ -11,11 +11,9 @@ Before running integration tests you must install the following development tool
 
 1. [Java](https://openjdk.org/) and [Kotlin](https://kotlinlang.org/), 
 [sdkman](https://sdkman.io/) can help:
-   ```shell
-   sdk install java 11.0.16.1-zulu
-   sdk install kotlin 1.7.20`
-   ```
-   
+```shell
+sdk install java 11.0.16.1-zulu
+sdk install kotlin 1.7.20`
+```
 2. [Swift](https://www.swift.org/)
-
 3. [Python](https://www.python.org/)

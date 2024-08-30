@@ -4,9 +4,12 @@ import org.junit.Test
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.runner.RunWith
-import java.io.File
 import kotlin.test.AfterTest
 import kotlin.test.assertTrue
+import java.io.File
+import org.rustbitcoin.bitcoin.Network
+import org.rustbitcoin.bitcoin.Amount
+import org.rustbitcoin.bitcoin.FeeRate
 
 private const val SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
 private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"

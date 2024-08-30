@@ -1,6 +1,9 @@
-use crate::bitcoin::Amount;
-use crate::bitcoin::{Address, OutPoint, Script, Transaction, TxOut};
+use crate::bitcoin::{Address, Transaction, TxOut};
 use crate::error::RequestBuilderError;
+
+use bitcoin_ffi::Amount;
+use bitcoin_ffi::OutPoint;
+use bitcoin_ffi::Script;
 
 use bdk_core::spk_client::SyncItem;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
@@ -126,7 +129,7 @@ impl From<BdkLocalOutput> for LocalOutput {
     fn from(local_utxo: BdkLocalOutput) -> Self {
         LocalOutput {
             outpoint: OutPoint {
-                txid: local_utxo.outpoint.txid.to_string(),
+                txid: local_utxo.outpoint.txid,
                 vout: local_utxo.outpoint.vout,
             },
             txout: TxOut {

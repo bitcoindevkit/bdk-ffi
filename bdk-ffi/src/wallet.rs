@@ -1,4 +1,4 @@
-use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction};
+use crate::bitcoin::{Psbt, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateTxError, CreateWithPersistError,
@@ -8,11 +8,16 @@ use crate::store::Connection;
 use crate::types::{AddressInfo, Balance, CanonicalTx, LocalOutput, ScriptAmount};
 use crate::types::{FullScanRequestBuilder, SyncRequestBuilder, Update};
 
+use bitcoin_ffi::Amount;
+use bitcoin_ffi::FeeRate;
+use bitcoin_ffi::OutPoint;
+use bitcoin_ffi::Script;
+
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
-use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
+use bdk_wallet::bitcoin::{Sequence, Txid};
 use bdk_wallet::rusqlite::Connection as BdkConnection;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::PersistedWallet;
@@ -184,7 +189,7 @@ pub struct SentAndReceivedValues {
     pub received: Arc<Amount>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct TxBuilder {
     pub(crate) add_global_xpubs: bool,
     pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
@@ -357,14 +362,12 @@ impl TxBuilder {
         }
         tx_builder.change_policy(self.change_policy);
         if !self.utxos.is_empty() {
-            let bdk_utxos: Vec<BdkOutPoint> = self.utxos.iter().map(BdkOutPoint::from).collect();
             tx_builder
-                .add_utxos(&bdk_utxos)
+                .add_utxos(&self.utxos)
                 .map_err(CreateTxError::from)?;
         }
         if !self.unspendable.is_empty() {
-            let bdk_unspendable: Vec<BdkOutPoint> =
-                self.unspendable.iter().map(BdkOutPoint::from).collect();
+            let bdk_unspendable: Vec<OutPoint> = self.unspendable.clone().into_iter().collect();
             tx_builder.unspendable(bdk_unspendable);
         }
         if self.manually_selected_only {

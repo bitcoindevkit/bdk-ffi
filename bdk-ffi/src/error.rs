@@ -1,11 +1,10 @@
-use crate::bitcoin::OutPoint;
+use bitcoin_ffi::OutPoint;
 
 use bdk_bitcoind_rpc::bitcoincore_rpc::bitcoin::address::ParseError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_wallet::bitcoin::address::FromScriptError as BdkFromScriptError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
-use bdk_wallet::bitcoin::amount::ParseAmountError as BdkParseAmountError;
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
@@ -21,11 +20,10 @@ use bdk_wallet::keys::bip39::Error as BdkBip39Error;
 use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddUtxoError;
-use bdk_wallet::CreateWithPersistError as BdkCreateWithPersistError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
+use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
 use bitcoin_internals::hex::display::DisplayHex;
 
-use bdk_wallet::chain;
 use std::convert::TryInto;
 
 // ------------------------------------------------------------------------
@@ -381,12 +379,6 @@ pub enum ExtractTxError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum FeeRateError {
-    #[error("arithmetic overflow on feerate")]
-    ArithmeticOverflow,
-}
-
-#[derive(Debug, thiserror::Error)]
 pub enum FromScriptError {
     #[error("script is not a p2pkh, p2sh or witness program")]
     UnrecognizedScript,
@@ -418,28 +410,6 @@ pub enum LoadWithPersistError {
 
     #[error("could not load")]
     CouldNotLoad,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum ParseAmountError {
-    #[error("amount out of range")]
-    OutOfRange,
-
-    #[error("amount has a too high precision")]
-    TooPrecise,
-
-    #[error("the input has too few digits")]
-    MissingDigits,
-
-    #[error("the input is too large")]
-    InputTooLarge,
-
-    #[error("invalid character: {error_message}")]
-    InvalidCharacter { error_message: String },
-
-    // Has to handle non-exhaustive
-    #[error("unknown parse amount error")]
-    OtherParseAmountErr,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -781,9 +751,9 @@ impl From<BdkBip39Error> for Bip39Error {
 impl From<BdkCalculateFeeError> for CalculateFeeError {
     fn from(error: BdkCalculateFeeError) -> Self {
         match error {
-            BdkCalculateFeeError::MissingTxOut(out_points) => CalculateFeeError::MissingTxOut {
-                out_points: out_points.iter().map(|op| op.into()).collect(),
-            },
+            BdkCalculateFeeError::MissingTxOut(out_points) => {
+                CalculateFeeError::MissingTxOut { out_points }
+            }
             BdkCalculateFeeError::NegativeFee(signed_amount) => CalculateFeeError::NegativeFee {
                 amount: signed_amount.to_string(),
             },
@@ -1089,21 +1059,6 @@ impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistEr
     }
 }
 
-impl From<BdkParseAmountError> for ParseAmountError {
-    fn from(error: BdkParseAmountError) -> Self {
-        match error {
-            BdkParseAmountError::OutOfRange(_) => ParseAmountError::OutOfRange,
-            BdkParseAmountError::TooPrecise(_) => ParseAmountError::TooPrecise,
-            BdkParseAmountError::MissingDigits(_) => ParseAmountError::MissingDigits,
-            BdkParseAmountError::InputTooLarge(_) => ParseAmountError::InputTooLarge,
-            BdkParseAmountError::InvalidCharacter(c) => ParseAmountError::InvalidCharacter {
-                error_message: c.to_string(),
-            },
-            _ => ParseAmountError::OtherParseAmountErr,
-        }
-    }
-}
-
 impl From<std::io::Error> for PersistenceError {
     fn from(error: std::io::Error) -> Self {
         PersistenceError::Write {
@@ -1263,8 +1218,8 @@ impl From<BdkSqliteError> for SqliteError {
 mod test {
     use crate::error::{
         Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError,
-        ElectrumError, EsploraError, ExtractTxError, FeeRateError, PersistenceError, PsbtError,
-        PsbtParseError, RequestBuilderError, TransactionError, TxidParseError,
+        ElectrumError, EsploraError, ExtractTxError, PersistenceError, PsbtError, PsbtParseError,
+        RequestBuilderError, TransactionError, TxidParseError,
     };
     use crate::SignerError;
 
@@ -1631,18 +1586,6 @@ mod test {
                 "this error is required because the bdk::bitcoin::psbt::ExtractTxError is non-exhaustive"
             ),
         ];
-
-        for (error, expected_message) in cases {
-            assert_eq!(error.to_string(), expected_message);
-        }
-    }
-
-    #[test]
-    fn test_error_fee_rate() {
-        let cases = vec![(
-            FeeRateError::ArithmeticOverflow,
-            "arithmetic overflow on feerate",
-        )];
 
         for (error, expected_message) in cases {
             assert_eq!(error.to_string(), expected_message);

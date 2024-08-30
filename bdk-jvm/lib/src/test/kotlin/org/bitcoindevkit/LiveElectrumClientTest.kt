@@ -1,6 +1,7 @@
 package org.bitcoindevkit
 
 import kotlin.test.Test
+import org.rustbitcoin.bitcoin.Network
 
 private const val SIGNET_ELECTRUM_URL = "ssl://mempool.space:60602"
 

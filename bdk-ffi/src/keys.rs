@@ -1,5 +1,4 @@
 use crate::error::{Bip32Error, Bip39Error, DescriptorKeyError};
-use std::fmt::Display;
 
 use bdk_wallet::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk_wallet::bitcoin::key::Secp256k1;
@@ -15,6 +14,7 @@ use bdk_wallet::keys::{
 use bdk_wallet::miniscript::descriptor::{DescriptorXKey, Wildcard};
 use bdk_wallet::miniscript::BareCtx;
 
+use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
