@@ -110,7 +110,6 @@ final class LiveTxBuilderTests: XCTestCase {
         let psbt: Psbt = try TxBuilder()
             .setRecipients(recipients: allRecipients)
             .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 4))
-            .changePolicy(changePolicy: ChangeSpendPolicy.changeForbidden)
             .enableRbf()
             .finish(wallet: wallet)
 
