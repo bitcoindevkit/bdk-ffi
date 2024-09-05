@@ -50,6 +50,7 @@ mv "${HEADERPATH_BITCOIN_FFI}" "${NEW_HEADER_DIR}"
 mv "${MODMAPPATH}" "${NEW_HEADER_DIR}/module.modulemap"
 echo -e "\n" >> "${NEW_HEADER_DIR}/module.modulemap"
 cat "${MODMAPPATH_BITCOIN_FFI}" >> "${NEW_HEADER_DIR}/module.modulemap"
+rm "${MODMAPPATH_BITCOIN_FFI}"
 
 # remove old xcframework directory
 rm -rf "${OUTDIR}/${NAME}.xcframework"
