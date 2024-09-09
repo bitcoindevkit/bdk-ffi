@@ -5,20 +5,6 @@ namespace bdk {};
 // ------------------------------------------------------------------------
 
 [Error]
-interface AddressParseError {
-  Base58();
-  Bech32();
-  WitnessVersion(string error_message);
-  WitnessProgram(string error_message);
-  UnknownHrp();
-  LegacyAddressTooLong();
-  InvalidBase58PayloadLength();
-  InvalidLegacyPrefix();
-  NetworkValidation();
-  OtherAddressParseErr();
-};
-
-[Error]
 interface Bip32Error {
     CannotDeriveFromHardenedKey();
     Secp256k1(string error_message);
@@ -153,14 +139,6 @@ interface ExtractTxError {
   MissingInputValue();
   SendingTooMuch();
   OtherExtractTxErr();
-};
-
-[Error]
-interface FromScriptError {
-  UnrecognizedScript();
-  WitnessProgram(string error_message);
-  WitnessVersion(string error_message);
-  OtherFromScriptErr();
 };
 
 [Error]
@@ -626,21 +604,6 @@ enum WordCount {
   "Words24",
 };
 
-[Traits=(Display)]
-interface Address {
-  [Throws=AddressParseError]
-  constructor(string address, Network network);
-
-  [Name=from_script, Throws=FromScriptError]
-  constructor(Script script, Network network);
-
-  Script script_pubkey();
-
-  string to_qr_uri();
-
-  boolean is_valid_for_network(Network network);
-};
-
 interface Transaction {
   [Throws=TransactionError]
   constructor(sequence<u8> transaction_bytes);
@@ -718,7 +681,16 @@ typedef extern Txid;
 typedef extern OutPoint;
 
 [ExternalInterface="bitcoin_ffi"]
+typedef extern Address;
+
+[ExternalInterface="bitcoin_ffi"]
 typedef extern FeeRateError;
 
 [ExternalInterface="bitcoin_ffi"]
 typedef extern ParseAmountError;
+
+[ExternalInterface="bitcoin_ffi"]
+typedef extern AddressParseError;
+
+[ExternalInterface="bitcoin_ffi"]
+typedef extern FromScriptError;

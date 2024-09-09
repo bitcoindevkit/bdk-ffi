@@ -1,9 +1,10 @@
-use crate::bitcoin::{Address, Transaction, TxOut};
+use crate::bitcoin::{Transaction, TxOut};
 use crate::error::RequestBuilderError;
 
 use bitcoin_ffi::Amount;
-use bitcoin_ffi::OutPoint;
 use bitcoin_ffi::Script;
+use bitcoin_ffi::OutPoint;
+use bitcoin_ffi::Address;
 
 use bdk_core::spk_client::SyncItem;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;

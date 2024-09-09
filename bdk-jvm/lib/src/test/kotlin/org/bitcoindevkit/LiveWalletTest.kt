@@ -7,6 +7,7 @@ import java.io.File
 import org.rustbitcoin.bitcoin.Amount
 import org.rustbitcoin.bitcoin.Network
 import org.rustbitcoin.bitcoin.FeeRate
+import org.rustbitcoin.bitcoin.Address
 
 private const val SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
 private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"

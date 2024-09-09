@@ -1,10 +1,7 @@
 use bitcoin_ffi::OutPoint;
 
-use bdk_bitcoind_rpc::bitcoincore_rpc::bitcoin::address::ParseError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
-use bdk_wallet::bitcoin::address::FromScriptError as BdkFromScriptError;
-use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
@@ -29,40 +26,6 @@ use std::convert::TryInto;
 // ------------------------------------------------------------------------
 // error definitions
 // ------------------------------------------------------------------------
-
-#[derive(Debug, thiserror::Error)]
-pub enum AddressParseError {
-    #[error("base58 address encoding error")]
-    Base58,
-
-    #[error("bech32 address encoding error")]
-    Bech32,
-
-    #[error("witness version conversion/parsing error: {error_message}")]
-    WitnessVersion { error_message: String },
-
-    #[error("witness program error: {error_message}")]
-    WitnessProgram { error_message: String },
-
-    #[error("tried to parse an unknown hrp")]
-    UnknownHrp,
-
-    #[error("legacy address base58 string")]
-    LegacyAddressTooLong,
-
-    #[error("legacy address base58 data")]
-    InvalidBase58PayloadLength,
-
-    #[error("segwit address bech32 string")]
-    InvalidLegacyPrefix,
-
-    #[error("validation error")]
-    NetworkValidation,
-
-    // This error is required because the bdk::bitcoin::address::ParseError is non-exhaustive
-    #[error("other address parse error")]
-    OtherAddressParseErr,
-}
 
 #[derive(Debug, thiserror::Error)]
 pub enum Bip32Error {
@@ -379,22 +342,6 @@ pub enum ExtractTxError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum FromScriptError {
-    #[error("script is not a p2pkh, p2sh or witness program")]
-    UnrecognizedScript,
-
-    #[error("witness program error: {error_message}")]
-    WitnessProgram { error_message: String },
-
-    #[error("witness version construction error: {error_message}")]
-    WitnessVersion { error_message: String },
-
-    // This error is required because the bdk::bitcoin::address::FromScriptError is non-exhaustive
-    #[error("other from script error")]
-    OtherFromScriptErr,
-}
-
-#[derive(Debug, thiserror::Error)]
 pub enum RequestBuilderError {
     #[error("the request has already been consumed")]
     RequestAlreadyConsumed,
@@ -667,29 +614,6 @@ impl From<BdkElectrumError> for ElectrumError {
                     error_message: error_message.to_string(),
                 }
             }
-        }
-    }
-}
-
-impl From<BdkParseError> for AddressParseError {
-    fn from(error: BdkParseError) -> Self {
-        match error {
-            BdkParseError::Base58(_) => AddressParseError::Base58,
-            BdkParseError::Bech32(_) => AddressParseError::Bech32,
-            BdkParseError::WitnessVersion(e) => AddressParseError::WitnessVersion {
-                error_message: e.to_string(),
-            },
-            BdkParseError::WitnessProgram(e) => AddressParseError::WitnessProgram {
-                error_message: e.to_string(),
-            },
-            ParseError::UnknownHrp(_) => AddressParseError::UnknownHrp,
-            ParseError::LegacyAddressTooLong(_) => AddressParseError::LegacyAddressTooLong,
-            ParseError::InvalidBase58PayloadLength(_) => {
-                AddressParseError::InvalidBase58PayloadLength
-            }
-            ParseError::InvalidLegacyPrefix(_) => AddressParseError::InvalidLegacyPrefix,
-            ParseError::NetworkValidation(_) => AddressParseError::NetworkValidation,
-            _ => AddressParseError::OtherAddressParseErr,
         }
     }
 }
@@ -1025,21 +949,6 @@ impl From<BdkExtractTxError> for ExtractTxError {
             BdkExtractTxError::MissingInputValue { .. } => ExtractTxError::MissingInputValue,
             BdkExtractTxError::SendingTooMuch { .. } => ExtractTxError::SendingTooMuch,
             _ => ExtractTxError::OtherExtractTxErr,
-        }
-    }
-}
-
-impl From<BdkFromScriptError> for FromScriptError {
-    fn from(error: BdkFromScriptError) -> Self {
-        match error {
-            BdkFromScriptError::UnrecognizedScript => FromScriptError::UnrecognizedScript,
-            BdkFromScriptError::WitnessProgram(e) => FromScriptError::WitnessProgram {
-                error_message: e.to_string(),
-            },
-            BdkFromScriptError::WitnessVersion(e) => FromScriptError::WitnessVersion {
-                error_message: e.to_string(),
-            },
-            _ => FromScriptError::OtherFromScriptErr,
         }
     }
 }
