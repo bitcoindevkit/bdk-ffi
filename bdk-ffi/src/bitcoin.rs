@@ -1,80 +1,75 @@
-use crate::error::{
-    AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
-};
+use crate::error::{PsbtError, PsbtParseError, TransactionError};
 
-use bitcoin_ffi::OutPoint;
 use bitcoin_ffi::Script;
+use bitcoin_ffi::OutPoint;
 
 use bdk_bitcoind_rpc::bitcoincore_rpc::jsonrpc::serde_json;
-use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
-use bdk_wallet::bitcoin::Address as BdkAddress;
-use bdk_wallet::bitcoin::Network;
+// use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
 
-use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct Address(BdkAddress<NetworkChecked>);
-
-impl Address {
-    pub fn new(address: String, network: Network) -> Result<Self, AddressParseError> {
-        let parsed_address = address.parse::<bdk_wallet::bitcoin::Address<NetworkUnchecked>>()?;
-        let network_checked_address = parsed_address.require_network(network)?;
-
-        Ok(Address(network_checked_address))
-    }
-
-    pub fn from_script(script: Arc<Script>, network: Network) -> Result<Self, FromScriptError> {
-        let address = BdkAddress::from_script(&script.0.clone(), network)?;
-
-        Ok(Address(address))
-    }
-
-    pub fn script_pubkey(&self) -> Arc<Script> {
-        Arc::new(Script(self.0.script_pubkey()))
-    }
-
-    pub fn to_qr_uri(&self) -> String {
-        self.0.to_qr_uri()
-    }
-
-    pub fn is_valid_for_network(&self, network: Network) -> bool {
-        let address_str = self.0.to_string();
-        if let Ok(unchecked_address) = address_str.parse::<BdkAddress<NetworkUnchecked>>() {
-            unchecked_address.is_valid_for_network(network)
-        } else {
-            false
-        }
-    }
-}
-
-impl Display for Address {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-impl From<Address> for BdkAddress {
-    fn from(address: Address) -> Self {
-        address.0
-    }
-}
-
-impl From<BdkAddress> for Address {
-    fn from(address: BdkAddress) -> Self {
-        Address(address)
-    }
-}
+// #[derive(Debug, PartialEq, Eq)]
+// pub struct Address(BdkAddress<NetworkChecked>);
+//
+// impl Address {
+//     pub fn new(address: String, network: Network) -> Result<Self, AddressParseError> {
+//         let parsed_address = address.parse::<bdk_wallet::bitcoin::Address<NetworkUnchecked>>()?;
+//         let network_checked_address = parsed_address.require_network(network)?;
+//
+//         Ok(Address(network_checked_address))
+//     }
+//
+//     pub fn from_script(script: Arc<Script>, network: Network) -> Result<Self, FromScriptError> {
+//         let address = BdkAddress::from_script(&script.0.clone(), network)?;
+//
+//         Ok(Address(address))
+//     }
+//
+//     pub fn script_pubkey(&self) -> Arc<Script> {
+//         Arc::new(Script(self.0.script_pubkey()))
+//     }
+//
+//     pub fn to_qr_uri(&self) -> String {
+//         self.0.to_qr_uri()
+//     }
+//
+//     pub fn is_valid_for_network(&self, network: Network) -> bool {
+//         let address_str = self.0.to_string();
+//         if let Ok(unchecked_address) = address_str.parse::<BdkAddress<NetworkUnchecked>>() {
+//             unchecked_address.is_valid_for_network(network)
+//         } else {
+//             false
+//         }
+//     }
+// }
+//
+// impl Display for Address {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(f, "{}", self.0)
+//     }
+// }
+//
+// impl From<Address> for BdkAddress {
+//     fn from(address: Address) -> Self {
+//         address.0
+//     }
+// }
+//
+// impl From<BdkAddress> for Address {
+//     fn from(address: BdkAddress) -> Self {
+//         Address(address)
+//     }
+// }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction(BdkTransaction);
@@ -239,8 +234,9 @@ impl From<&BdkTxOut> for TxOut {
 
 #[cfg(test)]
 mod tests {
-    use crate::bitcoin::Address;
-    use crate::bitcoin::Network;
+    // use crate::bitcoin::Address;
+    use bitcoin_ffi::Address;
+    use bdk_wallet::bitcoin::Network;
 
     #[test]
     fn test_is_valid_for_network() {
