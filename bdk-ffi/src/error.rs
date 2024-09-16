@@ -22,7 +22,7 @@ use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddUtxoError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
 use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
-use bitcoin_internals::hex::display::DisplayHex;
+use bdk_wallet::bitcoin::hex::DisplayHex;
 
 use std::convert::TryInto;
 

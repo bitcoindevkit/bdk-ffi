@@ -140,7 +140,7 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c8d66485a3a2ea485c1913c4572ce0256067a5377ac8c75c4960e1cda98605f"
 dependencies = [
- "bitcoin-internals 0.3.0",
+ "bitcoin-internals",
  "bitcoin_hashes 0.14.0",
 ]
 
@@ -182,7 +182,6 @@ dependencies = [
  "bdk_esplora",
  "bdk_wallet",
  "bitcoin-ffi",
- "bitcoin-internals 0.2.0",
  "thiserror",
  "uniffi",
 ]
@@ -294,7 +293,7 @@ dependencies = [
  "base58ck",
  "base64 0.21.7",
  "bech32",
- "bitcoin-internals 0.3.0",
+ "bitcoin-internals",
  "bitcoin-io",
  "bitcoin-units",
  "bitcoin_hashes 0.14.0",
@@ -313,12 +312,6 @@ dependencies = [
  "thiserror",
  "uniffi",
 ]
-
-[[package]]
-name = "bitcoin-internals"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9425c3bf7089c983facbae04de54513cce73b41c7f9ff8c845b54e7bc64ebbfb"
 
 [[package]]
 name = "bitcoin-internals"
@@ -341,7 +334,7 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb54da0b28892f3c52203a7191534033e051b6f4b52bc15480681b57b7e036f5"
 dependencies = [
- "bitcoin-internals 0.3.0",
+ "bitcoin-internals",
  "serde",
 ]
 
