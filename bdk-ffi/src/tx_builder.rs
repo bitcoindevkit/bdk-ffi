@@ -1,7 +1,7 @@
 use crate::bitcoin::Psbt;
 use crate::error::CreateTxError;
-use crate::types::ScriptAmount;
-use crate::wallet::{RbfValue, Wallet};
+use crate::types::{RbfValue, ScriptAmount};
+use crate::wallet::Wallet;
 
 use bitcoin_ffi::{Amount, FeeRate, Script};
 

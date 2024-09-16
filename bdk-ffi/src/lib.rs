@@ -57,11 +57,11 @@ use crate::types::FullScanRequestBuilder;
 use crate::types::FullScanScriptInspector;
 use crate::types::LocalOutput;
 use crate::types::ScriptAmount;
+use crate::types::SentAndReceivedValues;
 use crate::types::SyncRequest;
 use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 use crate::types::Update;
-use crate::wallet::SentAndReceivedValues;
 use crate::wallet::Wallet;
 
 use bitcoin_ffi::Amount;

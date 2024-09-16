@@ -5,19 +5,16 @@ use crate::error::{
     SignerError, SqliteError, TxidParseError,
 };
 use crate::store::Connection;
-use crate::types::{AddressInfo, Balance, CanonicalTx, LocalOutput};
-use crate::types::{FullScanRequestBuilder, SyncRequestBuilder, Update};
+use crate::types::{
+    AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, LocalOutput, SentAndReceivedValues,
+    SyncRequestBuilder, Update,
+};
 
-use bitcoin_ffi::Amount;
-use bitcoin_ffi::FeeRate;
-use bitcoin_ffi::Script;
+use bitcoin_ffi::{Amount, FeeRate, Script};
 
-use bdk_wallet::bitcoin::Network;
-use bdk_wallet::bitcoin::Txid;
+use bdk_wallet::bitcoin::{Network, Txid};
 use bdk_wallet::rusqlite::Connection as BdkConnection;
-use bdk_wallet::PersistedWallet;
-use bdk_wallet::Wallet as BdkWallet;
-use bdk_wallet::{KeychainKind, SignOptions};
+use bdk_wallet::{KeychainKind, PersistedWallet, SignOptions, Wallet as BdkWallet};
 
 use std::borrow::BorrowMut;
 use std::str::FromStr;
@@ -177,15 +174,4 @@ impl Wallet {
                 rusqlite_error: e.to_string(),
             })
     }
-}
-
-pub struct SentAndReceivedValues {
-    pub sent: Arc<Amount>,
-    pub received: Arc<Amount>,
-}
-
-#[derive(Clone, Debug)]
-pub enum RbfValue {
-    Default,
-    Value(u32),
 }
