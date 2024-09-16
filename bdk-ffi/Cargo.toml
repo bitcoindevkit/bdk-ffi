@@ -18,11 +18,11 @@ path = "uniffi-bindgen.rs"
 default = ["uniffi/cli"]
 
 [dependencies]
-bdk_wallet = { version = "1.0.0-beta.2", features = ["all-keys", "keys-bip39", "rusqlite"] }
-bdk_core = { version = "0.1.0" }
-bdk_esplora = { version = "0.17.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
-bdk_electrum = { version = "0.17.0", default-features = false, features = ["use-rustls-ring"] }
-bdk_bitcoind_rpc = { version = "0.14.0" }
+bdk_wallet = { version = "1.0.0-beta.4", features = ["all-keys", "keys-bip39", "rusqlite"] }
+bdk_core = { version = "0.2.0" }
+bdk_esplora = { version = "0.18.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
+bdk_electrum = { version = "0.18.0", default-features = false, features = ["use-rustls-ring"] }
+bdk_bitcoind_rpc = { version = "0.15.0" }
 bitcoin-internals = { version = "0.2.0", features = ["alloc"] }
 bitcoin-ffi = { git = "https://github.com/bitcoindevkit/bitcoin-ffi", tag = "v0.1.2" }
 
