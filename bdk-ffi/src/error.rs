@@ -7,6 +7,7 @@ use bdk_wallet::bitcoin::address::FromScriptError as BdkFromScriptError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
+use bdk_wallet::bitcoin::hex::DisplayHex;
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
@@ -22,7 +23,6 @@ use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddUtxoError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
 use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
-use bdk_wallet::bitcoin::hex::DisplayHex;
 
 use std::convert::TryInto;
 

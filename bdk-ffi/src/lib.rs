@@ -5,6 +5,7 @@ mod error;
 mod esplora;
 mod keys;
 mod store;
+mod tx_builder;
 mod types;
 mod wallet;
 
@@ -43,6 +44,8 @@ use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
 use crate::store::Connection;
+use crate::tx_builder::BumpFeeTxBuilder;
+use crate::tx_builder::TxBuilder;
 use crate::types::AddressInfo;
 use crate::types::Balance;
 use crate::types::BlockId;
@@ -58,9 +61,7 @@ use crate::types::SyncRequest;
 use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 use crate::types::Update;
-use crate::wallet::BumpFeeTxBuilder;
 use crate::wallet::SentAndReceivedValues;
-use crate::wallet::TxBuilder;
 use crate::wallet::Wallet;
 
 use bitcoin_ffi::Amount;
