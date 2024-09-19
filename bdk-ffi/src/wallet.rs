@@ -125,6 +125,14 @@ impl Wallet {
             .collect()
     }
 
+    pub fn transactions_sort_by(&self) -> Vec<CanonicalTx> {
+        self.get_wallet()
+            .transactions_sort_by(|tx1, tx2| tx2.chain_position.cmp(&tx1.chain_position))
+            .into_iter()
+            .map(|tx| tx.into())
+            .collect()
+    }
+
     pub fn get_tx(&self, txid: String) -> Result<Option<CanonicalTx>, TxidParseError> {
         let txid =
             Txid::from_str(txid.as_str()).map_err(|_| TxidParseError::InvalidTxid { txid })?;

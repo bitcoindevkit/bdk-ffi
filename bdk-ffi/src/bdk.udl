@@ -396,6 +396,8 @@ interface Wallet {
 
   sequence<CanonicalTx> transactions();
 
+  sequence<CanonicalTx> transactions_sort_by();
+
   [Throws=TxidParseError]
   CanonicalTx? get_tx(string txid);
 
