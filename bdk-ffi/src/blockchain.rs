@@ -1,19 +1,21 @@
 // use crate::BlockchainConfig;
 use crate::Network;
 use crate::{BdkError, Transaction};
+use bdk::bitcoin::Txid;
 use bdk::blockchain::any::{AnyBlockchain, AnyBlockchainConfig};
 use bdk::blockchain::rpc::Auth as BdkAuth;
 use bdk::blockchain::rpc::RpcSyncParams as BdkRpcSyncParams;
-use bdk::blockchain::Blockchain as BdkBlockchain;
 use bdk::blockchain::GetBlockHash;
 use bdk::blockchain::GetHeight;
 use bdk::blockchain::{
     electrum::ElectrumBlockchainConfig, esplora::EsploraBlockchainConfig,
     rpc::RpcConfig as BdkRpcConfig, ConfigurableBlockchain,
 };
+use bdk::blockchain::{Blockchain as BdkBlockchain, GetTx};
 use bdk::FeeRate;
 use std::convert::{From, TryFrom};
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 pub(crate) struct Blockchain {
@@ -79,6 +81,12 @@ impl Blockchain {
         self.get_blockchain()
             .get_block_hash(u64::from(height))
             .map(|hash| hash.to_string())
+    }
+
+    pub(crate) fn get_tx(&self, txid: String) -> Result<Option<Arc<Transaction>>, BdkError> {
+        let txid = Txid::from_str(txid.as_str())?;
+        let tx_opt = self.get_blockchain().get_tx(&txid)?;
+        Ok(tx_opt.map(|inner| Arc::new(Transaction { inner })))
     }
 }
 
