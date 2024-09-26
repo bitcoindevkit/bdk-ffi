@@ -580,6 +580,9 @@ interface EsploraClient {
 
   [Throws=EsploraError]
   void broadcast([ByRef] Transaction transaction);
+
+  [Throws=EsploraError]
+  Transaction? get_tx(string txid);
 };
 
 // ------------------------------------------------------------------------

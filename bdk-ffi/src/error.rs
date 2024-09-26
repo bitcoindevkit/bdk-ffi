@@ -7,6 +7,7 @@ use bdk_wallet::bitcoin::address::FromScriptError as BdkFromScriptError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
+use bdk_wallet::bitcoin::hashes::hex::HexToArrayError as BdkHexToArrayError;
 use bdk_wallet::bitcoin::hex::DisplayHex;
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
@@ -1009,6 +1010,14 @@ impl From<Box<BdkEsploraError>> for EsploraError {
             BdkEsploraError::InvalidHttpHeaderValue(value) => {
                 EsploraError::InvalidHttpHeaderValue { value }
             }
+        }
+    }
+}
+
+impl From<BdkHexToArrayError> for EsploraError {
+    fn from(error: BdkHexToArrayError) -> Self {
+        EsploraError::Parsing {
+            error_message: error.to_string(),
         }
     }
 }

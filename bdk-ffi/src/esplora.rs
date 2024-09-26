@@ -6,6 +6,7 @@ use crate::types::{FullScanRequest, SyncRequest};
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
+use bdk_wallet::bitcoin::Txid;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
@@ -14,6 +15,7 @@ use bdk_wallet::KeychainKind;
 use bdk_wallet::Update as BdkUpdate;
 
 use std::collections::BTreeMap;
+use std::str::FromStr;
 use std::sync::Arc;
 
 pub struct EsploraClient(BlockingClient);
@@ -80,5 +82,11 @@ impl EsploraClient {
         self.0
             .broadcast(&bdk_transaction)
             .map_err(EsploraError::from)
+    }
+
+    pub fn get_tx(&self, txid: String) -> Result<Option<Arc<Transaction>>, EsploraError> {
+        let txid = Txid::from_str(&txid)?;
+        let tx_opt = self.0.get_tx(&txid)?;
+        Ok(tx_opt.map(|inner| Arc::new(Transaction::from(inner))))
     }
 }
