@@ -3,6 +3,44 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.0-beta.2]
+This release updates the bdk-ffi libraries to the latest bdk_wallet 1.0.0-beta.2 and related libraries (Esplora, Electrum, etc.), as well as uses the latest uniffi-rs library version 0.28.0. The releases now depend on [bitcoin-ffi] for the types that are exposed from the rust-bitcoin org. It also bumps the minimum supported Android API level to 24 (Android Nougat).
+
+#### Added
+  - SQLite persistence through bdk_sqlite [https://github.com/bitcoindevkit/bdk-ffi/pull/544]
+  - The `Address`, `DescriptorSecretKey`, `DescriptorPublicKey`, `Mnemonic`, and `Descriptor` types now have the `toString()` method implemented on them by default [https://github.com/bitcoindevkit/bdk-ffi/pull/551]
+  - `Address.from_script()` [https://github.com/bitcoindevkit/bdk-ffi/pull/554]
+  - New `FromScriptError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - New type `ChangeSet` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - Wallet constructors do not take a persistence path anymore [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - `Wallet.get_balance()` method renamed to `balance()` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - Add `add_global_xpubs()` method on `TxBuilder` [https://github.com/bitcoindevkit/bdk-ffi/pull/574]
+  - Add `wallet.derivation_index` method on Wallet type [https://github.com/bitcoindevkit/bdk-ffi/pull/579]
+  - Add `wallet.persist` method on Wallet type [https://github.com/bitcoindevkit/bdk-ffi/pull/582]
+  - Add `Connection` type [https://github.com/bitcoindevkit/bdk-ffi/pull/582]
+
+#### Changed
+  - `AddressError` is replaced by `AddressParseError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - New variants in `CalculateFeeError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - New variants in `CreateTxError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - New variants in `ParseAmountError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - New variants in `SignerError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - New variants in `WalletCreationError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - `Wallet.calculate_fee()` returns an `Amount` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - Renamed `Transaction.txid()` to `Transaction.compute_txid()` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+
+#### Removed
+  - flat file persistence [https://github.com/bitcoindevkit/bdk-ffi/pull/544]
+
+[https://github.com/bitcoindevkit/bdk-ffi/pull/544]: https://github.com/bitcoindevkit/bdk-ffi/pull/544
+[https://github.com/bitcoindevkit/bdk-ffi/pull/551]: https://github.com/bitcoindevkit/bdk-ffi/pull/551
+[https://github.com/bitcoindevkit/bdk-ffi/pull/554]: https://github.com/bitcoindevkit/bdk-ffi/pull/554
+[https://github.com/bitcoindevkit/bdk-ffi/pull/561]: https://github.com/bitcoindevkit/bdk-ffi/pull/561
+[https://github.com/bitcoindevkit/bdk-ffi/pull/574]: https://github.com/bitcoindevkit/bdk-ffi/pull/574
+[https://github.com/bitcoindevkit/bdk-ffi/pull/579]: https://github.com/bitcoindevkit/bdk-ffi/pull/579
+[https://github.com/bitcoindevkit/bdk-ffi/pull/582]: https://github.com/bitcoindevkit/bdk-ffi/pull/582
+[bitcoin-ffi]: https://github.com/bitcoindevkit/bitcoin-ffi
+
 ## [v1.0.0-alpha.11]
 This release brings the latest alpha 11 release of the Rust bdk_wallet library, as well as the new Electrum client, the new memory wallet, and a whole lot of new types and APIs across the library. Also of note are the much simpler-to-use full_scan and sync workflows for syncing wallets.
 
@@ -54,7 +92,6 @@ This release has a new API and a few internal optimizations and refactorings.
 ## [v0.29.0]
 This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
-Changelog
 - Add support for Windows in bdk-jvm [#336]
 - Add support for older version of Linux distros in bdk-jvm [#345]
 - APIs added
@@ -262,6 +299,7 @@ Changelog
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v1.0.0-beta.2]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.11...v1.0.0-beta.2
 [v1.0.0-alpha.11]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.7...v1.0.0-alpha.11
 [v1.0.0-alpha.7]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.2a...v1.0.0-alpha.7
 [v1.0.0-alpha.2a]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.31.0...v1.0.0-alpha.2a
