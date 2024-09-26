@@ -18,7 +18,7 @@ import bdkpython as bdk
 
 setup(
     name="bdkpython",
-    version="1.0.0b2.dev",
+    version="1.0.0b5.dev",
     description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
