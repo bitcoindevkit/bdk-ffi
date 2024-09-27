@@ -10,9 +10,6 @@ plugins {
     id("org.gradle.java-library")
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
-
-    // Custom plugin to generate the native libs and bindings file
-    id("org.bitcoindevkit.plugins.generate-jvm-bindings")
 }
 
 java {
@@ -20,6 +17,12 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
     withSourcesJar()
     withJavadocJar()
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = "11"
+    }
 }
 
 // This block ensures that the tests that require access to a blockchain are not
@@ -119,14 +122,4 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     sign(publishing.publications)
-}
-
-// This task dependency ensures that we build the bindings
-// binaries before running the tests
-tasks.withType<KotlinCompile> {
-    dependsOn("buildJvmLib")
-
-    kotlinOptions {
-        jvmTarget = "11"
-    }
 }

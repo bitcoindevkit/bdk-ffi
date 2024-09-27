@@ -32,10 +32,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: "Set default Rust version to 1.77.1"
-        run: rustup default 1.77.1
-
       - name: "Run JVM tests"
         run: |
           cd bdk-jvm
+          bash ./scripts/build-linux-x86_64.sh
           ./gradlew test -P excludeConnectedTests

@@ -1,14 +1,22 @@
 default:
   just --list
 
-build:
-  ./gradlew buildJvmLib
+build-linux:
+  bash ./scripts/build-linux-x86_64.sh
+
+build-macos-aarch64:
+  bash ./scripts/build-macos-aarch64.sh
+
+build-macos-x86_64:
+  bash ./scripts/build-macos-x86_64.sh
+  
+build-windows:
+  bash ./scripts/build-windows-x86_64.sh
 
 clean:
   rm -rf ../bdk-ffi/target/
   rm -rf ./build/
   rm -rf ./lib/build/
-  rm -rf ./plugins/build/
 
 publish-local:
   ./gradlew publishToMavenLocal -P localBuild

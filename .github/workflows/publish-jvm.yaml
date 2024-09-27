@@ -24,16 +24,11 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: "Set default Rust version to 1.77.1"
-        run: rustup default 1.77.1
-
-      - name: "Install aarch64 Rust target"
-        run: rustup target add aarch64-apple-darwin
-
       - name: "Build bdk-jvm library"
         run: |
           cd bdk-jvm
-          ./gradlew buildJvmLib
+          bash ./scripts/build-macos-aarch64.sh
+          bash ./scripts/build-macos-x86_64.sh
 
       - name: "Upload macOS native libraries for reuse in publishing job"
         uses: actions/upload-artifact@v3
@@ -54,16 +49,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: "Set default Rust version to 1.77.1"
-        run: rustup default 1.77.1
-
-      - name: "Install x86_64-pc-windows-msvc Rust target"
-        run: rustup target add x86_64-pc-windows-msvc
-
       - name: "Build bdk-jvm library"
         run: |
           cd bdk-jvm
-          ./gradlew buildJvmLib
+          bash ./scripts/build-windows-x86_64.sh
 
       - name: "Upload Windows native libraries for reuse in publishing job"
         uses: actions/upload-artifact@v3
@@ -94,13 +83,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: "Set default Rust version to 1.77.1"
-        run: rustup default 1.77.1
-
       - name: "Build bdk-jvm library"
         run: |
           cd bdk-jvm
-          ./gradlew buildJvmLib
+          bash ./scripts/build-linux-x86_64.sh
 
       - name: "Download macOS native binaries from previous job"
         uses: actions/download-artifact@v3

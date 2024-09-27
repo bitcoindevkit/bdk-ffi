@@ -1,9 +1,9 @@
 #!/bin/bash
 
-COMPILATION_TARGET="aarch64-apple-darwin"
-TARGET_DIR="target/$COMPILATION_TARGET/release-smaller"
-RESOURCE_DIR="resources/darwin-aarch64"
-LIB_NAME="libbdkffi.dylib"
+COMPILATION_TARGET="x86_64-pc-windows-msvc"
+TARGET_DIR="target/x86_64-pc-windows-msvc/release-smaller"
+RESOURCE_DIR="resources/win32-x86-64"
+LIB_NAME="bdkffi.ddl"
 
 # Move to the Rust library directory
 cd ../bdk-ffi/ || exit

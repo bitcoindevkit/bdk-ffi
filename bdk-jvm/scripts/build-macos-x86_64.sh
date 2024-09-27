@@ -1,8 +1,8 @@
 #!/bin/bash
 
-COMPILATION_TARGET="aarch64-apple-darwin"
-TARGET_DIR="target/$COMPILATION_TARGET/release-smaller"
-RESOURCE_DIR="resources/darwin-aarch64"
+COMPILATION_TARGET="x86_64-apple-darwin"
+TARGET_DIR="target/x86_64-apple-darwin/release-smaller"
+RESOURCE_DIR="resources/darwin-x86-64"
 LIB_NAME="libbdkffi.dylib"
 
 # Move to the Rust library directory
