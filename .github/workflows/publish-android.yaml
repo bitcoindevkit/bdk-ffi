@@ -25,16 +25,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: "Set default Rust version to 1.77.1"
-        run: rustup default 1.77.1
-
-      - name: "Install Rust Android targets"
-        run: rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
-
       - name: "Build bdk-android library"
         run: |
           cd bdk-android
-          ./gradlew buildAndroidLib
+          bash ./scripts/build-linux-x86_64.sh
 
       - name: "Publish to Maven Central"
         env:

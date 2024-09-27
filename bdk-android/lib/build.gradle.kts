@@ -8,9 +8,6 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
-
-    // Custom plugin to generate the native libs and bindings file
-    id("org.bitcoindevkit.plugins.generate-android-bindings")
 }
 
 android {
@@ -19,7 +16,6 @@ android {
 
     defaultConfig {
         minSdk = 24
-        targetSdk = 34
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -106,15 +102,6 @@ afterEvaluate {
             }
         }
     }
-    
-    // This is required because we must ensure the moveNativeAndroidLibs task is executed after
-    // the mergeReleaseJniLibFolders (hard requirement introduced by our upgrade to Gradle 8.7)
-    tasks.named("mergeReleaseJniLibFolders") {
-        dependsOn(":lib:moveNativeAndroidLibs")
-    }
-    tasks.named("mergeDebugJniLibFolders") {
-        dependsOn(":lib:moveNativeAndroidLibs")
-    }
 }
 
 signing {
@@ -127,9 +114,4 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     sign(publishing.publications)
-}
-
-// This task dependency ensures that we build the bindings binaries before running the tests
-tasks.withType<KotlinCompile> {
-    dependsOn("buildAndroidLib")
 }

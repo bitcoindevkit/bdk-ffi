@@ -3,7 +3,6 @@ plugins {
     id("org.jetbrains.kotlin.android").version("1.9.23").apply(false)
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
-    id("org.bitcoindevkit.plugins.generate-android-bindings").apply(false)
     id("io.github.gradle-nexus.publish-plugin").version("1.1.0").apply(true)
 }
 

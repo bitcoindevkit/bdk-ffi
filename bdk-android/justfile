@@ -1,8 +1,11 @@
 default:
   just --list
 
-build:
-  ./gradlew buildAndroidLib
+build-linux:
+  bash ./scripts/build-linux-x86_64.sh
+
+build-macos:
+  bash ./scripts/build-macos-aarch64.sh
 
 clean:
   rm -rf ../bdk-ffi/target/
