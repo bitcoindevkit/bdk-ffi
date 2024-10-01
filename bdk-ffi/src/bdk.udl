@@ -388,6 +388,8 @@ interface Wallet {
 
   boolean mark_used(KeychainKind keychain, u32 index);
 
+  sequence<AddressInfo> reveal_addresses_to(KeychainKind keychain, u32 index);
+
   Network network();
 
   Balance balance();
