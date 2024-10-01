@@ -386,6 +386,8 @@ interface Wallet {
 
   AddressInfo next_unused_address(KeychainKind keychain);
 
+  boolean mark_used(KeychainKind keychain, u32 index);
+
   Network network();
 
   Balance balance();

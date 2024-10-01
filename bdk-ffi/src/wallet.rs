@@ -88,6 +88,10 @@ impl Wallet {
         self.get_wallet().next_unused_address(keychain).into()
     }
 
+    pub fn mark_used(&self, keychain: KeychainKind, index: u32) -> bool {
+        self.get_wallet().mark_used(keychain, index)
+    }
+
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
         self.get_wallet()
             .apply_update(update.0.clone())
