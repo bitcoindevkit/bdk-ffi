@@ -390,6 +390,8 @@ interface Wallet {
 
   sequence<AddressInfo> reveal_addresses_to(KeychainKind keychain, u32 index);
 
+  sequence<AddressInfo> list_unused_addresses(KeychainKind keychain);
+
   Network network();
 
   Balance balance();

@@ -99,6 +99,13 @@ impl Wallet {
             .collect()
     }
 
+    pub fn list_unused_addresses(&self, keychain: KeychainKind) -> Vec<AddressInfo> {
+        self.get_wallet()
+            .list_unused_addresses(keychain)
+            .map(|address_info| address_info.into())
+            .collect()
+    }
+
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
         self.get_wallet()
             .apply_update(update.0.clone())
