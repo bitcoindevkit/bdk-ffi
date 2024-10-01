@@ -382,6 +382,8 @@ interface Wallet {
 
   AddressInfo peek_address(KeychainKind keychain, u32 index);
 
+  u32 next_derivation_index(KeychainKind keychain);
+
   Network network();
 
   Balance balance();
