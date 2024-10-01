@@ -384,6 +384,8 @@ interface Wallet {
 
   u32 next_derivation_index(KeychainKind keychain);
 
+  AddressInfo next_unused_address(KeychainKind keychain);
+
   Network network();
 
   Balance balance();
