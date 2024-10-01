@@ -72,8 +72,8 @@ impl Wallet {
         self.inner_mutex.lock().expect("wallet")
     }
 
-    pub fn reveal_next_address(&self, keychain_kind: KeychainKind) -> AddressInfo {
-        self.get_wallet().reveal_next_address(keychain_kind).into()
+    pub fn reveal_next_address(&self, keychain: KeychainKind) -> AddressInfo {
+        self.get_wallet().reveal_next_address(keychain).into()
     }
 
     pub fn peek_address(&self, keychain: KeychainKind, index: u32) -> AddressInfo {
