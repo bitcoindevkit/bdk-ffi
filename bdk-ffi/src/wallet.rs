@@ -76,6 +76,10 @@ impl Wallet {
         self.get_wallet().reveal_next_address(keychain_kind).into()
     }
 
+    pub fn peek_address(&self, keychain_kind: KeychainKind, index: u32) -> AddressInfo {
+        self.get_wallet().peek_address(keychain_kind, index).into()
+    }
+
     pub fn apply_update(&self, update: Arc<Update>) -> Result<(), CannotConnectError> {
         self.get_wallet()
             .apply_update(update.0.clone())

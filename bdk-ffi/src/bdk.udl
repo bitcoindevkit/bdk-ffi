@@ -380,6 +380,8 @@ interface Wallet {
 
   AddressInfo reveal_next_address(KeychainKind keychain);
 
+  AddressInfo peek_address(KeychainKind keychain, u32 index);
+
   Network network();
 
   Balance balance();
