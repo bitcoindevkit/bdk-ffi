@@ -688,6 +688,9 @@ interface Psbt {
   [Throws=PsbtError]
   Psbt combine(Psbt other);
 
+  [Throws=PsbtError]
+  Psbt finalize();
+
   string json_serialize();
 };
 
