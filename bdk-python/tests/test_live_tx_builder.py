@@ -105,7 +105,7 @@ class LiveTxBuilderTest(unittest.TestCase):
             ScriptAmount(recipient2.script_pubkey, 4200)
         )
         
-        psbt: Psbt = TxBuilder().set_recipients(all_recipients).fee_rate(fee_rate=FeeRate.from_sat_per_vb(2)).enable_rbf().finish(wallet)
+        psbt: Psbt = TxBuilder().set_recipients(all_recipients).fee_rate(fee_rate=FeeRate.from_sat_per_vb(2)).finish(wallet)
         wallet.sign(psbt)
         
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")

@@ -1,6 +1,6 @@
 use crate::bitcoin::Psbt;
 use crate::error::CreateTxError;
-use crate::types::{RbfValue, ScriptAmount};
+use crate::types::ScriptAmount;
 use crate::wallet::Wallet;
 
 use bitcoin_ffi::{Amount, FeeRate, Script};
@@ -27,8 +27,7 @@ pub struct TxBuilder {
     pub(crate) fee_absolute: Option<Arc<Amount>>,
     pub(crate) drain_wallet: bool,
     pub(crate) drain_to: Option<BdkScriptBuf>,
-    pub(crate) rbf: Option<RbfValue>,
-    // pub(crate) data: Vec<u8>,
+    pub(crate) sequence: Option<u32>,
 }
 
 impl TxBuilder {
@@ -44,8 +43,7 @@ impl TxBuilder {
             fee_absolute: None,
             drain_wallet: false,
             drain_to: None,
-            rbf: None,
-            // data: Vec::new(),
+            sequence: None,
         }
     }
 
@@ -162,16 +160,9 @@ impl TxBuilder {
         })
     }
 
-    pub(crate) fn enable_rbf(&self) -> Arc<Self> {
+    pub(crate) fn set_exact_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(TxBuilder {
-            rbf: Some(RbfValue::Default),
-            ..self.clone()
-        })
-    }
-
-    pub(crate) fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
-        Arc::new(TxBuilder {
-            rbf: Some(RbfValue::Value(nsequence)),
+            sequence: Some(nsequence),
             ..self.clone()
         })
     }
@@ -211,15 +202,8 @@ impl TxBuilder {
         if let Some(script) = &self.drain_to {
             tx_builder.drain_to(script.clone());
         }
-        if let Some(rbf) = &self.rbf {
-            match *rbf {
-                RbfValue::Default => {
-                    tx_builder.enable_rbf();
-                }
-                RbfValue::Value(nsequence) => {
-                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
-                }
-            }
+        if let Some(sequence) = self.sequence {
+            tx_builder.set_exact_sequence(Sequence(sequence));
         }
 
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
@@ -232,7 +216,7 @@ impl TxBuilder {
 pub(crate) struct BumpFeeTxBuilder {
     pub(crate) txid: String,
     pub(crate) fee_rate: Arc<FeeRate>,
-    pub(crate) rbf: Option<RbfValue>,
+    pub(crate) sequence: Option<u32>,
 }
 
 impl BumpFeeTxBuilder {
@@ -240,20 +224,13 @@ impl BumpFeeTxBuilder {
         Self {
             txid,
             fee_rate,
-            rbf: None,
+            sequence: None,
         }
     }
 
-    pub(crate) fn enable_rbf(&self) -> Arc<Self> {
-        Arc::new(Self {
-            rbf: Some(RbfValue::Default),
-            ..self.clone()
-        })
-    }
-
-    pub(crate) fn enable_rbf_with_sequence(&self, nsequence: u32) -> Arc<Self> {
-        Arc::new(Self {
-            rbf: Some(RbfValue::Value(nsequence)),
+    pub(crate) fn set_exact_sequence(&self, nsequence: u32) -> Arc<Self> {
+        Arc::new(BumpFeeTxBuilder {
+            sequence: Some(nsequence),
             ..self.clone()
         })
     }
@@ -265,16 +242,10 @@ impl BumpFeeTxBuilder {
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_fee_bump(txid).map_err(CreateTxError::from)?;
         tx_builder.fee_rate(self.fee_rate.0);
-        if let Some(rbf) = &self.rbf {
-            match *rbf {
-                RbfValue::Default => {
-                    tx_builder.enable_rbf();
-                }
-                RbfValue::Value(nsequence) => {
-                    tx_builder.enable_rbf_with_sequence(Sequence(nsequence));
-                }
-            }
+        if let Some(sequence) = self.sequence {
+            tx_builder.set_exact_sequence(Sequence(sequence));
         }
+
         let psbt: BdkPsbt = tx_builder.finish()?;
 
         Ok(Arc::new(psbt.into()))

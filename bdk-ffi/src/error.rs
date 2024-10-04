@@ -154,11 +154,8 @@ pub enum CreateTxError {
     #[error("lock time conflict: requested {requested}, but required {required}")]
     LockTime { requested: String, required: String },
 
-    #[error("transaction requires rbf sequence number")]
-    RbfSequence,
-
-    #[error("rbf sequence: {rbf}, csv sequence: {csv}")]
-    RbfSequenceCsv { rbf: String, csv: String },
+    #[error("rbf sequence: {sequence}, csv sequence: {csv}")]
+    RbfSequenceCsv { sequence: String, csv: String },
 
     #[error("fee too low: required {required}")]
     FeeTooLow { required: String },
@@ -793,9 +790,8 @@ impl From<BdkCreateTxError> for CreateTxError {
                 requested: requested.to_string(),
                 required: required.to_string(),
             },
-            BdkCreateTxError::RbfSequence => CreateTxError::RbfSequence,
-            BdkCreateTxError::RbfSequenceCsv { rbf, csv } => CreateTxError::RbfSequenceCsv {
-                rbf: rbf.to_string(),
+            BdkCreateTxError::RbfSequenceCsv { sequence, csv } => CreateTxError::RbfSequenceCsv {
+                sequence: sequence.to_string(),
                 csv: csv.to_string(),
             },
             BdkCreateTxError::FeeTooLow { required } => CreateTxError::FeeTooLow {

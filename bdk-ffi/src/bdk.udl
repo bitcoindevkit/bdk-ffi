@@ -61,8 +61,7 @@ interface CreateTxError {
   Version0();
   Version1Csv();
   LockTime(string requested, string required);
-  RbfSequence();
-  RbfSequenceCsv(string rbf, string csv);
+  RbfSequenceCsv(string sequence, string csv);
   FeeTooLow(string required);
   FeeRateTooLow(string required);
   NoUtxosSelected();
@@ -462,9 +461,7 @@ interface TxBuilder {
 
   TxBuilder drain_to([ByRef] Script script);
 
-  TxBuilder enable_rbf();
-
-  TxBuilder enable_rbf_with_sequence(u32 nsequence);
+  TxBuilder set_exact_sequence(u32 nsequence);
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
@@ -473,9 +470,7 @@ interface TxBuilder {
 interface BumpFeeTxBuilder {
   constructor(string txid, FeeRate fee_rate);
 
-  BumpFeeTxBuilder enable_rbf();
-
-  BumpFeeTxBuilder enable_rbf_with_sequence(u32 nsequence);
+  BumpFeeTxBuilder set_exact_sequence(u32 nsequence);
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);

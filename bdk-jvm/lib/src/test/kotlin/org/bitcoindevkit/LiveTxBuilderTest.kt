@@ -86,7 +86,6 @@ class LiveTxBuilderTest {
             .setRecipients(allRecipients)
             .feeRate(FeeRate.fromSatPerVb(4uL))
             .changePolicy(ChangeSpendPolicy.CHANGE_FORBIDDEN)
-            .enableRbf()
             .finish(wallet)
 
         wallet.sign(psbt)

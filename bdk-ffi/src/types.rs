@@ -232,9 +232,3 @@ pub struct SentAndReceivedValues {
     pub sent: Arc<Amount>,
     pub received: Arc<Amount>,
 }
-
-#[derive(Clone, Debug)]
-pub enum RbfValue {
-    Default,
-    Value(u32),
-}
