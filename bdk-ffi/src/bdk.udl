@@ -405,6 +405,9 @@ interface Wallet {
   [Throws=SignerError]
   boolean sign(Psbt psbt);
 
+  [Throws=SignerError]
+  boolean finalize_psbt(Psbt psbt);
+
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
 
   sequence<CanonicalTx> transactions();

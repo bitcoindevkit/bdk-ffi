@@ -144,6 +144,13 @@ impl Wallet {
             .map_err(SignerError::from)
     }
 
+    pub fn finalize_psbt(&self, psbt: Arc<Psbt>) -> Result<bool, SignerError> {
+        let mut psbt = psbt.0.lock().unwrap();
+        self.get_wallet()
+            .finalize_psbt(&mut psbt, SignOptions::default())
+            .map_err(SignerError::from)
+    }
+
     pub fn sent_and_received(&self, tx: &Transaction) -> SentAndReceivedValues {
         let (sent, received) = self.get_wallet().sent_and_received(&tx.into());
         SentAndReceivedValues {
