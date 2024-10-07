@@ -72,6 +72,10 @@ impl Wallet {
         self.inner_mutex.lock().expect("wallet")
     }
 
+    pub fn cancel_tx(&self, tx: &Transaction) {
+        self.get_wallet().cancel_tx(&tx.into())
+    }
+
     pub fn reveal_next_address(&self, keychain: KeychainKind) -> AddressInfo {
         self.get_wallet().reveal_next_address(keychain).into()
     }
