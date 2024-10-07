@@ -393,6 +393,8 @@ interface Wallet {
 
   Network network();
 
+  string descriptor_checksum(KeychainKind keychain);
+
   Balance balance();
 
   [Throws=CannotConnectError]

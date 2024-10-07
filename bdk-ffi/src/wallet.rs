@@ -116,6 +116,10 @@ impl Wallet {
         self.get_wallet().derivation_index(keychain)
     }
 
+    pub fn descriptor_checksum(&self, keychain: KeychainKind) -> String {
+        self.get_wallet().descriptor_checksum(keychain)
+    }
+
     pub fn network(&self) -> Network {
         self.get_wallet().network()
     }
