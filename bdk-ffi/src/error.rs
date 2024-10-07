@@ -1,10 +1,9 @@
 use bitcoin_ffi::OutPoint;
 
-use bdk_bitcoind_rpc::bitcoincore_rpc::bitcoin::address::ParseError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
-use bdk_wallet::bitcoin::address::FromScriptError as BdkFromScriptError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
+use bdk_wallet::bitcoin::address::{FromScriptError as BdkFromScriptError, ParseError};
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk_wallet::bitcoin::hashes::hex::HexToArrayError as BdkHexToArrayError;

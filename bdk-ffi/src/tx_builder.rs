@@ -5,10 +5,10 @@ use crate::wallet::Wallet;
 
 use bitcoin_ffi::{Amount, FeeRate, Script};
 
-use bdk_bitcoind_rpc::bitcoincore_rpc::bitcoin::{OutPoint, Sequence, Txid};
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
+use bdk_wallet::bitcoin::{OutPoint, Sequence, Txid};
 use bdk_wallet::ChangeSpendPolicy;
 
 use std::collections::HashSet;
