@@ -379,6 +379,8 @@ interface Wallet {
   
   u32? derivation_index(KeychainKind keychain);
 
+  LocalOutput? get_utxo(OutPoint op);
+  
   AddressInfo reveal_next_address(KeychainKind keychain);
 
   AddressInfo peek_address(KeychainKind keychain, u32 index);

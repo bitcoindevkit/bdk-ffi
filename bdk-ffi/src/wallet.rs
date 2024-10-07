@@ -10,7 +10,7 @@ use crate::types::{
     SyncRequestBuilder, Update,
 };
 
-use bitcoin_ffi::{Amount, FeeRate, Script};
+use bitcoin_ffi::{Amount, FeeRate, OutPoint, Script};
 
 use bdk_wallet::bitcoin::{Network, Txid};
 use bdk_wallet::rusqlite::Connection as BdkConnection;
@@ -74,6 +74,12 @@ impl Wallet {
 
     pub fn cancel_tx(&self, tx: &Transaction) {
         self.get_wallet().cancel_tx(&tx.into())
+    }
+
+    pub fn get_utxo(&self, op: OutPoint) -> Option<LocalOutput> {
+        self.get_wallet()
+            .get_utxo(op)
+            .map(|local_output| local_output.into())
     }
 
     pub fn reveal_next_address(&self, keychain: KeychainKind) -> AddressInfo {
