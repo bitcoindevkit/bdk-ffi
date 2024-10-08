@@ -376,11 +376,13 @@ interface Wallet {
   constructor(Descriptor descriptor, Descriptor change_descriptor, Connection connection);
 
   void cancel_tx([ByRef] Transaction tx);
-  
+
   u32? derivation_index(KeychainKind keychain);
 
   LocalOutput? get_utxo(OutPoint op);
-  
+
+  KeychainAndIndex? derivation_of_spk(Script spk);
+
   AddressInfo reveal_next_address(KeychainKind keychain);
 
   AddressInfo peek_address(KeychainKind keychain, u32 index);
@@ -631,6 +633,11 @@ dictionary ScriptAmount {
 dictionary SentAndReceivedValues {
     Amount sent;
     Amount received;
+};
+
+dictionary KeychainAndIndex {
+    KeychainKind keychain;
+    u32 index;
 };
 
 // ------------------------------------------------------------------------

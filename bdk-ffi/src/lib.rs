@@ -55,6 +55,7 @@ use crate::types::ConfirmationBlockTime;
 use crate::types::FullScanRequest;
 use crate::types::FullScanRequestBuilder;
 use crate::types::FullScanScriptInspector;
+use crate::types::KeychainAndIndex;
 use crate::types::LocalOutput;
 use crate::types::ScriptAmount;
 use crate::types::SentAndReceivedValues;

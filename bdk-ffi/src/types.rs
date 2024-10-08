@@ -232,3 +232,8 @@ pub struct SentAndReceivedValues {
     pub sent: Arc<Amount>,
     pub received: Arc<Amount>,
 }
+
+pub struct KeychainAndIndex {
+    pub keychain: KeychainKind,
+    pub index: u32,
+}

@@ -6,8 +6,8 @@ use crate::error::{
 };
 use crate::store::Connection;
 use crate::types::{
-    AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, LocalOutput, SentAndReceivedValues,
-    SyncRequestBuilder, Update,
+    AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex, LocalOutput,
+    SentAndReceivedValues, SyncRequestBuilder, Update,
 };
 
 use bitcoin_ffi::{Amount, FeeRate, OutPoint, Script};
@@ -70,6 +70,15 @@ impl Wallet {
 
     pub(crate) fn get_wallet(&self) -> MutexGuard<PersistedWallet<BdkConnection>> {
         self.inner_mutex.lock().expect("wallet")
+    }
+
+    pub fn derivation_of_spk(&self, spk: Arc<Script>) -> Option<KeychainAndIndex> {
+        self.get_wallet()
+            .derivation_of_spk(spk.0.clone())
+            .map(|(k, i)| KeychainAndIndex {
+                keychain: k,
+                index: i,
+            })
     }
 
     pub fn cancel_tx(&self, tx: &Transaction) {
