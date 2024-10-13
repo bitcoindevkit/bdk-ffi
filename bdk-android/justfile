@@ -7,6 +7,9 @@ build-linux:
 build-macos:
   bash ./scripts/build-macos-aarch64.sh
 
+build-windows:
+  bash ./scripts/build-windows-x86_64.sh
+
 clean:
   rm -rf ../bdk-ffi/target/
   rm -rf ./build/
