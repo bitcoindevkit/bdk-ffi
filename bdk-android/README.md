@@ -38,17 +38,8 @@ _Note that Kotlin version `1.9.23` or later is required to build the library._
 git clone https://github.com/bitcoindevkit/bdk-ffi
 ```
 2. Follow the "General" bdk-ffi ["Getting Started (Developer)"] instructions. 
-3. Install Rust (note that we are currently building using Rust 1.77.1):
-```shell
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup default 1.77.1
-```
-4. Install required targets
-```sh
-rustup target add x86_64-linux-android aarch64-linux-android armv7-linux-androideabi
-```
-5. Install Android SDK and Build-Tools for API level 30+
-6. Setup `ANDROID_SDK_ROOT` and `ANDROID_NDK_ROOT` path variables which are required by the build tool. Note that currently, NDK version 25.2.9519653 or above is required. For example:
+3. Install Android SDK and Build-Tools for API level 30+
+4. Setup `ANDROID_SDK_ROOT` and `ANDROID_NDK_ROOT` path variables which are required by the build tool. Note that currently, NDK version 25.2.9519653 or above is required. For example:
 ```shell
 # macOS
 export ANDROID_SDK_ROOT=~/Library/Android/sdk
@@ -60,12 +51,13 @@ export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
 ```
 
 7. Build kotlin bindings
- ```sh
- # build Android library
- cd bdk-android
- ./gradlew buildAndroidLib
- ```
-1. Start android emulator and run tests
+```sh
+# build Android library
+cd bdk-android
+bash ./scripts/build-<your-local-architecture>.sh
+```
+
+8. Start android emulator and run tests
 ```sh
 ./gradlew connectedAndroidTest
 ```
@@ -96,7 +88,6 @@ class file for com.sun.jna.Pointer not found
 The solution is to add JNA as a dependency like so:
 ```kotlin
 dependencies {
-    // ...
     implementation("net.java.dev.jna:jna:5.12.1")
 }
 ```
