@@ -1,4 +1,9 @@
-namespace bdk {};
+namespace bdk {
+  [Throws=LightClientBuilderError]
+  NodePair build_light_client([ByRef] Wallet wallet, sequence<Peer> peers, u8 connections, u32? recovery_height, string data_dir);
+
+  void run_node(LightNode node);
+};
 
 // ------------------------------------------------------------------------
 // bdk crate - error module
@@ -262,6 +267,17 @@ interface TransactionError {
 [Error]
 interface TxidParseError {
   InvalidTxid(string txid);
+};
+
+[Error]
+interface LightClientBuilderError {
+  DatabaseError(string reason);
+  ParseIpAddrError();
+};
+
+[Error]
+enum LightClientError {
+  "NodeStopped",
 };
 
 // ------------------------------------------------------------------------
@@ -638,6 +654,93 @@ dictionary SentAndReceivedValues {
 dictionary KeychainAndIndex {
     KeychainKind keychain;
     u32 index;
+};
+
+// ------------------------------------------------------------------------
+// bdk-kyoto crate
+// ------------------------------------------------------------------------
+
+interface LightClient {
+  [Async]
+  Update? update(NodeMessageHandler? logger);
+
+  [Async, Throws=LightClientError]
+  void broadcast(Transaction transaction);
+
+  [Async, Throws=LightClientError]
+  void watch_address(Address address);
+
+  [Async, Throws=LightClientError]
+  void shutdown();
+
+};
+
+interface LightNode {
+  [Async]
+  void run();
+};
+
+dictionary NodePair {
+  LightNode node;
+  LightClient client;
+};
+
+dictionary Peer {
+  IpAddress address;
+  u16? port;
+  boolean v2_transport;
+};
+
+interface IpAddress {
+  [Name=from_ipv4]
+  constructor(u8 q1, u8 q2, u8 q3, u8 q4);
+
+  [Name=from_ipv6]
+  constructor(u16 a, u16 b, u16 c, u16 d, u16 e, u16 f, u16 g, u16 h);
+};
+
+[Trait, WithForeign]
+interface NodeMessageHandler {
+  void dialog(string dialog);
+
+  void warning(Warning warning);
+
+  void state_changed(NodeState state);
+
+  void connections_met();
+
+  void tx_sent(Txid txid);
+
+  void tx_failed(Txid txid);
+
+  void blocks_disconnected(sequence<u32> blocks);
+
+  void synced(u32 tip);
+};
+
+[Enum]
+interface Warning {
+  NotEnoughConnections();
+  PeerTimedOut();
+  CouldNotConnect();
+  NoCompactFilters();
+  PotentialStaleTip();
+  UnsolicitedMessage();
+  UnlinkableAnchor();
+  CorruptedHeaders();
+  TransactionRejected();
+  FailedPersistance(string warning);
+  EvaluatingFork();
+  EmptyPeerDatabase();
+  UnexpectedSyncError(string warning);
+};
+
+enum NodeState {
+  "Behind",
+  "HeadersSynced",
+  "FilterHeadersSynced",
+  "FiltersSynced",
+  "TransactionsSynced"
 };
 
 // ------------------------------------------------------------------------

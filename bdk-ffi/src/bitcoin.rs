@@ -77,7 +77,7 @@ impl From<BdkAddress> for Address {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Transaction(BdkTransaction);
+pub struct Transaction(pub(crate) BdkTransaction);
 
 impl Transaction {
     pub fn new(transaction_bytes: Vec<u8>) -> Result<Self, TransactionError> {
