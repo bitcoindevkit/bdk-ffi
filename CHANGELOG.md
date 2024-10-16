@@ -3,6 +3,35 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.0-beta.5]
+This release updates the bdk-ffi libraries to the latest bdk_wallet 1.0.0-beta.5 and related libraries (Esplora, Electrum, etc.). 
+
+#### Added
+`EsploraClient`
+    - `get_tx` [https://github.com/bitcoindevkit/bdk-ffi/pull/598]
+`Wallet`
+    - `peek_address` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
+    - `next_derivation_index` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
+    - `next_unused_address` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
+    - `mark_used` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
+    - `reveal_addresses_to` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
+    - `list_unused_addresses` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
+    - `descriptor_checksum` [https://github.com/bitcoindevkit/bdk-ffi/pull/603]
+    - `finalize_psbt` [https://github.com/bitcoindevkit/bdk-ffi/pull/604]
+    - `cancel_tx` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
+    - `get_utxo` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
+    - `derivation_of_spk` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
+`TxBuilder`
+    - `set_exact_sequence` [https://github.com/bitcoindevkit/bdk-ffi/pull/600]
+
+#### Changed
+`Wallet`
+    - corrected argument name in `reveal_next_address` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
+    
+#### Removed
+`TxBuilder`
+    - `enable_rbf` [https://github.com/bitcoindevkit/bdk-ffi/pull/600]
+
 ## [v1.0.0-beta.2]
 This release updates the bdk-ffi libraries to the latest bdk_wallet 1.0.0-beta.2 and related libraries (Esplora, Electrum, etc.), as well as uses the latest uniffi-rs library version 0.28.0. The releases now depend on [bitcoin-ffi] for the types that are exposed from the rust-bitcoin org. It also bumps the minimum supported Android API level to 24 (Android Nougat).
 
