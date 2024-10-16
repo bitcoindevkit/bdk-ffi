@@ -88,8 +88,7 @@ git push upstream v0.6.0
 27.  - [ ] Make sure the released libraries work and contain the artifacts you would expect 
 28.  - [ ] Aggregate all the changelog notices from the PRs and add them to the changelog file
 29.  - [ ] Bump the versions on master from `0.9.0-SNAPSHOT` to `0.10.0-SNAPSHOT`, `0.6.0.dev0` to `0.7.0.dev0`
-30.  - [ ] Apply changes to the minor_release and patch_release issue templates if they need any
-31.  - [ ] Open a PR on master with the changes in steps 29, 30, and 31. See [example PR here](https://github.com/bitcoindevkit/bdk-ffi/pull/317). Get a review and merge the PR.
-32.  - [ ] Make release on GitHub (set as pre-release and generate auto release notes between the previous tag and the new one)
-33.  - [ ] Post in the announcement channel
-34.  - [ ] Tweet about the library
+30.  - [ ] Apply changes to the release issue template if needed
+31.  - [ ] Make release on GitHub (set as pre-release and generate auto release notes between the previous tag and the new one)
+32.  - [ ] Post in the announcement channel
+33.  - [ ] Tweet about the library
