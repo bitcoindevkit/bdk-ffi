@@ -3,7 +3,7 @@
 COMPILATION_TARGET="x86_64-pc-windows-msvc"
 TARGET_DIR="target/x86_64-pc-windows-msvc/release-smaller"
 RESOURCE_DIR="resources/win32-x86-64"
-LIB_NAME="bdkffi.ddl"
+LIB_NAME="bdkffi.dll"
 
 # Move to the Rust library directory
 cd ../bdk-ffi/ || exit
