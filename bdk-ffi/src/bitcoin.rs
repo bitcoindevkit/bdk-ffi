@@ -2,8 +2,8 @@ use crate::error::{
     AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
 };
 
-use bitcoin_ffi::OutPoint;
 use bitcoin_ffi::Script;
+use bitcoin_ffi::TxIn;
 
 use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bdk_wallet::bitcoin::consensus::encode::serialize;
@@ -14,7 +14,6 @@ use bdk_wallet::bitcoin::Address as BdkAddress;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
-use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
 use bdk_wallet::serde_json;
 
@@ -197,28 +196,6 @@ impl Psbt {
 impl From<BdkPsbt> for Psbt {
     fn from(psbt: BdkPsbt) -> Self {
         Psbt(Mutex::new(psbt))
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct TxIn {
-    pub previous_output: OutPoint,
-    pub script_sig: Arc<Script>,
-    pub sequence: u32,
-    pub witness: Vec<Vec<u8>>,
-}
-
-impl From<&BdkTxIn> for TxIn {
-    fn from(tx_in: &BdkTxIn) -> Self {
-        TxIn {
-            previous_output: OutPoint {
-                txid: tx_in.previous_output.txid,
-                vout: tx_in.previous_output.vout,
-            },
-            script_sig: Arc::new(Script(tx_in.script_sig.clone())),
-            sequence: tx_in.sequence.0,
-            witness: tx_in.witness.to_vec(),
-        }
     }
 }
 

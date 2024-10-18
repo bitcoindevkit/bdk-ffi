@@ -714,12 +714,7 @@ interface Psbt {
   string json_serialize();
 };
 
-dictionary TxIn {
-  OutPoint previous_output;
-  Script script_sig;
-  u32 sequence;
-  sequence<sequence<u8>> witness;
-};
+
 
 // ------------------------------------------------------------------------
 // types defined in external crate bitcoin-ffi
@@ -742,6 +737,9 @@ typedef extern Txid;
 
 [External="bitcoin_ffi"]
 typedef extern OutPoint;
+
+[External="bitcoin_ffi"]
+typedef extern TxIn;
 
 [ExternalInterface="bitcoin_ffi"]
 typedef extern FeeRateError;
