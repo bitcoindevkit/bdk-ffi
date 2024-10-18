@@ -12,7 +12,6 @@ mod wallet;
 use crate::bitcoin::Address;
 use crate::bitcoin::Psbt;
 use crate::bitcoin::Transaction;
-use crate::bitcoin::TxIn;
 use crate::bitcoin::TxOut;
 use crate::descriptor::Descriptor;
 use crate::electrum::ElectrumClient;
@@ -70,6 +69,7 @@ use bitcoin_ffi::FeeRate;
 use bitcoin_ffi::Network;
 use bitcoin_ffi::OutPoint;
 use bitcoin_ffi::Script;
+use bitcoin_ffi::TxIn;
 
 use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
