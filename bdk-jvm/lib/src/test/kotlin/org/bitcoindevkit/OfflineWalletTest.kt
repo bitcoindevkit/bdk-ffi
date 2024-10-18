@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import java.io.File
-import org.rustbitcoin.bitcoin.Network
+import org.bitcoindevkit.bitcoinffi.Network
 
 class OfflineWalletTest {
     private val descriptor: Descriptor = Descriptor(

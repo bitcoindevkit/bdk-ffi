@@ -9,7 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.runner.RunWith
 import kotlin.test.AfterTest
 import java.io.File
-import org.rustbitcoin.bitcoin.Network
+import org.bitcoindevkit.bitcoinffi.Network
 
 @RunWith(AndroidJUnit4::class)
 class OfflineWalletTest {

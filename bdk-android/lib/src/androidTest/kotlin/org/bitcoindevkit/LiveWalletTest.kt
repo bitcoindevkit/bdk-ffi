@@ -7,9 +7,9 @@ import org.junit.runner.RunWith
 import kotlin.test.AfterTest
 import kotlin.test.assertTrue
 import java.io.File
-import org.rustbitcoin.bitcoin.Network
-import org.rustbitcoin.bitcoin.Amount
-import org.rustbitcoin.bitcoin.FeeRate
+import org.bitcoindevkit.bitcoinffi.Network
+import org.bitcoindevkit.bitcoinffi.Amount
+import org.bitcoindevkit.bitcoinffi.FeeRate
 
 private const val SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
 private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
