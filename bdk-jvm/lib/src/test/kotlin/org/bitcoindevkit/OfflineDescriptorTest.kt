@@ -2,7 +2,7 @@ package org.bitcoindevkit
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import org.rustbitcoin.bitcoin.Network
+import org.bitcoindevkit.bitcoinffi.Network
 
 class OfflineDescriptorTest {
     @Test
