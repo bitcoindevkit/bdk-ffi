@@ -57,6 +57,7 @@ use crate::types::FullScanRequestBuilder;
 use crate::types::FullScanScriptInspector;
 use crate::types::KeychainAndIndex;
 use crate::types::LocalOutput;
+use crate::types::Policy;
 use crate::types::ScriptAmount;
 use crate::types::SentAndReceivedValues;
 use crate::types::SyncRequest;

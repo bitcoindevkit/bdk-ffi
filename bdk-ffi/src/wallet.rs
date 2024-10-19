@@ -1,13 +1,13 @@
 use crate::bitcoin::{Psbt, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateWithPersistError, LoadWithPersistError,
-    SignerError, SqliteError, TxidParseError,
+    CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
+    LoadWithPersistError, SignerError, SqliteError, TxidParseError,
 };
 use crate::store::Connection;
 use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex, LocalOutput,
-    SentAndReceivedValues, SyncRequestBuilder, Update,
+    Policy, SentAndReceivedValues, SyncRequestBuilder, Update,
 };
 
 use bitcoin_ffi::{Amount, FeeRate, OutPoint, Script};
@@ -139,6 +139,13 @@ impl Wallet {
         self.get_wallet().descriptor_checksum(keychain)
     }
 
+    pub fn policies(&self, keychain: KeychainKind) -> Result<Option<Arc<Policy>>, DescriptorError> {
+        self.get_wallet()
+            .policies(keychain)
+            .map_err(DescriptorError::from)
+            .map(|e| e.map(|p| Arc::new(p.into())))
+    }
+
     pub fn network(&self) -> Network {
         self.get_wallet().network()
     }
@@ -154,8 +161,7 @@ impl Wallet {
 
     pub(crate) fn sign(
         &self,
-        psbt: Arc<Psbt>,
-        // sign_options: Option<SignOptions>,
+        psbt: Arc<Psbt>, // sign_options: Option<SignOptions>,
     ) -> Result<bool, SignerError> {
         let mut psbt = psbt.0.lock().unwrap();
         self.get_wallet()

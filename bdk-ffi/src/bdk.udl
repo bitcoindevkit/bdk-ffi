@@ -401,6 +401,9 @@ interface Wallet {
 
   string descriptor_checksum(KeychainKind keychain);
 
+  [Throws=DescriptorError]
+  Policy? policies(KeychainKind keychain);
+
   Balance balance();
 
   [Throws=CannotConnectError]
@@ -440,6 +443,8 @@ interface Wallet {
 };
 
 interface Update {};
+
+interface Policy {};
 
 interface TxBuilder {
   constructor();

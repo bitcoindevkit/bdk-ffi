@@ -15,12 +15,12 @@ use bdk_wallet::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
 use bdk_wallet::chain::{
     ChainPosition as BdkChainPosition, ConfirmationBlockTime as BdkConfirmationBlockTime,
 };
+use bdk_wallet::descriptor::Policy as BdkPolicy;
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
-
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug)]
@@ -236,4 +236,18 @@ pub struct SentAndReceivedValues {
 pub struct KeychainAndIndex {
     pub keychain: KeychainKind,
     pub index: u32,
+}
+
+/// Descriptor spending policy
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub struct Policy(BdkPolicy);
+impl From<BdkPolicy> for Policy {
+    fn from(value: BdkPolicy) -> Self {
+        Policy(value)
+    }
+}
+impl From<Policy> for BdkPolicy {
+    fn from(value: Policy) -> Self {
+        value.0
+    }
 }
