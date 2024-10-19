@@ -401,6 +401,9 @@ interface Wallet {
 
   string descriptor_checksum(KeychainKind keychain);
 
+  [Throws=DescriptorError]
+  Policy? policies(KeychainKind keychain);
+
   Balance balance();
 
   [Throws=CannotConnectError]
@@ -441,6 +444,60 @@ interface Wallet {
 
 interface Update {};
 
+interface Policy {
+  string id();
+  
+  string as_string();
+
+  boolean requires_path();
+  
+  SatisfiableItem item();
+  
+  Satisfaction satisfaction();
+
+  Satisfaction contribution();
+};
+
+[Enum]
+interface SatisfiableItem {
+  EcdsaSignature(PkOrF key);
+  SchnorrSignature(PkOrF key);
+  Sha256Preimage(string hash);
+  Hash256Preimage(string hash);
+  Ripemd160Preimage(string hash);
+  Hash160Preimage(string hash);
+  AbsoluteTimelock(LockTime value);
+  RelativeTimelock(u32 value);
+  Multisig(sequence<PkOrF> keys, u64 threshold);
+  Thresh(sequence<Policy> items, u64 threshold);
+};
+
+[Enum]
+interface PkOrF {
+  Pubkey(string value);
+  XOnlyPubkey(string value);
+  Fingerprint(string value);
+};
+
+[Enum]
+interface LockTime {
+  Blocks(u32 height);
+  Seconds(u32 consensus_time);
+};
+
+[Enum]
+interface Satisfaction {
+    Partial(u64 n, u64 m, sequence<u64> items, boolean? sorted, record<u32, sequence<Condition>> conditions);
+    PartialComplete(u64 n, u64 m, sequence<u64> items, boolean? sorted, record<sequence<u32>, sequence<Condition>> conditions);
+    Complete(Condition condition);
+    None(string msg);
+};
+
+dictionary Condition {
+  u32? csv;
+  LockTime? timelock;
+};
+
 interface TxBuilder {
   constructor();
 
@@ -455,6 +512,8 @@ interface TxBuilder {
   TxBuilder unspendable(sequence<OutPoint> unspendable);
 
   TxBuilder add_utxo(OutPoint outpoint);
+
+  TxBuilder policy_path(record<string, sequence<u64>> policy_path, KeychainKind keychain);
 
   TxBuilder change_policy(ChangeSpendPolicy change_policy);
 

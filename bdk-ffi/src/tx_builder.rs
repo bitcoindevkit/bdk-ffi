@@ -3,6 +3,7 @@ use crate::error::CreateTxError;
 use crate::types::ScriptAmount;
 use crate::wallet::Wallet;
 
+use bdk_wallet::KeychainKind;
 use bitcoin_ffi::{Amount, FeeRate, Script};
 
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
@@ -11,6 +12,8 @@ use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint, Sequence, Txid};
 use bdk_wallet::ChangeSpendPolicy;
 
+use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -21,6 +24,8 @@ pub struct TxBuilder {
     pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
     pub(crate) utxos: Vec<OutPoint>,
     pub(crate) unspendable: HashSet<OutPoint>,
+    pub(crate) internal_policy_path: Option<BTreeMap<String, Vec<usize>>>,
+    pub(crate) external_policy_path: Option<BTreeMap<String, Vec<usize>>>,
     pub(crate) change_policy: ChangeSpendPolicy,
     pub(crate) manually_selected_only: bool,
     pub(crate) fee_rate: Option<FeeRate>,
@@ -37,6 +42,8 @@ impl TxBuilder {
             recipients: Vec::new(),
             utxos: Vec::new(),
             unspendable: HashSet::new(),
+            internal_policy_path: None,
+            external_policy_path: None,
             change_policy: ChangeSpendPolicy::ChangeAllowed,
             manually_selected_only: false,
             fee_rate: None,
@@ -102,6 +109,25 @@ impl TxBuilder {
             utxos,
             ..self.clone()
         })
+    }
+
+    pub(crate) fn policy_path(
+        &self,
+        policy_path: HashMap<String, Vec<u64>>,
+        keychain: KeychainKind,
+    ) -> Arc<Self> {
+        let mut updated_self = self.clone();
+        let to_update = match keychain {
+            KeychainKind::Internal => &mut updated_self.internal_policy_path,
+            KeychainKind::External => &mut updated_self.external_policy_path,
+        };
+        *to_update = Some(
+            policy_path
+                .into_iter()
+                .map(|(key, value)| (key, value.into_iter().map(|x| x as usize).collect()))
+                .collect::<BTreeMap<String, Vec<usize>>>(),
+        );
+        Arc::new(updated_self)
     }
 
     pub(crate) fn change_policy(&self, change_policy: ChangeSpendPolicy) -> Arc<Self> {
@@ -177,6 +203,12 @@ impl TxBuilder {
         for (script, amount) in &self.recipients {
             tx_builder.add_recipient(script.clone(), *amount);
         }
+        if let Some(policy_path) = &self.external_policy_path {
+            tx_builder.policy_path(policy_path.clone(), KeychainKind::External);
+        }
+        if let Some(policy_path) = &self.internal_policy_path {
+            tx_builder.policy_path(policy_path.clone(), KeychainKind::Internal);
+        }
         tx_builder.change_policy(self.change_policy);
         if !self.utxos.is_empty() {
             tx_builder
@@ -249,5 +281,94 @@ impl BumpFeeTxBuilder {
         let psbt: BdkPsbt = tx_builder.finish()?;
 
         Ok(Arc::new(psbt.into()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use bitcoin_ffi::Network;
+
+    use crate::{
+        descriptor::Descriptor, esplora::EsploraClient, store::Connection,
+        types::FullScanScriptInspector, wallet::Wallet,
+    };
+
+    struct FullScanInspector;
+    impl FullScanScriptInspector for FullScanInspector {
+        fn inspect(&self, _: bdk_wallet::KeychainKind, _: u32, _: Arc<bitcoin_ffi::Script>) {}
+    }
+
+    #[test]
+    fn test_policy_path() {
+        let wallet = create_and_sync_wallet();
+        let address = wallet
+            .next_unused_address(bdk_wallet::KeychainKind::External)
+            .address;
+        println!("Wallet address: {:?}", address);
+
+        let ext_policy = wallet.policies(bdk_wallet::KeychainKind::External);
+        let int_policy = wallet.policies(bdk_wallet::KeychainKind::Internal);
+
+        if let (Ok(Some(ext_policy)), Ok(Some(int_policy))) = (ext_policy, int_policy) {
+            let ext_path = vec![(ext_policy.id().clone(), vec![0, 1])]
+                .into_iter()
+                .collect();
+            println!("External Policy path : {:?}\n", ext_path);
+            let int_path = vec![(int_policy.id().clone(), vec![0, 1])]
+                .into_iter()
+                .collect();
+            println!("Internal Policy Path: {:?}\n", int_path);
+
+            match crate::tx_builder::TxBuilder::new()
+                .add_recipient(
+                    &(*address.script_pubkey()).to_owned(),
+                    Arc::new(bitcoin_ffi::Amount::from_sat(1000)),
+                )
+                .do_not_spend_change()
+                .policy_path(int_path, bdk_wallet::KeychainKind::Internal)
+                .policy_path(ext_path, bdk_wallet::KeychainKind::External)
+                .finish(&Arc::new(wallet))
+            {
+                Ok(tx) => println!("Transaction serialized: {}\n", tx.serialize()),
+                Err(e) => eprintln!("Error: {:?}", e),
+            }
+        } else {
+            println!("Failed to retrieve valid policies for keychains.");
+        }
+    }
+
+    fn create_and_sync_wallet() -> Wallet {
+        let external_descriptor = format!(
+            "wsh(thresh(2,pk({}/0/*),sj:and_v(v:pk({}/0/*),n:older(6)),snj:and_v(v:pk({}/0/*),after(630000))))",
+            "tpubD6NzVbkrYhZ4XJBfEJ6gt9DiVdfWJijsQTCE3jtXByW3Tk6AVGQ3vL1NNxg3SjB7QkJAuutACCQjrXD8zdZSM1ZmBENszCqy49ECEHmD6rf",
+            "tpubD6NzVbkrYhZ4YfAr3jCBRk4SpqB9L1Hh442y83njwfMaker7EqZd7fHMqyTWrfRYJ1e5t2ue6BYjW5i5yQnmwqbzY1a3kfqNxog1AFcD1aE",
+            "tprv8ZgxMBicQKsPeitVUz3s6cfyCECovNP7t82FaKPa4UKqV1kssWcXgLkMDjzDbgG9GWoza4pL7z727QitfzkiwX99E1Has3T3a1MKHvYWmQZ"
+        );
+        let internal_descriptor = format!(
+            "wsh(thresh(2,pk({}/1/*),sj:and_v(v:pk({}/1/*),n:older(6)),snj:and_v(v:pk({}/1/*),after(630000))))",
+            "tpubD6NzVbkrYhZ4XJBfEJ6gt9DiVdfWJijsQTCE3jtXByW3Tk6AVGQ3vL1NNxg3SjB7QkJAuutACCQjrXD8zdZSM1ZmBENszCqy49ECEHmD6rf",
+            "tpubD6NzVbkrYhZ4YfAr3jCBRk4SpqB9L1Hh442y83njwfMaker7EqZd7fHMqyTWrfRYJ1e5t2ue6BYjW5i5yQnmwqbzY1a3kfqNxog1AFcD1aE",
+            "tprv8ZgxMBicQKsPeitVUz3s6cfyCECovNP7t82FaKPa4UKqV1kssWcXgLkMDjzDbgG9GWoza4pL7z727QitfzkiwX99E1Has3T3a1MKHvYWmQZ"
+        );
+        let wallet = Wallet::new(
+            Arc::new(Descriptor::new(external_descriptor, Network::Signet).unwrap()),
+            Arc::new(Descriptor::new(internal_descriptor, Network::Signet).unwrap()),
+            Network::Signet,
+            Arc::new(Connection::new_in_memory().unwrap()),
+        )
+        .unwrap();
+        let client = EsploraClient::new("https://mutinynet.com/api/".to_string());
+        let full_scan_builder = wallet.start_full_scan();
+        let full_scan_request = full_scan_builder
+            .inspect_spks_for_all_keychains(Arc::new(FullScanInspector))
+            .unwrap()
+            .build()
+            .unwrap();
+        let update = client.full_scan(full_scan_request, 10, 10).unwrap();
+        wallet.apply_update(update).unwrap();
+        println!("Wallet balance: {:?}", wallet.balance().total.to_sat());
+        wallet
     }
 }
