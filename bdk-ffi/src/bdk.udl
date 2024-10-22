@@ -461,6 +461,8 @@ interface TxBuilder {
 
   TxBuilder add_utxo(OutPoint outpoint);
 
+  TxBuilder policy_path(record<string, sequence<u64>> policy_path, KeychainKind keychain);
+
   TxBuilder change_policy(ChangeSpendPolicy change_policy);
 
   TxBuilder do_not_spend_change();

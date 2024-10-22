@@ -3,6 +3,7 @@ use crate::error::CreateTxError;
 use crate::types::ScriptAmount;
 use crate::wallet::Wallet;
 
+use bdk_wallet::KeychainKind;
 use bitcoin_ffi::{Amount, FeeRate, Script};
 
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
@@ -11,6 +12,8 @@ use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint, Sequence, Txid};
 use bdk_wallet::ChangeSpendPolicy;
 
+use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -21,6 +24,7 @@ pub struct TxBuilder {
     pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
     pub(crate) utxos: Vec<OutPoint>,
     pub(crate) unspendable: HashSet<OutPoint>,
+    pub(crate) policy_path: (HashMap<String, Vec<u64>>, KeychainKind),
     pub(crate) change_policy: ChangeSpendPolicy,
     pub(crate) manually_selected_only: bool,
     pub(crate) fee_rate: Option<FeeRate>,
@@ -37,6 +41,7 @@ impl TxBuilder {
             recipients: Vec::new(),
             utxos: Vec::new(),
             unspendable: HashSet::new(),
+            policy_path: (HashMap::new(), KeychainKind::External),
             change_policy: ChangeSpendPolicy::ChangeAllowed,
             manually_selected_only: false,
             fee_rate: None,
@@ -100,6 +105,17 @@ impl TxBuilder {
         utxos.append(&mut outpoints);
         Arc::new(TxBuilder {
             utxos,
+            ..self.clone()
+        })
+    }
+
+    pub(crate) fn policy_path(
+        &self,
+        policy_path: HashMap<String, Vec<u64>>,
+        keychain: KeychainKind,
+    ) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            policy_path: (policy_path, keychain),
             ..self.clone()
         })
     }
@@ -177,6 +193,15 @@ impl TxBuilder {
         for (script, amount) in &self.recipients {
             tx_builder.add_recipient(script.clone(), *amount);
         }
+        tx_builder.policy_path(
+            self.policy_path
+                .0
+                .clone()
+                .into_iter()
+                .map(|(key, value)| (key, value.into_iter().map(|x| x as usize).collect()))
+                .collect::<BTreeMap<String, Vec<usize>>>(),
+            self.policy_path.1,
+        );
         tx_builder.change_policy(self.change_policy);
         if !self.utxos.is_empty() {
             tx_builder
