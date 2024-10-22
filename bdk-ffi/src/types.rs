@@ -251,3 +251,8 @@ impl From<Policy> for BdkPolicy {
         value.0
     }
 }
+impl Policy {
+    pub fn id(&self) -> String {
+        self.0.id.clone()
+    }
+}

@@ -444,7 +444,9 @@ interface Wallet {
 
 interface Update {};
 
-interface Policy {};
+interface Policy {
+  string id();
+};
 
 interface TxBuilder {
   constructor();
