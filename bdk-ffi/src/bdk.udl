@@ -75,6 +75,7 @@ interface CreateTxError {
   UnknownUtxo(string outpoint);
   MissingNonWitnessUtxo(string outpoint);
   MiniscriptPsbt(string error_message);
+  PushBytesError();
 };
 
 [Error]
@@ -708,6 +709,8 @@ interface TxBuilder {
   TxBuilder drain_to([ByRef] Script script);
 
   TxBuilder set_exact_sequence(u32 nsequence);
+
+  TxBuilder add_data(sequence<u8> data);
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);

@@ -1,5 +1,6 @@
 use bitcoin_ffi::OutPoint;
 
+use bdk_core::bitcoin::script::PushBytesError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
@@ -195,6 +196,9 @@ pub enum CreateTxError {
 
     #[error("miniscript psbt error: {error_message}")]
     MiniscriptPsbt { error_message: String },
+
+    #[error("attempt to prepare too many bytes to be pushed into script")]
+    PushBytesError,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -948,6 +952,12 @@ impl From<BdkCreateTxError> for CreateTxError {
                 error_message: e.to_string(),
             },
         }
+    }
+}
+
+impl From<PushBytesError> for CreateTxError {
+    fn from(_: PushBytesError) -> Self {
+        CreateTxError::PushBytesError
     }
 }
 

@@ -14,7 +14,9 @@ use bdk_wallet::ChangeSpendPolicy;
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+use bdk_wallet::bitcoin::script::PushBytesBuf;
 use std::collections::HashSet;
+use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -33,6 +35,7 @@ pub struct TxBuilder {
     pub(crate) drain_wallet: bool,
     pub(crate) drain_to: Option<BdkScriptBuf>,
     pub(crate) sequence: Option<u32>,
+    pub(crate) data: Vec<u8>,
 }
 
 impl TxBuilder {
@@ -51,6 +54,7 @@ impl TxBuilder {
             drain_wallet: false,
             drain_to: None,
             sequence: None,
+            data: Vec::new(),
         }
     }
 
@@ -193,6 +197,13 @@ impl TxBuilder {
         })
     }
 
+    pub(crate) fn add_data(&self, data: Vec<u8>) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            data,
+            ..self.clone()
+        })
+    }
+
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
@@ -236,6 +247,10 @@ impl TxBuilder {
         }
         if let Some(sequence) = self.sequence {
             tx_builder.set_exact_sequence(Sequence(sequence));
+        }
+        if !&self.data.is_empty() {
+            let push_bytes = PushBytesBuf::try_from(self.data.clone())?;
+            tx_builder.add_data(&push_bytes);
         }
 
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
