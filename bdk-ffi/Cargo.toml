@@ -22,16 +22,16 @@ bdk_wallet = { version = "=1.0.0-beta.5", features = ["all-keys", "keys-bip39", 
 bdk_core = { version = "0.3.0" }
 bdk_esplora = { version = "0.19.0", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
 bdk_electrum = { version = "0.19.0", default-features = false, features = ["use-rustls-ring"] }
-bitcoin-ffi = { git = "https://github.com/bitcoindevkit/bitcoin-ffi", tag = "v0.1.2" }
+bitcoin-ffi = { git = "https://github.com/reez/bitcoin-ffi.git", branch = "uniffi-0.28.2" }
 
-uniffi = { version = "=0.28.0" }
+uniffi = { version = "=0.28.2" }
 thiserror = "1.0.58"
 
 [build-dependencies]
-uniffi = { version = "=0.28.0", features = ["build"] }
+uniffi = { version = "=0.28.2", features = ["build"] }
 
 [dev-dependencies]
-uniffi = { version = "=0.28.0", features = ["bindgen-tests"] }
+uniffi = { version = "=0.28.2", features = ["bindgen-tests"] }
 assert_matches = "1.5.0"
 
 [profile.release-smaller]
