@@ -255,4 +255,12 @@ impl Policy {
     pub fn id(&self) -> String {
         self.0.id.clone()
     }
+
+    pub fn as_string(&self) -> String {
+        bdk_wallet::serde_json::to_string(&self.0).unwrap()
+    }
+
+    pub fn requires_path(&self) -> bool {
+        self.0.requires_path()
+    }
 }

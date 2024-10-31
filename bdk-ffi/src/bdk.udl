@@ -446,6 +446,10 @@ interface Update {};
 
 interface Policy {
   string id();
+  
+  string as_string();
+
+  boolean requires_path();
 };
 
 interface TxBuilder {
