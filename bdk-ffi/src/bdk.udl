@@ -362,9 +362,13 @@ interface ChangeSet {};
 // bdk_wallet crate - wallet module
 // ------------------------------------------------------------------------
 
+/// Policy regarding the use of change outputs when creating a transaction
 enum ChangeSpendPolicy {
+  /// Use both change and non-change outputs (default)
   "ChangeAllowed",
+  /// Only use change outputs (see [`TxBuilder::only_spend_change`])
   "OnlyChange",
+  /// Only use non-change outputs
   "ChangeForbidden"
 };
 
@@ -375,64 +379,188 @@ interface Wallet {
   [Name=load, Throws=LoadWithPersistError]
   constructor(Descriptor descriptor, Descriptor change_descriptor, Connection connection);
 
+  /// Informs the wallet that you no longer intend to broadcast a tx that was built from it.
+  ///
+  /// This frees up the change address used when creating the tx for use in future transactions.
   void cancel_tx([ByRef] Transaction tx);
 
+  /// The derivation index of this wallet. It will return `None` if it has not derived any addresses.
+  /// Otherwise, it will return the index of the highest address it has derived.
   u32? derivation_index(KeychainKind keychain);
 
+  /// Returns the utxo owned by this wallet corresponding to `outpoint` if it exists in the
+  /// wallet's database.
   LocalOutput? get_utxo(OutPoint op);
 
+  /// Finds how the wallet derived the script pubkey `spk`.
+  ///
+  /// Will only return `Some(_)` if the wallet has given out the spk.
   KeychainAndIndex? derivation_of_spk(Script spk);
 
+  /// Attempt to reveal the next address of the given `keychain`.
+  ///
+  /// This will increment the keychain's derivation index. If the keychain's descriptor doesn't
+  /// contain a wildcard or every address is already revealed up to the maximum derivation
+  /// index defined in [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki),
+  /// then the last revealed address will be returned.
   AddressInfo reveal_next_address(KeychainKind keychain);
 
+  /// Peek an address of the given `keychain` at `index` without revealing it.
+  ///
+  /// For non-wildcard descriptors this returns the same address at every provided index.
+  ///
+  /// # Panics
+  ///
+  /// This panics when the caller requests for an address of derivation index greater than the
+  /// [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) max index.
   AddressInfo peek_address(KeychainKind keychain, u32 index);
 
+  /// The index of the next address that you would get if you were to ask the wallet for a new address
   u32 next_derivation_index(KeychainKind keychain);
 
+  /// Get the next unused address for the given `keychain`, i.e. the address with the lowest
+  /// derivation index that hasn't been used.
+  ///
+  /// This will attempt to derive and reveal a new address if no newly revealed addresses
+  /// are available. See also [`reveal_next_address`](Self::reveal_next_address).
+  ///
+  /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
+  /// calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
   AddressInfo next_unused_address(KeychainKind keychain);
 
+  /// Marks an address used of the given `keychain` at `index`.
+  ///
+  /// Returns whether the given index was present and then removed from the unused set.
   boolean mark_used(KeychainKind keychain, u32 index);
 
+  /// Reveal addresses up to and including the target `index` and return an iterator
+  /// of newly revealed addresses.
+  ///
+  /// If the target `index` is unreachable, we make a best effort to reveal up to the last
+  /// possible index. If all addresses up to the given `index` are already revealed, then
+  /// no new addresses are returned.
+  ///
+  /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
+  /// calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
   sequence<AddressInfo> reveal_addresses_to(KeychainKind keychain, u32 index);
 
+  /// List addresses that are revealed but unused.
+  ///
+  /// Note if the returned iterator is empty you can reveal more addresses
+  /// by using [`reveal_next_address`](Self::reveal_next_address) or
+  /// [`reveal_addresses_to`](Self::reveal_addresses_to).
   sequence<AddressInfo> list_unused_addresses(KeychainKind keychain);
 
+  /// Get the Bitcoin network the wallet is using.
   Network network();
 
+  /// Return the checksum of the public descriptor associated to `keychain`
+  ///
+  /// Internally calls [`Self::public_descriptor`] to fetch the right descriptor
   string descriptor_checksum(KeychainKind keychain);
 
+  /// Return the balance, separated into available, trusted-pending, untrusted-pending and immature
+  /// values.
   Balance balance();
 
+  /// Applies an update to the wallet and stages the changes (but does not persist them).
+  ///
+  /// Usually you create an `update` by interacting with some blockchain data source and inserting
+  /// transactions related to your wallet into it.
+  ///
+  /// After applying updates you should persist the staged wallet changes. For an example of how
+  /// to persist staged wallet changes see [`Wallet::reveal_next_address`].
   [Throws=CannotConnectError]
   void apply_update(Update update);
 
+  /// Return whether or not a `script` is part of this wallet (either internal or external)
   boolean is_mine(Script script);
 
+  /// Sign a transaction with all the wallet's signers, in the order specified by every signer's
+  /// [`SignerOrdering`]. This function returns the `Result` type with an encapsulated `bool` that has the value true if the PSBT was finalized, or false otherwise.
+  ///
+  /// The [`SignOptions`] can be used to tweak the behavior of the software signers, and the way
+  /// the transaction is finalized at the end. Note that it can't be guaranteed that *every*
+  /// signers will follow the options, but the "software signers" (WIF keys and `xprv`) defined
+  /// in this library will.
   [Throws=SignerError]
   boolean sign(Psbt psbt);
 
+  /// Finalize a PSBT, i.e., for each input determine if sufficient data is available to pass
+  /// validation and construct the respective `scriptSig` or `scriptWitness`. Please refer to
+  /// [BIP174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#Input_Finalizer),
+  /// and [BIP371](https://github.com/bitcoin/bips/blob/master/bip-0371.mediawiki)
+  /// for further information.
+  ///
+  /// Returns `true` if the PSBT could be finalized, and `false` otherwise.
+  ///
+  /// The [`SignOptions`] can be used to tweak the behavior of the finalizer.
   [Throws=SignerError]
   boolean finalize_psbt(Psbt psbt);
 
+  /// Compute the `tx`'s sent and received [`Amount`]s.
+  ///
+  /// This method returns a tuple `(sent, received)`. Sent is the sum of the txin amounts
+  /// that spend from previous txouts tracked by this wallet. Received is the summation
+  /// of this tx's outputs that send to script pubkeys tracked by this wallet.
   SentAndReceivedValues sent_and_received([ByRef] Transaction tx);
 
+  /// Iterate over the transactions in the wallet.
   sequence<CanonicalTx> transactions();
 
+  /// Get a single transaction from the wallet as a [`WalletTx`] (if the transaction exists).
+  ///
+  /// `WalletTx` contains the full transaction alongside meta-data such as:
+  /// * Blocks that the transaction is [`Anchor`]ed in. These may or may not be blocks that exist
+  ///   in the best chain.
+  /// * The [`ChainPosition`] of the transaction in the best chain - whether the transaction is
+  ///   confirmed or unconfirmed. If the transaction is confirmed, the anchor which proves the
+  ///   confirmation is provided. If the transaction is unconfirmed, the unix timestamp of when
+  ///   the transaction was last seen in the mempool is provided.
   [Throws=TxidParseError]
   CanonicalTx? get_tx(string txid);
 
+  /// Calculates the fee of a given transaction. Returns [`Amount::ZERO`] if `tx` is a coinbase transaction.
+  ///
+  /// To calculate the fee for a [`Transaction`] with inputs not owned by this wallet you must
+  /// manually insert the TxOut(s) into the tx graph using the [`insert_txout`] function.
+  ///
+  /// Note `tx` does not have to be in the graph for this to work.
   [Throws=CalculateFeeError]
   Amount calculate_fee([ByRef] Transaction tx);
 
+  /// Calculate the [`FeeRate`] for a given transaction.
+  ///
+  /// To calculate the fee rate for a [`Transaction`] with inputs not owned by this wallet you must
+  /// manually insert the TxOut(s) into the tx graph using the [`insert_txout`] function.
+  ///
+  /// Note `tx` does not have to be in the graph for this to work.
   [Throws=CalculateFeeError]
   FeeRate calculate_fee_rate([ByRef] Transaction tx);
 
+  /// Return the list of unspent outputs of this wallet
   sequence<LocalOutput> list_unspent();
 
+  /// List all relevant outputs (includes both spent and unspent, confirmed and unconfirmed).
+  ///
+  /// To list only unspent outputs (UTXOs), use [`Wallet::list_unspent`] instead.
   sequence<LocalOutput> list_output();
 
+  /// Create a [`FullScanRequest] for this wallet.
+  ///
+  /// This is the first step when performing a spk-based wallet full scan, the returned
+  /// [`FullScanRequest] collects iterators for the wallet's keychain script pub keys needed to
+  /// start a blockchain full scan with a spk based blockchain client.
+  ///
+  /// This operation is generally only used when importing or restoring a previously used wallet
+  /// in which the list of used scripts is not known.
   FullScanRequestBuilder start_full_scan();
 
+  /// Create a partial [`SyncRequest`] for this wallet for all revealed spks.
+  ///
+  /// This is the first step when performing a spk-based wallet partial sync, the returned
+  /// [`SyncRequest`] collects all revealed script pubkeys from the wallet keychain needed to
+  /// start a blockchain sync with a spk based blockchain client.
   SyncRequestBuilder start_sync_with_revealed_spks();
 
   [Throws=SqliteError]
