@@ -19,13 +19,15 @@ use bdk_wallet::chain::{
 };
 
 use bdk_wallet::descriptor::policy::{
-    PkOrF as BdkPkOrF, Policy as BdkPolicy, SatisfiableItem as BdkSatisfiableItem,
+    Condition as BdkCondition, PkOrF as BdkPkOrF, Policy as BdkPolicy,
+    Satisfaction as BdkSatisfaction, SatisfiableItem as BdkSatisfiableItem,
 };
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug)]
@@ -268,8 +270,13 @@ impl Policy {
     pub fn requires_path(&self) -> bool {
         self.0.requires_path()
     }
+
     pub fn item(&self) -> SatisfiableItem {
         self.0.item.clone().into()
+    }
+
+    pub fn satisfaction(&self) -> Satisfaction {
+        self.0.satisfaction.clone().into()
     }
 }
 
@@ -390,6 +397,98 @@ impl From<BdkLockTime> for LockTime {
             BdkLockTime::Seconds(time) => LockTime::Seconds {
                 consensus_time: time.to_consensus_u32(),
             },
+        }
+    }
+}
+#[derive(Debug, Clone)]
+pub enum Satisfaction {
+    Partial {
+        n: u64,
+        m: u64,
+        items: Vec<u64>,
+        sorted: Option<bool>,
+        conditions: HashMap<u32, Vec<Condition>>,
+    },
+    PartialComplete {
+        n: u64,
+        m: u64,
+        items: Vec<u64>,
+        sorted: Option<bool>,
+        conditions: HashMap<Vec<u32>, Vec<Condition>>,
+    },
+    Complete {
+        condition: Condition,
+    },
+
+    None {
+        msg: String,
+    },
+}
+impl From<BdkSatisfaction> for Satisfaction {
+    fn from(value: BdkSatisfaction) -> Self {
+        match value {
+            BdkSatisfaction::Partial {
+                n,
+                m,
+                items,
+                sorted,
+                conditions,
+            } => Satisfaction::Partial {
+                n: n as u64,
+                m: m as u64,
+                items: items.iter().map(|e| e.to_owned() as u64).collect(),
+                sorted,
+                conditions: conditions
+                    .into_iter()
+                    .map(|(index, conditions)| {
+                        (
+                            index as u32,
+                            conditions.into_iter().map(|e| e.into()).collect(),
+                        )
+                    })
+                    .collect(),
+            },
+            BdkSatisfaction::PartialComplete {
+                n,
+                m,
+                items,
+                sorted,
+                conditions,
+            } => Satisfaction::PartialComplete {
+                n: n as u64,
+                m: m as u64,
+                items: items.iter().map(|e| e.to_owned() as u64).collect(),
+                sorted,
+                conditions: conditions
+                    .into_iter()
+                    .map(|(index, conditions)| {
+                        (
+                            index.iter().map(|e| e.to_owned() as u32).collect(),
+                            conditions.into_iter().map(|e| e.into()).collect(), // Convert each `Condition` to `YourType`
+                        )
+                    })
+                    .collect(),
+            },
+            BdkSatisfaction::Complete { condition } => Satisfaction::Complete {
+                condition: condition.into(),
+            },
+            BdkSatisfaction::None => Satisfaction::None {
+                msg: "Cannot satisfy or contribute to the policy item".to_string(),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Condition {
+    pub csv: Option<u32>,
+    pub timelock: Option<LockTime>,
+}
+impl From<BdkCondition> for Condition {
+    fn from(value: BdkCondition) -> Self {
+        Condition {
+            csv: value.csv.map(|e| e.to_consensus_u32()),
+            timelock: value.timelock.map(|e| e.into()),
         }
     }
 }

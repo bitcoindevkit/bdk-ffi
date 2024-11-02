@@ -452,6 +452,8 @@ interface Policy {
   boolean requires_path();
   
   SatisfiableItem item();
+  
+  Satisfaction satisfaction();
 };
 
 [Enum]
@@ -479,6 +481,19 @@ interface PkOrF {
 interface LockTime {
   Blocks(u32 height);
   Seconds(u32 consensus_time);
+};
+
+[Enum]
+interface Satisfaction {
+    Partial(u64 n, u64 m, sequence<u64> items, boolean? sorted, record<u32, sequence<Condition>> conditions);
+    PartialComplete(u64 n, u64 m, sequence<u64> items, boolean? sorted, record<sequence<u32>, sequence<Condition>> conditions);
+    Complete(Condition condition);
+    None(string msg);
+};
+
+dictionary Condition {
+  u32? csv;
+  LockTime? timelock;
 };
 
 interface TxBuilder {
