@@ -450,6 +450,35 @@ interface Policy {
   string as_string();
 
   boolean requires_path();
+  
+  SatisfiableItem item();
+};
+
+[Enum]
+interface SatisfiableItem {
+  EcdsaSignature(PkOrF key);
+  SchnorrSignature(PkOrF key);
+  Sha256Preimage(string hash);
+  Hash256Preimage(string hash);
+  Ripemd160Preimage(string hash);
+  Hash160Preimage(string hash);
+  AbsoluteTimelock(LockTime value);
+  RelativeTimelock(u32 value);
+  Multisig(sequence<PkOrF> keys, u64 threshold);
+  Thresh(sequence<Policy> items, u64 threshold);
+};
+
+[Enum]
+interface PkOrF {
+  Pubkey(string value);
+  XOnlyPubkey(string value);
+  Fingerprint(string value);
+};
+
+[Enum]
+interface LockTime {
+  Blocks(u32 height);
+  Seconds(u32 consensus_time);
 };
 
 interface TxBuilder {

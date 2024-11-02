@@ -5,7 +5,9 @@ use bitcoin_ffi::Amount;
 use bitcoin_ffi::OutPoint;
 use bitcoin_ffi::Script;
 
+use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_core::spk_client::SyncItem;
+
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanRequestBuilder as BdkFullScanRequestBuilder;
@@ -15,7 +17,10 @@ use bdk_wallet::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
 use bdk_wallet::chain::{
     ChainPosition as BdkChainPosition, ConfirmationBlockTime as BdkConfirmationBlockTime,
 };
-use bdk_wallet::descriptor::Policy as BdkPolicy;
+
+use bdk_wallet::descriptor::policy::{
+    PkOrF as BdkPkOrF, Policy as BdkPolicy, SatisfiableItem as BdkSatisfiableItem,
+};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
@@ -262,5 +267,129 @@ impl Policy {
 
     pub fn requires_path(&self) -> bool {
         self.0.requires_path()
+    }
+    pub fn item(&self) -> SatisfiableItem {
+        self.0.item.clone().into()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum SatisfiableItem {
+    EcdsaSignature {
+        key: PkOrF,
+    },
+    SchnorrSignature {
+        key: PkOrF,
+    },
+    Sha256Preimage {
+        hash: String,
+    },
+    Hash256Preimage {
+        hash: String,
+    },
+    Ripemd160Preimage {
+        hash: String,
+    },
+    Hash160Preimage {
+        hash: String,
+    },
+    AbsoluteTimelock {
+        value: LockTime,
+    },
+    RelativeTimelock {
+        value: u32,
+    },
+
+    Multisig {
+        keys: Vec<PkOrF>,
+
+        threshold: u64,
+    },
+
+    Thresh {
+        items: Vec<Arc<Policy>>,
+
+        threshold: u64,
+    },
+}
+impl From<BdkSatisfiableItem> for SatisfiableItem {
+    fn from(value: BdkSatisfiableItem) -> Self {
+        match value {
+            BdkSatisfiableItem::EcdsaSignature(pk_or_f) => SatisfiableItem::EcdsaSignature {
+                key: pk_or_f.into(),
+            },
+            BdkSatisfiableItem::SchnorrSignature(pk_or_f) => SatisfiableItem::SchnorrSignature {
+                key: pk_or_f.into(),
+            },
+            BdkSatisfiableItem::Sha256Preimage { hash } => SatisfiableItem::Sha256Preimage {
+                hash: hash.to_string(),
+            },
+            BdkSatisfiableItem::Hash256Preimage { hash } => SatisfiableItem::Hash256Preimage {
+                hash: hash.to_string(),
+            },
+            BdkSatisfiableItem::Ripemd160Preimage { hash } => SatisfiableItem::Ripemd160Preimage {
+                hash: hash.to_string(),
+            },
+            BdkSatisfiableItem::Hash160Preimage { hash } => SatisfiableItem::Hash160Preimage {
+                hash: hash.to_string(),
+            },
+            BdkSatisfiableItem::AbsoluteTimelock { value } => SatisfiableItem::AbsoluteTimelock {
+                value: value.into(),
+            },
+            BdkSatisfiableItem::RelativeTimelock { value } => SatisfiableItem::RelativeTimelock {
+                value: value.to_consensus_u32(),
+            },
+            BdkSatisfiableItem::Multisig { keys, threshold } => SatisfiableItem::Multisig {
+                keys: keys.iter().map(|e| e.to_owned().into()).collect(),
+                threshold: threshold as u64,
+            },
+            BdkSatisfiableItem::Thresh { items, threshold } => SatisfiableItem::Thresh {
+                items: items
+                    .iter()
+                    .map(|e| Arc::new(e.to_owned().into()))
+                    .collect(),
+                threshold: threshold as u64,
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum PkOrF {
+    Pubkey { value: String },
+    XOnlyPubkey { value: String },
+    Fingerprint { value: String },
+}
+impl From<BdkPkOrF> for PkOrF {
+    fn from(value: BdkPkOrF) -> Self {
+        match value {
+            BdkPkOrF::Pubkey(public_key) => PkOrF::Pubkey {
+                value: public_key.to_string(),
+            },
+            BdkPkOrF::XOnlyPubkey(xonly_public_key) => PkOrF::XOnlyPubkey {
+                value: xonly_public_key.to_string(),
+            },
+            BdkPkOrF::Fingerprint(fingerprint) => PkOrF::Fingerprint {
+                value: fingerprint.to_string(),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum LockTime {
+    Blocks { height: u32 },
+    Seconds { consensus_time: u32 },
+}
+impl From<BdkLockTime> for LockTime {
+    fn from(value: BdkLockTime) -> Self {
+        match value {
+            BdkLockTime::Blocks(height) => LockTime::Blocks {
+                height: height.to_consensus_u32(),
+            },
+            BdkLockTime::Seconds(time) => LockTime::Seconds {
+                consensus_time: time.to_consensus_u32(),
+            },
+        }
     }
 }
