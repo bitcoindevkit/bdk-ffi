@@ -454,6 +454,8 @@ interface Policy {
   SatisfiableItem item();
   
   Satisfaction satisfaction();
+
+  Satisfaction contribution();
 };
 
 [Enum]

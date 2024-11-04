@@ -278,6 +278,10 @@ impl Policy {
     pub fn satisfaction(&self) -> Satisfaction {
         self.0.satisfaction.clone().into()
     }
+
+    pub fn contribution(&self) -> Satisfaction {
+        self.0.contribution.clone().into()
+    }
 }
 
 #[derive(Debug, Clone)]
