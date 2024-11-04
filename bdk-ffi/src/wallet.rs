@@ -180,7 +180,8 @@ impl Wallet {
 
     pub fn transactions(&self) -> Vec<CanonicalTx> {
         self.get_wallet()
-            .transactions()
+            .transactions_sort_by(|tx1, tx2| tx2.chain_position.cmp(&tx1.chain_position))
+            .into_iter()
             .map(|tx| tx.into())
             .collect()
     }
