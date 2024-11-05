@@ -24,7 +24,8 @@ pub struct TxBuilder {
     pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
     pub(crate) utxos: Vec<OutPoint>,
     pub(crate) unspendable: HashSet<OutPoint>,
-    pub(crate) policy_path: (HashMap<String, Vec<u64>>, KeychainKind),
+    pub(crate) internal_policy_path: Option<BTreeMap<String, Vec<usize>>>,
+    pub(crate) external_policy_path: Option<BTreeMap<String, Vec<usize>>>,
     pub(crate) change_policy: ChangeSpendPolicy,
     pub(crate) manually_selected_only: bool,
     pub(crate) fee_rate: Option<FeeRate>,
@@ -41,7 +42,8 @@ impl TxBuilder {
             recipients: Vec::new(),
             utxos: Vec::new(),
             unspendable: HashSet::new(),
-            policy_path: (HashMap::new(), KeychainKind::External),
+            internal_policy_path: None,
+            external_policy_path: None,
             change_policy: ChangeSpendPolicy::ChangeAllowed,
             manually_selected_only: false,
             fee_rate: None,
@@ -114,10 +116,18 @@ impl TxBuilder {
         policy_path: HashMap<String, Vec<u64>>,
         keychain: KeychainKind,
     ) -> Arc<Self> {
-        Arc::new(TxBuilder {
-            policy_path: (policy_path, keychain),
-            ..self.clone()
-        })
+        let mut updated_self = self.clone();
+        let to_update = match keychain {
+            KeychainKind::Internal => &mut updated_self.internal_policy_path,
+            KeychainKind::External => &mut updated_self.external_policy_path,
+        };
+        *to_update = Some(
+            policy_path
+                .into_iter()
+                .map(|(key, value)| (key, value.into_iter().map(|x| x as usize).collect()))
+                .collect::<BTreeMap<String, Vec<usize>>>(),
+        );
+        Arc::new(updated_self)
     }
 
     pub(crate) fn change_policy(&self, change_policy: ChangeSpendPolicy) -> Arc<Self> {
@@ -193,15 +203,12 @@ impl TxBuilder {
         for (script, amount) in &self.recipients {
             tx_builder.add_recipient(script.clone(), *amount);
         }
-        tx_builder.policy_path(
-            self.policy_path
-                .0
-                .clone()
-                .into_iter()
-                .map(|(key, value)| (key, value.into_iter().map(|x| x as usize).collect()))
-                .collect::<BTreeMap<String, Vec<usize>>>(),
-            self.policy_path.1,
-        );
+        if let Some(policy_path) = &self.external_policy_path {
+            tx_builder.policy_path(policy_path.clone(), KeychainKind::External);
+        }
+        if let Some(policy_path) = &self.internal_policy_path {
+            tx_builder.policy_path(policy_path.clone(), KeychainKind::Internal);
+        }
         tx_builder.change_policy(self.change_policy);
         if !self.utxos.is_empty() {
             tx_builder
