@@ -601,6 +601,9 @@ interface EsploraClient {
 
   [Throws=EsploraError]
   Transaction? get_tx(string txid);
+
+  [Throws=EsploraError]
+  u32 get_height();
 };
 
 // ------------------------------------------------------------------------
