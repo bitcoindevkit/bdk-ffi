@@ -54,7 +54,7 @@ jobs:
         run: cargo clippy --all-targets --features "uniffi/bindgen-tests" -- -D warnings
 
       - name: Test
-        run: CLASSPATH=./tests/jna/jna-5.8.0.jar cargo test --features uniffi/bindgen-tests
+        run: CLASSPATH=./tests/jna/jna-5.14.0.jar cargo test --features uniffi/bindgen-tests
 
   fmt:
     name: Rust fmt

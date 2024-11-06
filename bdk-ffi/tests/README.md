@@ -5,7 +5,7 @@ supported bindings languages.
 
 To skip integration tests and only run unit tests use `cargo test --lib`. 
 
-To run all tests including integration tests use `CLASSPATH=./tests/jna/jna-5.8.0.jar cargo test`. 
+To run all tests including integration tests use `CLASSPATH=./tests/jna/jna-5.14.0.jar cargo test`. 
 
 Before running integration tests you must install the following development tools:
 
