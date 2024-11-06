@@ -606,13 +606,13 @@ mod test {
         assert_eq!(psbt.inputs.len(), 1);
         let input_value = psbt
             .inputs
-            .get(0)
+            .first()
             .cloned()
             .unwrap()
             .non_witness_utxo
             .unwrap()
             .output
-            .get(0)
+            .first()
             .unwrap()
             .value;
         assert_eq!(input_value, 50_000_u64);
@@ -620,13 +620,7 @@ mod test {
         // confirm one output to correct address with all sats - fee
         assert_eq!(psbt.outputs.len(), 1);
         let output_address = Address::from_script(
-            &psbt
-                .unsigned_tx
-                .output
-                .get(0)
-                .cloned()
-                .unwrap()
-                .script_pubkey,
+            &psbt.unsigned_tx.output.first().unwrap().script_pubkey,
             Network::Testnet.into(),
         )
         .unwrap();
@@ -636,7 +630,7 @@ mod test {
                 .unwrap()
                 .assume_checked()
         );
-        let output_value = psbt.unsigned_tx.output.get(0).cloned().unwrap().value;
+        let output_value = psbt.unsigned_tx.output.first().cloned().unwrap().value;
         assert_eq!(output_value, 49_890_u64); // input - fee
 
         assert_eq!(

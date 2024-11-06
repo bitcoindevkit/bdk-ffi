@@ -7,16 +7,16 @@ on: [workflow_dispatch]
 # tries to load glibc and fails because it requires a more recent version.
 
 jobs:
-  build-manylinux2014-x86_64-wheels:
-    name: "Build Manylinux 2014 x86_64 wheel"
-    runs-on: ubuntu-22.04
+  build-manylinux_2_28-x86_64-wheels:
+    name: "Build Manylinux 2.28 x86_64 wheel"
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python
     container:
-      image: quay.io/pypa/manylinux2014_x86_64
+      image: quay.io/pypa/manylinux_2_28_x86_64
       env:
-        PLAT: manylinux2014_x86_64
+        PLAT: manylinux_2_28_x86_64
         PYBIN: "/opt/python/${{ matrix.python }}/bin"
     strategy:
       matrix:
@@ -24,14 +24,18 @@ jobs:
           - cp38-cp38
           - cp39-cp39
           - cp310-cp310
+          - cp311-cp311
+          - cp312-cp312
     steps:
       - name: "Checkout"
         uses: actions/checkout@v3
         with:
           submodules: true
-      - uses: actions-rs/toolchain@v1
+
+      - name: "Install Rust 1.77.1"
+        uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.77.1
 
       - name: "Generate bdk.py and binaries"
         run: bash ./scripts/generate-linux.sh
@@ -39,11 +43,11 @@ jobs:
       - name: "Build wheel"
         # Specifying the plat-name argument is necessary to build a wheel with the correct name,
         # see issue #350 for more information
-        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_17_x86_64 --verbose
+        run: ${PYBIN}/python setup.py bdist_wheel --plat-name manylinux_2_28_x86_64 --verbose
 
       - uses: actions/upload-artifact@v3
         with:
-          name: bdkpython-manylinux2014-x86_64-${{ matrix.python }}
+          name: bdkpython-manylinux_2_28_x86_64-${{ matrix.python }}
           path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/dist/*.whl
 
   build-macos-arm64-wheels:
@@ -58,6 +62,8 @@ jobs:
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
+          - "3.12"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v3
@@ -95,6 +101,8 @@ jobs:
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
+          - "3.12"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v3
@@ -131,6 +139,8 @@ jobs:
           - "3.8"
           - "3.9"
           - "3.10"
+          - "3.11"
+          - "3.12"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v3
@@ -154,11 +164,11 @@ jobs:
 
   publish-pypi:
     name: "Publish on PyPI"
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         working-directory: bdk-python
-    needs: [build-manylinux2014-x86_64-wheels, build-macos-arm64-wheels, build-macos-x86_64-wheels, build-windows-wheels]
+    needs: [build-manylinux_2_28-x86_64-wheels, build-macos-arm64-wheels, build-macos-x86_64-wheels, build-windows-wheels]
     steps:
       - name: "Checkout"
         uses: actions/checkout@v3

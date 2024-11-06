@@ -19,12 +19,12 @@ descriptor = bdk.Descriptor("wpkh(tprv8ZgxMBicQKsPcx5nBGsR63Pe8KnRUqmbJNENAfGftF
 db_config = bdk.DatabaseConfig.MEMORY()
 blockchain_config = bdk.BlockchainConfig.ELECTRUM(
     bdk.ElectrumConfig(
-        "ssl://electrum.blockstream.info:60002",
-        None,
-        5,
-        None,
-        100,
-        True,
+        url = "ssl://electrum.blockstream.info:60002",
+        socks5 = None,
+        retry = 5,
+        timeout = None,
+        stop_gap = 100,
+        validate_domain = True,
     )
 )
 blockchain = bdk.Blockchain(blockchain_config)
@@ -51,7 +51,7 @@ print(f"Wallet balance is: {balance.total}")
 
 setup(
     name="bdkpython",
-    version="0.31.2",
+    version="0.32.0",
     description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",

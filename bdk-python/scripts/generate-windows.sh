@@ -2,16 +2,17 @@
 
 set -euo pipefail
 python3 --version
-pip install --user -r requirements.txt
+pip install -r requirements.txt
 
-echo "Generating bdk.py..."
 cd ../bdk-ffi/
-cargo run --bin uniffi-bindgen generate src/bdk.udl --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
+rustup default 1.77.1
+rustup target add x86_64-pc-windows-msvc
 
 echo "Generating native binaries..."
-rustup default 1.67.0
-rustup target add x86_64-pc-windows-msvc
 cargo build --profile release-smaller --target x86_64-pc-windows-msvc
+
+echo "Generating bdk.py..."
+cargo run --bin uniffi-bindgen generate --library ../target/x86_64-pc-windows-msvc/release-smaller/bdkffi.dll --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
 
 echo "Copying libraries bdkffi.dll..."
 cp ../target/x86_64-pc-windows-msvc/release-smaller/bdkffi.dll ../bdk-python/src/bdkpython/bdkffi.dll

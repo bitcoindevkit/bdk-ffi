@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 val libraryVersion: String by project
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.6.10"
+    id("org.jetbrains.kotlin.jvm") version "1.9.23"
     id("java-library")
     id("maven-publish")
     id("signing")

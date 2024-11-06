@@ -4,13 +4,14 @@ set -euo pipefail
 ${PYBIN}/python --version
 ${PYBIN}/pip install -r requirements.txt
 
-echo "Generating bdk.py..."
 cd ../bdk-ffi/
-cargo run --bin uniffi-bindgen generate src/bdk.udl --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
+rustup default 1.77.1
 
 echo "Generating native binaries..."
-rustup default 1.67.0
 cargo build --profile release-smaller
+
+echo "Generating bdk.py..."
+cargo run --bin uniffi-bindgen generate --library ../target/release-smaller/libbdkffi.so --language python --out-dir ../bdk-python/src/bdkpython/ --no-format
 
 echo "Copying linux libbdkffi.so..."
 cp ../target/release-smaller/libbdkffi.so ../bdk-python/src/bdkpython/libbdkffi.so

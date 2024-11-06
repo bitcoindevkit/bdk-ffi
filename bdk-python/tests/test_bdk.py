@@ -6,12 +6,12 @@ descriptor = bdk.Descriptor("wpkh([c258d2e4/84h/1h/0h]tpubDDYkZojQFQjht8Tm4jsS3i
 db_config = bdk.DatabaseConfig.MEMORY()
 blockchain_config = bdk.BlockchainConfig.ELECTRUM(
     bdk.ElectrumConfig(
-        "ssl://electrum.blockstream.info:60002",
-        None,
-        5,
-        None,
-        100,
-        True,
+        url = "ssl://electrum.blockstream.info:60002",
+        socks5 = None,
+        retry = 5,
+        timeout = None,
+        stop_gap = 100,
+        validate_domain = True,
     )
 )
 blockchain = bdk.Blockchain(blockchain_config)

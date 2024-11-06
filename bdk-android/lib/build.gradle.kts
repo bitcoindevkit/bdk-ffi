@@ -5,7 +5,7 @@ val libraryVersion: String by project
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android") version "1.6.10"
+    id("org.jetbrains.kotlin.android") version "1.9.23"
     id("maven-publish")
     id("signing")
 

@@ -47,17 +47,17 @@ dependencies {
 * [Tatooine Faucet](https://github.com/thunderbiscuit/tatooine)
 
 ## How to build
-_Note that Kotlin version `1.6.10` or later is required to build the library._
+_Note that Kotlin version `1.9.23` or later is required to build the library._
 1. Install JDK 11. It must be version 11 (not 17), otherwise it won't build. For example, with SDKMAN!:
 ```shell
 curl -s "https://get.sdkman.io" | bash
 source "$HOME/.sdkman/bin/sdkman-init.sh"
 sdk install java 11.0.19-tem
 ```
-2. Install Rust (note that we are currently building using Rust 1.67.0):
+2. Install Rust (note that we are currently building using Rust stable):
 ```shell
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup default 1.67.0
+rustup default stable
 ```
 3. Clone this repository.
 ```shell
