@@ -14,9 +14,9 @@ jobs:
     strategy:
       matrix:
         rust:
-          - version: 1.71.0 # STABLE
+          - version: stable # STABLE
             clippy: true
-          - version: 1.61.0 # MSRV
+          - version: 1.77.1 # MSRV
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -46,12 +46,6 @@ jobs:
       - name: Update toolchain
         run: rustup update
 
-      - name: Pin dependencies for MSRV
-        if: matrix.rust.version == '1.61.0'
-        run: |
-          cargo update -p hashlink --precise "0.8.1"
-          cargo update -p tokio --precise "1.29.1"
-          cargo update -p flate2 --precise "1.0.26"
       - name: Build
         run: cargo build
 

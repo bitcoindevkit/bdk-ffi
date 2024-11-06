@@ -4,6 +4,7 @@ version = "0.31.1"
 authors = ["Steve Myers <steve@notmandatory.org>", "Sudarsan Balaji <sudarsan.balaji@artfuldev.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
+rust-version = "1.77.1"
 
 [lib]
 crate-type = ["lib", "staticlib", "cdylib"]

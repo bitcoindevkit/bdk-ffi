@@ -24,8 +24,8 @@ jobs:
           distribution: temurin
           java-version: 11
 
-      - name: "Set default Rust version to 1.67.0"
-        run: rustup default 1.67.0
+      - name: "Set default Rust version to 1.77.1"
+        run: rustup default 1.77.1
 
       - name: "Install aarch64 Rust target"
         run: rustup target add aarch64-apple-darwin
@@ -54,8 +54,8 @@ jobs:
           distribution: temurin
           java-version: 11
 
-      - name: "Set default Rust version to 1.67.0"
-        run: rustup default 1.67.0
+      - name: "Set default Rust version to 1.77.1"
+        run: rustup default 1.77.1
 
       - name: "Install x86_64-pc-windows-msvc Rust target"
         run: rustup target add x86_64-pc-windows-msvc
@@ -94,8 +94,8 @@ jobs:
           distribution: temurin
           java-version: 11
 
-      - name: "Set default Rust version to 1.67.0"
-        run: rustup default 1.67.0
+      - name: "Set default Rust version to 1.77.1"
+        run: rustup default 1.77.1
 
       - name: "Build bdk-jvm library"
         run: |
