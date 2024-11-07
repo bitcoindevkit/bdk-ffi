@@ -161,7 +161,8 @@ impl Wallet {
 
     pub(crate) fn sign(
         &self,
-        psbt: Arc<Psbt>, // sign_options: Option<SignOptions>,
+        psbt: Arc<Psbt>,
+        // sign_options: Option<SignOptions>,
     ) -> Result<bool, SignerError> {
         let mut psbt = psbt.0.lock().unwrap();
         self.get_wallet()

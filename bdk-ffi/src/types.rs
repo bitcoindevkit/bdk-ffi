@@ -27,6 +27,7 @@ use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
+
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
