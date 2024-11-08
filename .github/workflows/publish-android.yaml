@@ -1,10 +1,6 @@
 name: Publish bdk-android to Maven Central
 on: [workflow_dispatch]
 
-# The default Android NDK on the ubuntu-22.04 image is 25.2.9519653
-env:
-  ANDROID_NDK_HOME: /usr/local/lib/android/sdk/ndk/25.2.9519653
-
 jobs:
   build:
     runs-on: ubuntu-20.04
@@ -25,7 +21,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
 
       - name: "Set default Rust version to 1.77.1"
         run: rustup default 1.77.1

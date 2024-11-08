@@ -1,29 +1,24 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-// library version is defined in gradle.properties
-val libraryVersion: String by project
-
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android") version "1.9.23"
-    id("maven-publish")
-    id("signing")
+    id("org.jetbrains.kotlin.android")
+    id("org.gradle.maven-publish")
+    id("org.gradle.signing")
 
     // Custom plugin to generate the native libs and bindings file
     id("org.bitcoindevkit.plugins.generate-android-bindings")
 }
 
-repositories {
-    mavenCentral()
-    google()
-}
+// library version is defined in gradle.properties
+val libraryVersion: String by project
 
 android {
-    compileSdk = 31
+    namespace = "org.bitcoindevkit"
+    compileSdk = 34
 
     defaultConfig {
-        minSdk = 21
-        targetSdk = 31
+        minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -40,6 +35,20 @@ android {
             withSourcesJar()
             withJavadocJar()
         }
+    }
+}
+
+kotlin {
+    tasks.withType<KotlinCompile>().configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
@@ -103,6 +112,10 @@ afterEvaluate {
 }
 
 signing {
+    if (project.hasProperty("localBuild")) {
+        isRequired = false
+    }
+
     val signingKeyId: String? by project
     val signingKey: String? by project
     val signingPassword: String? by project
@@ -114,4 +127,10 @@ signing {
 // binaries before running the tests
 tasks.withType<KotlinCompile> {
     dependsOn("buildAndroidLib")
+}
+
+afterEvaluate {
+    tasks.named("mergeReleaseJniLibFolders") {
+        mustRunAfter(tasks.named("moveNativeAndroidLibs"))
+    }
 }
