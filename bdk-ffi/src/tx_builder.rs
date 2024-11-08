@@ -332,7 +332,7 @@ mod tests {
                 .finish(&Arc::new(wallet))
             {
                 Ok(tx) => println!("Transaction serialized: {}\n", tx.serialize()),
-                Err(e) => println!("Error: {}", e.to_string()),
+                Err(e) => eprintln!("Error: {:?}", e),
             }
         } else {
             println!("Failed to retrieve valid policies for keychains.");
