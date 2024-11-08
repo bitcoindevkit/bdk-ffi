@@ -89,4 +89,8 @@ impl EsploraClient {
         let tx_opt = self.0.get_tx(&txid)?;
         Ok(tx_opt.map(|inner| Arc::new(Transaction::from(inner))))
     }
+
+    pub fn get_height(&self) -> Result<u32, EsploraError> {
+        self.0.get_height().map_err(EsploraError::from)
+    }
 }
