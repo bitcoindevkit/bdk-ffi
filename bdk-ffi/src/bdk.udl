@@ -737,7 +737,11 @@ interface DescriptorPublicKey {
 
   string as_string();
 
+/// Whether or not this key has multiple derivation paths.
   boolean is_multipath();
+
+/// The fingerprint of the master key associated with this key, `0x00000000` if none.
+  string master_fingerprint();
 };
 
 [Traits=(Display)]

@@ -227,6 +227,10 @@ impl DescriptorPublicKey {
     pub(crate) fn is_multipath(&self) -> bool {
         self.0.is_multipath()
     }
+
+    pub(crate) fn master_fingerprint(&self) -> String {
+        self.0.master_fingerprint().to_string()
+    }
 }
 
 #[cfg(test)]
