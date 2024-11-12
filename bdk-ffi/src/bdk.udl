@@ -736,6 +736,8 @@ interface DescriptorPublicKey {
   DescriptorPublicKey extend([ByRef] DerivationPath path);
 
   string as_string();
+
+  boolean is_multipath();
 };
 
 [Traits=(Display)]

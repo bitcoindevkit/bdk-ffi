@@ -223,6 +223,10 @@ impl DescriptorPublicKey {
     pub(crate) fn as_string(&self) -> String {
         self.0.to_string()
     }
+
+    pub(crate) fn is_multipath(&self) -> bool {
+        self.0.is_multipath()
+    }
 }
 
 #[cfg(test)]
