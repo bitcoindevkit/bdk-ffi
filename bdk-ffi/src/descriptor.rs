@@ -266,6 +266,10 @@ impl Descriptor {
         let key_map = &self.key_map;
         descriptor.to_string_with_secret(key_map)
     }
+
+    pub(crate) fn is_multipath(&self) -> bool {
+        self.extended_descriptor.is_multipath()
+    }
 }
 
 impl Display for Descriptor {

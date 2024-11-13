@@ -774,6 +774,9 @@ interface Descriptor {
   constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
 
   string to_string_with_secret();
+
+/// Whether or not this key has multiple derivation paths.
+  boolean is_multipath();
 };
 
 // ------------------------------------------------------------------------
