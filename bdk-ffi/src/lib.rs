@@ -30,6 +30,7 @@ use crate::error::EsploraError;
 use crate::error::ExtractTxError;
 use crate::error::FromScriptError;
 use crate::error::LoadWithPersistError;
+use crate::error::MiniscriptError;
 use crate::error::PersistenceError;
 use crate::error::PsbtError;
 use crate::error::PsbtParseError;

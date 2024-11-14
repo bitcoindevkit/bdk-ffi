@@ -14,8 +14,10 @@ use bdk_wallet::template::{
 };
 use bdk_wallet::KeychainKind;
 
+use crate::error::MiniscriptError;
 use std::fmt::Display;
 use std::str::FromStr;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct Descriptor {
@@ -269,6 +271,24 @@ impl Descriptor {
 
     pub(crate) fn is_multipath(&self) -> bool {
         self.extended_descriptor.is_multipath()
+    }
+
+    pub(crate) fn to_single_descriptors(&self) -> Result<Vec<Arc<Descriptor>>, MiniscriptError> {
+        self.extended_descriptor
+            .clone()
+            .into_single_descriptors()
+            .map_err(MiniscriptError::from)
+            .map(|descriptors| {
+                descriptors
+                    .into_iter()
+                    .map(|desc| {
+                        Arc::new(Descriptor {
+                            extended_descriptor: desc,
+                            key_map: self.key_map.clone(),
+                        })
+                    })
+                    .collect()
+            })
     }
 }
 

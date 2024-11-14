@@ -410,6 +410,120 @@ pub enum LoadWithPersistError {
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum MiniscriptError {
+    #[error("absolute locktime error")]
+    AbsoluteLockTime,
+
+    #[error("address error: {error_message}")]
+    AddrError { error_message: String },
+
+    #[error("p2sh address error: {error_message}")]
+    AddrP2shError { error_message: String },
+
+    #[error("analysis error: {error_message}")]
+    AnalysisError { error_message: String },
+
+    #[error("@ found outside of OR")]
+    AtOutsideOr,
+
+    #[error("bad descriptor: {error_message}")]
+    BadDescriptor { error_message: String },
+
+    #[error("bare descriptor address")]
+    BareDescriptorAddr,
+
+    #[error("too many keys in checkmultisig: {keys}")]
+    CmsTooManyKeys { keys: u32 },
+
+    #[error("context error: {error_message}")]
+    ContextError { error_message: String },
+
+    #[error("could not satisfy")]
+    CouldNotSatisfy,
+
+    #[error("expected character: {char}")]
+    ExpectedChar { char: String },
+
+    #[error("impossible satisfaction")]
+    ImpossibleSatisfaction,
+
+    #[error("invalid opcode")]
+    InvalidOpcode,
+
+    #[error("invalid push")]
+    InvalidPush,
+
+    #[error("lift error: {error_message}")]
+    LiftError { error_message: String },
+
+    #[error("maximum recursive depth exceeded")]
+    MaxRecursiveDepthExceeded,
+
+    #[error("missing signature")]
+    MissingSig,
+
+    #[error("too many keys in multi-a: {keys}")]
+    MultiATooManyKeys { keys: u64 },
+
+    #[error("multiple colons in fragment name")]
+    MultiColon,
+
+    #[error("multipath descriptor length mismatch")]
+    MultipathDescLenMismatch,
+
+    #[error("non-minimal verify: {error_message}")]
+    NonMinimalVerify { error_message: String },
+
+    #[error("non-standard bare script")]
+    NonStandardBareScript,
+
+    #[error("non top-level: {error_message}")]
+    NonTopLevel { error_message: String },
+
+    #[error("parse threshold error")]
+    ParseThreshold,
+
+    #[error("policy error: {error_message}")]
+    PolicyError { error_message: String },
+
+    #[error("pubkey context error")]
+    PubKeyCtxError,
+
+    #[error("relative locktime error")]
+    RelativeLockTime,
+
+    #[error("script error: {error_message}")]
+    Script { error_message: String },
+
+    #[error("secp256k1 error: {error_message}")]
+    Secp { error_message: String },
+
+    #[error("threshold error")]
+    Threshold,
+
+    #[error("no script code for taproot")]
+    TrNoScriptCode,
+
+    #[error("trailing data: {error_message}")]
+    Trailing { error_message: String },
+
+    #[error("type check error: {error_message}")]
+    TypeCheck { error_message: String },
+
+    #[error("unexpected: {error_message}")]
+    Unexpected { error_message: String },
+
+    #[error("unexpected start")]
+    UnexpectedStart,
+
+    #[error("unknown wrapper: {char}")]
+    UnknownWrapper { char: String },
+
+    #[error("unprintable character: {byte}")]
+    Unprintable { byte: u8 },
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum PersistenceError {
     #[error("writing to persistence error: {error_message}")]
     Write { error_message: String },
@@ -1059,6 +1173,81 @@ impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistEr
                     error_message: e.to_string(),
                 }
             }
+        }
+    }
+}
+
+impl From<bdk_wallet::miniscript::Error> for MiniscriptError {
+    fn from(error: bdk_wallet::miniscript::Error) -> Self {
+        use bdk_wallet::miniscript::Error as BdkMiniscriptError;
+        match error {
+            BdkMiniscriptError::AbsoluteLockTime(_) => MiniscriptError::AbsoluteLockTime,
+            BdkMiniscriptError::AddrError(e) => MiniscriptError::AddrError {
+                error_message: e.to_string(),
+            },
+            BdkMiniscriptError::AddrP2shError(e) => MiniscriptError::AddrP2shError {
+                error_message: e.to_string(),
+            },
+            BdkMiniscriptError::AnalysisError(e) => MiniscriptError::AnalysisError {
+                error_message: e.to_string(),
+            },
+            BdkMiniscriptError::AtOutsideOr(_) => MiniscriptError::AtOutsideOr,
+            BdkMiniscriptError::BadDescriptor(s) => {
+                MiniscriptError::BadDescriptor { error_message: s }
+            }
+            BdkMiniscriptError::BareDescriptorAddr => MiniscriptError::BareDescriptorAddr,
+            BdkMiniscriptError::CmsTooManyKeys(n) => MiniscriptError::CmsTooManyKeys { keys: n },
+            BdkMiniscriptError::ContextError(e) => MiniscriptError::ContextError {
+                error_message: e.to_string(),
+            },
+            BdkMiniscriptError::CouldNotSatisfy => MiniscriptError::CouldNotSatisfy,
+            BdkMiniscriptError::ExpectedChar(c) => MiniscriptError::ExpectedChar {
+                char: c.to_string(),
+            },
+            BdkMiniscriptError::ImpossibleSatisfaction => MiniscriptError::ImpossibleSatisfaction,
+            BdkMiniscriptError::InvalidOpcode(_) => MiniscriptError::InvalidOpcode,
+            BdkMiniscriptError::InvalidPush(_) => MiniscriptError::InvalidPush,
+            BdkMiniscriptError::LiftError(e) => MiniscriptError::LiftError {
+                error_message: e.to_string(),
+            },
+            BdkMiniscriptError::MaxRecursiveDepthExceeded => {
+                MiniscriptError::MaxRecursiveDepthExceeded
+            }
+            BdkMiniscriptError::MissingSig(_) => MiniscriptError::MissingSig,
+            BdkMiniscriptError::MultiATooManyKeys(n) => {
+                MiniscriptError::MultiATooManyKeys { keys: n }
+            }
+            BdkMiniscriptError::MultiColon(_) => MiniscriptError::MultiColon,
+            BdkMiniscriptError::MultipathDescLenMismatch => {
+                MiniscriptError::MultipathDescLenMismatch
+            }
+            BdkMiniscriptError::NonMinimalVerify(s) => {
+                MiniscriptError::NonMinimalVerify { error_message: s }
+            }
+            BdkMiniscriptError::NonStandardBareScript => MiniscriptError::NonStandardBareScript,
+            BdkMiniscriptError::NonTopLevel(s) => MiniscriptError::NonTopLevel { error_message: s },
+            BdkMiniscriptError::ParseThreshold(_) => MiniscriptError::ParseThreshold,
+            BdkMiniscriptError::PolicyError(e) => MiniscriptError::PolicyError {
+                error_message: e.to_string(),
+            },
+            BdkMiniscriptError::PubKeyCtxError(_, _) => MiniscriptError::PubKeyCtxError,
+            BdkMiniscriptError::RelativeLockTime(_) => MiniscriptError::RelativeLockTime,
+            BdkMiniscriptError::Script(e) => MiniscriptError::Script {
+                error_message: e.to_string(),
+            },
+            BdkMiniscriptError::Secp(e) => MiniscriptError::Secp {
+                error_message: e.to_string(),
+            },
+            BdkMiniscriptError::Threshold(_) => MiniscriptError::Threshold,
+            BdkMiniscriptError::TrNoScriptCode => MiniscriptError::TrNoScriptCode,
+            BdkMiniscriptError::Trailing(s) => MiniscriptError::Trailing { error_message: s },
+            BdkMiniscriptError::TypeCheck(s) => MiniscriptError::TypeCheck { error_message: s },
+            BdkMiniscriptError::Unexpected(s) => MiniscriptError::Unexpected { error_message: s },
+            BdkMiniscriptError::UnexpectedStart => MiniscriptError::UnexpectedStart,
+            BdkMiniscriptError::UnknownWrapper(c) => MiniscriptError::UnknownWrapper {
+                char: c.to_string(),
+            },
+            BdkMiniscriptError::Unprintable(b) => MiniscriptError::Unprintable { byte: b },
         }
     }
 }
