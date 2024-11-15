@@ -3,18 +3,18 @@ use crate::error::CreateTxError;
 use crate::types::ScriptAmount;
 use crate::wallet::Wallet;
 
-use bdk_wallet::KeychainKind;
 use bitcoin_ffi::{Amount, FeeRate, Script};
 
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
+use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint, Sequence, Txid};
 use bdk_wallet::ChangeSpendPolicy;
+use bdk_wallet::KeychainKind;
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use bdk_wallet::bitcoin::script::PushBytesBuf;
 use std::collections::HashSet;
 use std::convert::TryFrom;
 use std::str::FromStr;
@@ -36,6 +36,7 @@ pub struct TxBuilder {
     pub(crate) drain_to: Option<BdkScriptBuf>,
     pub(crate) sequence: Option<u32>,
     pub(crate) data: Vec<u8>,
+    pub(crate) current_height: Option<u32>,
 }
 
 impl TxBuilder {
@@ -55,6 +56,7 @@ impl TxBuilder {
             drain_to: None,
             sequence: None,
             data: Vec::new(),
+            current_height: None,
         }
     }
 
@@ -204,6 +206,13 @@ impl TxBuilder {
         })
     }
 
+    pub(crate) fn current_height(&self, height: u32) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            current_height: Some(height),
+            ..self.clone()
+        })
+    }
+
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
@@ -252,6 +261,9 @@ impl TxBuilder {
             let push_bytes = PushBytesBuf::try_from(self.data.clone())?;
             tx_builder.add_data(&push_bytes);
         }
+        if let Some(height) = self.current_height {
+            tx_builder.current_height(height);
+        }
 
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
 
@@ -264,6 +276,7 @@ pub(crate) struct BumpFeeTxBuilder {
     pub(crate) txid: String,
     pub(crate) fee_rate: Arc<FeeRate>,
     pub(crate) sequence: Option<u32>,
+    pub(crate) current_height: Option<u32>,
 }
 
 impl BumpFeeTxBuilder {
@@ -272,12 +285,20 @@ impl BumpFeeTxBuilder {
             txid,
             fee_rate,
             sequence: None,
+            current_height: None,
         }
     }
 
     pub(crate) fn set_exact_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             sequence: Some(nsequence),
+            ..self.clone()
+        })
+    }
+
+    pub(crate) fn current_height(&self, height: u32) -> Arc<Self> {
+        Arc::new(BumpFeeTxBuilder {
+            current_height: Some(height),
             ..self.clone()
         })
     }
@@ -291,6 +312,9 @@ impl BumpFeeTxBuilder {
         tx_builder.fee_rate(self.fee_rate.0);
         if let Some(sequence) = self.sequence {
             tx_builder.set_exact_sequence(Sequence(sequence));
+        }
+        if let Some(height) = self.current_height {
+            tx_builder.current_height(height);
         }
 
         let psbt: BdkPsbt = tx_builder.finish()?;
