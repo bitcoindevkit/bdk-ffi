@@ -10,6 +10,7 @@ mod types;
 mod wallet;
 
 use crate::bitcoin::Address;
+use crate::bitcoin::FinalizedPsbtResult;
 use crate::bitcoin::Psbt;
 use crate::bitcoin::Transaction;
 use crate::bitcoin::TxIn;
@@ -33,6 +34,7 @@ use crate::error::LoadWithPersistError;
 use crate::error::MiniscriptError;
 use crate::error::PersistenceError;
 use crate::error::PsbtError;
+use crate::error::PsbtFinalizeError;
 use crate::error::PsbtParseError;
 use crate::error::RequestBuilderError;
 use crate::error::SignerError;

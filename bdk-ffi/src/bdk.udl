@@ -259,6 +259,13 @@ interface PsbtParseError {
 };
 
 [Error]
+interface PsbtFinalizeError {
+  InputError(string reason, u32 index);
+  WrongInputCount(u32 in_tx, u32 in_map);
+  InputIdxOutofBounds(u32 psbt_inp, u32 requested);
+};
+
+[Error]
 interface RequestBuilderError {
   RequestAlreadyConsumed();
 };
@@ -958,7 +965,15 @@ interface Psbt {
   [Throws=PsbtError]
   Psbt combine(Psbt other);
 
+  FinalizedPsbtResult finalize();
+
   string json_serialize();
+};
+
+dictionary FinalizedPsbtResult {
+  Psbt psbt;
+  boolean could_finalize;
+  sequence<PsbtFinalizeError>? errors;
 };
 
 dictionary TxIn {

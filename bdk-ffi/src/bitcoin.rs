@@ -1,3 +1,4 @@
+use crate::error::PsbtFinalizeError;
 use crate::error::{
     AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
 };
@@ -10,12 +11,14 @@ use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
+use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Address as BdkAddress;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
+use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
 use std::fmt::Display;
@@ -188,6 +191,26 @@ impl Psbt {
         Ok(Arc::new(Psbt(Mutex::new(original_psbt))))
     }
 
+    pub(crate) fn finalize(&self) -> FinalizedPsbtResult {
+        let curve = Secp256k1::verification_only();
+        let finalized = self.0.lock().unwrap().clone().finalize(&curve);
+        match finalized {
+            Ok(psbt) => FinalizedPsbtResult {
+                psbt: Arc::new(psbt.into()),
+                could_finalize: true,
+                errors: None,
+            },
+            Err((psbt, errors)) => {
+                let errors = errors.into_iter().map(|e| e.into()).collect();
+                FinalizedPsbtResult {
+                    psbt: Arc::new(psbt.into()),
+                    could_finalize: false,
+                    errors: Some(errors),
+                }
+            }
+        }
+    }
+
     pub(crate) fn json_serialize(&self) -> String {
         let psbt = self.0.lock().unwrap();
         serde_json::to_string(psbt.deref()).unwrap()
@@ -198,6 +221,12 @@ impl From<BdkPsbt> for Psbt {
     fn from(psbt: BdkPsbt) -> Self {
         Psbt(Mutex::new(psbt))
     }
+}
+
+pub struct FinalizedPsbtResult {
+    pub psbt: Arc<Psbt>,
+    pub could_finalize: bool,
+    pub errors: Option<Vec<PsbtFinalizeError>>,
 }
 
 #[derive(Debug, Clone)]

@@ -19,6 +19,7 @@ use bdk_wallet::error::BuildFeeBumpError;
 use bdk_wallet::error::CreateTxError as BdkCreateTxError;
 use bdk_wallet::keys::bip39::Error as BdkBip39Error;
 use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
+use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddUtxoError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
@@ -640,6 +641,16 @@ pub enum PsbtParseError {
 
     #[error("error in psbt base64 encoding: {error_message}")]
     Base64Encoding { error_message: String },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PsbtFinalizeError {
+    #[error("an input at index {index} is invalid: {reason}")]
+    InputError { reason: String, index: u32 },
+    #[error("wrong input count; expected: {in_tx}, got: {in_map}")]
+    WrongInputCount { in_tx: u32, in_map: u32 },
+    #[error("input index out of bounds; inputs: {psbt_inp}, requested: {requested}")]
+    InputIdxOutofBounds { psbt_inp: u32, requested: u32 },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1339,6 +1350,29 @@ impl From<BdkPsbtParseError> for PsbtParseError {
             },
             _ => {
                 unreachable!("this is required because of the non-exhaustive enum in rust-bitcoin")
+            }
+        }
+    }
+}
+
+impl From<BdkPsbtFinalizeError> for PsbtFinalizeError {
+    fn from(value: BdkPsbtFinalizeError) -> Self {
+        match value {
+            BdkPsbtFinalizeError::InputError(input_error, index) => PsbtFinalizeError::InputError {
+                reason: input_error.to_string(),
+                index: index as u32,
+            },
+            BdkPsbtFinalizeError::WrongInputCount { in_tx, in_map } => {
+                PsbtFinalizeError::WrongInputCount {
+                    in_tx: in_tx as u32,
+                    in_map: in_map as u32,
+                }
+            }
+            BdkPsbtFinalizeError::InputIdxOutofBounds { psbt_inp, index } => {
+                PsbtFinalizeError::InputIdxOutofBounds {
+                    psbt_inp: psbt_inp as u32,
+                    requested: index as u32,
+                }
             }
         }
     }
