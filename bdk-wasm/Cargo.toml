@@ -1,0 +1,12 @@
+[package]
+name = "bdk-wasm"
+version = "1.0.0-alpha.11"
+homepage = "https://bitcoindevkit.org"
+repository = "https://github.com/bitcoindevkit/bdk"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+uniffi_udl = { version = "=0.28.0" }
+uniffi_meta = { version = "=0.28.0" }
+anyhow = "1.0"
