@@ -199,6 +199,9 @@ pub enum CreateTxError {
 
     #[error("attempt to prepare too many bytes to be pushed into script")]
     PushBytesError,
+
+    #[error("invalid lock time value")]
+    LockTimeConversionError,
 }
 
 #[derive(Debug, thiserror::Error)]

@@ -1,5 +1,5 @@
 use crate::bitcoin::{Address, Transaction, TxOut};
-use crate::error::RequestBuilderError;
+use crate::error::{CreateTxError, RequestBuilderError};
 
 use bitcoin_ffi::Amount;
 use bitcoin_ffi::OutPoint;
@@ -29,6 +29,7 @@ use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
 
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug)]
@@ -401,6 +402,19 @@ impl From<BdkLockTime> for LockTime {
             BdkLockTime::Seconds(time) => LockTime::Seconds {
                 consensus_time: time.to_consensus_u32(),
             },
+        }
+    }
+}
+
+impl TryFrom<&LockTime> for BdkLockTime {
+    type Error = CreateTxError;
+
+    fn try_from(value: &LockTime) -> Result<Self, CreateTxError> {
+        match value {
+            LockTime::Blocks { height } => BdkLockTime::from_height(*height)
+                .map_err(|_| CreateTxError::LockTimeConversionError),
+            LockTime::Seconds { consensus_time } => BdkLockTime::from_time(*consensus_time)
+                .map_err(|_| CreateTxError::LockTimeConversionError),
         }
     }
 }

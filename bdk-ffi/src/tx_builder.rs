@@ -1,10 +1,11 @@
 use crate::bitcoin::Psbt;
 use crate::error::CreateTxError;
-use crate::types::ScriptAmount;
+use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
 use bitcoin_ffi::{Amount, FeeRate, Script};
 
+use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
@@ -16,7 +17,7 @@ use bdk_wallet::KeychainKind;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -37,6 +38,7 @@ pub struct TxBuilder {
     pub(crate) sequence: Option<u32>,
     pub(crate) data: Vec<u8>,
     pub(crate) current_height: Option<u32>,
+    pub(crate) locktime: Option<LockTime>,
 }
 
 impl TxBuilder {
@@ -57,6 +59,7 @@ impl TxBuilder {
             sequence: None,
             data: Vec::new(),
             current_height: None,
+            locktime: None,
         }
     }
 
@@ -213,6 +216,13 @@ impl TxBuilder {
         })
     }
 
+    pub(crate) fn nlocktime(&self, locktime: LockTime) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            locktime: Some(locktime),
+            ..self.clone()
+        })
+    }
+
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
@@ -264,6 +274,11 @@ impl TxBuilder {
         if let Some(height) = self.current_height {
             tx_builder.current_height(height);
         }
+        // let bdk_locktime = locktime.try_into().map_err(CreateTxError::LockTimeConversionError)?;
+        if let Some(locktime) = &self.locktime {
+            let bdk_locktime: BdkLockTime = locktime.try_into()?;
+            tx_builder.nlocktime(bdk_locktime);
+        }
 
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
 
@@ -277,15 +292,17 @@ pub(crate) struct BumpFeeTxBuilder {
     pub(crate) fee_rate: Arc<FeeRate>,
     pub(crate) sequence: Option<u32>,
     pub(crate) current_height: Option<u32>,
+    pub(crate) locktime: Option<LockTime>,
 }
 
 impl BumpFeeTxBuilder {
     pub(crate) fn new(txid: String, fee_rate: Arc<FeeRate>) -> Self {
-        Self {
+        BumpFeeTxBuilder {
             txid,
             fee_rate,
             sequence: None,
             current_height: None,
+            locktime: None,
         }
     }
 
@@ -303,6 +320,13 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    pub(crate) fn nlocktime(&self, locktime: LockTime) -> Arc<Self> {
+        Arc::new(BumpFeeTxBuilder {
+            locktime: Some(locktime),
+            ..self.clone()
+        })
+    }
+
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
             outpoint: self.txid.clone(),
@@ -315,6 +339,10 @@ impl BumpFeeTxBuilder {
         }
         if let Some(height) = self.current_height {
             tx_builder.current_height(height);
+        }
+        if let Some(locktime) = &self.locktime {
+            let bdk_locktime: BdkLockTime = locktime.try_into()?;
+            tx_builder.nlocktime(bdk_locktime);
         }
 
         let psbt: BdkPsbt = tx_builder.finish()?;

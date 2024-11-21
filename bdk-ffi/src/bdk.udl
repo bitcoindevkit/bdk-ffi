@@ -76,6 +76,7 @@ interface CreateTxError {
   MissingNonWitnessUtxo(string outpoint);
   MiniscriptPsbt(string error_message);
   PushBytesError();
+  LockTimeConversionError();
 };
 
 [Error]
@@ -714,6 +715,8 @@ interface TxBuilder {
 
   TxBuilder current_height(u32 height);
 
+  TxBuilder nlocktime(LockTime locktime);
+
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
 };
@@ -724,6 +727,8 @@ interface BumpFeeTxBuilder {
   BumpFeeTxBuilder set_exact_sequence(u32 nsequence);
 
   BumpFeeTxBuilder current_height(u32 height);
+
+  BumpFeeTxBuilder nlocktime(LockTime locktime);
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
