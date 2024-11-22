@@ -719,6 +719,8 @@ interface TxBuilder {
 
   TxBuilder allow_dust(boolean allow_dust);
 
+  TxBuilder version(i32 version);
+
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
 };
@@ -733,6 +735,8 @@ interface BumpFeeTxBuilder {
   BumpFeeTxBuilder nlocktime(LockTime locktime);
 
   BumpFeeTxBuilder allow_dust(boolean allow_dust);
+
+  BumpFeeTxBuilder version(i32 version);
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);

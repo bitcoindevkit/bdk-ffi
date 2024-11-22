@@ -40,6 +40,7 @@ pub struct TxBuilder {
     pub(crate) current_height: Option<u32>,
     pub(crate) locktime: Option<LockTime>,
     pub(crate) allow_dust: bool,
+    pub(crate) version: Option<i32>,
 }
 
 impl TxBuilder {
@@ -62,6 +63,7 @@ impl TxBuilder {
             current_height: None,
             locktime: None,
             allow_dust: false,
+            version: None,
         }
     }
 
@@ -232,6 +234,13 @@ impl TxBuilder {
         })
     }
 
+    pub(crate) fn version(&self, version: i32) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            version: Some(version),
+            ..self.clone()
+        })
+    }
+
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
@@ -290,6 +299,9 @@ impl TxBuilder {
         if self.allow_dust {
             tx_builder.allow_dust(self.allow_dust);
         }
+        if let Some(version) = self.version {
+            tx_builder.version(version);
+        }
 
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
 
@@ -305,6 +317,7 @@ pub(crate) struct BumpFeeTxBuilder {
     pub(crate) current_height: Option<u32>,
     pub(crate) locktime: Option<LockTime>,
     pub(crate) allow_dust: bool,
+    pub(crate) version: Option<i32>,
 }
 
 impl BumpFeeTxBuilder {
@@ -316,6 +329,7 @@ impl BumpFeeTxBuilder {
             current_height: None,
             locktime: None,
             allow_dust: false,
+            version: None,
         }
     }
 
@@ -347,6 +361,13 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    pub(crate) fn version(&self, version: i32) -> Arc<Self> {
+        Arc::new(BumpFeeTxBuilder {
+            version: Some(version),
+            ..self.clone()
+        })
+    }
+
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
             outpoint: self.txid.clone(),
@@ -366,6 +387,9 @@ impl BumpFeeTxBuilder {
         }
         if self.allow_dust {
             tx_builder.allow_dust(self.allow_dust);
+        }
+        if let Some(version) = self.version {
+            tx_builder.version(version);
         }
 
         let psbt: BdkPsbt = tx_builder.finish()?;
