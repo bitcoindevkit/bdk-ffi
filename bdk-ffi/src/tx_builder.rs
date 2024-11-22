@@ -39,6 +39,7 @@ pub struct TxBuilder {
     pub(crate) data: Vec<u8>,
     pub(crate) current_height: Option<u32>,
     pub(crate) locktime: Option<LockTime>,
+    pub(crate) allow_dust: bool,
 }
 
 impl TxBuilder {
@@ -60,6 +61,7 @@ impl TxBuilder {
             data: Vec::new(),
             current_height: None,
             locktime: None,
+            allow_dust: false,
         }
     }
 
@@ -223,6 +225,13 @@ impl TxBuilder {
         })
     }
 
+    pub(crate) fn allow_dust(&self, allow_dust: bool) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            allow_dust,
+            ..self.clone()
+        })
+    }
+
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
@@ -274,10 +283,12 @@ impl TxBuilder {
         if let Some(height) = self.current_height {
             tx_builder.current_height(height);
         }
-        // let bdk_locktime = locktime.try_into().map_err(CreateTxError::LockTimeConversionError)?;
         if let Some(locktime) = &self.locktime {
             let bdk_locktime: BdkLockTime = locktime.try_into()?;
             tx_builder.nlocktime(bdk_locktime);
+        }
+        if self.allow_dust {
+            tx_builder.allow_dust(self.allow_dust);
         }
 
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
@@ -293,6 +304,7 @@ pub(crate) struct BumpFeeTxBuilder {
     pub(crate) sequence: Option<u32>,
     pub(crate) current_height: Option<u32>,
     pub(crate) locktime: Option<LockTime>,
+    pub(crate) allow_dust: bool,
 }
 
 impl BumpFeeTxBuilder {
@@ -303,6 +315,7 @@ impl BumpFeeTxBuilder {
             sequence: None,
             current_height: None,
             locktime: None,
+            allow_dust: false,
         }
     }
 
@@ -327,6 +340,13 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    pub(crate) fn allow_dust(&self, allow_dust: bool) -> Arc<Self> {
+        Arc::new(BumpFeeTxBuilder {
+            allow_dust,
+            ..self.clone()
+        })
+    }
+
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
             outpoint: self.txid.clone(),
@@ -343,6 +363,9 @@ impl BumpFeeTxBuilder {
         if let Some(locktime) = &self.locktime {
             let bdk_locktime: BdkLockTime = locktime.try_into()?;
             tx_builder.nlocktime(bdk_locktime);
+        }
+        if self.allow_dust {
+            tx_builder.allow_dust(self.allow_dust);
         }
 
         let psbt: BdkPsbt = tx_builder.finish()?;

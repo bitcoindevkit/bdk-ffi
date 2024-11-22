@@ -717,6 +717,8 @@ interface TxBuilder {
 
   TxBuilder nlocktime(LockTime locktime);
 
+  TxBuilder allow_dust(boolean allow_dust);
+
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
 };
@@ -729,6 +731,8 @@ interface BumpFeeTxBuilder {
   BumpFeeTxBuilder current_height(u32 height);
 
   BumpFeeTxBuilder nlocktime(LockTime locktime);
+
+  BumpFeeTxBuilder allow_dust(boolean allow_dust);
 
   [Throws=CreateTxError]
   Psbt finish([ByRef] Wallet wallet);
