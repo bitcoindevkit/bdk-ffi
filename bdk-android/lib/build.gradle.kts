@@ -8,6 +8,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
+    id("org.jetbrains.dokka")
 }
 
 android {

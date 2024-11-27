@@ -10,6 +10,7 @@ plugins {
     id("org.gradle.java-library")
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
+    id("org.jetbrains.dokka")
 }
 
 java {
