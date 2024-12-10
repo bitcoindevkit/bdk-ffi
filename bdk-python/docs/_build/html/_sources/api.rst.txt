@@ -1,138 +1,31 @@
-API Reference
-============
+BDK Python API Reference
+=====================
 
-.. currentmodule:: bdkpython
+This document describes the Python API for the Bitcoin Development Kit (BDK).
 
-Core Types
----------
+Bdk Module
+==========
+Bitcoin Module
+==============
 
-Amount and Fees
-~~~~~~~~~~~~~~
-.. autoclass:: Amount
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: FeeRate
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Addresses and Scripts
-~~~~~~~~~~~~~~~~~~~
-.. autoclass:: Address
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: Script
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: OutPoint
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Descriptors
-~~~~~~~~~~
-.. autoclass:: Descriptor
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: DescriptorPublicKey
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: DescriptorSecretKey
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: DerivationPath
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Wallet Operations
----------------
-
-Transaction Building
-~~~~~~~~~~~~~~~~~~
-.. autoclass:: TxBuilder
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: BumpFeeTxBuilder
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: TxBuilderResult
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: Psbt
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Blockchain Clients
-~~~~~~~~~~~~~~~~
-.. autoclass:: Blockchain
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: ElectrumClient
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: EsploraClient
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Wallet
-~~~~~~
-.. autoclass:: Wallet
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: WalletSync
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Utilities
+Examples
 --------
-.. autoclass:: Mnemonic
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
-.. autoclass:: Network
-   :members:
-   :undoc-members:
-   :show-inheritance:
+Basic Wallet Usage
+~~~~~~~~~~~~~~~~
 
-Exceptions
----------
-.. autoexception:: InternalError
-   :members:
-   :show-inheritance:
+.. code-block:: python
 
-.. autoexception:: FeeRateError
-   :members:
-   :show-inheritance:
-
-.. autoexception:: ParseAmountError
-   :members:
-   :show-inheritance:
+   from bdkpython import *   
+                # Create a new wallet
+                descriptor = "wpkh(...)"  # Your descriptor here
+                wallet = Wallet(descriptor, network=Network.TESTNET)
+                
+                # Sync wallet
+                blockchain = Blockchain("https://blockstream.info/testnet/api")
+                wallet.sync(blockchain)
+                
+                # Get balance
+                balance = wallet.get_balance()
+                print(f"Confirmed balance: {balance.confirmed}")
+                

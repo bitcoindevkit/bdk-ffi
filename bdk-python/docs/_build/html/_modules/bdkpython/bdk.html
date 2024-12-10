@@ -5,14 +5,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bdkpython.bdk &mdash; Bitcoin Dev Kit Python  documentation</title>
+  <title>bdkpython.bdk &mdash; BDK Python 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+      <script src="../../_static/documentation_options.js?v=01f34227"></script>
       <script src="../../_static/doctools.js?v=9a2dae69"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -29,7 +29,7 @@
           
           
           <a href="../../index.html" class="icon icon-home">
-            Bitcoin Dev Kit Python
+            BDK Python
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -41,7 +41,10 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">BDK Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html#api-reference">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html#bdk-module">Bdk Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html#bitcoin-module">Bitcoin Module</a></li>
 </ul>
 
         </div>
@@ -50,7 +53,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../../index.html">Bitcoin Dev Kit Python</a>
+          <a href="../../index.html">BDK Python</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -333,8 +336,11 @@
 <span class="c1"># A handful of classes and functions to support the generated data structures.</span>
 <span class="c1"># This would be a good candidate for isolating in its own ffi-support lib.</span>
 
+<div class="viewcode-block" id="InternalError">
+<a class="viewcode-back" href="../../api.html#bdkpython.InternalError">[docs]</a>
 <span class="k">class</span> <span class="nc">InternalError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-    <span class="k">pass</span>
+    <span class="k">pass</span></div>
+
 
 <span class="k">class</span> <span class="nc">_UniffiRustCallStatus</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">Structure</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -3024,6 +3030,8 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
+<div class="viewcode-block" id="BumpFeeTxBuilder">
+<a class="viewcode-back" href="../../api.html#bdkpython.BumpFeeTxBuilder">[docs]</a>
 <span class="k">class</span> <span class="nc">BumpFeeTxBuilder</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A `BumpFeeTxBuilder` is created by calling `build_fee_bump` on a wallet. After assigning it, you set options on it</span>
@@ -3059,6 +3067,8 @@
         <span class="k">return</span> <span class="n">inst</span>
 
 
+<div class="viewcode-block" id="BumpFeeTxBuilder.allow_dust">
+<a class="viewcode-back" href="../../api.html#bdkpython.BumpFeeTxBuilder.allow_dust">[docs]</a>
     <span class="k">def</span> <span class="nf">allow_dust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allow_dust</span><span class="p">:</span> <span class="s2">&quot;bool&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BumpFeeTxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set whether or not the dust limit is checked.</span>
@@ -3071,12 +3081,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeBumpFeeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_bumpfeetxbuilder_allow_dust</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">allow_dust</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="BumpFeeTxBuilder.current_height">
+<a class="viewcode-back" href="../../api.html#bdkpython.BumpFeeTxBuilder.current_height">[docs]</a>
     <span class="k">def</span> <span class="nf">current_height</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BumpFeeTxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the current blockchain height.</span>
@@ -3097,12 +3110,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeBumpFeeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_bumpfeetxbuilder_current_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterUInt32</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">height</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="BumpFeeTxBuilder.finish">
+<a class="viewcode-back" href="../../api.html#bdkpython.BumpFeeTxBuilder.finish">[docs]</a>
     <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wallet</span><span class="p">:</span> <span class="s2">&quot;Wallet&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Psbt&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Finish building the transaction.</span>
@@ -3120,12 +3136,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypePsbt</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeCreateTxError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_bumpfeetxbuilder_finish</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeWallet</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">wallet</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="BumpFeeTxBuilder.nlocktime">
+<a class="viewcode-back" href="../../api.html#bdkpython.BumpFeeTxBuilder.nlocktime">[docs]</a>
     <span class="k">def</span> <span class="nf">nlocktime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">locktime</span><span class="p">:</span> <span class="s2">&quot;LockTime&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BumpFeeTxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Use a specific nLockTime while creating the transaction.</span>
@@ -3138,12 +3157,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeBumpFeeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_bumpfeetxbuilder_nlocktime</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeLockTime</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">locktime</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="BumpFeeTxBuilder.set_exact_sequence">
+<a class="viewcode-back" href="../../api.html#bdkpython.BumpFeeTxBuilder.set_exact_sequence">[docs]</a>
     <span class="k">def</span> <span class="nf">set_exact_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsequence</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BumpFeeTxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set an exact `nSequence` value.</span>
@@ -3157,12 +3179,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeBumpFeeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_bumpfeetxbuilder_set_exact_sequence</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterUInt32</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">nsequence</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="BumpFeeTxBuilder.version">
+<a class="viewcode-back" href="../../api.html#bdkpython.BumpFeeTxBuilder.version">[docs]</a>
     <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BumpFeeTxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build a transaction with a specific version.</span>
@@ -3176,7 +3201,9 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeBumpFeeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_bumpfeetxbuilder_version</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterInt32</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">version</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
 
 
 
@@ -3354,6 +3381,8 @@
     <span class="k">pass</span>
 
 
+<div class="viewcode-block" id="DerivationPath">
+<a class="viewcode-back" href="../../api.html#bdkpython.DerivationPath">[docs]</a>
 <span class="k">class</span> <span class="nc">DerivationPath</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">):</span>
@@ -3378,7 +3407,8 @@
         <span class="c1"># and just create a new instance with the required pointer.</span>
         <span class="n">inst</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="n">inst</span><span class="o">.</span><span class="n">_pointer</span> <span class="o">=</span> <span class="n">pointer</span>
-        <span class="k">return</span> <span class="n">inst</span>
+        <span class="k">return</span> <span class="n">inst</span></div>
+
 
 
 
@@ -4051,6 +4081,8 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
+<div class="viewcode-block" id="ElectrumClient">
+<a class="viewcode-back" href="../../api.html#bdkpython.ElectrumClient">[docs]</a>
 <span class="k">class</span> <span class="nc">ElectrumClient</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">):</span>
@@ -4078,18 +4110,23 @@
         <span class="k">return</span> <span class="n">inst</span>
 
 
+<div class="viewcode-block" id="ElectrumClient.broadcast">
+<a class="viewcode-back" href="../../api.html#bdkpython.ElectrumClient.broadcast">[docs]</a>
     <span class="k">def</span> <span class="nf">broadcast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">:</span> <span class="s2">&quot;Transaction&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeTransaction</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeElectrumError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_electrumclient_broadcast</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeTransaction</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">transaction</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="ElectrumClient.full_scan">
+<a class="viewcode-back" href="../../api.html#bdkpython.ElectrumClient.full_scan">[docs]</a>
     <span class="k">def</span> <span class="nf">full_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_scan_request</span><span class="p">:</span> <span class="s2">&quot;FullScanRequest&quot;</span><span class="p">,</span><span class="n">stop_gap</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span><span class="n">batch_size</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span><span class="n">fetch_prev_txouts</span><span class="p">:</span> <span class="s2">&quot;bool&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Update&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeFullScanRequest</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">full_scan_request</span><span class="p">)</span>
         
@@ -4105,12 +4142,15 @@
         <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">stop_gap</span><span class="p">),</span>
         <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">batch_size</span><span class="p">),</span>
         <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">fetch_prev_txouts</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="ElectrumClient.sync">
+<a class="viewcode-back" href="../../api.html#bdkpython.ElectrumClient.sync">[docs]</a>
     <span class="k">def</span> <span class="nf">sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sync_request</span><span class="p">:</span> <span class="s2">&quot;SyncRequest&quot;</span><span class="p">,</span><span class="n">batch_size</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span><span class="n">fetch_prev_txouts</span><span class="p">:</span> <span class="s2">&quot;bool&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Update&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeSyncRequest</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">sync_request</span><span class="p">)</span>
         
@@ -4123,7 +4163,9 @@
         <span class="n">_UniffiConverterTypeSyncRequest</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">sync_request</span><span class="p">),</span>
         <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">batch_size</span><span class="p">),</span>
         <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">fetch_prev_txouts</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
 
 
 
@@ -4173,6 +4215,8 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
+<div class="viewcode-block" id="EsploraClient">
+<a class="viewcode-back" href="../../api.html#bdkpython.EsploraClient">[docs]</a>
 <span class="k">class</span> <span class="nc">EsploraClient</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">):</span>
@@ -4200,17 +4244,22 @@
         <span class="k">return</span> <span class="n">inst</span>
 
 
+<div class="viewcode-block" id="EsploraClient.broadcast">
+<a class="viewcode-back" href="../../api.html#bdkpython.EsploraClient.broadcast">[docs]</a>
     <span class="k">def</span> <span class="nf">broadcast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">:</span> <span class="s2">&quot;Transaction&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeTransaction</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">transaction</span><span class="p">)</span>
         
         <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeEsploraError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_esploraclient_broadcast</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
-        <span class="n">_UniffiConverterTypeTransaction</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">transaction</span><span class="p">))</span>
+        <span class="n">_UniffiConverterTypeTransaction</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">transaction</span><span class="p">))</span></div>
 
 
 
 
 
 
+
+<div class="viewcode-block" id="EsploraClient.full_scan">
+<a class="viewcode-back" href="../../api.html#bdkpython.EsploraClient.full_scan">[docs]</a>
     <span class="k">def</span> <span class="nf">full_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_scan_request</span><span class="p">:</span> <span class="s2">&quot;FullScanRequest&quot;</span><span class="p">,</span><span class="n">stop_gap</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span><span class="n">parallel_requests</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Update&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeFullScanRequest</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">full_scan_request</span><span class="p">)</span>
         
@@ -4223,33 +4272,42 @@
         <span class="n">_UniffiConverterTypeFullScanRequest</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">full_scan_request</span><span class="p">),</span>
         <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">stop_gap</span><span class="p">),</span>
         <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">parallel_requests</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="EsploraClient.get_height">
+<a class="viewcode-back" href="../../api.html#bdkpython.EsploraClient.get_height">[docs]</a>
     <span class="k">def</span> <span class="nf">get_height</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterUInt32</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeEsploraError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_esploraclient_get_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="EsploraClient.get_tx">
+<a class="viewcode-back" href="../../api.html#bdkpython.EsploraClient.get_tx">[docs]</a>
     <span class="k">def</span> <span class="nf">get_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txid</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;typing.Optional[Transaction]&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">txid</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">_UniffiConverterOptionalTypeTransaction</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeEsploraError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_esploraclient_get_tx</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">txid</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="EsploraClient.sync">
+<a class="viewcode-back" href="../../api.html#bdkpython.EsploraClient.sync">[docs]</a>
     <span class="k">def</span> <span class="nf">sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sync_request</span><span class="p">:</span> <span class="s2">&quot;SyncRequest&quot;</span><span class="p">,</span><span class="n">parallel_requests</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Update&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeSyncRequest</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">sync_request</span><span class="p">)</span>
         
@@ -4259,7 +4317,9 @@
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeEsploraError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_esploraclient_sync</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeSyncRequest</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">sync_request</span><span class="p">),</span>
         <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">parallel_requests</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
 
 
 
@@ -4600,6 +4660,8 @@
     <span class="k">pass</span>
 
 
+<div class="viewcode-block" id="Mnemonic">
+<a class="viewcode-back" href="../../api.html#bdkpython.Mnemonic">[docs]</a>
 <span class="k">class</span> <span class="nc">Mnemonic</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">word_count</span><span class="p">:</span> <span class="s2">&quot;WordCount&quot;</span><span class="p">):</span>
@@ -4626,6 +4688,8 @@
         <span class="n">inst</span><span class="o">.</span><span class="n">_pointer</span> <span class="o">=</span> <span class="n">pointer</span>
         <span class="k">return</span> <span class="n">inst</span>
 
+<div class="viewcode-block" id="Mnemonic.from_entropy">
+<a class="viewcode-back" href="../../api.html#bdkpython.Mnemonic.from_entropy">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_entropy</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">entropy</span><span class="p">:</span> <span class="s2">&quot;typing.List[int]&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterSequenceUInt8</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">entropy</span><span class="p">)</span>
@@ -4633,9 +4697,12 @@
         <span class="c1"># Call the (fallible) function before creating any half-baked object instances.</span>
         <span class="n">pointer</span> <span class="o">=</span> <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeBip39Error</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_constructor_mnemonic_from_entropy</span><span class="p">,</span>
         <span class="n">_UniffiConverterSequenceUInt8</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">entropy</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="Mnemonic.from_string">
+<a class="viewcode-back" href="../../api.html#bdkpython.Mnemonic.from_string">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">mnemonic</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">mnemonic</span><span class="p">)</span>
@@ -4643,14 +4710,16 @@
         <span class="c1"># Call the (fallible) function before creating any half-baked object instances.</span>
         <span class="n">pointer</span> <span class="o">=</span> <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeBip39Error</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_constructor_mnemonic_from_string</span><span class="p">,</span>
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">mnemonic</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+
 
 
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_mnemonic_uniffi_trait_display</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+
 
 
 
@@ -4827,6 +4896,8 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
+<div class="viewcode-block" id="Psbt">
+<a class="viewcode-back" href="../../api.html#bdkpython.Psbt">[docs]</a>
 <span class="k">class</span> <span class="nc">Psbt</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">psbt_base64</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">):</span>
@@ -4854,58 +4925,77 @@
         <span class="k">return</span> <span class="n">inst</span>
 
 
+<div class="viewcode-block" id="Psbt.combine">
+<a class="viewcode-back" href="../../api.html#bdkpython.Psbt.combine">[docs]</a>
     <span class="k">def</span> <span class="nf">combine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Psbt&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Psbt&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypePsbt</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">_UniffiConverterTypePsbt</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypePsbtError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_psbt_combine</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypePsbt</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="Psbt.extract_tx">
+<a class="viewcode-back" href="../../api.html#bdkpython.Psbt.extract_tx">[docs]</a>
     <span class="k">def</span> <span class="nf">extract_tx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Transaction&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTransaction</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeExtractTxError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_psbt_extract_tx</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="Psbt.fee">
+<a class="viewcode-back" href="../../api.html#bdkpython.Psbt.fee">[docs]</a>
     <span class="k">def</span> <span class="nf">fee</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypePsbtError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_psbt_fee</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="Psbt.finalize">
+<a class="viewcode-back" href="../../api.html#bdkpython.Psbt.finalize">[docs]</a>
     <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FinalizedPsbtResult&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterTypeFinalizedPsbtResult</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_psbt_finalize</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="Psbt.json_serialize">
+<a class="viewcode-back" href="../../api.html#bdkpython.Psbt.json_serialize">[docs]</a>
     <span class="k">def</span> <span class="nf">json_serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_psbt_json_serialize</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="Psbt.serialize">
+<a class="viewcode-back" href="../../api.html#bdkpython.Psbt.serialize">[docs]</a>
     <span class="k">def</span> <span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_psbt_serialize</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
 
 
 
@@ -5234,8 +5324,6 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
-<div class="viewcode-block" id="Transaction">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction">[docs]</a>
 <span class="k">class</span> <span class="nc">Transaction</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction_bytes</span><span class="p">:</span> <span class="s2">&quot;typing.List[int]&quot;</span><span class="p">):</span>
@@ -5263,146 +5351,109 @@
         <span class="k">return</span> <span class="n">inst</span>
 
 
-<div class="viewcode-block" id="Transaction.compute_txid">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.compute_txid">[docs]</a>
     <span class="k">def</span> <span class="nf">compute_txid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_compute_txid</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.input">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.input">[docs]</a>
     <span class="k">def</span> <span class="nf">input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;typing.List[TxIn]&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterSequenceTypeTxIn</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_input</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.is_coinbase">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.is_coinbase">[docs]</a>
     <span class="k">def</span> <span class="nf">is_coinbase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_is_coinbase</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.is_explicitly_rbf">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.is_explicitly_rbf">[docs]</a>
     <span class="k">def</span> <span class="nf">is_explicitly_rbf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_is_explicitly_rbf</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.is_lock_time_enabled">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.is_lock_time_enabled">[docs]</a>
     <span class="k">def</span> <span class="nf">is_lock_time_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_is_lock_time_enabled</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.lock_time">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.lock_time">[docs]</a>
     <span class="k">def</span> <span class="nf">lock_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterUInt32</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_lock_time</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.output">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.output">[docs]</a>
     <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;typing.List[TxOut]&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterSequenceTypeTxOut</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_output</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.serialize">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.serialize">[docs]</a>
     <span class="k">def</span> <span class="nf">serialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;typing.List[int]&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterSequenceUInt8</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_serialize</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.total_size">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.total_size">[docs]</a>
     <span class="k">def</span> <span class="nf">total_size</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_total_size</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.version">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.version">[docs]</a>
     <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterInt32</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_version</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.vsize">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.vsize">[docs]</a>
     <span class="k">def</span> <span class="nf">vsize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_vsize</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Transaction.weight">
-<a class="viewcode-back" href="../../api.html#bdkpython.Transaction.weight">[docs]</a>
     <span class="k">def</span> <span class="nf">weight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;int&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterUInt64</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_transaction_weight</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
-</div>
-
+        <span class="p">)</span>
 
 
 
@@ -5647,6 +5698,8 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
+<div class="viewcode-block" id="TxBuilder">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder">[docs]</a>
 <span class="k">class</span> <span class="nc">TxBuilder</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A `TxBuilder` is created by calling `build_tx` on a wallet. After assigning it, you set options on it until finally</span>
@@ -5676,6 +5729,8 @@
         <span class="k">return</span> <span class="n">inst</span>
 
 
+<div class="viewcode-block" id="TxBuilder.add_data">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.add_data">[docs]</a>
     <span class="k">def</span> <span class="nf">add_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="s2">&quot;typing.List[int]&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add data as an output using `OP_RETURN`.</span>
@@ -5686,12 +5741,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_add_data</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterSequenceUInt8</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.add_global_xpubs">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.add_global_xpubs">[docs]</a>
     <span class="k">def</span> <span class="nf">add_global_xpubs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fill-in the `PSBT_GLOBAL_XPUB` field with the extended keys contained in both the external and internal</span>
@@ -5703,12 +5761,15 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_add_global_xpubs</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.add_recipient">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.add_recipient">[docs]</a>
     <span class="k">def</span> <span class="nf">add_recipient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script</span><span class="p">:</span> <span class="s2">&quot;Script&quot;</span><span class="p">,</span><span class="n">amount</span><span class="p">:</span> <span class="s2">&quot;Amount&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a recipient to the internal list of recipients.</span>
@@ -5722,12 +5783,15 @@
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_add_recipient</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeScript</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">script</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeAmount</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">amount</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.add_unspendable">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.add_unspendable">[docs]</a>
     <span class="k">def</span> <span class="nf">add_unspendable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unspendable</span><span class="p">:</span> <span class="s2">&quot;OutPoint&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a utxo to the internal list of unspendable utxos.</span>
@@ -5740,12 +5804,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_add_unspendable</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeOutPoint</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">unspendable</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.add_utxo">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.add_utxo">[docs]</a>
     <span class="k">def</span> <span class="nf">add_utxo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outpoint</span><span class="p">:</span> <span class="s2">&quot;OutPoint&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add a utxo to the internal list of utxos that must be spent.</span>
@@ -5759,12 +5826,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_add_utxo</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeOutPoint</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">outpoint</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.allow_dust">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.allow_dust">[docs]</a>
     <span class="k">def</span> <span class="nf">allow_dust</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allow_dust</span><span class="p">:</span> <span class="s2">&quot;bool&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set whether or not the dust limit is checked.</span>
@@ -5777,12 +5847,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_allow_dust</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">allow_dust</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.change_policy">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.change_policy">[docs]</a>
     <span class="k">def</span> <span class="nf">change_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">change_policy</span><span class="p">:</span> <span class="s2">&quot;ChangeSpendPolicy&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set a specific `ChangeSpendPolicy`. See `TxBuilder::do_not_spend_change` and `TxBuilder::only_spend_change` for</span>
@@ -5794,12 +5867,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_change_policy</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeChangeSpendPolicy</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">change_policy</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.current_height">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.current_height">[docs]</a>
     <span class="k">def</span> <span class="nf">current_height</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the current blockchain height.</span>
@@ -5820,12 +5896,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_current_height</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterUInt32</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">height</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.do_not_spend_change">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.do_not_spend_change">[docs]</a>
     <span class="k">def</span> <span class="nf">do_not_spend_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Do not spend change outputs.</span>
@@ -5836,12 +5915,15 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_do_not_spend_change</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.drain_to">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.drain_to">[docs]</a>
     <span class="k">def</span> <span class="nf">drain_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script</span><span class="p">:</span> <span class="s2">&quot;Script&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sets the address to drain excess coins to.</span>
@@ -5862,12 +5944,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_drain_to</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeScript</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">script</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.drain_wallet">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.drain_wallet">[docs]</a>
     <span class="k">def</span> <span class="nf">drain_wallet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Spend all the available inputs. This respects filters like `TxBuilder::unspendable` and the change policy.</span>
@@ -5875,12 +5960,15 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_drain_wallet</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.fee_absolute">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.fee_absolute">[docs]</a>
     <span class="k">def</span> <span class="nf">fee_absolute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fee</span><span class="p">:</span> <span class="s2">&quot;Amount&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set an absolute fee The `fee_absolute` method refers to the absolute transaction fee in `Amount`. If anyone sets</span>
@@ -5895,12 +5983,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_fee_absolute</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeAmount</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">fee</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.fee_rate">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.fee_rate">[docs]</a>
     <span class="k">def</span> <span class="nf">fee_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fee_rate</span><span class="p">:</span> <span class="s2">&quot;FeeRate&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set a custom fee rate.</span>
@@ -5918,12 +6009,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_fee_rate</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeFeeRate</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">fee_rate</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.finish">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.finish">[docs]</a>
     <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wallet</span><span class="p">:</span> <span class="s2">&quot;Wallet&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Psbt&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Finish building the transaction.</span>
@@ -5941,12 +6035,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypePsbt</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeCreateTxError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_finish</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeWallet</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">wallet</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.manually_selected_only">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.manually_selected_only">[docs]</a>
     <span class="k">def</span> <span class="nf">manually_selected_only</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Only spend utxos added by `TxBuilder::add_utxo`.</span>
@@ -5956,12 +6053,15 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_manually_selected_only</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.nlocktime">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.nlocktime">[docs]</a>
     <span class="k">def</span> <span class="nf">nlocktime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">locktime</span><span class="p">:</span> <span class="s2">&quot;LockTime&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Use a specific nLockTime while creating the transaction.</span>
@@ -5974,12 +6074,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_nlocktime</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeLockTime</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">locktime</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.only_spend_change">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.only_spend_change">[docs]</a>
     <span class="k">def</span> <span class="nf">only_spend_change</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Only spend change outputs.</span>
@@ -5990,12 +6093,15 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_only_spend_change</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.policy_path">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.policy_path">[docs]</a>
     <span class="k">def</span> <span class="nf">policy_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">policy_path</span><span class="p">:</span> <span class="s2">&quot;dict[str, typing.List[int]]&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The TxBuilder::policy_path is a complex API. See the Rust docs for complete information: https://docs.rs/bdk_wallet/latest/bdk_wallet/struct.TxBuilder.html#method.policy_path</span>
@@ -6009,12 +6115,15 @@
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_policy_path</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterMapStringSequenceUInt64</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">policy_path</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.set_exact_sequence">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.set_exact_sequence">[docs]</a>
     <span class="k">def</span> <span class="nf">set_exact_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsequence</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set an exact `nSequence` value.</span>
@@ -6028,12 +6137,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_set_exact_sequence</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterUInt32</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">nsequence</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.set_recipients">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.set_recipients">[docs]</a>
     <span class="k">def</span> <span class="nf">set_recipients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">recipients</span><span class="p">:</span> <span class="s2">&quot;typing.List[ScriptAmount]&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Replace the recipients already added with a new list of recipients.</span>
@@ -6044,12 +6156,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_set_recipients</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterSequenceTypeScriptAmount</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">recipients</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.unspendable">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.unspendable">[docs]</a>
     <span class="k">def</span> <span class="nf">unspendable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unspendable</span><span class="p">:</span> <span class="s2">&quot;typing.List[OutPoint]&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Replace the internal list of unspendable utxos with a new list.</span>
@@ -6062,12 +6177,15 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_unspendable</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterSequenceTypeOutPoint</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">unspendable</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
 
 
 
+
+<div class="viewcode-block" id="TxBuilder.version">
+<a class="viewcode-back" href="../../api.html#bdkpython.TxBuilder.version">[docs]</a>
     <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;TxBuilder&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Build a transaction with a specific version.</span>
@@ -6081,7 +6199,9 @@
         <span class="k">return</span> <span class="n">_UniffiConverterTypeTxBuilder</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_txbuilder_version</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterInt32</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">version</span><span class="p">))</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
 
 
 

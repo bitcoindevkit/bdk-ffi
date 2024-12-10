@@ -12,7 +12,7 @@ jobs:
       - name: "Set up Python"
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: '3.9.x'
 
       - name: "Install dependencies"
         run: |
@@ -24,11 +24,11 @@ jobs:
       - name: "Build Python API documentation"
         run: |
           cd ./bdk-python/
-          bash ./scripts/build-linux-x86_64.sh
+          python scripts/generate_docs.py
           sphinx-build -b html docs/ docs/_build/html
 
-      - name: "Upload Python website"
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifact-python-api-docs
-          path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/docs/_build/html/
+#      - name: "Upload Python website"
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: artifact-python-api-docs
+#          path: /home/runner/work/bdk-ffi/bdk-ffi/bdk-python/docs/_build/html/

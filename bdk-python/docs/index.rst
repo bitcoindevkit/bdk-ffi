@@ -1,12 +1,11 @@
-Welcome to Bitcoin Dev Kit Python's documentation!
-=============================================
+Welcome to BDK Python's documentation!
+========================================
 
 .. toctree::
-   :maxdepth: 10
+   :maxdepth: 2
    :caption: Contents:
 
    api
-   examples
 
 Indices and tables
 ==================
