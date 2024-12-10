@@ -21,16 +21,6 @@ Core Types
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: Script
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: OutPoint
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Wallet Operations
 -----------------
 
@@ -72,7 +62,22 @@ Utilities
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: Network
+.. autoclass:: Descriptor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: DescriptorSecretKey
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: DescriptorPublicKey
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: ChangeSet
    :members:
    :undoc-members:
    :show-inheritance:
@@ -86,11 +91,6 @@ Exceptions
    :show-inheritance:
 
 .. autoclass:: FeeRateError
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. autoclass:: ParseAmountError
    :members:
    :undoc-members:
    :show-inheritance:

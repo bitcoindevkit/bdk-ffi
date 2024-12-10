@@ -9,10 +9,10 @@ output_file = 'docs/api.rst'
 
 # Define categories and corresponding classes
 categories = {
-    "Core Types": ["Amount", "FeeRate", "Address", "Script", "OutPoint"],
+    "Core Types": ["Amount", "FeeRate", "Address"],
     "Wallet Operations": ["TxBuilder", "BumpFeeTxBuilder", "Psbt", "Blockchain", "ElectrumClient", "EsploraClient", "Wallet"],
-    "Utilities": ["Mnemonic", "Network"],
-    "Exceptions": ["InternalError", "FeeRateError", "ParseAmountError"]
+    "Utilities": ["Mnemonic", "Descriptor", "DescriptorSecretKey", "DescriptorPublicKey", "ChangeSet"],
+    "Exceptions": ["InternalError", "FeeRateError"]
 }
 
 # Regex pattern to match class definitions
