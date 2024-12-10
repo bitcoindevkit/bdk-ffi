@@ -39,7 +39,7 @@ pip install ./dist/bdkpython-<yourversion>.whl
 
 ```shell
 python3 scripts/generate_docs.py
-sphinx-build -b html docs/ docs/_build/html
+sphinx-build -b  html -W --keep-going  docs/ docs/_build/html
 ```
 
 To rebuild, run the following. be sure to keep the conf.py and index.rst
@@ -47,5 +47,5 @@ To rebuild, run the following. be sure to keep the conf.py and index.rst
 ```shell
 rm -rf docs/_build/html
 python3 scripts/generate_docs.py
-sphinx-build -b html docs/ docs/_build/html
+sphinx-build -b  html -W --keep-going  docs/ docs/_build/html
 ```
