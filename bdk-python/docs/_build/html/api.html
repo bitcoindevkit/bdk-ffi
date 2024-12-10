@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BDK Python API Reference &mdash; BDK Python 0.1.0 documentation</title>
+  <title>API Reference &mdash; BDK Python 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
@@ -43,11 +43,120 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">BDK Python API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#bdk-module">Bdk Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#bitcoin-module">Bitcoin Module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#basic-wallet-usage">Basic Wallet Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#core-types">Core Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.Address"><code class="docutils literal notranslate"><span class="pre">Address</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Address.from_script"><code class="docutils literal notranslate"><span class="pre">Address.from_script()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Address.is_valid_for_network"><code class="docutils literal notranslate"><span class="pre">Address.is_valid_for_network()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Address.script_pubkey"><code class="docutils literal notranslate"><span class="pre">Address.script_pubkey()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Address.to_qr_uri"><code class="docutils literal notranslate"><span class="pre">Address.to_qr_uri()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#wallet-operations">Wallet Operations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.TxBuilder"><code class="docutils literal notranslate"><span class="pre">TxBuilder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.add_data"><code class="docutils literal notranslate"><span class="pre">TxBuilder.add_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.add_global_xpubs"><code class="docutils literal notranslate"><span class="pre">TxBuilder.add_global_xpubs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.add_recipient"><code class="docutils literal notranslate"><span class="pre">TxBuilder.add_recipient()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.add_unspendable"><code class="docutils literal notranslate"><span class="pre">TxBuilder.add_unspendable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.add_utxo"><code class="docutils literal notranslate"><span class="pre">TxBuilder.add_utxo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.allow_dust"><code class="docutils literal notranslate"><span class="pre">TxBuilder.allow_dust()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.change_policy"><code class="docutils literal notranslate"><span class="pre">TxBuilder.change_policy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.current_height"><code class="docutils literal notranslate"><span class="pre">TxBuilder.current_height()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.do_not_spend_change"><code class="docutils literal notranslate"><span class="pre">TxBuilder.do_not_spend_change()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.drain_to"><code class="docutils literal notranslate"><span class="pre">TxBuilder.drain_to()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.drain_wallet"><code class="docutils literal notranslate"><span class="pre">TxBuilder.drain_wallet()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.fee_absolute"><code class="docutils literal notranslate"><span class="pre">TxBuilder.fee_absolute()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.fee_rate"><code class="docutils literal notranslate"><span class="pre">TxBuilder.fee_rate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.finish"><code class="docutils literal notranslate"><span class="pre">TxBuilder.finish()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.manually_selected_only"><code class="docutils literal notranslate"><span class="pre">TxBuilder.manually_selected_only()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.nlocktime"><code class="docutils literal notranslate"><span class="pre">TxBuilder.nlocktime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.only_spend_change"><code class="docutils literal notranslate"><span class="pre">TxBuilder.only_spend_change()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.policy_path"><code class="docutils literal notranslate"><span class="pre">TxBuilder.policy_path()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.set_exact_sequence"><code class="docutils literal notranslate"><span class="pre">TxBuilder.set_exact_sequence()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.set_recipients"><code class="docutils literal notranslate"><span class="pre">TxBuilder.set_recipients()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.unspendable"><code class="docutils literal notranslate"><span class="pre">TxBuilder.unspendable()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.TxBuilder.version"><code class="docutils literal notranslate"><span class="pre">TxBuilder.version()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder"><code class="docutils literal notranslate"><span class="pre">BumpFeeTxBuilder</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder.allow_dust"><code class="docutils literal notranslate"><span class="pre">BumpFeeTxBuilder.allow_dust()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder.current_height"><code class="docutils literal notranslate"><span class="pre">BumpFeeTxBuilder.current_height()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder.finish"><code class="docutils literal notranslate"><span class="pre">BumpFeeTxBuilder.finish()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder.nlocktime"><code class="docutils literal notranslate"><span class="pre">BumpFeeTxBuilder.nlocktime()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder.set_exact_sequence"><code class="docutils literal notranslate"><span class="pre">BumpFeeTxBuilder.set_exact_sequence()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder.version"><code class="docutils literal notranslate"><span class="pre">BumpFeeTxBuilder.version()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.Psbt"><code class="docutils literal notranslate"><span class="pre">Psbt</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Psbt.combine"><code class="docutils literal notranslate"><span class="pre">Psbt.combine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Psbt.extract_tx"><code class="docutils literal notranslate"><span class="pre">Psbt.extract_tx()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Psbt.fee"><code class="docutils literal notranslate"><span class="pre">Psbt.fee()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Psbt.finalize"><code class="docutils literal notranslate"><span class="pre">Psbt.finalize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Psbt.json_serialize"><code class="docutils literal notranslate"><span class="pre">Psbt.json_serialize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Psbt.serialize"><code class="docutils literal notranslate"><span class="pre">Psbt.serialize()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.ElectrumClient"><code class="docutils literal notranslate"><span class="pre">ElectrumClient</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.ElectrumClient.broadcast"><code class="docutils literal notranslate"><span class="pre">ElectrumClient.broadcast()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.ElectrumClient.full_scan"><code class="docutils literal notranslate"><span class="pre">ElectrumClient.full_scan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.ElectrumClient.sync"><code class="docutils literal notranslate"><span class="pre">ElectrumClient.sync()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.EsploraClient"><code class="docutils literal notranslate"><span class="pre">EsploraClient</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.EsploraClient.broadcast"><code class="docutils literal notranslate"><span class="pre">EsploraClient.broadcast()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.EsploraClient.full_scan"><code class="docutils literal notranslate"><span class="pre">EsploraClient.full_scan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.EsploraClient.get_height"><code class="docutils literal notranslate"><span class="pre">EsploraClient.get_height()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.EsploraClient.get_tx"><code class="docutils literal notranslate"><span class="pre">EsploraClient.get_tx()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.EsploraClient.sync"><code class="docutils literal notranslate"><span class="pre">EsploraClient.sync()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.Wallet"><code class="docutils literal notranslate"><span class="pre">Wallet</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.apply_update"><code class="docutils literal notranslate"><span class="pre">Wallet.apply_update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.balance"><code class="docutils literal notranslate"><span class="pre">Wallet.balance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.calculate_fee"><code class="docutils literal notranslate"><span class="pre">Wallet.calculate_fee()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.calculate_fee_rate"><code class="docutils literal notranslate"><span class="pre">Wallet.calculate_fee_rate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.cancel_tx"><code class="docutils literal notranslate"><span class="pre">Wallet.cancel_tx()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.derivation_index"><code class="docutils literal notranslate"><span class="pre">Wallet.derivation_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.derivation_of_spk"><code class="docutils literal notranslate"><span class="pre">Wallet.derivation_of_spk()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.descriptor_checksum"><code class="docutils literal notranslate"><span class="pre">Wallet.descriptor_checksum()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.finalize_psbt"><code class="docutils literal notranslate"><span class="pre">Wallet.finalize_psbt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.get_tx"><code class="docutils literal notranslate"><span class="pre">Wallet.get_tx()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.get_utxo"><code class="docutils literal notranslate"><span class="pre">Wallet.get_utxo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.is_mine"><code class="docutils literal notranslate"><span class="pre">Wallet.is_mine()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.list_output"><code class="docutils literal notranslate"><span class="pre">Wallet.list_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.list_unspent"><code class="docutils literal notranslate"><span class="pre">Wallet.list_unspent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.list_unused_addresses"><code class="docutils literal notranslate"><span class="pre">Wallet.list_unused_addresses()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.load"><code class="docutils literal notranslate"><span class="pre">Wallet.load()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.mark_used"><code class="docutils literal notranslate"><span class="pre">Wallet.mark_used()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.network"><code class="docutils literal notranslate"><span class="pre">Wallet.network()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.next_derivation_index"><code class="docutils literal notranslate"><span class="pre">Wallet.next_derivation_index()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.next_unused_address"><code class="docutils literal notranslate"><span class="pre">Wallet.next_unused_address()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.peek_address"><code class="docutils literal notranslate"><span class="pre">Wallet.peek_address()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.persist"><code class="docutils literal notranslate"><span class="pre">Wallet.persist()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.policies"><code class="docutils literal notranslate"><span class="pre">Wallet.policies()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.reveal_addresses_to"><code class="docutils literal notranslate"><span class="pre">Wallet.reveal_addresses_to()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.reveal_next_address"><code class="docutils literal notranslate"><span class="pre">Wallet.reveal_next_address()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.sent_and_received"><code class="docutils literal notranslate"><span class="pre">Wallet.sent_and_received()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.sign"><code class="docutils literal notranslate"><span class="pre">Wallet.sign()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.start_full_scan"><code class="docutils literal notranslate"><span class="pre">Wallet.start_full_scan()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.start_sync_with_revealed_spks"><code class="docutils literal notranslate"><span class="pre">Wallet.start_sync_with_revealed_spks()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Wallet.transactions"><code class="docutils literal notranslate"><span class="pre">Wallet.transactions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#utilities">Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.Mnemonic"><code class="docutils literal notranslate"><span class="pre">Mnemonic</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Mnemonic.from_entropy"><code class="docutils literal notranslate"><span class="pre">Mnemonic.from_entropy()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bdkpython.Mnemonic.from_string"><code class="docutils literal notranslate"><span class="pre">Mnemonic.from_string()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#exceptions">Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bdkpython.InternalError"><code class="docutils literal notranslate"><span class="pre">InternalError</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -68,7 +177,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">BDK Python API Reference</li>
+      <li class="breadcrumb-item active">API Reference</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -78,34 +187,658 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="bdk-python-api-reference">
-<h1>BDK Python API Reference<a class="headerlink" href="#bdk-python-api-reference" title="Link to this heading"></a></h1>
-<p>This document describes the Python API for the Bitcoin Development Kit (BDK).</p>
-</section>
-<section id="bdk-module">
-<h1>Bdk Module<a class="headerlink" href="#bdk-module" title="Link to this heading"></a></h1>
-</section>
-<section id="bitcoin-module">
-<h1>Bitcoin Module<a class="headerlink" href="#bitcoin-module" title="Link to this heading"></a></h1>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
-<section id="basic-wallet-usage">
-<h3>Basic Wallet Usage<a class="headerlink" href="#basic-wallet-usage" title="Link to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">bdkpython</span> <span class="kn">import</span> <span class="o">*</span>
-             <span class="c1"># Create a new wallet</span>
-             <span class="n">descriptor</span> <span class="o">=</span> <span class="s2">&quot;wpkh(...)&quot;</span>  <span class="c1"># Your descriptor here</span>
-             <span class="n">wallet</span> <span class="o">=</span> <span class="n">Wallet</span><span class="p">(</span><span class="n">descriptor</span><span class="p">,</span> <span class="n">network</span><span class="o">=</span><span class="n">Network</span><span class="o">.</span><span class="n">TESTNET</span><span class="p">)</span>
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<section id="core-types">
+<h2>Core Types<a class="headerlink" href="#core-types" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.Address">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">Address</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">address</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Network</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#Address"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Address" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Address.from_script">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_script</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Script</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Network</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#Address.from_script"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Address.from_script" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
-             <span class="c1"># Sync wallet</span>
-             <span class="n">blockchain</span> <span class="o">=</span> <span class="n">Blockchain</span><span class="p">(</span><span class="s2">&quot;https://blockstream.info/testnet/api&quot;</span><span class="p">)</span>
-             <span class="n">wallet</span><span class="o">.</span><span class="n">sync</span><span class="p">(</span><span class="n">blockchain</span><span class="p">)</span>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Address.is_valid_for_network">
+<span class="sig-name descname"><span class="pre">is_valid_for_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Network</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Address.is_valid_for_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Address.is_valid_for_network" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
-             <span class="c1"># Get balance</span>
-             <span class="n">balance</span> <span class="o">=</span> <span class="n">wallet</span><span class="o">.</span><span class="n">get_balance</span><span class="p">()</span>
-             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Confirmed balance: </span><span class="si">{</span><span class="n">balance</span><span class="o">.</span><span class="n">confirmed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Address.script_pubkey">
+<span class="sig-name descname"><span class="pre">script_pubkey</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Script</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Address.script_pubkey"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Address.script_pubkey" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Address.to_qr_uri">
+<span class="sig-name descname"><span class="pre">to_qr_uri</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Address.to_qr_uri"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Address.to_qr_uri" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
+<section id="wallet-operations">
+<h2>Wallet Operations<a class="headerlink" href="#wallet-operations" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">TxBuilder</span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A <cite>TxBuilder</cite> is created by calling <cite>build_tx</cite> on a wallet. After assigning it, you set options on it until finally
+calling <cite>finish</cite> to consume the builder and generate the transaction.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.add_data">
+<span class="sig-name descname"><span class="pre">add_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.add_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.add_data" title="Link to this definition"></a></dt>
+<dd><p>Add data as an output using <cite>OP_RETURN</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.add_global_xpubs">
+<span class="sig-name descname"><span class="pre">add_global_xpubs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.add_global_xpubs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.add_global_xpubs" title="Link to this definition"></a></dt>
+<dd><p>Fill-in the <cite>PSBT_GLOBAL_XPUB</cite> field with the extended keys contained in both the external and internal
+descriptors.</p>
+<p>This is useful for offline signers that take part to a multisig. Some hardware wallets like BitBox and ColdCard
+are known to require this.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.add_recipient">
+<span class="sig-name descname"><span class="pre">add_recipient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Script</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amount</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Amount</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.add_recipient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.add_recipient" title="Link to this definition"></a></dt>
+<dd><p>Add a recipient to the internal list of recipients.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.add_unspendable">
+<span class="sig-name descname"><span class="pre">add_unspendable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unspendable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">OutPoint</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.add_unspendable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.add_unspendable" title="Link to this definition"></a></dt>
+<dd><p>Add a utxo to the internal list of unspendable utxos.</p>
+<p>It’s important to note that the “must-be-spent” utxos added with <cite>TxBuilder::add_utxo</cite> have priority over this.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.add_utxo">
+<span class="sig-name descname"><span class="pre">add_utxo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">outpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">OutPoint</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.add_utxo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.add_utxo" title="Link to this definition"></a></dt>
+<dd><p>Add a utxo to the internal list of utxos that must be spent.</p>
+<p>These have priority over the “unspendable” utxos, meaning that if a utxo is present both in the “utxos” and the
+“unspendable” list, it will be spent.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.allow_dust">
+<span class="sig-name descname"><span class="pre">allow_dust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">allow_dust</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.allow_dust"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.allow_dust" title="Link to this definition"></a></dt>
+<dd><p>Set whether or not the dust limit is checked.</p>
+<p>Note: by avoiding a dust limit check you may end up with a transaction that is non-standard.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.change_policy">
+<span class="sig-name descname"><span class="pre">change_policy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">change_policy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ChangeSpendPolicy</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.change_policy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.change_policy" title="Link to this definition"></a></dt>
+<dd><p>Set a specific <cite>ChangeSpendPolicy</cite>. See <cite>TxBuilder::do_not_spend_change</cite> and <cite>TxBuilder::only_spend_change</cite> for
+some shortcuts. This method assumes the presence of an internal keychain, otherwise it has no effect.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.current_height">
+<span class="sig-name descname"><span class="pre">current_height</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.current_height"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.current_height" title="Link to this definition"></a></dt>
+<dd><p>Set the current blockchain height.</p>
+<p>This will be used to:</p>
+<p>1. Set the <cite>nLockTime</cite> for preventing fee sniping. Note: This will be ignored if you manually specify a
+<cite>nlocktime</cite> using <cite>TxBuilder::nlocktime</cite>.</p>
+<p>2. Decide whether coinbase outputs are mature or not. If the coinbase outputs are not mature at <cite>current_height</cite>,
+we ignore them in the coin selection. If you want to create a transaction that spends immature coinbase inputs,
+manually add them using <cite>TxBuilder::add_utxos</cite>.
+In both cases, if you don’t provide a current height, we use the last sync height.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.do_not_spend_change">
+<span class="sig-name descname"><span class="pre">do_not_spend_change</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.do_not_spend_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.do_not_spend_change" title="Link to this definition"></a></dt>
+<dd><p>Do not spend change outputs.</p>
+<p>This effectively adds all the change outputs to the “unspendable” list. See <cite>TxBuilder::unspendable</cite>. This method
+assumes the presence of an internal keychain, otherwise it has no effect.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.drain_to">
+<span class="sig-name descname"><span class="pre">drain_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Script</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.drain_to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.drain_to" title="Link to this definition"></a></dt>
+<dd><p>Sets the address to drain excess coins to.</p>
+<p>Usually, when there are excess coins they are sent to a change address generated by the wallet. This option
+replaces the usual change address with an arbitrary script_pubkey of your choosing. Just as with a change output,
+if the drain output is not needed (the excess coins are too small) it will not be included in the resulting
+transaction. The only difference is that it is valid to use <cite>drain_to</cite> without setting any ordinary recipients
+with <cite>add_recipient</cite> (but it is perfectly fine to add recipients as well).</p>
+<p>If you choose not to set any recipients, you should provide the utxos that the transaction should spend via
+<cite>add_utxos</cite>. <cite>drain_to</cite> is very useful for draining all the coins in a wallet with <cite>drain_wallet</cite> to a single
+address.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.drain_wallet">
+<span class="sig-name descname"><span class="pre">drain_wallet</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.drain_wallet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.drain_wallet" title="Link to this definition"></a></dt>
+<dd><p>Spend all the available inputs. This respects filters like <cite>TxBuilder::unspendable</cite> and the change policy.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.fee_absolute">
+<span class="sig-name descname"><span class="pre">fee_absolute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fee</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Amount</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.fee_absolute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.fee_absolute" title="Link to this definition"></a></dt>
+<dd><p>Set an absolute fee The <cite>fee_absolute</cite> method refers to the absolute transaction fee in <cite>Amount</cite>. If anyone sets
+both the <cite>fee_absolute</cite> method and the <cite>fee_rate</cite> method, the <cite>FeePolicy</cite> enum will be set by whichever method was
+called last, as the <cite>FeeRate</cite> and <cite>FeeAmount</cite> are mutually exclusive.</p>
+<p>Note that this is really a minimum absolute fee – it’s possible to overshoot it slightly since adding a change output to drain the remaining excess might not be viable.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.fee_rate">
+<span class="sig-name descname"><span class="pre">fee_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fee_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FeeRate</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.fee_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.fee_rate" title="Link to this definition"></a></dt>
+<dd><p>Set a custom fee rate.</p>
+<p>This method sets the mining fee paid by the transaction as a rate on its size. This means that the total fee paid
+is equal to fee_rate times the size of the transaction. Default is 1 sat/vB in accordance with Bitcoin Core’s
+default relay policy.</p>
+<p>Note that this is really a minimum feerate – it’s possible to overshoot it slightly since adding a change output
+to drain the remaining excess might not be viable.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.finish">
+<span class="sig-name descname"><span class="pre">finish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wallet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bdkpython.Wallet" title="bdkpython.bdk.Wallet"><span class="pre">Wallet</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.Psbt" title="bdkpython.bdk.Psbt"><span class="pre">Psbt</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.finish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.finish" title="Link to this definition"></a></dt>
+<dd><p>Finish building the transaction.</p>
+<p>Uses the thread-local random number generator (rng).</p>
+<p>Returns a new <cite>Psbt</cite> per BIP174.</p>
+<p>WARNING: To avoid change address reuse you must persist the changes resulting from one or more calls to this
+method before closing the wallet. See <cite>Wallet::reveal_next_address</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.manually_selected_only">
+<span class="sig-name descname"><span class="pre">manually_selected_only</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.manually_selected_only"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.manually_selected_only" title="Link to this definition"></a></dt>
+<dd><p>Only spend utxos added by <cite>TxBuilder::add_utxo</cite>.</p>
+<p>The wallet will not add additional utxos to the transaction even if they are needed to make the transaction valid.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.nlocktime">
+<span class="sig-name descname"><span class="pre">nlocktime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locktime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">LockTime</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.nlocktime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.nlocktime" title="Link to this definition"></a></dt>
+<dd><p>Use a specific nLockTime while creating the transaction.</p>
+<p>This can cause conflicts if the wallet’s descriptors contain an “after” (<cite>OP_CLTV</cite>) operator.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.only_spend_change">
+<span class="sig-name descname"><span class="pre">only_spend_change</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.only_spend_change"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.only_spend_change" title="Link to this definition"></a></dt>
+<dd><p>Only spend change outputs.</p>
+<p>This effectively adds all the non-change outputs to the “unspendable” list. See <cite>TxBuilder::unspendable</cite>. This
+method assumes the presence of an internal keychain, otherwise it has no effect.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.policy_path">
+<span class="sig-name descname"><span class="pre">policy_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">policy_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.policy_path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.policy_path" title="Link to this definition"></a></dt>
+<dd><p>The TxBuilder::policy_path is a complex API. See the Rust docs for complete information: https://docs.rs/bdk_wallet/latest/bdk_wallet/struct.TxBuilder.html#method.policy_path</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.set_exact_sequence">
+<span class="sig-name descname"><span class="pre">set_exact_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nsequence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.set_exact_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.set_exact_sequence" title="Link to this definition"></a></dt>
+<dd><p>Set an exact <cite>nSequence</cite> value.</p>
+<p>This can cause conflicts if the wallet’s descriptors contain an “older” (<cite>OP_CSV</cite>) operator and the given
+<cite>nsequence</cite> is lower than the CSV value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.set_recipients">
+<span class="sig-name descname"><span class="pre">set_recipients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">recipients</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ScriptAmount</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.set_recipients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.set_recipients" title="Link to this definition"></a></dt>
+<dd><p>Replace the recipients already added with a new list of recipients.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.unspendable">
+<span class="sig-name descname"><span class="pre">unspendable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unspendable</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">OutPoint</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.unspendable"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.unspendable" title="Link to this definition"></a></dt>
+<dd><p>Replace the internal list of unspendable utxos with a new list.</p>
+<p>It’s important to note that the “must-be-spent” utxos added with <cite>TxBuilder::add_utxo</cite> have priority over these.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.TxBuilder.version">
+<span class="sig-name descname"><span class="pre">version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.TxBuilder" title="bdkpython.bdk.TxBuilder"><span class="pre">TxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#TxBuilder.version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.TxBuilder.version" title="Link to this definition"></a></dt>
+<dd><p>Build a transaction with a specific version.</p>
+<p>The version should always be greater than 0 and greater than 1 if the wallet’s descriptors contain an “older”
+(<cite>OP_CSV</cite>) operator.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.BumpFeeTxBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">BumpFeeTxBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fee_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FeeRate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#BumpFeeTxBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.BumpFeeTxBuilder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A <cite>BumpFeeTxBuilder</cite> is created by calling <cite>build_fee_bump</cite> on a wallet. After assigning it, you set options on it
+until finally calling <cite>finish</cite> to consume the builder and generate the transaction.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.BumpFeeTxBuilder.allow_dust">
+<span class="sig-name descname"><span class="pre">allow_dust</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">allow_dust</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder" title="bdkpython.bdk.BumpFeeTxBuilder"><span class="pre">BumpFeeTxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#BumpFeeTxBuilder.allow_dust"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.BumpFeeTxBuilder.allow_dust" title="Link to this definition"></a></dt>
+<dd><p>Set whether or not the dust limit is checked.</p>
+<p>Note: by avoiding a dust limit check you may end up with a transaction that is non-standard.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.BumpFeeTxBuilder.current_height">
+<span class="sig-name descname"><span class="pre">current_height</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder" title="bdkpython.bdk.BumpFeeTxBuilder"><span class="pre">BumpFeeTxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#BumpFeeTxBuilder.current_height"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.BumpFeeTxBuilder.current_height" title="Link to this definition"></a></dt>
+<dd><p>Set the current blockchain height.</p>
+<p>This will be used to:</p>
+<p>1. Set the <cite>nLockTime</cite> for preventing fee sniping. Note: This will be ignored if you manually specify a
+<cite>nlocktime</cite> using <cite>TxBuilder::nlocktime</cite>.</p>
+<p>2. Decide whether coinbase outputs are mature or not. If the coinbase outputs are not mature at <cite>current_height</cite>,
+we ignore them in the coin selection. If you want to create a transaction that spends immature coinbase inputs,
+manually add them using <cite>TxBuilder::add_utxos</cite>.
+In both cases, if you don’t provide a current height, we use the last sync height.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.BumpFeeTxBuilder.finish">
+<span class="sig-name descname"><span class="pre">finish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wallet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bdkpython.Wallet" title="bdkpython.bdk.Wallet"><span class="pre">Wallet</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.Psbt" title="bdkpython.bdk.Psbt"><span class="pre">Psbt</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#BumpFeeTxBuilder.finish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.BumpFeeTxBuilder.finish" title="Link to this definition"></a></dt>
+<dd><p>Finish building the transaction.</p>
+<p>Uses the thread-local random number generator (rng).</p>
+<p>Returns a new <cite>Psbt</cite> per BIP174.</p>
+<p>WARNING: To avoid change address reuse you must persist the changes resulting from one or more calls to this
+method before closing the wallet. See <cite>Wallet::reveal_next_address</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.BumpFeeTxBuilder.nlocktime">
+<span class="sig-name descname"><span class="pre">nlocktime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">locktime</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">LockTime</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder" title="bdkpython.bdk.BumpFeeTxBuilder"><span class="pre">BumpFeeTxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#BumpFeeTxBuilder.nlocktime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.BumpFeeTxBuilder.nlocktime" title="Link to this definition"></a></dt>
+<dd><p>Use a specific nLockTime while creating the transaction.</p>
+<p>This can cause conflicts if the wallet’s descriptors contain an “after” (<cite>OP_CLTV</cite>) operator.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.BumpFeeTxBuilder.set_exact_sequence">
+<span class="sig-name descname"><span class="pre">set_exact_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nsequence</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder" title="bdkpython.bdk.BumpFeeTxBuilder"><span class="pre">BumpFeeTxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#BumpFeeTxBuilder.set_exact_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.BumpFeeTxBuilder.set_exact_sequence" title="Link to this definition"></a></dt>
+<dd><p>Set an exact <cite>nSequence</cite> value.</p>
+<p>This can cause conflicts if the wallet’s descriptors contain an “older” (<cite>OP_CSV</cite>) operator and the given
+<cite>nsequence</cite> is lower than the CSV value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.BumpFeeTxBuilder.version">
+<span class="sig-name descname"><span class="pre">version</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.BumpFeeTxBuilder" title="bdkpython.bdk.BumpFeeTxBuilder"><span class="pre">BumpFeeTxBuilder</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#BumpFeeTxBuilder.version"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.BumpFeeTxBuilder.version" title="Link to this definition"></a></dt>
+<dd><p>Build a transaction with a specific version.</p>
+<p>The version should always be greater than 0 and greater than 1 if the wallet’s descriptors contain an “older”
+(<cite>OP_CSV</cite>) operator.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.Psbt">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">Psbt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psbt_base64</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#Psbt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Psbt" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Psbt.combine">
+<span class="sig-name descname"><span class="pre">combine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bdkpython.Psbt" title="bdkpython.bdk.Psbt"><span class="pre">Psbt</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#bdkpython.Psbt" title="bdkpython.bdk.Psbt"><span class="pre">Psbt</span></a></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Psbt.combine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Psbt.combine" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Psbt.extract_tx">
+<span class="sig-name descname"><span class="pre">extract_tx</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Transaction</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Psbt.extract_tx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Psbt.extract_tx" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Psbt.fee">
+<span class="sig-name descname"><span class="pre">fee</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Psbt.fee"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Psbt.fee" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Psbt.finalize">
+<span class="sig-name descname"><span class="pre">finalize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FinalizedPsbtResult</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Psbt.finalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Psbt.finalize" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Psbt.json_serialize">
+<span class="sig-name descname"><span class="pre">json_serialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Psbt.json_serialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Psbt.json_serialize" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Psbt.serialize">
+<span class="sig-name descname"><span class="pre">serialize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Psbt.serialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Psbt.serialize" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.ElectrumClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">ElectrumClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#ElectrumClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.ElectrumClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.ElectrumClient.broadcast">
+<span class="sig-name descname"><span class="pre">broadcast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#ElectrumClient.broadcast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.ElectrumClient.broadcast" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.ElectrumClient.full_scan">
+<span class="sig-name descname"><span class="pre">full_scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full_scan_request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FullScanRequest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_gap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fetch_prev_txouts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Update</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#ElectrumClient.full_scan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.ElectrumClient.full_scan" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.ElectrumClient.sync">
+<span class="sig-name descname"><span class="pre">sync</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sync_request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SyncRequest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fetch_prev_txouts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Update</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#ElectrumClient.sync"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.ElectrumClient.sync" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.EsploraClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">EsploraClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#EsploraClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.EsploraClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.EsploraClient.broadcast">
+<span class="sig-name descname"><span class="pre">broadcast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transaction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#EsploraClient.broadcast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.EsploraClient.broadcast" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.EsploraClient.full_scan">
+<span class="sig-name descname"><span class="pre">full_scan</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full_scan_request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FullScanRequest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_gap</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallel_requests</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Update</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#EsploraClient.full_scan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.EsploraClient.full_scan" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.EsploraClient.get_height">
+<span class="sig-name descname"><span class="pre">get_height</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#EsploraClient.get_height"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.EsploraClient.get_height" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.EsploraClient.get_tx">
+<span class="sig-name descname"><span class="pre">get_tx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Transaction</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#EsploraClient.get_tx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.EsploraClient.get_tx" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.EsploraClient.sync">
+<span class="sig-name descname"><span class="pre">sync</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sync_request</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SyncRequest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parallel_requests</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Update</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#EsploraClient.sync"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.EsploraClient.sync" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.Wallet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">Wallet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">descriptor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Descriptor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">change_descriptor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Descriptor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">network</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Network</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.apply_update">
+<span class="sig-name descname"><span class="pre">apply_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">update</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Update</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.apply_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.apply_update" title="Link to this definition"></a></dt>
+<dd><p>Applies an update to the wallet and stages the changes (but does not persist them).</p>
+<p>Usually you create an <cite>update</cite> by interacting with some blockchain data source and inserting
+transactions related to your wallet into it.</p>
+<p>After applying updates you should persist the staged wallet changes. For an example of how
+to persist staged wallet changes see [<cite>Wallet::reveal_next_address</cite>].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.balance">
+<span class="sig-name descname"><span class="pre">balance</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Balance</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.balance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.balance" title="Link to this definition"></a></dt>
+<dd><p>Return the balance, separated into available, trusted-pending, untrusted-pending and immature
+values.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.calculate_fee">
+<span class="sig-name descname"><span class="pre">calculate_fee</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Amount</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.calculate_fee"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.calculate_fee" title="Link to this definition"></a></dt>
+<dd><p>Calculates the fee of a given transaction. Returns [<cite>Amount::ZERO</cite>] if <cite>tx</cite> is a coinbase transaction.</p>
+<p>To calculate the fee for a [<cite>Transaction</cite>] with inputs not owned by this wallet you must
+manually insert the TxOut(s) into the tx graph using the [<cite>insert_txout</cite>] function.</p>
+<p>Note <cite>tx</cite> does not have to be in the graph for this to work.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.calculate_fee_rate">
+<span class="sig-name descname"><span class="pre">calculate_fee_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FeeRate</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.calculate_fee_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.calculate_fee_rate" title="Link to this definition"></a></dt>
+<dd><p>Calculate the [<cite>FeeRate</cite>] for a given transaction.</p>
+<p>To calculate the fee rate for a [<cite>Transaction</cite>] with inputs not owned by this wallet you must
+manually insert the TxOut(s) into the tx graph using the [<cite>insert_txout</cite>] function.</p>
+<p>Note <cite>tx</cite> does not have to be in the graph for this to work.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.cancel_tx">
+<span class="sig-name descname"><span class="pre">cancel_tx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.cancel_tx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.cancel_tx" title="Link to this definition"></a></dt>
+<dd><p>Informs the wallet that you no longer intend to broadcast a tx that was built from it.</p>
+<p>This frees up the change address used when creating the tx for use in future transactions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.derivation_index">
+<span class="sig-name descname"><span class="pre">derivation_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.derivation_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.derivation_index" title="Link to this definition"></a></dt>
+<dd><p>The derivation index of this wallet. It will return <cite>None</cite> if it has not derived any addresses.
+Otherwise, it will return the index of the highest address it has derived.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.derivation_of_spk">
+<span class="sig-name descname"><span class="pre">derivation_of_spk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Script</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">KeychainAndIndex</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.derivation_of_spk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.derivation_of_spk" title="Link to this definition"></a></dt>
+<dd><p>Finds how the wallet derived the script pubkey <cite>spk</cite>.</p>
+<p>Will only return <cite>Some(_)</cite> if the wallet has given out the spk.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.descriptor_checksum">
+<span class="sig-name descname"><span class="pre">descriptor_checksum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.descriptor_checksum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.descriptor_checksum" title="Link to this definition"></a></dt>
+<dd><p>Return the checksum of the public descriptor associated to <cite>keychain</cite></p>
+<p>Internally calls [<cite>Self::public_descriptor</cite>] to fetch the right descriptor</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.finalize_psbt">
+<span class="sig-name descname"><span class="pre">finalize_psbt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psbt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bdkpython.Psbt" title="bdkpython.bdk.Psbt"><span class="pre">Psbt</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.finalize_psbt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.finalize_psbt" title="Link to this definition"></a></dt>
+<dd><p>Finalize a PSBT, i.e., for each input determine if sufficient data is available to pass
+validation and construct the respective <cite>scriptSig</cite> or <cite>scriptWitness</cite>. Please refer to
+[BIP174](<a class="reference external" href="https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#Input_Finalizer">https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#Input_Finalizer</a>),
+and [BIP371](<a class="reference external" href="https://github.com/bitcoin/bips/blob/master/bip-0371.mediawiki">https://github.com/bitcoin/bips/blob/master/bip-0371.mediawiki</a>)
+for further information.</p>
+<p>Returns <cite>true</cite> if the PSBT could be finalized, and <cite>false</cite> otherwise.</p>
+<p>The [<cite>SignOptions</cite>] can be used to tweak the behavior of the finalizer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.get_tx">
+<span class="sig-name descname"><span class="pre">get_tx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">CanonicalTx</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.get_tx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.get_tx" title="Link to this definition"></a></dt>
+<dd><p>Get a single transaction from the wallet as a [<cite>WalletTx</cite>] (if the transaction exists).</p>
+<p><cite>WalletTx</cite> contains the full transaction alongside meta-data such as:
+* Blocks that the transaction is [<cite>Anchor</cite>]ed in. These may or may not be blocks that exist</p>
+<blockquote>
+<div><p>in the best chain.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>The [<cite>ChainPosition</cite>] of the transaction in the best chain - whether the transaction is
+confirmed or unconfirmed. If the transaction is confirmed, the anchor which proves the
+confirmation is provided. If the transaction is unconfirmed, the unix timestamp of when
+the transaction was last seen in the mempool is provided.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.get_utxo">
+<span class="sig-name descname"><span class="pre">get_utxo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">op</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">OutPoint</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">LocalOutput</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.get_utxo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.get_utxo" title="Link to this definition"></a></dt>
+<dd><p>Returns the utxo owned by this wallet corresponding to <cite>outpoint</cite> if it exists in the
+wallet’s database.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.is_mine">
+<span class="sig-name descname"><span class="pre">is_mine</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Script</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.is_mine"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.is_mine" title="Link to this definition"></a></dt>
+<dd><p>Return whether or not a <cite>script</cite> is part of this wallet (either internal or external)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.list_output">
+<span class="sig-name descname"><span class="pre">list_output</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">LocalOutput</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.list_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.list_output" title="Link to this definition"></a></dt>
+<dd><p>List all relevant outputs (includes both spent and unspent, confirmed and unconfirmed).</p>
+<p>To list only unspent outputs (UTXOs), use [<cite>Wallet::list_unspent</cite>] instead.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.list_unspent">
+<span class="sig-name descname"><span class="pre">list_unspent</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">LocalOutput</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.list_unspent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.list_unspent" title="Link to this definition"></a></dt>
+<dd><p>Return the list of unspent outputs of this wallet</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.list_unused_addresses">
+<span class="sig-name descname"><span class="pre">list_unused_addresses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">AddressInfo</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.list_unused_addresses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.list_unused_addresses" title="Link to this definition"></a></dt>
+<dd><p>List addresses that are revealed but unused.</p>
+<p>Note if the returned iterator is empty you can reveal more addresses
+by using [<cite>reveal_next_address</cite>](Self::reveal_next_address) or
+[<cite>reveal_addresses_to</cite>](Self::reveal_addresses_to).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.load">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">descriptor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Descriptor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">change_descriptor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Descriptor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.load" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.mark_used">
+<span class="sig-name descname"><span class="pre">mark_used</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.mark_used"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.mark_used" title="Link to this definition"></a></dt>
+<dd><p>Marks an address used of the given <cite>keychain</cite> at <cite>index</cite>.</p>
+<p>Returns whether the given index was present and then removed from the unused set.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.network">
+<span class="sig-name descname"><span class="pre">network</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Network</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.network" title="Link to this definition"></a></dt>
+<dd><p>Get the Bitcoin network the wallet is using.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.next_derivation_index">
+<span class="sig-name descname"><span class="pre">next_derivation_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.next_derivation_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.next_derivation_index" title="Link to this definition"></a></dt>
+<dd><p>The index of the next address that you would get if you were to ask the wallet for a new address</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.next_unused_address">
+<span class="sig-name descname"><span class="pre">next_unused_address</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">AddressInfo</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.next_unused_address"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.next_unused_address" title="Link to this definition"></a></dt>
+<dd><p>Get the next unused address for the given <cite>keychain</cite>, i.e. the address with the lowest
+derivation index that hasn’t been used.</p>
+<p>This will attempt to derive and reveal a new address if no newly revealed addresses
+are available. See also [<cite>reveal_next_address</cite>](Self::reveal_next_address).</p>
+<p><strong>WARNING</strong>: To avoid address reuse you must persist the changes resulting from one or more
+calls to this method before closing the wallet. See [<cite>Wallet::reveal_next_address</cite>].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.peek_address">
+<span class="sig-name descname"><span class="pre">peek_address</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">AddressInfo</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.peek_address"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.peek_address" title="Link to this definition"></a></dt>
+<dd><p>Peek an address of the given <cite>keychain</cite> at <cite>index</cite> without revealing it.</p>
+<p>For non-wildcard descriptors this returns the same address at every provided index.</p>
+<p># Panics</p>
+<p>This panics when the caller requests for an address of derivation index greater than the
+[BIP32](<a class="reference external" href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki</a>) max index.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.persist">
+<span class="sig-name descname"><span class="pre">persist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.persist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.persist" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.policies">
+<span class="sig-name descname"><span class="pre">policies</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Policy</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.policies"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.policies" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.reveal_addresses_to">
+<span class="sig-name descname"><span class="pre">reveal_addresses_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">AddressInfo</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.reveal_addresses_to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.reveal_addresses_to" title="Link to this definition"></a></dt>
+<dd><p>Reveal addresses up to and including the target <cite>index</cite> and return an iterator
+of newly revealed addresses.</p>
+<p>If the target <cite>index</cite> is unreachable, we make a best effort to reveal up to the last
+possible index. If all addresses up to the given <cite>index</cite> are already revealed, then
+no new addresses are returned.</p>
+<p><strong>WARNING</strong>: To avoid address reuse you must persist the changes resulting from one or more
+calls to this method before closing the wallet. See [<cite>Wallet::reveal_next_address</cite>].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.reveal_next_address">
+<span class="sig-name descname"><span class="pre">reveal_next_address</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">keychain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">KeychainKind</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">AddressInfo</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.reveal_next_address"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.reveal_next_address" title="Link to this definition"></a></dt>
+<dd><p>Attempt to reveal the next address of the given <cite>keychain</cite>.</p>
+<p>This will increment the keychain’s derivation index. If the keychain’s descriptor doesn’t
+contain a wildcard or every address is already revealed up to the maximum derivation
+index defined in [BIP32](<a class="reference external" href="https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki">https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki</a>),
+then the last revealed address will be returned.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.sent_and_received">
+<span class="sig-name descname"><span class="pre">sent_and_received</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Transaction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SentAndReceivedValues</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.sent_and_received"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.sent_and_received" title="Link to this definition"></a></dt>
+<dd><p>Compute the <cite>tx</cite>’s sent and received [<cite>Amount</cite>]s.</p>
+<p>This method returns a tuple <cite>(sent, received)</cite>. Sent is the sum of the txin amounts
+that spend from previous txouts tracked by this wallet. Received is the summation
+of this tx’s outputs that send to script pubkeys tracked by this wallet.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.sign">
+<span class="sig-name descname"><span class="pre">sign</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">psbt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#bdkpython.Psbt" title="bdkpython.bdk.Psbt"><span class="pre">Psbt</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.sign"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.sign" title="Link to this definition"></a></dt>
+<dd><p>Sign a transaction with all the wallet’s signers, in the order specified by every signer’s
+[<cite>SignerOrdering</cite>]. This function returns the <cite>Result</cite> type with an encapsulated <cite>bool</cite> that has the value true if the PSBT was finalized, or false otherwise.</p>
+<p>The [<cite>SignOptions</cite>] can be used to tweak the behavior of the software signers, and the way
+the transaction is finalized at the end. Note that it can’t be guaranteed that <em>every</em>
+signers will follow the options, but the “software signers” (WIF keys and <cite>xprv</cite>) defined
+in this library will.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.start_full_scan">
+<span class="sig-name descname"><span class="pre">start_full_scan</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FullScanRequestBuilder</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.start_full_scan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.start_full_scan" title="Link to this definition"></a></dt>
+<dd><p>Create a [<a href="#id1"><span class="problematic" id="id2">`</span></a>FullScanRequest] for this wallet.</p>
+<p>This is the first step when performing a spk-based wallet full scan, the returned
+[<a href="#id3"><span class="problematic" id="id4">`</span></a>FullScanRequest] collects iterators for the wallet’s keychain script pub keys needed to
+start a blockchain full scan with a spk based blockchain client.</p>
+<p>This operation is generally only used when importing or restoring a previously used wallet
+in which the list of used scripts is not known.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.start_sync_with_revealed_spks">
+<span class="sig-name descname"><span class="pre">start_sync_with_revealed_spks</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">SyncRequestBuilder</span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.start_sync_with_revealed_spks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.start_sync_with_revealed_spks" title="Link to this definition"></a></dt>
+<dd><p>Create a partial [<cite>SyncRequest</cite>] for this wallet for all revealed spks.</p>
+<p>This is the first step when performing a spk-based wallet partial sync, the returned
+[<cite>SyncRequest</cite>] collects all revealed script pubkeys from the wallet keychain needed to
+start a blockchain sync with a spk based blockchain client.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Wallet.transactions">
+<span class="sig-name descname"><span class="pre">transactions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">CanonicalTx</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#Wallet.transactions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Wallet.transactions" title="Link to this definition"></a></dt>
+<dd><p>Iterate over the transactions in the wallet.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.Mnemonic">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">Mnemonic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">word_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">WordCount</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#Mnemonic"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Mnemonic" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Mnemonic.from_entropy">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_entropy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entropy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#Mnemonic.from_entropy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Mnemonic.from_entropy" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bdkpython.Mnemonic.from_string">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mnemonic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/bdkpython/bdk.html#Mnemonic.from_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.Mnemonic.from_string" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="exceptions">
+<h2>Exceptions<a class="headerlink" href="#exceptions" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bdkpython.InternalError">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">bdkpython.</span></span><span class="sig-name descname"><span class="pre">InternalError</span></span><a class="reference internal" href="_modules/bdkpython/bdk.html#InternalError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bdkpython.InternalError" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
 </section>
 </section>
 

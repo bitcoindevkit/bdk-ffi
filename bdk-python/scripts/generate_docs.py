@@ -1,116 +1,48 @@
-#!/usr/bin/env python3
 import os
-import sys
-import inspect
-import importlib
-from typing import Any, Dict, List
+import re
 
-def get_class_methods(cls: type) -> List[Dict[str, Any]]:
-    """Extract method information from a class."""
-    methods = []
-    for name, member in inspect.getmembers(cls, predicate=inspect.isfunction):
-        if not name.startswith('_') or name == '__init__':
-            sig = inspect.signature(member)
-            doc = inspect.getdoc(member) or ''
-            methods.append({
-                'name': name,
-                'signature': str(sig),
-                'doc': doc
-            })
-    return methods
+# Define the directory where the Python source files are located
+src_dir = 'src/bdkpython'
 
-def get_class_info(cls: type) -> Dict[str, Any]:
-    """Extract class information including docstring and methods."""
-    return {
-        'name': cls.__name__,
-        'doc': inspect.getdoc(cls) or '',
-        'methods': get_class_methods(cls)
-    }
+# Define the output file for the API documentation
+output_file = 'docs/api.rst'
 
-def format_rst_class(class_info: Dict[str, Any]) -> str:
-    """Format class information as RST."""
-    lines = []
-    lines.append(f".. py:class:: {class_info['name']}")
-    lines.append('')
-    
-    if class_info['doc']:
-        lines.append(f"   {class_info['doc']}")
-        lines.append('')
-    
-    for method in class_info['methods']:
-        lines.append(f"   .. py:method:: {method['name']}{method['signature']}")
-        lines.append('')
-        if method['doc']:
-            for doc_line in method['doc'].split('\n'):
-                lines.append(f"      {doc_line}")
-            lines.append('')
-    
-    return '\n'.join(lines)
+# Define categories and corresponding classes
+categories = {
+    "Core Types": ["Amount", "FeeRate", "Address", "Script", "OutPoint"],
+    "Wallet Operations": ["TxBuilder", "BumpFeeTxBuilder", "Psbt", "Blockchain", "ElectrumClient", "EsploraClient", "Wallet"],
+    "Utilities": ["Mnemonic", "Network"],
+    "Exceptions": ["InternalError", "FeeRateError", "ParseAmountError"]
+}
 
-def generate_module_docs(module) -> str:
-    """Generate RST documentation for a module."""
-    lines = []
-    
-    # Module header
-    module_name = module.__name__.split('.')[-1]
-    lines.append(f"{module_name.capitalize()} Module")
-    lines.append('=' * len(f"{module_name} Module"))
-    lines.append('')
-    
-    if module.__doc__:
-        lines.append(module.__doc__)
-        lines.append('')
-    
-    # Get all classes
-    for obj in inspect.getmembers(module):
-        if inspect.isclass(obj) and obj.__module__ == module.__name__:
-            class_info = get_class_info(obj)
-            lines.append(format_rst_class(class_info))
-            lines.append('')
-    
-    return '\n'.join(lines)
+# Regex pattern to match class definitions
+class_pattern = re.compile(r'^class ([A-Za-z][A-Za-z0-9_]*)')
 
+# Scan the source directory for Python files and extract public classes
+public_classes = {}
+for root, _, files in os.walk(src_dir):
+    for file in files:
+        if file.endswith('.py'):
+            with open(os.path.join(root, file), 'r') as f:
+                for line in f:
+                    match = class_pattern.match(line)
+                    if match:
+                        class_name = match.group(1)
+                        # Only consider classes not starting with underscore
+                        if not class_name.startswith('_'):
+                            public_classes[class_name] = root
 
-def main():
-    output_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'docs')
-    os.makedirs(output_dir, exist_ok=True)
-   
-    # Generate main API documentation
-    api_rst_path = os.path.join(output_dir, 'api.rst')
-    
-    with open(api_rst_path, 'w') as f:
-        f.write("BDK Python API Reference\n")
-        f.write("=====================\n\n")
-        f.write("This document describes the Python API for the Bitcoin Development Kit (BDK).\n\n")
-        
-        # Generate docs for each module
-        for module_name in ['bdk', 'bitcoin']:
-            try:
-                module = importlib.import_module(f'bdkpython.{module_name}')
-                f.write(generate_module_docs(module))
-            except ImportError as e:
-                print(f"Warning: Could not import {module_name}: {e}", file=sys.stderr)
-        
-        # Add examples section to ast
-        f.write("\nExamples\n")
-        f.write("--------\n\n")
-        f.write("Basic Wallet Usage\n")
-        f.write("~~~~~~~~~~~~~~~~\n\n")
-        f.write(".. code-block:: python\n\n")
+# Generate the RST content
+rst_content = "API Reference\n============\n\n.. currentmodule:: bdkpython\n\n"
 
-        f.write("""   from bdkpython import *   
-                # Create a new wallet
-                descriptor = "wpkh(...)"  # Your descriptor here
-                wallet = Wallet(descriptor, network=Network.TESTNET)
-                
-                # Sync wallet
-                blockchain = Blockchain("https://blockstream.info/testnet/api")
-                wallet.sync(blockchain)
-                
-                # Get balance
-                balance = wallet.get_balance()
-                print(f"Confirmed balance: {balance.confirmed}")
-                """)
+for category, class_list in categories.items():
+    rst_content += f"{category}\n{'-' * len(category)}\n\n"
+    for class_name in class_list:
+        if class_name in public_classes:
+            rst_content += f".. autoclass:: {class_name}\n   :members:\n   :undoc-members:\n   :show-inheritance:\n\n"
 
-if __name__ == '__main__':
-    main()
+# Write the RST content to the output file
+with open(output_file, 'w') as f:
+    f.write(rst_content)
+
+print(f"API documentation has been generated in {output_file}")

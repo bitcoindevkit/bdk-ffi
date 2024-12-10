@@ -41,10 +41,7 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">BDK Python API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html#api-reference">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html#bdk-module">Bdk Module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html#bitcoin-module">Bitcoin Module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
 </ul>
 
         </div>
@@ -3381,8 +3378,6 @@
     <span class="k">pass</span>
 
 
-<div class="viewcode-block" id="DerivationPath">
-<a class="viewcode-back" href="../../api.html#bdkpython.DerivationPath">[docs]</a>
 <span class="k">class</span> <span class="nc">DerivationPath</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">):</span>
@@ -3407,8 +3402,7 @@
         <span class="c1"># and just create a new instance with the required pointer.</span>
         <span class="n">inst</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="n">inst</span><span class="o">.</span><span class="n">_pointer</span> <span class="o">=</span> <span class="n">pointer</span>
-        <span class="k">return</span> <span class="n">inst</span></div>
-
+        <span class="k">return</span> <span class="n">inst</span>
 
 
 
@@ -3462,8 +3456,6 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
-<div class="viewcode-block" id="Descriptor">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor">[docs]</a>
 <span class="k">class</span> <span class="nc">Descriptor</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descriptor</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
@@ -3493,8 +3485,6 @@
         <span class="n">inst</span><span class="o">.</span><span class="n">_pointer</span> <span class="o">=</span> <span class="n">pointer</span>
         <span class="k">return</span> <span class="n">inst</span>
 
-<div class="viewcode-block" id="Descriptor.new_bip44">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.new_bip44">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">new_bip44</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">secret_key</span><span class="p">:</span> <span class="s2">&quot;DescriptorSecretKey&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">)</span>
@@ -3508,12 +3498,9 @@
         <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeNetwork</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">network</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="Descriptor.new_bip44_public">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.new_bip44_public">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">new_bip44_public</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">public_key</span><span class="p">:</span> <span class="s2">&quot;DescriptorPublicKey&quot;</span><span class="p">,</span><span class="n">fingerprint</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterTypeDescriptorPublicKey</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">public_key</span><span class="p">)</span>
@@ -3530,12 +3517,9 @@
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">fingerprint</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeNetwork</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">network</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="Descriptor.new_bip49">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.new_bip49">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">new_bip49</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">secret_key</span><span class="p">:</span> <span class="s2">&quot;DescriptorSecretKey&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">)</span>
@@ -3549,12 +3533,9 @@
         <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeNetwork</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">network</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="Descriptor.new_bip49_public">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.new_bip49_public">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">new_bip49_public</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">public_key</span><span class="p">:</span> <span class="s2">&quot;DescriptorPublicKey&quot;</span><span class="p">,</span><span class="n">fingerprint</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterTypeDescriptorPublicKey</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">public_key</span><span class="p">)</span>
@@ -3571,12 +3552,9 @@
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">fingerprint</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeNetwork</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">network</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="Descriptor.new_bip84">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.new_bip84">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">new_bip84</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">secret_key</span><span class="p">:</span> <span class="s2">&quot;DescriptorSecretKey&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">)</span>
@@ -3590,12 +3568,9 @@
         <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeNetwork</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">network</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="Descriptor.new_bip84_public">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.new_bip84_public">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">new_bip84_public</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">public_key</span><span class="p">:</span> <span class="s2">&quot;DescriptorPublicKey&quot;</span><span class="p">,</span><span class="n">fingerprint</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterTypeDescriptorPublicKey</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">public_key</span><span class="p">)</span>
@@ -3612,12 +3587,9 @@
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">fingerprint</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeNetwork</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">network</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="Descriptor.new_bip86">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.new_bip86">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">new_bip86</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">secret_key</span><span class="p">:</span> <span class="s2">&quot;DescriptorSecretKey&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">)</span>
@@ -3631,12 +3603,9 @@
         <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeNetwork</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">network</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
-
-<div class="viewcode-block" id="Descriptor.new_bip86_public">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.new_bip86_public">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">new_bip86_public</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">public_key</span><span class="p">:</span> <span class="s2">&quot;DescriptorPublicKey&quot;</span><span class="p">,</span><span class="n">fingerprint</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span><span class="n">keychain</span><span class="p">:</span> <span class="s2">&quot;KeychainKind&quot;</span><span class="p">,</span><span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterTypeDescriptorPublicKey</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">public_key</span><span class="p">)</span>
@@ -3653,13 +3622,10 @@
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">fingerprint</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeKeychainKind</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">keychain</span><span class="p">),</span>
         <span class="n">_UniffiConverterTypeNetwork</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">network</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
 
-
-<div class="viewcode-block" id="Descriptor.is_multipath">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.is_multipath">[docs]</a>
     <span class="k">def</span> <span class="nf">is_multipath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Whether or not this key has multiple derivation paths.</span>
@@ -3667,15 +3633,12 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptor_is_multipath</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Descriptor.to_single_descriptors">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.to_single_descriptors">[docs]</a>
     <span class="k">def</span> <span class="nf">to_single_descriptors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;typing.List[Descriptor]&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get as many descriptors as different paths in this descriptor.</span>
@@ -3686,20 +3649,16 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterSequenceTypeDescriptor</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeMiniscriptError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptor_to_single_descriptors</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="Descriptor.to_string_with_secret">
-<a class="viewcode-back" href="../../api.html#bdkpython.Descriptor.to_string_with_secret">[docs]</a>
     <span class="k">def</span> <span class="nf">to_string_with_secret</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptor_to_string_with_secret</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
-
+        <span class="p">)</span>
 
 
 
@@ -3708,8 +3667,7 @@
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptor_uniffi_trait_display</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
-
+        <span class="p">)</span>
 
 
 
@@ -3767,8 +3725,6 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
-<div class="viewcode-block" id="DescriptorPublicKey">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorPublicKey">[docs]</a>
 <span class="k">class</span> <span class="nc">DescriptorPublicKey</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     
@@ -3793,8 +3749,6 @@
         <span class="n">inst</span><span class="o">.</span><span class="n">_pointer</span> <span class="o">=</span> <span class="n">pointer</span>
         <span class="k">return</span> <span class="n">inst</span>
 
-<div class="viewcode-block" id="DescriptorPublicKey.from_string">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorPublicKey.from_string">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">public_key</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">public_key</span><span class="p">)</span>
@@ -3802,55 +3756,43 @@
         <span class="c1"># Call the (fallible) function before creating any half-baked object instances.</span>
         <span class="n">pointer</span> <span class="o">=</span> <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeDescriptorKeyError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_constructor_descriptorpublickey_from_string</span><span class="p">,</span>
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">public_key</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
 
-
-<div class="viewcode-block" id="DescriptorPublicKey.as_string">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorPublicKey.as_string">[docs]</a>
     <span class="k">def</span> <span class="nf">as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorpublickey_as_string</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="DescriptorPublicKey.derive">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorPublicKey.derive">[docs]</a>
     <span class="k">def</span> <span class="nf">derive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="s2">&quot;DerivationPath&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DescriptorPublicKey&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeDerivationPath</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">_UniffiConverterTypeDescriptorPublicKey</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeDescriptorKeyError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorpublickey_derive</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeDerivationPath</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="DescriptorPublicKey.extend">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorPublicKey.extend">[docs]</a>
     <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="s2">&quot;DerivationPath&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DescriptorPublicKey&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeDerivationPath</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">_UniffiConverterTypeDescriptorPublicKey</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeDescriptorKeyError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorpublickey_extend</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeDerivationPath</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="DescriptorPublicKey.is_multipath">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorPublicKey.is_multipath">[docs]</a>
     <span class="k">def</span> <span class="nf">is_multipath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;bool&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Whether or not this key has multiple derivation paths.</span>
@@ -3858,15 +3800,12 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterBool</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorpublickey_is_multipath</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="DescriptorPublicKey.master_fingerprint">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorPublicKey.master_fingerprint">[docs]</a>
     <span class="k">def</span> <span class="nf">master_fingerprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The fingerprint of the master key associated with this key, `0x00000000` if none.</span>
@@ -3874,9 +3813,7 @@
 
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorpublickey_master_fingerprint</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
-</div>
-
+        <span class="p">)</span>
 
 
 
@@ -3926,8 +3863,6 @@
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
 
-<div class="viewcode-block" id="DescriptorSecretKey">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorSecretKey">[docs]</a>
 <span class="k">class</span> <span class="nc">DescriptorSecretKey</span><span class="p">:</span>
     <span class="n">_pointer</span><span class="p">:</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">c_void_p</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">network</span><span class="p">:</span> <span class="s2">&quot;Network&quot;</span><span class="p">,</span><span class="n">mnemonic</span><span class="p">:</span> <span class="s2">&quot;Mnemonic&quot;</span><span class="p">,</span><span class="n">password</span><span class="p">:</span> <span class="s2">&quot;typing.Optional[str]&quot;</span><span class="p">):</span>
@@ -3960,8 +3895,6 @@
         <span class="n">inst</span><span class="o">.</span><span class="n">_pointer</span> <span class="o">=</span> <span class="n">pointer</span>
         <span class="k">return</span> <span class="n">inst</span>
 
-<div class="viewcode-block" id="DescriptorSecretKey.from_string">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorSecretKey.from_string">[docs]</a>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_string</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">secret_key</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">):</span>
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">)</span>
@@ -3969,73 +3902,56 @@
         <span class="c1"># Call the (fallible) function before creating any half-baked object instances.</span>
         <span class="n">pointer</span> <span class="o">=</span> <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeDescriptorKeyError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_constructor_descriptorsecretkey_from_string</span><span class="p">,</span>
         <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">secret_key</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_instance_</span><span class="p">(</span><span class="n">pointer</span><span class="p">)</span>
 
 
 
-
-<div class="viewcode-block" id="DescriptorSecretKey.as_public">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorSecretKey.as_public">[docs]</a>
     <span class="k">def</span> <span class="nf">as_public</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DescriptorPublicKey&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterTypeDescriptorPublicKey</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorsecretkey_as_public</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="DescriptorSecretKey.as_string">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorSecretKey.as_string">[docs]</a>
     <span class="k">def</span> <span class="nf">as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;str&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterString</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorsecretkey_as_string</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="DescriptorSecretKey.derive">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorSecretKey.derive">[docs]</a>
     <span class="k">def</span> <span class="nf">derive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="s2">&quot;DerivationPath&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DescriptorSecretKey&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeDerivationPath</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeDescriptorKeyError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorsecretkey_derive</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeDerivationPath</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="DescriptorSecretKey.extend">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorSecretKey.extend">[docs]</a>
     <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="s2">&quot;DerivationPath&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;DescriptorSecretKey&quot;</span><span class="p">:</span>
         <span class="n">_UniffiConverterTypeDerivationPath</span><span class="o">.</span><span class="n">check_lower</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">_UniffiConverterTypeDescriptorSecretKey</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call_with_error</span><span class="p">(</span><span class="n">_UniffiConverterTypeDescriptorKeyError</span><span class="p">,</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorsecretkey_extend</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),</span>
         <span class="n">_UniffiConverterTypeDerivationPath</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
 
 
 
 
-
-<div class="viewcode-block" id="DescriptorSecretKey.secret_bytes">
-<a class="viewcode-back" href="../../api.html#bdkpython.DescriptorSecretKey.secret_bytes">[docs]</a>
     <span class="k">def</span> <span class="nf">secret_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;typing.List[int]&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_UniffiConverterSequenceUInt8</span><span class="o">.</span><span class="n">lift</span><span class="p">(</span>
             <span class="n">_uniffi_rust_call</span><span class="p">(</span><span class="n">_UniffiLib</span><span class="o">.</span><span class="n">uniffi_bdkffi_fn_method_descriptorsecretkey_secret_bytes</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_uniffi_clone_pointer</span><span class="p">(),)</span>
-        <span class="p">)</span></div>
-</div>
-
+        <span class="p">)</span>
 
 
 
