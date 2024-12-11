@@ -4,6 +4,7 @@ mod electrum;
 mod error;
 mod esplora;
 mod keys;
+mod kyoto;
 mod store;
 mod tx_builder;
 mod types;
@@ -30,6 +31,8 @@ use crate::error::ElectrumError;
 use crate::error::EsploraError;
 use crate::error::ExtractTxError;
 use crate::error::FromScriptError;
+use crate::error::LightClientBuilderError;
+use crate::error::LightClientError;
 use crate::error::LoadWithPersistError;
 use crate::error::MiniscriptError;
 use crate::error::PersistenceError;
@@ -79,10 +82,21 @@ use bitcoin_ffi::FeeRate;
 use bitcoin_ffi::Network;
 use bitcoin_ffi::OutPoint;
 use bitcoin_ffi::Script;
+use bitcoin_ffi::Txid;
 
 use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::ChangeSet;
 use bdk_wallet::KeychainKind;
+
+use bdk_kyoto::NodeEventHandler;
+use bdk_kyoto::NodeState;
+use bdk_kyoto::Warning;
+use kyoto::IpAddress;
+use kyoto::LightClient;
+use kyoto::LightClientBuilder;
+use kyoto::LightNode;
+use kyoto::NodePair;
+use kyoto::Peer;
 
 uniffi::include_scaffolding!("bdk");
