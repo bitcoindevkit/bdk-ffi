@@ -2,7 +2,7 @@ use bitcoin_ffi::OutPoint;
 
 use bdk_core::bitcoin::script::PushBytesError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
-use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
+use bdk_esplora::esplora_client::Error as BdkEsploraError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
 use bdk_wallet::bitcoin::address::{FromScriptError as BdkFromScriptError, ParseError};
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
@@ -364,6 +364,9 @@ pub enum EsploraError {
 
     #[error("the request has already been consumed")]
     RequestAlreadyConsumed,
+
+    #[error("the server sent an invalid response")]
+    InvalidResponse,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1084,7 +1087,7 @@ impl From<BdkEsploraError> for EsploraError {
             BdkEsploraError::Parsing(e) => EsploraError::Parsing {
                 error_message: e.to_string(),
             },
-            Error::StatusCode(e) => EsploraError::StatusCode {
+            BdkEsploraError::StatusCode(e) => EsploraError::StatusCode {
                 error_message: e.to_string(),
             },
             BdkEsploraError::BitcoinEncoding(e) => EsploraError::BitcoinEncoding {
@@ -1101,10 +1104,13 @@ impl From<BdkEsploraError> for EsploraError {
                 EsploraError::HeaderHeightNotFound { height }
             }
             BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
-            Error::InvalidHttpHeaderName(name) => EsploraError::InvalidHttpHeaderName { name },
+            BdkEsploraError::InvalidHttpHeaderName(name) => {
+                EsploraError::InvalidHttpHeaderName { name }
+            }
             BdkEsploraError::InvalidHttpHeaderValue(value) => {
                 EsploraError::InvalidHttpHeaderValue { value }
             }
+            BdkEsploraError::InvalidResponse => EsploraError::InvalidResponse,
         }
     }
 }
@@ -1122,7 +1128,7 @@ impl From<Box<BdkEsploraError>> for EsploraError {
             BdkEsploraError::Parsing(e) => EsploraError::Parsing {
                 error_message: e.to_string(),
             },
-            Error::StatusCode(e) => EsploraError::StatusCode {
+            BdkEsploraError::StatusCode(e) => EsploraError::StatusCode {
                 error_message: e.to_string(),
             },
             BdkEsploraError::BitcoinEncoding(e) => EsploraError::BitcoinEncoding {
@@ -1139,10 +1145,13 @@ impl From<Box<BdkEsploraError>> for EsploraError {
                 EsploraError::HeaderHeightNotFound { height }
             }
             BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
-            Error::InvalidHttpHeaderName(name) => EsploraError::InvalidHttpHeaderName { name },
+            BdkEsploraError::InvalidHttpHeaderName(name) => {
+                EsploraError::InvalidHttpHeaderName { name }
+            }
             BdkEsploraError::InvalidHttpHeaderValue(value) => {
                 EsploraError::InvalidHttpHeaderValue { value }
             }
+            BdkEsploraError::InvalidResponse => EsploraError::InvalidResponse,
         }
     }
 }

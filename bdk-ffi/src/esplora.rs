@@ -8,9 +8,9 @@ use bdk_esplora::EsploraExt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::Txid;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
-use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
+use bdk_wallet::chain::spk_client::FullScanResponse as BdkFullScanResponse;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
-use bdk_wallet::chain::spk_client::SyncResult as BdkSyncResult;
+use bdk_wallet::chain::spk_client::SyncResponse as BdkSyncResponse;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::Update as BdkUpdate;
 
@@ -40,7 +40,7 @@ impl EsploraClient {
             .take()
             .ok_or(EsploraError::RequestAlreadyConsumed)?;
 
-        let result: BdkFullScanResult<KeychainKind> =
+        let result: BdkFullScanResponse<KeychainKind> =
             self.0
                 .full_scan(request, stop_gap as usize, parallel_requests as usize)?;
 
@@ -66,7 +66,7 @@ impl EsploraClient {
             .take()
             .ok_or(EsploraError::RequestAlreadyConsumed)?;
 
-        let result: BdkSyncResult = self.0.sync(request, parallel_requests as usize)?;
+        let result: BdkSyncResponse = self.0.sync(request, parallel_requests as usize)?;
 
         let update = BdkUpdate {
             last_active_indices: BTreeMap::default(),

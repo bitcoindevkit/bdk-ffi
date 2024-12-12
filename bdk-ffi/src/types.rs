@@ -36,9 +36,10 @@ use std::sync::{Arc, Mutex};
 pub enum ChainPosition {
     Confirmed {
         confirmation_block_time: ConfirmationBlockTime,
+        transitively: Option<String>,
     },
     Unconfirmed {
-        timestamp: u64,
+        timestamp: Option<u64>,
     },
 }
 
@@ -62,7 +63,10 @@ pub struct CanonicalTx {
 impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for CanonicalTx {
     fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>) -> Self {
         let chain_position = match tx.chain_position {
-            BdkChainPosition::Confirmed(anchor) => {
+            BdkChainPosition::Confirmed {
+                anchor,
+                transitively,
+            } => {
                 let block_id = BlockId {
                     height: anchor.block_id.height,
                     hash: anchor.block_id.hash.to_string(),
@@ -72,9 +76,12 @@ impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for
                         block_id,
                         confirmation_time: anchor.confirmation_time,
                     },
+                    transitively: transitively.map(|t| t.to_string()),
                 }
             }
-            BdkChainPosition::Unconfirmed(timestamp) => ChainPosition::Unconfirmed { timestamp },
+            BdkChainPosition::Unconfirmed { last_seen } => ChainPosition::Unconfirmed {
+                timestamp: last_seen,
+            },
         };
 
         CanonicalTx {

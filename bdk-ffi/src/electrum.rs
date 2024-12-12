@@ -4,9 +4,9 @@ use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
 
 use bdk_core::spk_client::FullScanRequest as BdkFullScanRequest;
-use bdk_core::spk_client::FullScanResult as BdkFullScanResult;
+use bdk_core::spk_client::FullScanResponse as BdkFullScanResponse;
 use bdk_core::spk_client::SyncRequest as BdkSyncRequest;
-use bdk_core::spk_client::SyncResult as BdkSyncResult;
+use bdk_core::spk_client::SyncResponse as BdkSyncResponse;
 use bdk_electrum::BdkElectrumClient as BdkBdkElectrumClient;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::KeychainKind;
@@ -43,7 +43,7 @@ impl ElectrumClient {
             .take()
             .ok_or(ElectrumError::RequestAlreadyConsumed)?;
 
-        let full_scan_result: BdkFullScanResult<KeychainKind> = self.0.full_scan(
+        let full_scan_result: BdkFullScanResponse<KeychainKind> = self.0.full_scan(
             request,
             stop_gap as usize,
             batch_size as usize,
@@ -73,7 +73,7 @@ impl ElectrumClient {
             .take()
             .ok_or(ElectrumError::RequestAlreadyConsumed)?;
 
-        let sync_result: BdkSyncResult =
+        let sync_result: BdkSyncResponse =
             self.0
                 .sync(request, batch_size as usize, fetch_prev_txouts)?;
 
