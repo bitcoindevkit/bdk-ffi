@@ -45,7 +45,7 @@ final class LiveWalletTests: XCTestCase {
         let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
         let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
         let update = try esploraClient.fullScan(
-            fullScanRequest: fullScanRequest,
+            request: fullScanRequest,
             stopGap: 10,
             parallelRequests: 1
         )
@@ -79,7 +79,7 @@ final class LiveWalletTests: XCTestCase {
         let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
         let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
         let update = try esploraClient.fullScan(
-            fullScanRequest: fullScanRequest,
+            request: fullScanRequest,
             stopGap: 10,
             parallelRequests: 1
         )
