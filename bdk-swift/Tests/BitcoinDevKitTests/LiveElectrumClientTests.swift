@@ -47,4 +47,15 @@ final class LiveElectrumClientTests: XCTestCase {
             print("Received \(sentAndReceived.received.toSat())")
         }
     }
+
+    func testServerFeatures() throws {
+        let electrumClient: ElectrumClient = try ElectrumClient(url: "ssl://electrum.blockstream.info:60002")
+        let features: ServerFeaturesRes = try electrumClient.serverFeatures()
+        print("Server Features:\n\(features)")
+
+        XCTAssertEqual(
+            features.genesisHash,
+            "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+        )
+    }
 }
