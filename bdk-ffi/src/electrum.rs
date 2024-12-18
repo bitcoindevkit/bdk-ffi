@@ -89,8 +89,8 @@ impl ElectrumClient {
         Ok(Arc::new(Update(update)))
     }
 
-    pub fn broadcast(&self, transaction: &Transaction) -> Result<String, ElectrumError> {
-        let bdk_transaction: BdkTransaction = transaction.into();
+    pub fn transaction_broadcast(&self, tx: &Transaction) -> Result<String, ElectrumError> {
+        let bdk_transaction: BdkTransaction = tx.into();
         self.0
             .transaction_broadcast(&bdk_transaction)
             .map_err(ElectrumError::from)

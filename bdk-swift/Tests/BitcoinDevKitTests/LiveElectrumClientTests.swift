@@ -24,7 +24,7 @@ final class LiveElectrumClientTests: XCTestCase {
         let electrumClient: ElectrumClient = try ElectrumClient(url: SIGNET_ELECTRUM_URL)
         let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
         let update = try electrumClient.fullScan(
-            fullScanRequest: fullScanRequest,
+            request: fullScanRequest,
             stopGap: 10,
             batchSize: 10,
             fetchPrevTxouts: false

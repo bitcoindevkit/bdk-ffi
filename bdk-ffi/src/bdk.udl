@@ -1035,10 +1035,10 @@ interface EsploraClient {
   constructor(string url);
 
   [Throws=EsploraError]
-  Update full_scan(FullScanRequest full_scan_request, u64 stop_gap, u64 parallel_requests);
+  Update full_scan(FullScanRequest request, u64 stop_gap, u64 parallel_requests);
 
   [Throws=EsploraError]
-  Update sync(SyncRequest sync_request, u64 parallel_requests);
+  Update sync(SyncRequest request, u64 parallel_requests);
 
   [Throws=EsploraError]
   void broadcast([ByRef] Transaction transaction);
@@ -1064,7 +1064,7 @@ interface ElectrumClient {
   /// Full scan the keychain scripts specified with the blockchain (via an Electrum client) and
   /// returns updates for bdk_chain data structures.
   ///
-  /// - `full_scan_request`: struct with data required to perform a spk-based blockchain client
+  /// - `request`: struct with data required to perform a spk-based blockchain client
   ///   full scan, see `FullScanRequest`.
   /// - `stop_gap`: the full scan for each keychain stops after a gap of script pubkeys with no
   ///   associated transactions.
@@ -1077,11 +1077,11 @@ interface ElectrumClient {
   ///   `CalculateFeeError::MissingTxOut` error if those TxOuts are not present in the transaction
   ///   graph.
   [Throws=ElectrumError]
-  Update full_scan(FullScanRequest full_scan_request, u64 stop_gap, u64 batch_size, boolean fetch_prev_txouts);
+  Update full_scan(FullScanRequest request, u64 stop_gap, u64 batch_size, boolean fetch_prev_txouts);
 
   /// Sync a set of scripts with the blockchain (via an Electrum client) for the data specified and returns updates for bdk_chain data structures.
   ///
-  /// - `sync_request`: struct with data required to perform a spk-based blockchain client
+  /// - `request`: struct with data required to perform a spk-based blockchain client
   ///   sync, see `SyncRequest`.
   /// - `batch_size`: specifies the max number of script pubkeys to request for in a single batch
   ///   request.
@@ -1095,11 +1095,11 @@ interface ElectrumClient {
   /// If the scripts to sync are unknown, such as when restoring or importing a keychain that may
   /// include scripts that have been used, use full_scan with the keychain.
   [Throws=ElectrumError]
-  Update sync(SyncRequest sync_request, u64 batch_size, boolean fetch_prev_txouts);
+  Update sync(SyncRequest request, u64 batch_size, boolean fetch_prev_txouts);
 
   /// Broadcasts a transaction to the network.
   [Throws=ElectrumError]
-  string broadcast([ByRef] Transaction transaction);
+  string transaction_broadcast([ByRef] Transaction tx);
 
   /// Returns the capabilities of the server.
   [Throws=ElectrumError]
