@@ -1066,6 +1066,18 @@ interface ElectrumClient {
 
   [Throws=ElectrumError]
   string broadcast([ByRef] Transaction transaction);
+
+  [Throws=ElectrumError]
+  ServerFeaturesRes server_features();
+};
+
+dictionary ServerFeaturesRes {
+  string server_version;
+  string genesis_hash;
+  string protocol_min;
+  string protocol_max;
+  string? hash_function;
+  i64? pruning;
 };
 
 // ------------------------------------------------------------------------
