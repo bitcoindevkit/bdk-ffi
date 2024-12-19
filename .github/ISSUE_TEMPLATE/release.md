@@ -84,7 +84,7 @@ python -m unittest --verbose
 git tag v0.6.0 --sign --edit
 git push upstream v0.6.0
 ```
-26.  - [ ] Trigger manual releases for all 4 libraries (for Swift, go on the [bdk-swift](https://github.com/bitcoindevkit/bdk-swift) trigger the release on `master` and simply add the version number and tag name in the text fields when running the workflow manually. Note that the version number must not contain the `v`, i.e. `0.26.0`, but the tag will have it, i.e. `v0.26.0`).
+26.  - [ ] Trigger manual releases for all 4 libraries (for Swift, go on the [bdk-swift](https://github.com/bitcoindevkit/bdk-swift) trigger the release on `master` and simply add the version number and tag name in the text fields when running the workflow manually. Note that the version number must not contain the `v`, i.e. `0.26.0`, but the tag will have it, i.e. `v0.26.0`). Note that on bdk-ffi to trigger release with tag (not branch).
 27.  - [ ] Make sure the released libraries work and contain the artifacts you would expect 
 28.  - [ ] Aggregate all the changelog notices from the PRs and add them to the changelog file
 29.  - [ ] Bump the versions on master from `0.9.0-SNAPSHOT` to `0.10.0-SNAPSHOT`, `0.6.0.dev0` to `0.7.0.dev0`
