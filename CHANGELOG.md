@@ -354,6 +354,8 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v1.0.0-beta.6]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.5...v1.0.0-beta.6
+[v1.0.0-beta.5]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.2...v1.0.0-beta.5
 [v1.0.0-beta.2]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.11...v1.0.0-beta.2
 [v1.0.0-alpha.11]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.7...v1.0.0-alpha.11
 [v1.0.0-alpha.7]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.2a...v1.0.0-alpha.7
