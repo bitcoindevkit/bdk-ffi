@@ -3,6 +3,32 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.0-beta.6]
+This release updates the `bdk-ffi` libraries to the latest `bdk_wallet` `1.0.0-beta.6` and related libraries (Esplora, Electrum, etc). 
+
+#### Added
+- `DescriptorPublicKey::is_multipath` [https://github.com/bitcoindevkit/bdk-ffi/pull/625]
+- `DescriptorPublicKey::master_fingerprint` [https://github.com/bitcoindevkit/bdk-ffi/pull/625]
+- `Descriptor::is_multipath` [https://github.com/bitcoindevkit/bdk-ffi/pull/625]
+- `Descriptor:: to_single_descriptors` [https://github.com/bitcoindevkit/bdk-ffi/pull/625]
+- `EsploraClient::get_height` [https://github.com/bitcoindevkit/bdk-ffi/pull/623]
+- `Psbt::finalize` [https://github.com/bitcoindevkit/bdk-ffi/pull/630]
+- `TxBuilder::add_data` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
+- `TxBuilder::current_height` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
+- `TxBuilder::nlocktime` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
+- `TxBuilder::allow_dust` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
+- `TxBuilder::version` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
+- `TxBuilder::policy_path` [https://github.com/bitcoindevkit/bdk-ffi/pull/629]
+- `Wallet::cancel_tx` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
+- `Wallet::get_utxo` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
+- `Wallet::derivation_of_spk` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
+- `Wallet::descriptor_checksum` [https://github.com/bitcoindevkit/bdk-ffi/pull/603]
+- `Wallet:: finalize_psbt` [https://github.com/bitcoindevkit/bdk-ffi/pullhttps://github.com/bitcoindevkit/bdk-ffi/pull/604]
+- `Wallet:: policies` [#629]
+
+#### Other
+- Added documentation via docstrings
+
 ## [v1.0.0-beta.5]
 This release updates the bdk-ffi libraries to the latest bdk_wallet 1.0.0-beta.5 and related libraries (Esplora, Electrum, etc.). 
 
