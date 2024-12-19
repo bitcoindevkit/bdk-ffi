@@ -1104,6 +1104,10 @@ interface ElectrumClient {
   /// Returns the capabilities of the server.
   [Throws=ElectrumError]
   ServerFeaturesRes server_features();
+
+  /// Estimates the fee required in bitcoin per kilobyte to confirm a transaction in `number` blocks.
+  [Throws=ElectrumError]
+  f64 estimate_fee(u64 number);
 };
 
 /// Response to an ElectrumClient.server_features request.
