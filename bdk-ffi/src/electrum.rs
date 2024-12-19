@@ -104,6 +104,13 @@ impl ElectrumClient {
             .map_err(ElectrumError::from)
             .map(ServerFeaturesRes::from)
     }
+
+    pub fn estimate_fee(&self, number: u64) -> Result<f64, ElectrumError> {
+        self.0
+            .inner
+            .estimate_fee(number as usize)
+            .map_err(ElectrumError::from)
+    }
 }
 
 pub struct ServerFeaturesRes {
