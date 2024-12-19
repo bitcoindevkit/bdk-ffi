@@ -1,7 +1,9 @@
 package org.bitcoindevkit
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import org.rustbitcoin.bitcoin.Network
+import org.bitcoindevkit.ServerFeaturesRes
 
 private const val SIGNET_ELECTRUM_URL = "ssl://mempool.space:60602"
 
@@ -37,5 +39,17 @@ class LiveElectrumClientTest {
             println("Sent ${sentAndReceived.sent.toSat()}")
             println("Received ${sentAndReceived.received.toSat()}")
         }
+    }
+
+    @Test
+    fun testServerFeatures() {
+        val electrumClient: ElectrumClient = ElectrumClient("ssl://electrum.blockstream.info:60002")
+        val features: ServerFeaturesRes = electrumClient.serverFeatures()
+        println("Server Features:\n$features")
+
+        assertEquals(
+            expected = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943",
+            actual = features.genesisHash
+        )
     }
 }
