@@ -4,7 +4,7 @@ on: [workflow_dispatch]
 jobs:
   build-macOS-native-libs:
     name: "Create M1 and x86_64 native binaries"
-    runs-on: macos-12
+    runs-on: macos-14
     steps:
       - name: "Checkout publishing branch"
         uses: actions/checkout@v3
