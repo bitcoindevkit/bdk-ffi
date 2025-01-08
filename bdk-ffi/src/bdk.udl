@@ -1031,23 +1031,46 @@ interface Descriptor {
 // bdk_esplora crate
 // ------------------------------------------------------------------------
 
+/// Wrapper around an esplora_client::BlockingClient which includes an internal in-memory transaction
+/// cache to avoid re-fetching already downloaded transactions.
 interface EsploraClient {
+  /// Creates a new bdk client from a esplora_client::BlockingClient
   constructor(string url);
 
+  /// Scan keychain scripts for transactions against Esplora, returning an update that can be
+  /// applied to the receiving structures.
+  ///
+  /// `request` provides the data required to perform a script-pubkey-based full scan
+  /// (see [`FullScanRequest`]). The full scan for each keychain (`K`) stops after a gap of
+  /// `stop_gap` script pubkeys with no associated transactions. `parallel_requests` specifies
+  /// the maximum number of HTTP requests to make in parallel.
   [Throws=EsploraError]
   Update full_scan(FullScanRequest request, u64 stop_gap, u64 parallel_requests);
 
+  /// Sync a set of scripts, txids, and/or outpoints against Esplora.
+  ///
+  /// `request` provides the data required to perform a script-pubkey-based sync (see
+  /// [`SyncRequest`]). `parallel_requests` specifies the maximum number of HTTP requests to make
+  /// in parallel.
   [Throws=EsploraError]
   Update sync(SyncRequest request, u64 parallel_requests);
 
+  /// Broadcast a [`Transaction`] to Esplora.
   [Throws=EsploraError]
   void broadcast([ByRef] Transaction transaction);
 
+  /// Get a [`Transaction`] option given its [`Txid`].
   [Throws=EsploraError]
   Transaction? get_tx(string txid);
 
+  /// Get the height of the current blockchain tip.
   [Throws=EsploraError]
   u32 get_height();
+
+  /// Get a map where the key is the confirmation target (in number of
+  /// blocks) and the value is the estimated feerate (in sat/vB).
+  [Throws=EsploraError]
+  record<u16, f64> get_fee_estimates();
 };
 
 // ------------------------------------------------------------------------

@@ -14,7 +14,7 @@ use bdk_wallet::chain::spk_client::SyncResponse as BdkSyncResponse;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::Update as BdkUpdate;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -92,5 +92,9 @@ impl EsploraClient {
 
     pub fn get_height(&self) -> Result<u32, EsploraError> {
         self.0.get_height().map_err(EsploraError::from)
+    }
+
+    pub fn get_fee_estimates(&self) -> Result<HashMap<u16, f64>, EsploraError> {
+        self.0.get_fee_estimates().map_err(EsploraError::from)
     }
 }
