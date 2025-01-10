@@ -17,7 +17,6 @@ use bdk_wallet::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
 use bdk_wallet::chain::{
     ChainPosition as BdkChainPosition, ConfirmationBlockTime as BdkConfirmationBlockTime,
 };
-
 use bdk_wallet::descriptor::policy::{
     Condition as BdkCondition, PkOrF as BdkPkOrF, Policy as BdkPolicy,
     Satisfaction as BdkSatisfaction, SatisfiableItem as BdkSatisfiableItem,
@@ -27,6 +26,7 @@ use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
+use bdk_wallet::signer::{SignOptions as BdkSignOptions, TapLeavesOptions};
 
 use std::collections::HashMap;
 use std::convert::TryFrom;
@@ -516,6 +516,33 @@ impl From<BdkCondition> for Condition {
         Condition {
             csv: value.csv.map(|e| e.to_consensus_u32()),
             timelock: value.timelock.map(|e| e.into()),
+        }
+    }
+}
+
+// This is a wrapper type around the bdk type [SignOptions](https://docs.rs/bdk_wallet/1.0.0/bdk_wallet/signer/struct.SignOptions.html)
+// because we did not want to expose the complexity behind the `TapLeavesOptions` type. When
+// transforming from a SignOption to a BdkSignOptions, we simply use the default values for
+// TapLeavesOptions.
+pub struct SignOptions {
+    pub trust_witness_utxo: bool,
+    pub assume_height: Option<u32>,
+    pub allow_all_sighashes: bool,
+    pub try_finalize: bool,
+    pub sign_with_tap_internal_key: bool,
+    pub allow_grinding: bool,
+}
+
+impl From<SignOptions> for BdkSignOptions {
+    fn from(options: SignOptions) -> BdkSignOptions {
+        BdkSignOptions {
+            trust_witness_utxo: options.trust_witness_utxo,
+            assume_height: options.assume_height,
+            allow_all_sighashes: options.allow_all_sighashes,
+            try_finalize: options.try_finalize,
+            tap_leaves_options: TapLeavesOptions::default(),
+            sign_with_tap_internal_key: options.sign_with_tap_internal_key,
+            allow_grinding: options.allow_grinding,
         }
     }
 }

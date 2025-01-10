@@ -74,6 +74,7 @@ use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 use crate::types::Update;
 use crate::wallet::Wallet;
+use crate::types::SignOptions;
 
 use bitcoin_ffi::Amount;
 use bitcoin_ffi::FeeRate;
