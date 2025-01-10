@@ -69,12 +69,12 @@ use crate::types::Satisfaction;
 use crate::types::SatisfiableItem;
 use crate::types::ScriptAmount;
 use crate::types::SentAndReceivedValues;
+use crate::types::SignOptions;
 use crate::types::SyncRequest;
 use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 use crate::types::Update;
 use crate::wallet::Wallet;
-use crate::types::SignOptions;
 
 use bitcoin_ffi::Amount;
 use bitcoin_ffi::FeeRate;

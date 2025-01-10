@@ -644,7 +644,7 @@ interface Wallet {
   ///
   /// The [`SignOptions`] can be used to tweak the behavior of the finalizer.
   [Throws=SignerError]
-  boolean finalize_psbt(Psbt psbt);
+  boolean finalize_psbt(Psbt psbt, SignOptions? sign_options);
 
   /// Compute the `tx`'s sent and received [`Amount`]s.
   ///

@@ -7,14 +7,14 @@ use crate::error::{
 use crate::store::Connection;
 use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex, LocalOutput,
-    Policy, SentAndReceivedValues, SyncRequestBuilder, Update, SignOptions
+    Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, Update,
 };
 
 use bitcoin_ffi::{Amount, FeeRate, OutPoint, Script};
 
-use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::bitcoin::{Network, Txid};
 use bdk_wallet::rusqlite::Connection as BdkConnection;
+use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{KeychainKind, PersistedWallet, Wallet as BdkWallet};
 
 use std::borrow::BorrowMut;
@@ -168,7 +168,7 @@ impl Wallet {
         let mut psbt = psbt.0.lock().unwrap();
         let bdk_sign_options: BdkSignOptions = match sign_options {
             Some(sign_options) => BdkSignOptions::from(sign_options),
-            None => BdkSignOptions::default()
+            None => BdkSignOptions::default(),
         };
 
         self.get_wallet()
@@ -176,10 +176,19 @@ impl Wallet {
             .map_err(SignerError::from)
     }
 
-    pub fn finalize_psbt(&self, psbt: Arc<Psbt>) -> Result<bool, SignerError> {
+    pub fn finalize_psbt(
+        &self,
+        psbt: Arc<Psbt>,
+        sign_options: Option<SignOptions>,
+    ) -> Result<bool, SignerError> {
         let mut psbt = psbt.0.lock().unwrap();
+        let bdk_sign_options: BdkSignOptions = match sign_options {
+            Some(sign_options) => BdkSignOptions::from(sign_options),
+            None => BdkSignOptions::default(),
+        };
+
         self.get_wallet()
-            .finalize_psbt(&mut psbt, BdkSignOptions::default())
+            .finalize_psbt(&mut psbt, bdk_sign_options)
             .map_err(SignerError::from)
     }
 
