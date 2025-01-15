@@ -632,7 +632,7 @@ interface Wallet {
   /// signers will follow the options, but the "software signers" (WIF keys and `xprv`) defined
   /// in this library will.
   [Throws=SignerError]
-  boolean sign(Psbt psbt, SignOptions? sign_options);
+  boolean sign(Psbt psbt, optional SignOptions? sign_options = null);
 
   /// Finalize a PSBT, i.e., for each input determine if sufficient data is available to pass
   /// validation and construct the respective `scriptSig` or `scriptWitness`. Please refer to
@@ -644,7 +644,7 @@ interface Wallet {
   ///
   /// The [`SignOptions`] can be used to tweak the behavior of the finalizer.
   [Throws=SignerError]
-  boolean finalize_psbt(Psbt psbt, SignOptions? sign_options);
+  boolean finalize_psbt(Psbt psbt, optional SignOptions? sign_options = null);
 
   /// Compute the `tx`'s sent and received [`Amount`]s.
   ///
