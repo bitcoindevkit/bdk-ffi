@@ -43,7 +43,7 @@ class LiveWalletTest(unittest.TestCase):
         esplora_client: EsploraClient = EsploraClient(url = SIGNET_ESPLORA_URL)
         full_scan_request: FullScanRequest = wallet.start_full_scan().build()
         update = esplora_client.full_scan(
-            full_scan_request=full_scan_request,
+            request=full_scan_request,
             stop_gap=10,
             parallel_requests=1
         )
@@ -75,7 +75,7 @@ class LiveWalletTest(unittest.TestCase):
         esplora_client: EsploraClient = EsploraClient(url = SIGNET_ESPLORA_URL)
         full_scan_request: FullScanRequest = wallet.start_full_scan().build()
         update = esplora_client.full_scan(
-            full_scan_request=full_scan_request,
+            request=full_scan_request,
             stop_gap=10,
             parallel_requests=1
         )
