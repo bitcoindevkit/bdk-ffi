@@ -24,3 +24,6 @@ test:
 
 test-specific TEST:
   ./gradlew test --tests {{TEST}}
+
+build-docs:
+  ./gradlew :lib:dokkaGeneratePublicationHtml

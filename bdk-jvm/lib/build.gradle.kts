@@ -11,6 +11,7 @@ plugins {
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
     id("org.jetbrains.dokka")
+    id("org.jetbrains.dokka-javadoc")
 }
 
 java {
@@ -123,4 +124,22 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     sign(publishing.publications)
+}
+
+dokka {
+    moduleName.set("bdk-jvm")
+    moduleVersion.set(libraryVersion)
+    dokkaSourceSets.main {
+        includes.from("README.md")
+        sourceLink {
+            localDirectory.set(file("src/main/kotlin"))
+            remoteUrl("https://bitcoindevkit.org/")
+            remoteLineSuffix.set("#L")
+        }
+    }
+    pluginsConfiguration.html {
+        // customStyleSheets.from("styles.css")
+        // customAssets.from("logo.svg")
+        footerMessage.set("(c) Bitcoin Dev Kit Developers")
+    }
 }
