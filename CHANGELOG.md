@@ -3,97 +3,134 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.0-beta.7]
+This release updates the `bdk-ffi` libraries to the final `bdk_wallet` `1.0.0` and related libraries (Esplora, Electrum, etc).
+
+#### Added
+
+- `ElectrumClient::server_features` [#641]
+- `ServerFeaturesRes` struct [#641]
+- `ElectrumClient::estimate_fee` [#641]
+- `EsploraClient::get_fee_estimates` [#648]
+- New optional argument sign_options on `Wallet::sign` and `Wallet::finalize_psbt` [#650]
+
+#### Changed
+
+- The full_scan and sync methods on the Electrum and Esplora clients now take a renamed `request` argument [#642]
+- ElectrumClient::broacast was renamed ElectrumClient::transaction_broadcast to mirror the Rust API [#642]
+
+[#641]: https://github.com/bitcoindevkit/bdk-ffi/pull/641
+[#642]: https://github.com/bitcoindevkit/bdk-ffi/pull/642
+[#648]: https://github.com/bitcoindevkit/bdk-ffi/pull/648
+[#650]: https://github.com/bitcoindevkit/bdk-ffi/pull/650
+
 ## [v1.0.0-beta.6]
 This release updates the `bdk-ffi` libraries to the latest `bdk_wallet` `1.0.0-beta.6` and related libraries (Esplora, Electrum, etc). 
 
 #### Added
-- `DescriptorPublicKey::is_multipath` [https://github.com/bitcoindevkit/bdk-ffi/pull/625]
-- `DescriptorPublicKey::master_fingerprint` [https://github.com/bitcoindevkit/bdk-ffi/pull/625]
-- `Descriptor::is_multipath` [https://github.com/bitcoindevkit/bdk-ffi/pull/625]
-- `Descriptor:: to_single_descriptors` [https://github.com/bitcoindevkit/bdk-ffi/pull/625]
-- `EsploraClient::get_height` [https://github.com/bitcoindevkit/bdk-ffi/pull/623]
-- `Psbt::finalize` [https://github.com/bitcoindevkit/bdk-ffi/pull/630]
-- `TxBuilder::add_data` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
-- `TxBuilder::current_height` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
-- `TxBuilder::nlocktime` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
-- `TxBuilder::allow_dust` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
-- `TxBuilder::version` [https://github.com/bitcoindevkit/bdk-ffi/pull/611]
-- `TxBuilder::policy_path` [https://github.com/bitcoindevkit/bdk-ffi/pull/629]
-- `Wallet::cancel_tx` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
-- `Wallet::get_utxo` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
-- `Wallet::derivation_of_spk` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
-- `Wallet::descriptor_checksum` [https://github.com/bitcoindevkit/bdk-ffi/pull/603]
-- `Wallet:: finalize_psbt` [https://github.com/bitcoindevkit/bdk-ffi/pullhttps://github.com/bitcoindevkit/bdk-ffi/pull/604]
+- `DescriptorPublicKey::is_multipath` [#625]
+- `DescriptorPublicKey::master_fingerprint` [#625]
+- `Descriptor::is_multipath` [#625]
+- `Descriptor:: to_single_descriptors` [#625]
+- `EsploraClient::get_height` [#623]
+- `Psbt::finalize` [#630]
+- `TxBuilder::add_data` [#611]
+- `TxBuilder::current_height` [#611]
+- `TxBuilder::nlocktime` [#611]
+- `TxBuilder::allow_dust` [#611]
+- `TxBuilder::version` [#611]
+- `TxBuilder::policy_path` [#629]
+- `Wallet::cancel_tx` [#601]
+- `Wallet::get_utxo` [#601]
+- `Wallet::derivation_of_spk` [#601]
+- `Wallet::descriptor_checksum` [#603]
+- `Wallet:: finalize_psbt` [#604]
 - `Wallet:: policies` [#629]
 
 #### Other
 - Added documentation via docstrings
+
+[#601]: https://github.com/bitcoindevkit/bdk-ffi/pull/601
+[#603]: https://github.com/bitcoindevkit/bdk-ffi/pull/603
+[#604]: https://github.com/bitcoindevkit/bdk-ffi/pull/604
+[#611]: https://github.com/bitcoindevkit/bdk-ffi/pull/611
+[#623]: https://github.com/bitcoindevkit/bdk-ffi/pull/623
+[#625]: https://github.com/bitcoindevkit/bdk-ffi/pull/625
+[#629]: https://github.com/bitcoindevkit/bdk-ffi/pull/629
+[#645]: https://github.com/bitcoindevkit/bdk-ffi/pull/645
 
 ## [v1.0.0-beta.5]
 This release updates the bdk-ffi libraries to the latest bdk_wallet 1.0.0-beta.5 and related libraries (Esplora, Electrum, etc.). 
 
 #### Added
 `EsploraClient`
-    - `get_tx` [https://github.com/bitcoindevkit/bdk-ffi/pull/598]
+    - `get_tx` [#598]
 `Wallet`
-    - `peek_address` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
-    - `next_derivation_index` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
-    - `next_unused_address` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
-    - `mark_used` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
-    - `reveal_addresses_to` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
-    - `list_unused_addresses` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
-    - `descriptor_checksum` [https://github.com/bitcoindevkit/bdk-ffi/pull/603]
-    - `finalize_psbt` [https://github.com/bitcoindevkit/bdk-ffi/pull/604]
-    - `cancel_tx` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
-    - `get_utxo` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
-    - `derivation_of_spk` [https://github.com/bitcoindevkit/bdk-ffi/pull/601]
+    - `peek_address` [#599]
+    - `next_derivation_index` [#599]
+    - `next_unused_address` [#599]
+    - `mark_used` [#599]
+    - `reveal_addresses_to` [#599]
+    - `list_unused_addresses` [#599]
+    - `descriptor_checksum` [#603]
+    - `finalize_psbt` [#604]
+    - `cancel_tx` [#601]
+    - `get_utxo` [#601]
+    - `derivation_of_spk` [#601]
 `TxBuilder`
-    - `set_exact_sequence` [https://github.com/bitcoindevkit/bdk-ffi/pull/600]
+    - `set_exact_sequence` [#600]
 
 #### Changed
 `Wallet`
-    - corrected argument name in `reveal_next_address` [https://github.com/bitcoindevkit/bdk-ffi/pull/599]
+    - corrected argument name in `reveal_next_address` [#599]
     
 #### Removed
 `TxBuilder`
-    - `enable_rbf` [https://github.com/bitcoindevkit/bdk-ffi/pull/600]
+    - `enable_rbf` [#600]
+
+[#598]: https://github.com/bitcoindevkit/bdk-ffi/pull/598
+[#599]: https://github.com/bitcoindevkit/bdk-ffi/pull/599
+[#600]: https://github.com/bitcoindevkit/bdk-ffi/pull/600
+[#601]: https://github.com/bitcoindevkit/bdk-ffi/pull/601
+[#603]: https://github.com/bitcoindevkit/bdk-ffi/pull/603
+[#604]: https://github.com/bitcoindevkit/bdk-ffi/pull/604
 
 ## [v1.0.0-beta.2]
 This release updates the bdk-ffi libraries to the latest bdk_wallet 1.0.0-beta.2 and related libraries (Esplora, Electrum, etc.), as well as uses the latest uniffi-rs library version 0.28.0. The releases now depend on [bitcoin-ffi] for the types that are exposed from the rust-bitcoin org. It also bumps the minimum supported Android API level to 24 (Android Nougat).
 
 #### Added
-  - SQLite persistence through bdk_sqlite [https://github.com/bitcoindevkit/bdk-ffi/pull/544]
-  - The `Address`, `DescriptorSecretKey`, `DescriptorPublicKey`, `Mnemonic`, and `Descriptor` types now have the `toString()` method implemented on them by default [https://github.com/bitcoindevkit/bdk-ffi/pull/551]
-  - `Address.from_script()` [https://github.com/bitcoindevkit/bdk-ffi/pull/554]
-  - New `FromScriptError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - New type `ChangeSet` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - Wallet constructors do not take a persistence path anymore [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - `Wallet.get_balance()` method renamed to `balance()` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - Add `add_global_xpubs()` method on `TxBuilder` [https://github.com/bitcoindevkit/bdk-ffi/pull/574]
-  - Add `wallet.derivation_index` method on Wallet type [https://github.com/bitcoindevkit/bdk-ffi/pull/579]
-  - Add `wallet.persist` method on Wallet type [https://github.com/bitcoindevkit/bdk-ffi/pull/582]
-  - Add `Connection` type [https://github.com/bitcoindevkit/bdk-ffi/pull/582]
+  - SQLite persistence through bdk_sqlite [#544]
+  - The `Address`, `DescriptorSecretKey`, `DescriptorPublicKey`, `Mnemonic`, and `Descriptor` types now have the `toString()` method implemented on them by default [#551]
+  - `Address.from_script()` [#554]
+  - New `FromScriptError` [#561]
+  - New type `ChangeSet` [#561]
+  - Wallet constructors do not take a persistence path anymore [#561]
+  - `Wallet.get_balance()` method renamed to `balance()` [#561]
+  - Add `add_global_xpubs()` method on `TxBuilder` [#574]
+  - Add `wallet.derivation_index` method on Wallet type [#579]
+  - Add `wallet.persist` method on Wallet type [#582]
+  - Add `Connection` type [#582]
 
 #### Changed
-  - `AddressError` is replaced by `AddressParseError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - New variants in `CalculateFeeError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - New variants in `CreateTxError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - New variants in `ParseAmountError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - New variants in `SignerError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - New variants in `WalletCreationError` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - `Wallet.calculate_fee()` returns an `Amount` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
-  - Renamed `Transaction.txid()` to `Transaction.compute_txid()` [https://github.com/bitcoindevkit/bdk-ffi/pull/561]
+  - `AddressError` is replaced by `AddressParseError` [#561]
+  - New variants in `CalculateFeeError` [#561]
+  - New variants in `CreateTxError` [#561]
+  - New variants in `ParseAmountError` [#561]
+  - New variants in `SignerError` [#561]
+  - New variants in `WalletCreationError` [#561]
+  - `Wallet.calculate_fee()` returns an `Amount` [#561]
+  - Renamed `Transaction.txid()` to `Transaction.compute_txid()` [#561]
 
 #### Removed
-  - flat file persistence [https://github.com/bitcoindevkit/bdk-ffi/pull/544]
+  - flat file persistence [#544]
 
-[https://github.com/bitcoindevkit/bdk-ffi/pull/544]: https://github.com/bitcoindevkit/bdk-ffi/pull/544
-[https://github.com/bitcoindevkit/bdk-ffi/pull/551]: https://github.com/bitcoindevkit/bdk-ffi/pull/551
-[https://github.com/bitcoindevkit/bdk-ffi/pull/554]: https://github.com/bitcoindevkit/bdk-ffi/pull/554
-[https://github.com/bitcoindevkit/bdk-ffi/pull/561]: https://github.com/bitcoindevkit/bdk-ffi/pull/561
-[https://github.com/bitcoindevkit/bdk-ffi/pull/574]: https://github.com/bitcoindevkit/bdk-ffi/pull/574
-[https://github.com/bitcoindevkit/bdk-ffi/pull/579]: https://github.com/bitcoindevkit/bdk-ffi/pull/579
-[https://github.com/bitcoindevkit/bdk-ffi/pull/582]: https://github.com/bitcoindevkit/bdk-ffi/pull/582
+[#544]: https://github.com/bitcoindevkit/bdk-ffi/pull/544
+[#551]: https://github.com/bitcoindevkit/bdk-ffi/pull/551
+[#554]: https://github.com/bitcoindevkit/bdk-ffi/pull/554
+[#561]: https://github.com/bitcoindevkit/bdk-ffi/pull/561
+[#574]: https://github.com/bitcoindevkit/bdk-ffi/pull/574
+[#579]: https://github.com/bitcoindevkit/bdk-ffi/pull/579
+[#582]: https://github.com/bitcoindevkit/bdk-ffi/pull/582
 [bitcoin-ffi]: https://github.com/bitcoindevkit/bitcoin-ffi
 
 ## [v1.0.0-alpha.11]
@@ -354,6 +391,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v1.0.0-beta.7]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.6...v1.0.0-beta.7
 [v1.0.0-beta.6]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.5...v1.0.0-beta.6
 [v1.0.0-beta.5]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.2...v1.0.0-beta.5
 [v1.0.0-beta.2]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.11...v1.0.0-beta.2
