@@ -89,13 +89,13 @@ jobs:
           bash ./scripts/build-linux-x86_64.sh
 
       - name: "Download macOS native binaries from previous job"
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: artifact-macos
           path: ./bdk-jvm/lib/src/main/resources/
 
       - name: "Download Windows native libraries from previous job"
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: artifact-windows
           path: ./bdk-jvm/lib/src/main/resources/
