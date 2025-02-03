@@ -53,8 +53,8 @@ class LiveWalletTest {
         for (tx in transactions) {
             val sentAndReceived = wallet.sentAndReceived(tx.transaction)
             println("Transaction: ${tx.transaction.computeTxid()}")
-            println("Sent ${sentAndReceived.sent}")
-            println("Received ${sentAndReceived.received}")
+            println("Sent ${sentAndReceived.sent.toSat()}")
+            println("Received ${sentAndReceived.received.toSat()}")
         }
     }
 
@@ -91,7 +91,7 @@ class LiveWalletTest {
         println("Txid is: ${tx.computeTxid()}")
 
         val txFee: Amount = wallet.calculateFee(tx)
-        println("Tx fee is: ${txFee}")
+        println("Tx fee is: ${txFee.toSat()}")
 
         val feeRate: FeeRate = wallet.calculateFeeRate(tx)
         println("Tx fee rate is: ${feeRate.toSatPerVbCeil()} sat/vB")

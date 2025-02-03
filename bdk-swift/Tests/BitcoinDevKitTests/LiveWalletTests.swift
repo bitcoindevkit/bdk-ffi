@@ -110,7 +110,7 @@ final class LiveWalletTests: XCTestCase {
         let tx: Transaction = try! psbt.extractTx()
         print(tx.computeTxid())
         let fee: Amount = try wallet.calculateFee(tx: tx)
-        print("Transaction Fee: \(fee)")
+        print("Transaction Fee: \(fee.toSat())")
         let feeRate: FeeRate = try wallet.calculateFeeRate(tx: tx)
         print("Transaction Fee Rate: \(feeRate.toSatPerVbCeil()) sat/vB")
 

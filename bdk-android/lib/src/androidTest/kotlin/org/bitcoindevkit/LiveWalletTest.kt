@@ -50,8 +50,8 @@ class LiveWalletTest {
         for (tx in transactions) {
             val sentAndReceived = wallet.sentAndReceived(tx.transaction)
             println("Transaction: ${tx.transaction.computeTxid()}")
-            println("Sent ${sentAndReceived.sent}")
-            println("Received ${sentAndReceived.received}")
+            println("Sent ${sentAndReceived.sent.toSat()}")
+            println("Received ${sentAndReceived.received.toSat()}")
         }
     }
 
