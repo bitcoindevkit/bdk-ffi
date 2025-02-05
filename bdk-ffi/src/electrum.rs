@@ -7,6 +7,7 @@ use bdk_core::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_core::spk_client::FullScanResponse as BdkFullScanResponse;
 use bdk_core::spk_client::SyncRequest as BdkSyncRequest;
 use bdk_core::spk_client::SyncResponse as BdkSyncResponse;
+use bdk_electrum::electrum_client::HeaderNotification as BdkHeaderNotification;
 use bdk_electrum::electrum_client::ServerFeaturesRes as BdkServerFeaturesRes;
 use bdk_electrum::BdkElectrumClient as BdkBdkElectrumClient;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
@@ -111,6 +112,14 @@ impl ElectrumClient {
             .estimate_fee(number as usize)
             .map_err(ElectrumError::from)
     }
+
+    pub fn block_headers_subscribe(&self) -> Result<HeaderNotification, ElectrumError> {
+        self.0
+            .inner
+            .block_headers_subscribe()
+            .map_err(ElectrumError::from)
+            .map(HeaderNotification::from)
+    }
 }
 
 pub struct ServerFeaturesRes {
@@ -131,6 +140,20 @@ impl From<BdkServerFeaturesRes> for ServerFeaturesRes {
             protocol_max: value.protocol_max,
             hash_function: value.hash_function,
             pruning: value.pruning,
+        }
+    }
+}
+
+pub struct HeaderNotification {
+    pub height: u64,
+    pub hash: String,
+}
+
+impl From<BdkHeaderNotification> for HeaderNotification {
+    fn from(value: BdkHeaderNotification) -> HeaderNotification {
+        HeaderNotification {
+            height: value.height as u64,
+            hash: value.header.block_hash().to_string(),
         }
     }
 }

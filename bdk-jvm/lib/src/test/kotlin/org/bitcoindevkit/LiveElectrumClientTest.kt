@@ -52,4 +52,11 @@ class LiveElectrumClientTest {
             actual = features.genesisHash
         )
     }
+
+    @Test
+    fun testBlockSubscription() {
+        val electrumClient: ElectrumClient = ElectrumClient("ssl://electrum.blockstream.info:60002")
+        val headerNotification: HeaderNotification = electrumClient.blockHeadersSubscribe()
+        println("Latest known block:\n$headerNotification")
+    }
 }
