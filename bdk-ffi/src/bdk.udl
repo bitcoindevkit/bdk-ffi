@@ -1120,6 +1120,10 @@ interface EsploraClient {
   /// blocks) and the value is the estimated feerate (in sat/vB).
   [Throws=EsploraError]
   record<u16, f64> get_fee_estimates();
+
+  /// Get the [`BlockHash`] of a specific block height
+  [Throws=EsploraError]
+  string get_block_hash(u32 block_height);
 };
 
 // ------------------------------------------------------------------------

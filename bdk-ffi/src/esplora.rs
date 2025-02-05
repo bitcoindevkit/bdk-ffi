@@ -97,4 +97,11 @@ impl EsploraClient {
     pub fn get_fee_estimates(&self) -> Result<HashMap<u16, f64>, EsploraError> {
         self.0.get_fee_estimates().map_err(EsploraError::from)
     }
+
+    pub fn get_block_hash(&self, block_height: u32) -> Result<String, EsploraError> {
+        self.0
+            .get_block_hash(block_height)
+            .map(|hash| hash.to_string())
+            .map_err(EsploraError::from)
+    }
 }
