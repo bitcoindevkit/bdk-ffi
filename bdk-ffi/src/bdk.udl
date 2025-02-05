@@ -1216,6 +1216,10 @@ interface ElectrumClient {
   /// Estimates the fee required in bitcoin per kilobyte to confirm a transaction in `number` blocks.
   [Throws=ElectrumError]
   f64 estimate_fee(u64 number);
+
+  /// Subscribes to notifications for new block headers, by sending a blockchain.headers.subscribe call.
+  [Throws=ElectrumError]
+  HeaderNotification block_headers_subscribe();
 };
 
 /// Response to an ElectrumClient.server_features request.
@@ -1237,6 +1241,15 @@ dictionary ServerFeaturesRes {
 
   /// Pruned height of the server.
   i64? pruning;
+};
+
+/// Notification of a new block header.
+dictionary HeaderNotification {
+  /// New block height.
+  u64 height;
+
+  /// Newly added header.
+  Header header;
 };
 
 // ------------------------------------------------------------------------
@@ -1315,6 +1328,29 @@ interface Address {
   boolean is_valid_for_network(Network network);
 
   AddressData to_address_data();
+};
+
+/// Bitcoin block header.
+/// Contains all the block’s information except the actual transactions, but including a root of a merkle tree
+/// committing to all transactions in the block.
+dictionary Header {
+  /// Block version, now repurposed for soft fork signalling.
+  i32 version;
+
+  /// Reference to the previous block in the chain.
+  string prev_blockhash;
+
+  /// The root hash of the merkle tree of transactions in the block.
+  string merkle_root;
+
+  /// The timestamp of the block, as claimed by the miner.
+  u32 time;
+
+  /// The target value below which the blockhash must lie.
+  u32 bits;
+
+  /// The nonce, selected to obtain a low enough blockhash.
+  u32 nonce;
 };
 
 interface Transaction {

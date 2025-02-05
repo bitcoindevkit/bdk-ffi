@@ -7,6 +7,7 @@ use crate::{impl_from_core_type, impl_into_core_type};
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
 use bdk_wallet::bitcoin::address::{Address as BdkAddress, AddressData as BdkAddressData};
+use bdk_wallet::bitcoin::blockdata::block::Header as BdkHeader;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
@@ -126,6 +127,28 @@ impl Script {
 
 impl_from_core_type!(BdkScriptBuf, Script);
 impl_into_core_type!(Script, BdkScriptBuf);
+
+pub struct Header {
+    pub version: i32,
+    pub prev_blockhash: String,
+    pub merkle_root: String,
+    pub time: u32,
+    pub bits: u32,
+    pub nonce: u32,
+}
+
+impl From<BdkHeader> for Header {
+    fn from(bdk_header: BdkHeader) -> Self {
+        Header {
+            version: bdk_header.version.to_consensus(),
+            prev_blockhash: bdk_header.prev_blockhash.to_string(),
+            merkle_root: bdk_header.merkle_root.to_string(),
+            time: bdk_header.time,
+            bits: bdk_header.bits.to_consensus(),
+            nonce: bdk_header.nonce,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum AddressData {
