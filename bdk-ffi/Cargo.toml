@@ -22,10 +22,12 @@ bdk_wallet = { version = "1.0.0", features = ["all-keys", "keys-bip39", "rusqlit
 bdk_core = { version = "0.4.1" }
 bdk_esplora = { version = "0.20.1", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
 bdk_electrum = { version = "0.20.1", default-features = false, features = ["use-rustls-ring"] }
+bdk_kyoto = { version = "0.7.1" }
 bitcoin-ffi = { git = "https://github.com/bitcoindevkit/bitcoin-ffi", tag = "v0.1.2" }
 
 uniffi = { version = "=0.28.0" }
 thiserror = "1.0.58"
+tokio = { version = "1.37", default-features = false, features = [ "rt-multi-thread", "sync" ] }
 
 [build-dependencies]
 uniffi = { version = "=0.28.0", features = ["build"] }
