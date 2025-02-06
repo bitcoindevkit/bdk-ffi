@@ -1124,6 +1124,10 @@ interface EsploraClient {
   /// Get the [`BlockHash`] of a specific block height
   [Throws=EsploraError]
   string get_block_hash(u32 block_height);
+
+  /// Get the status of a [`Transaction`] given its [`Txid`].
+  [Throws=EsploraError]
+  TxStatus get_tx_status(string txid);
 };
 
 // ------------------------------------------------------------------------
@@ -1224,6 +1228,13 @@ dictionary SentAndReceivedValues {
 dictionary KeychainAndIndex {
     KeychainKind keychain;
     u32 index;
+};
+
+dictionary TxStatus {
+    boolean confirmed;
+    u32? block_height;
+    string? block_hash;
+    u64? block_time;
 };
 
 // ------------------------------------------------------------------------

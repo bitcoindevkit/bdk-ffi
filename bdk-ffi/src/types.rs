@@ -32,6 +32,8 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 
+use bdk_esplora::esplora_client::api::TxStatus as BdkTxStatus;
+
 #[derive(Debug)]
 pub enum ChainPosition {
     Confirmed {
@@ -543,6 +545,24 @@ impl From<SignOptions> for BdkSignOptions {
             tap_leaves_options: TapLeavesOptions::default(),
             sign_with_tap_internal_key: options.sign_with_tap_internal_key,
             allow_grinding: options.allow_grinding,
+        }
+    }
+}
+
+pub struct TxStatus {
+    pub confirmed: bool,
+    pub block_height: Option<u32>,
+    pub block_hash: Option<String>,
+    pub block_time: Option<u64>,
+}
+
+impl From<BdkTxStatus> for TxStatus {
+    fn from(status: BdkTxStatus) -> Self {
+        TxStatus {
+            confirmed: status.confirmed,
+            block_height: status.block_height,
+            block_hash: status.block_hash.map(|h| h.to_string()),
+            block_time: status.block_time,
         }
     }
 }
