@@ -261,9 +261,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin"
-version = "0.32.2"
+version = "0.32.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea507acc1cd80fc084ace38544bbcf7ced7c2aa65b653b102de0ce718df668f6"
+checksum = "ce6bc65742dea50536e35ad42492b234c27904a27f0abdcbce605015cb4ea026"
 dependencies = [
  "base58ck",
  "base64 0.21.7",
@@ -281,7 +281,7 @@ dependencies = [
 [[package]]
 name = "bitcoin-ffi"
 version = "0.1.2"
-source = "git+https://github.com/bitcoindevkit/bitcoin-ffi?tag=v0.1.2#402a23a94424c9ca554874d58499d5b5709fd593"
+source = "git+https://github.com/reez/bitcoin-ffi.git?branch=t4#4583cb2cacc543384d8eaf602e62316962b17f3f"
 dependencies = [
  "bitcoin",
  "thiserror",
