@@ -43,6 +43,32 @@ pub enum ChainPosition {
     },
 }
 
+impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
+    fn from(chain_position: BdkChainPosition<BdkConfirmationBlockTime>) -> Self {
+        match chain_position {
+            BdkChainPosition::Confirmed {
+                anchor,
+                transitively,
+            } => {
+                let block_id = BlockId {
+                    height: anchor.block_id.height,
+                    hash: anchor.block_id.hash.to_string(),
+                };
+                ChainPosition::Confirmed {
+                    confirmation_block_time: ConfirmationBlockTime {
+                        block_id,
+                        confirmation_time: anchor.confirmation_time,
+                    },
+                    transitively: transitively.map(|t| t.to_string()),
+                }
+            }
+            BdkChainPosition::Unconfirmed { last_seen } => ChainPosition::Unconfirmed {
+                timestamp: last_seen,
+            },
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ConfirmationBlockTime {
     pub block_id: BlockId,
@@ -139,6 +165,8 @@ pub struct LocalOutput {
     pub txout: TxOut,
     pub keychain: KeychainKind,
     pub is_spent: bool,
+    pub derivation_index: u32,
+    pub chain_position: ChainPosition,
 }
 
 impl From<BdkLocalOutput> for LocalOutput {
@@ -154,6 +182,8 @@ impl From<BdkLocalOutput> for LocalOutput {
             },
             keychain: local_utxo.keychain,
             is_spent: local_utxo.is_spent,
+            derivation_index: local_utxo.derivation_index,
+            chain_position: local_utxo.chain_position.into(),
         }
     }
 }
