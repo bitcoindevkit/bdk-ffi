@@ -32,6 +32,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 
+use bdk_esplora::esplora_client::api::Tx as BdkTx;
 use bdk_esplora::esplora_client::api::TxStatus as BdkTxStatus;
 
 #[derive(Debug)]
@@ -549,6 +550,7 @@ impl From<SignOptions> for BdkSignOptions {
     }
 }
 
+#[derive(Debug)]
 pub struct TxStatus {
     pub confirmed: bool,
     pub block_height: Option<u32>,
@@ -563,6 +565,31 @@ impl From<BdkTxStatus> for TxStatus {
             block_height: status.block_height,
             block_hash: status.block_hash.map(|h| h.to_string()),
             block_time: status.block_time,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Tx {
+    pub txid: String,
+    pub version: i32,
+    pub locktime: u32,
+    pub size: u64,
+    pub weight: u64,
+    pub fee: u64,
+    pub status: TxStatus,
+}
+
+impl From<BdkTx> for Tx {
+    fn from(tx: BdkTx) -> Self {
+        Self {
+            txid: tx.txid.to_string(),
+            version: tx.version,
+            locktime: tx.locktime,
+            size: tx.size as u64,
+            weight: tx.weight,
+            fee: tx.fee,
+            status: tx.status.into(),
         }
     }
 }

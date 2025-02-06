@@ -1128,6 +1128,10 @@ interface EsploraClient {
   /// Get the status of a [`Transaction`] given its [`Txid`].
   [Throws=EsploraError]
   TxStatus get_tx_status(string txid);
+
+  /// Get transaction info given it's [`Txid`].
+  [Throws=EsploraError]
+  Tx? get_tx_info(string txid);
 };
 
 // ------------------------------------------------------------------------
@@ -1235,6 +1239,16 @@ dictionary TxStatus {
     u32? block_height;
     string? block_hash;
     u64? block_time;
+};
+
+dictionary Tx {
+    string txid;
+    i32 version;
+    u32 locktime;
+    u64 size;
+    u64 weight;
+    u64 fee;
+    TxStatus status;
 };
 
 // ------------------------------------------------------------------------

@@ -73,6 +73,7 @@ use crate::types::SignOptions;
 use crate::types::SyncRequest;
 use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
+use crate::types::Tx;
 use crate::types::TxStatus;
 use crate::types::Update;
 use crate::wallet::Wallet;
