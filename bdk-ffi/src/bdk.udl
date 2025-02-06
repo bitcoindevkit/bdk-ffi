@@ -377,6 +377,12 @@ dictionary LocalOutput {
 
   /// Whether this UTXO is spent or not
   boolean is_spent;
+
+  /// The derivation index for the script pubkey in the wallet
+  u32 derivation_index;
+
+  /// The position of the output in the blockchain.
+  ChainPosition chain_position;
 };
 
 /// Bitcoin transaction output.

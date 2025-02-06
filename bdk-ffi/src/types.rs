@@ -46,26 +46,9 @@ pub enum ChainPosition {
     },
 }
 
-#[derive(Debug)]
-pub struct ConfirmationBlockTime {
-    pub block_id: BlockId,
-    pub confirmation_time: u64,
-}
-
-#[derive(Debug)]
-pub struct BlockId {
-    pub height: u32,
-    pub hash: String,
-}
-
-pub struct CanonicalTx {
-    pub transaction: Arc<Transaction>,
-    pub chain_position: ChainPosition,
-}
-
-impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for CanonicalTx {
-    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>) -> Self {
-        let chain_position = match tx.chain_position {
+impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
+    fn from(chain_position: BdkChainPosition<BdkConfirmationBlockTime>) -> Self {
+        match chain_position {
             BdkChainPosition::Confirmed {
                 anchor,
                 transitively,
@@ -85,11 +68,32 @@ impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for
             BdkChainPosition::Unconfirmed { last_seen } => ChainPosition::Unconfirmed {
                 timestamp: last_seen,
             },
-        };
+        }
+    }
+}
 
+#[derive(Debug)]
+pub struct ConfirmationBlockTime {
+    pub block_id: BlockId,
+    pub confirmation_time: u64,
+}
+
+#[derive(Debug)]
+pub struct BlockId {
+    pub height: u32,
+    pub hash: String,
+}
+
+pub struct CanonicalTx {
+    pub transaction: Arc<Transaction>,
+    pub chain_position: ChainPosition,
+}
+
+impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for CanonicalTx {
+    fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>) -> Self {
         CanonicalTx {
             transaction: Arc::new(Transaction::from(tx.tx_node.tx.as_ref().clone())),
-            chain_position,
+            chain_position: tx.chain_position.into(),
         }
     }
 }
@@ -142,6 +146,8 @@ pub struct LocalOutput {
     pub txout: TxOut,
     pub keychain: KeychainKind,
     pub is_spent: bool,
+    pub derivation_index: u32,
+    pub chain_position: ChainPosition,
 }
 
 impl From<BdkLocalOutput> for LocalOutput {
@@ -157,6 +163,8 @@ impl From<BdkLocalOutput> for LocalOutput {
             },
             keychain: local_utxo.keychain,
             is_spent: local_utxo.is_spent,
+            derivation_index: local_utxo.derivation_index,
+            chain_position: local_utxo.chain_position.into(),
         }
     }
 }
