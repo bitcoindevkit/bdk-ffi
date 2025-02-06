@@ -1,5 +1,6 @@
 use crate::bitcoin::Transaction;
 use crate::error::EsploraError;
+use crate::types::TxStatus;
 use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
 
@@ -96,5 +97,13 @@ impl EsploraClient {
 
     pub fn get_fee_estimates(&self) -> Result<HashMap<u16, f64>, EsploraError> {
         self.0.get_fee_estimates().map_err(EsploraError::from)
+    }
+
+    pub fn get_tx_status(&self, txid: String) -> Result<TxStatus, EsploraError> {
+        let txid = Txid::from_str(&txid)?;
+        self.0
+            .get_tx_status(&txid)
+            .map(TxStatus::from)
+            .map_err(EsploraError::from)
     }
 }
