@@ -10,11 +10,13 @@ mod types;
 mod wallet;
 
 use crate::bitcoin::Address;
+use crate::bitcoin::AddressData;
 use crate::bitcoin::FinalizedPsbtResult;
 use crate::bitcoin::Psbt;
 use crate::bitcoin::Transaction;
 use crate::bitcoin::TxIn;
 use crate::bitcoin::TxOut;
+use crate::bitcoin::WitnessProgram;
 use crate::descriptor::Descriptor;
 use crate::electrum::ElectrumClient;
 use crate::electrum::ServerFeaturesRes;

@@ -6,13 +6,14 @@ use crate::error::{
 use bitcoin_ffi::OutPoint;
 use bitcoin_ffi::Script;
 
-use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
+use bdk_wallet::bitcoin::address::NetworkChecked;
+use bdk_wallet::bitcoin::address::NetworkUnchecked;
+use bdk_wallet::bitcoin::address::{Address as BdkAddress, AddressData as BdkAddressData};
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
-use bdk_wallet::bitcoin::Address as BdkAddress;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
@@ -25,6 +26,19 @@ use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+
+#[derive(Debug)]
+pub enum AddressData {
+    P2pkh { pubkey_hash: String },
+    P2sh { script_hash: String },
+    Segwit { witness_program: WitnessProgram },
+}
+
+#[derive(Debug)]
+pub struct WitnessProgram {
+    pub version: u8,
+    pub program: Vec<u8>,
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Address(BdkAddress<NetworkChecked>);
@@ -57,6 +71,25 @@ impl Address {
             unchecked_address.is_valid_for_network(network)
         } else {
             false
+        }
+    }
+
+    pub fn to_address_data(&self) -> AddressData {
+        match self.0.to_address_data() {
+            BdkAddressData::P2pkh { pubkey_hash } => AddressData::P2pkh {
+                pubkey_hash: pubkey_hash.to_string(),
+            },
+            BdkAddressData::P2sh { script_hash } => AddressData::P2sh {
+                script_hash: script_hash.to_string(),
+            },
+            BdkAddressData::Segwit { witness_program } => AddressData::Segwit {
+                witness_program: WitnessProgram {
+                    version: witness_program.version().to_num(),
+                    program: witness_program.program().as_bytes().to_vec(),
+                },
+            },
+            // AddressData is marked #[non_exhaustive] in bitcoin crate
+            _ => unimplemented!("Unsupported address type"),
         }
     }
 }
@@ -594,5 +627,35 @@ mod tests {
             bitcoin_regtest_p2sh_address.is_valid_for_network(Network::Regtest),
             "Address should be valid for Regtest"
         );
+    }
+
+    #[test]
+    fn test_to_address_data() {
+        // P2PKH address
+        let p2pkh = Address::new(
+            "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2".to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        let p2pkh_data = p2pkh.to_address_data();
+        println!("P2PKH data: {:#?}", p2pkh_data);
+
+        // P2SH address
+        let p2sh = Address::new(
+            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy".to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        let p2sh_data = p2sh.to_address_data();
+        println!("P2SH data: {:#?}", p2sh_data);
+
+        // Segwit address (P2WPKH)
+        let segwit = Address::new(
+            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4".to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        let segwit_data = segwit.to_address_data();
+        println!("Segwit data: {:#?}", segwit_data);
     }
 }

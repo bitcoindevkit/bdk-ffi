@@ -1257,6 +1257,18 @@ dictionary Tx {
     TxStatus status;
 };
 
+dictionary WitnessProgram {
+    u8 version;
+    sequence<u8> program;
+};
+
+[Enum]
+interface AddressData {
+    P2pkh(string pubkey_hash);
+    P2sh(string script_hash);
+    Segwit(WitnessProgram witness_program);
+};
+
 // ------------------------------------------------------------------------
 // bdk_wallet crate - bitcoin re-exports
 // ------------------------------------------------------------------------
@@ -1282,6 +1294,8 @@ interface Address {
   string to_qr_uri();
 
   boolean is_valid_for_network(Network network);
+
+  AddressData to_address_data();
 };
 
 interface Transaction {
