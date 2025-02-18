@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         rust:
-          - version: 1.77.1
+          - version: 1.84.1
             clippy: true
     steps:
       - name: "Checkout"

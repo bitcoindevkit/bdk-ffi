@@ -5,7 +5,7 @@ ${PYBIN}/python --version
 ${PYBIN}/pip install -r requirements.txt
 
 cd ../bdk-ffi/
-rustup default 1.77.1
+rustup default 1.84.1
 
 echo "Generating native binaries..."
 cargo build --profile release-smaller

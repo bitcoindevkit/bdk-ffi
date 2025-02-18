@@ -15,7 +15,7 @@ STATIC_LIB_NAME="lib${NAME}.a"
 NEW_HEADER_DIR="../bdk-ffi/target/include"
 
 # set required rust version and install component and targets
-rustup default 1.77.1
+rustup default 1.84.1
 rustup component add rust-src
 rustup target add aarch64-apple-ios      # iOS arm64
 rustup target add x86_64-apple-ios       # iOS x86_64
