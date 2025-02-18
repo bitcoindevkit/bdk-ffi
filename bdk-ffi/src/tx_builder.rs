@@ -1,9 +1,9 @@
-use crate::bitcoin::Psbt;
+use crate::bitcoin::{Psbt, Script};
 use crate::error::CreateTxError;
 use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
-use bitcoin_ffi::{Amount, FeeRate, Script};
+use bitcoin_ffi::{Amount, FeeRate};
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;

@@ -2,9 +2,9 @@ use crate::error::PsbtFinalizeError;
 use crate::error::{
     AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
 };
+use crate::{impl_from_core_type, impl_into_core_type};
 
 use bitcoin_ffi::OutPoint;
-use bitcoin_ffi::Script;
 
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
@@ -16,6 +16,7 @@ use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
+use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
@@ -26,6 +27,23 @@ use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+
+#[derive(Clone, Debug)]
+pub struct Script(pub BdkScriptBuf);
+
+impl Script {
+    pub fn new(raw_output_script: Vec<u8>) -> Self {
+        let script: BdkScriptBuf = raw_output_script.into();
+        Script(script)
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.0.to_bytes()
+    }
+}
+
+impl_from_core_type!(BdkScriptBuf, Script);
+impl_into_core_type!(Script, BdkScriptBuf);
 
 #[derive(Debug)]
 pub enum AddressData {

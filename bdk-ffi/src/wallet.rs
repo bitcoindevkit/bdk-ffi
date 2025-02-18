@@ -1,4 +1,4 @@
-use crate::bitcoin::{Psbt, Transaction};
+use crate::bitcoin::{Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
@@ -10,7 +10,7 @@ use crate::types::{
     Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, Update,
 };
 
-use bitcoin_ffi::{Amount, FeeRate, OutPoint, Script};
+use bitcoin_ffi::{Amount, FeeRate, OutPoint};
 
 use bdk_wallet::bitcoin::{Network, Txid};
 use bdk_wallet::rusqlite::Connection as BdkConnection;

@@ -1360,12 +1360,15 @@ dictionary TxIn {
   sequence<sequence<u8>> witness;
 };
 
+interface Script {
+  constructor(sequence<u8> raw_output_script);
+
+  sequence<u8> to_bytes();
+};
+
 // ------------------------------------------------------------------------
 // types defined in external crate bitcoin-ffi
 // ------------------------------------------------------------------------
-
-[ExternalInterface="bitcoin_ffi"]
-typedef extern Script;
 
 [External="bitcoin_ffi"]
 typedef extern Network;
