@@ -84,12 +84,12 @@ use crate::wallet::Wallet;
 
 use bitcoin_ffi::Amount;
 use bitcoin_ffi::FeeRate;
-use bitcoin_ffi::Network;
 use bitcoin_ffi::OutPoint;
 
 use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::ChangeSet;
 use bdk_wallet::KeychainKind;
+use bdk_wallet::bitcoin::Network;
 
 uniffi::include_scaffolding!("bdk");
