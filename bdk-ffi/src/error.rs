@@ -5,6 +5,7 @@ use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::Error as BdkEsploraError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
 use bdk_wallet::bitcoin::address::{FromScriptError as BdkFromScriptError, ParseError};
+use bdk_wallet::bitcoin::amount::ParseAmountError as BdkParseAmountError;
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk_wallet::bitcoin::hashes::hex::HexToArrayError as BdkHexToArrayError;
@@ -532,6 +533,28 @@ pub enum MiniscriptError {
 
     #[error("unprintable character: {byte}")]
     Unprintable { byte: u8 },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ParseAmountError {
+    #[error("amount out of range")]
+    OutOfRange,
+
+    #[error("amount has a too high precision")]
+    TooPrecise,
+
+    #[error("the input has too few digits")]
+    MissingDigits,
+
+    #[error("the input is too large")]
+    InputTooLarge,
+
+    #[error("invalid character: {error_message}")]
+    InvalidCharacter { error_message: String },
+
+    // Has to handle non-exhaustive
+    #[error("unknown parse amount error")]
+    OtherParseAmountErr,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1281,6 +1304,21 @@ impl From<bdk_wallet::miniscript::Error> for MiniscriptError {
                 char: c.to_string(),
             },
             BdkMiniscriptError::Unprintable(b) => MiniscriptError::Unprintable { byte: b },
+        }
+    }
+}
+
+impl From<BdkParseAmountError> for ParseAmountError {
+    fn from(error: BdkParseAmountError) -> Self {
+        match error {
+            BdkParseAmountError::OutOfRange(_) => ParseAmountError::OutOfRange,
+            BdkParseAmountError::TooPrecise(_) => ParseAmountError::TooPrecise,
+            BdkParseAmountError::MissingDigits(_) => ParseAmountError::MissingDigits,
+            BdkParseAmountError::InputTooLarge(_) => ParseAmountError::InputTooLarge,
+            BdkParseAmountError::InvalidCharacter(c) => ParseAmountError::InvalidCharacter {
+                error_message: c.to_string(),
+            },
+            _ => ParseAmountError::OtherParseAmountErr,
         }
     }
 }

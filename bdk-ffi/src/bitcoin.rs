@@ -1,7 +1,7 @@
-use crate::error::PsbtFinalizeError;
 use crate::error::{
     AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
 };
+use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::{impl_from_core_type, impl_into_core_type};
 
 use bitcoin_ffi::OutPoint;
@@ -14,6 +14,7 @@ use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
+use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
@@ -27,6 +28,31 @@ use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Amount(pub BdkAmount);
+
+impl Amount {
+    pub fn from_sat(sat: u64) -> Self {
+        Amount(BdkAmount::from_sat(sat))
+    }
+
+    pub fn from_btc(btc: f64) -> Result<Self, ParseAmountError> {
+        let bitcoin_amount = BdkAmount::from_btc(btc).map_err(ParseAmountError::from)?;
+        Ok(Amount(bitcoin_amount))
+    }
+
+    pub fn to_sat(&self) -> u64 {
+        self.0.to_sat()
+    }
+
+    pub fn to_btc(&self) -> f64 {
+        self.0.to_btc()
+    }
+}
+
+impl_from_core_type!(BdkAmount, Amount);
+impl_into_core_type!(Amount, BdkAmount);
 
 #[derive(Clone, Debug)]
 pub struct Script(pub BdkScriptBuf);

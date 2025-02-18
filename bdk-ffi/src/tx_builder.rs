@@ -1,9 +1,9 @@
-use crate::bitcoin::{Psbt, Script};
+use crate::bitcoin::{Amount, Psbt, Script};
 use crate::error::CreateTxError;
 use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
-use bitcoin_ffi::{Amount, FeeRate};
+use bitcoin_ffi::FeeRate;
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
@@ -408,6 +408,7 @@ mod tests {
         descriptor::Descriptor, esplora::EsploraClient, store::Connection,
         types::FullScanScriptInspector, wallet::Wallet,
     };
+    use crate::bitcoin::Amount;
 
     struct FullScanInspector;
     impl FullScanScriptInspector for FullScanInspector {
@@ -438,7 +439,7 @@ mod tests {
             match crate::tx_builder::TxBuilder::new()
                 .add_recipient(
                     &(*address.script_pubkey()).to_owned(),
-                    Arc::new(bitcoin_ffi::Amount::from_sat(1000)),
+                    Arc::new(Amount::from_sat(1000)),
                 )
                 .do_not_spend_change()
                 .policy_path(int_path, bdk_wallet::KeychainKind::Internal)

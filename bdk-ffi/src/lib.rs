@@ -37,6 +37,7 @@ use crate::error::ExtractTxError;
 use crate::error::FromScriptError;
 use crate::error::LoadWithPersistError;
 use crate::error::MiniscriptError;
+use crate::error::ParseAmountError;
 use crate::error::PersistenceError;
 use crate::error::PsbtError;
 use crate::error::PsbtFinalizeError;
@@ -81,15 +82,15 @@ use crate::types::Tx;
 use crate::types::TxStatus;
 use crate::types::Update;
 use crate::wallet::Wallet;
+use crate::bitcoin::Amount;
 
-use bitcoin_ffi::Amount;
 use bitcoin_ffi::FeeRate;
 use bitcoin_ffi::OutPoint;
 
+use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::ChangeSet;
 use bdk_wallet::KeychainKind;
-use bdk_wallet::bitcoin::Network;
 
 uniffi::include_scaffolding!("bdk");

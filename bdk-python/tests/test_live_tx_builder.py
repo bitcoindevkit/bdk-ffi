@@ -8,8 +8,6 @@ from bdkpython import Address
 from bdkpython import Psbt
 from bdkpython import TxBuilder
 from bdkpython import Connection
-from bdkpython.bitcoin import Network
-from bdkpython.bitcoin import Amount
 from bdkpython.bitcoin import FeeRate
 
 import unittest
