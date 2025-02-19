@@ -12,6 +12,8 @@ mod wallet;
 
 use crate::bitcoin::Address;
 use crate::bitcoin::AddressData;
+use crate::bitcoin::Amount;
+use crate::bitcoin::FeeRate;
 use crate::bitcoin::FinalizedPsbtResult;
 use crate::bitcoin::Psbt;
 use crate::bitcoin::Script;
@@ -34,6 +36,7 @@ use crate::error::DescriptorKeyError;
 use crate::error::ElectrumError;
 use crate::error::EsploraError;
 use crate::error::ExtractTxError;
+use crate::error::FeeRateError;
 use crate::error::FromScriptError;
 use crate::error::LoadWithPersistError;
 use crate::error::MiniscriptError;
@@ -82,9 +85,7 @@ use crate::types::Tx;
 use crate::types::TxStatus;
 use crate::types::Update;
 use crate::wallet::Wallet;
-use crate::bitcoin::Amount;
 
-use bitcoin_ffi::FeeRate;
 use bitcoin_ffi::OutPoint;
 
 use bdk_wallet::bitcoin::Network;

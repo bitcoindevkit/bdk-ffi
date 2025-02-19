@@ -1,9 +1,7 @@
-use crate::bitcoin::{Amount, Psbt, Script};
+use crate::bitcoin::{Amount, FeeRate, Psbt, Script};
 use crate::error::CreateTxError;
 use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
-
-use bitcoin_ffi::FeeRate;
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
@@ -404,11 +402,11 @@ mod tests {
 
     use bitcoin_ffi::Network;
 
+    use crate::bitcoin::Amount;
     use crate::{
         descriptor::Descriptor, esplora::EsploraClient, store::Connection,
         types::FullScanScriptInspector, wallet::Wallet,
     };
-    use crate::bitcoin::Amount;
 
     struct FullScanInspector;
     impl FullScanScriptInspector for FullScanInspector {

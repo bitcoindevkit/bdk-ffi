@@ -1,5 +1,5 @@
 use crate::error::{
-    AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
+    AddressParseError, FeeRateError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::{impl_from_core_type, impl_into_core_type};
@@ -15,6 +15,7 @@ use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
+use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
@@ -28,6 +29,38 @@ use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+
+#[derive(Clone, Debug)]
+pub struct FeeRate(pub BdkFeeRate);
+
+impl FeeRate {
+    pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
+        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
+        match fee_rate {
+            Some(fee_rate) => Ok(FeeRate(fee_rate)),
+            None => Err(FeeRateError::ArithmeticOverflow),
+        }
+    }
+
+    pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
+        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
+    }
+
+    pub fn to_sat_per_vb_ceil(&self) -> u64 {
+        self.0.to_sat_per_vb_ceil()
+    }
+
+    pub fn to_sat_per_vb_floor(&self) -> u64 {
+        self.0.to_sat_per_vb_floor()
+    }
+
+    pub fn to_sat_per_kwu(&self) -> u64 {
+        self.0.to_sat_per_kwu()
+    }
+}
+
+impl_from_core_type!(BdkFeeRate, FeeRate);
+impl_into_core_type!(FeeRate, BdkFeeRate);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Amount(pub BdkAmount);

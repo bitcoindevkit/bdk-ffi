@@ -158,6 +158,11 @@ interface ExtractTxError {
 };
 
 [Error]
+interface FeeRateError {
+  ArithmeticOverflow();
+};
+
+[Error]
 interface FromScriptError {
   UnrecognizedScript();
   WitnessProgram(string error_message);
@@ -1397,18 +1402,26 @@ interface Amount {
   f64 to_btc();
 };
 
+interface FeeRate {
+  [Name=from_sat_per_vb, Throws=FeeRateError]
+  constructor(u64 sat_per_vb);
+
+  [Name=from_sat_per_kwu]
+  constructor(u64 sat_per_kwu);
+
+  u64 to_sat_per_vb_ceil();
+
+  u64 to_sat_per_vb_floor();
+
+  u64 to_sat_per_kwu();
+};
+
 // ------------------------------------------------------------------------
 // types defined in external crate bitcoin-ffi
 // ------------------------------------------------------------------------
-
-[ExternalInterface="bitcoin_ffi"]
-typedef extern FeeRate;
 
 [External="bitcoin_ffi"]
 typedef extern Txid;
 
 [External="bitcoin_ffi"]
 typedef extern OutPoint;
-
-[ExternalInterface="bitcoin_ffi"]
-typedef extern FeeRateError;
