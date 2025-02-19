@@ -2,6 +2,7 @@ from bdkpython import Descriptor
 from bdkpython import Mnemonic
 from bdkpython import DescriptorSecretKey
 from bdkpython import KeychainKind
+from bdkpython import Network
 
 import unittest
 

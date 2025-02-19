@@ -3,6 +3,7 @@ from bdkpython import Wallet
 from bdkpython import KeychainKind
 from bdkpython import Connection
 from bdkpython import AddressInfo
+from bdkpython import Network
 
 import unittest
 import os

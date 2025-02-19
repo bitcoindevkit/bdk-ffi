@@ -265,7 +265,6 @@ impl TxBuilder {
                 .map_err(CreateTxError::from)?;
         }
         if !self.unspendable.is_empty() {
-            // let bdk_unspendable: Vec<BdkOutPoint> = self.unspendable.clone().into_iter().collect();
             tx_builder.unspendable(self.unspendable.clone());
         }
         if self.manually_selected_only {
