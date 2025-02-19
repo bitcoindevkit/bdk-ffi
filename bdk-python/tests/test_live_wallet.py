@@ -7,6 +7,7 @@ from bdkpython import Address
 from bdkpython import Psbt
 from bdkpython import TxBuilder
 from bdkpython import Connection
+from bdkpython import Network
 
 import unittest
 import os
