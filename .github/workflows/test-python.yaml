@@ -36,10 +36,10 @@ jobs:
         with:
           submodules: true
 
-      - name: "Install Rust 1.77.1"
+      - name: "Install Rust 1.84.1"
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.77.1
+          toolchain: 1.84.1
           
       - name: "Generate bdk.py and binaries"
         run: bash ./scripts/generate-linux.sh

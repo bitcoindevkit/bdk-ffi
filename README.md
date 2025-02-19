@@ -37,7 +37,7 @@ just publishlocal
 ```
 
 ## Minimum Supported Rust Version (MSRV)
-This library should compile with any combination of features with Rust 1.77.1.
+This library should compile with any combination of features with Rust 1.84.1.
 
 ## Contributing
 To add new structs and functions, see the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/) and the [uniffi-examples](https://thunderbiscuit.github.io/uniffi-examples/) repository.
