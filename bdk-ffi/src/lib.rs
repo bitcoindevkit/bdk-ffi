@@ -15,6 +15,7 @@ use crate::bitcoin::AddressData;
 use crate::bitcoin::Amount;
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::FinalizedPsbtResult;
+use crate::bitcoin::OutPoint;
 use crate::bitcoin::Psbt;
 use crate::bitcoin::Script;
 use crate::bitcoin::Transaction;
@@ -85,8 +86,6 @@ use crate::types::Tx;
 use crate::types::TxStatus;
 use crate::types::Update;
 use crate::wallet::Wallet;
-
-use bitcoin_ffi::OutPoint;
 
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;

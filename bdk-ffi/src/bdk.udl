@@ -1416,12 +1416,7 @@ interface FeeRate {
   u64 to_sat_per_kwu();
 };
 
-// ------------------------------------------------------------------------
-// types defined in external crate bitcoin-ffi
-// ------------------------------------------------------------------------
-
-[External="bitcoin_ffi"]
-typedef extern Txid;
-
-[External="bitcoin_ffi"]
-typedef extern OutPoint;
+dictionary OutPoint {
+  string txid;
+  u32 vout;
+};

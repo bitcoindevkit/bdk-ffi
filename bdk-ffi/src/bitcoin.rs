@@ -4,8 +4,6 @@ use crate::error::{
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::{impl_from_core_type, impl_into_core_type};
 
-use bitcoin_ffi::OutPoint;
-
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
 use bdk_wallet::bitcoin::address::{Address as BdkAddress, AddressData as BdkAddressData};
@@ -22,6 +20,7 @@ use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
+use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Txid};
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
@@ -29,6 +28,30 @@ use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct OutPoint {
+    pub txid: String,
+    pub vout: u32,
+}
+
+impl From<&BdkOutPoint> for OutPoint {
+    fn from(outpoint: &BdkOutPoint) -> Self {
+        OutPoint {
+            txid: outpoint.txid.to_string(),
+            vout: outpoint.vout,
+        }
+    }
+}
+
+impl From<OutPoint> for BdkOutPoint {
+    fn from(outpoint: OutPoint) -> Self {
+        BdkOutPoint {
+            txid: Txid::from_str(&outpoint.txid).unwrap(),
+            vout: outpoint.vout,
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct FeeRate(pub BdkFeeRate);
@@ -351,7 +374,7 @@ impl From<&BdkTxIn> for TxIn {
     fn from(tx_in: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
-                txid: tx_in.previous_output.txid,
+                txid: tx_in.previous_output.txid.to_string(),
                 vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script(tx_in.script_sig.clone())),

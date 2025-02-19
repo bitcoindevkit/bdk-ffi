@@ -1,4 +1,4 @@
-use bitcoin_ffi::OutPoint;
+use crate::OutPoint;
 
 use bdk_core::bitcoin::script::PushBytesError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
@@ -912,6 +912,7 @@ impl From<BdkCalculateFeeError> for CalculateFeeError {
     fn from(error: BdkCalculateFeeError) -> Self {
         match error {
             BdkCalculateFeeError::MissingTxOut(out_points) => {
+                let out_points = out_points.iter().map(OutPoint::from).collect();
                 CalculateFeeError::MissingTxOut { out_points }
             }
             BdkCalculateFeeError::NegativeFee(signed_amount) => CalculateFeeError::NegativeFee {

@@ -1,4 +1,4 @@
-use crate::bitcoin::{Amount, FeeRate, Psbt, Script};
+use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script};
 use crate::error::CreateTxError;
 use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
@@ -8,13 +8,12 @@ use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
-use bdk_wallet::bitcoin::{OutPoint, Sequence, Txid};
+use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
 use bdk_wallet::ChangeSpendPolicy;
 use bdk_wallet::KeychainKind;
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -23,8 +22,8 @@ use std::sync::Arc;
 pub struct TxBuilder {
     pub(crate) add_global_xpubs: bool,
     pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
-    pub(crate) utxos: Vec<OutPoint>,
-    pub(crate) unspendable: HashSet<OutPoint>,
+    pub(crate) utxos: Vec<BdkOutPoint>,
+    pub(crate) unspendable: Vec<BdkOutPoint>,
     pub(crate) internal_policy_path: Option<BTreeMap<String, Vec<usize>>>,
     pub(crate) external_policy_path: Option<BTreeMap<String, Vec<usize>>>,
     pub(crate) change_policy: ChangeSpendPolicy,
@@ -47,7 +46,7 @@ impl TxBuilder {
             add_global_xpubs: false,
             recipients: Vec::new(),
             utxos: Vec::new(),
-            unspendable: HashSet::new(),
+            unspendable: Vec::new(),
             internal_policy_path: None,
             external_policy_path: None,
             change_policy: ChangeSpendPolicy::ChangeAllowed,
@@ -94,17 +93,21 @@ impl TxBuilder {
     }
 
     pub(crate) fn add_unspendable(&self, unspendable: OutPoint) -> Arc<Self> {
-        let mut unspendable_hash_set = self.unspendable.clone();
-        unspendable_hash_set.insert(unspendable);
+        let mut unspendable_vec: Vec<BdkOutPoint> = self.unspendable.clone();
+        unspendable_vec.push(unspendable.into());
+
         Arc::new(TxBuilder {
-            unspendable: unspendable_hash_set,
+            unspendable: unspendable_vec,
             ..self.clone()
         })
     }
 
     pub(crate) fn unspendable(&self, unspendable: Vec<OutPoint>) -> Arc<Self> {
+        let new_unspendable_vec: Vec<BdkOutPoint> =
+            unspendable.into_iter().map(BdkOutPoint::from).collect();
+
         Arc::new(TxBuilder {
-            unspendable: unspendable.into_iter().collect(),
+            unspendable: new_unspendable_vec,
             ..self.clone()
         })
     }
@@ -113,9 +116,9 @@ impl TxBuilder {
         self.add_utxos(vec![outpoint])
     }
 
-    pub(crate) fn add_utxos(&self, mut outpoints: Vec<OutPoint>) -> Arc<Self> {
-        let mut utxos = self.utxos.to_vec();
-        utxos.append(&mut outpoints);
+    pub(crate) fn add_utxos(&self, outpoints: Vec<OutPoint>) -> Arc<Self> {
+        let mut utxos: Vec<BdkOutPoint> = self.utxos.clone();
+        utxos.extend(outpoints.into_iter().map(BdkOutPoint::from));
         Arc::new(TxBuilder {
             utxos,
             ..self.clone()
@@ -262,8 +265,8 @@ impl TxBuilder {
                 .map_err(CreateTxError::from)?;
         }
         if !self.unspendable.is_empty() {
-            let bdk_unspendable: Vec<OutPoint> = self.unspendable.clone().into_iter().collect();
-            tx_builder.unspendable(bdk_unspendable);
+            // let bdk_unspendable: Vec<BdkOutPoint> = self.unspendable.clone().into_iter().collect();
+            tx_builder.unspendable(self.unspendable.clone());
         }
         if self.manually_selected_only {
             tx_builder.manually_selected_only();
@@ -398,19 +401,17 @@ impl BumpFeeTxBuilder {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-
-    use bitcoin_ffi::Network;
-
-    use crate::bitcoin::Amount;
+    use crate::bitcoin::{Amount, Script};
     use crate::{
         descriptor::Descriptor, esplora::EsploraClient, store::Connection,
         types::FullScanScriptInspector, wallet::Wallet,
     };
+    use bdk_wallet::bitcoin::Network;
+    use std::sync::Arc;
 
     struct FullScanInspector;
     impl FullScanScriptInspector for FullScanInspector {
-        fn inspect(&self, _: bdk_wallet::KeychainKind, _: u32, _: Arc<bitcoin_ffi::Script>) {}
+        fn inspect(&self, _: bdk_wallet::KeychainKind, _: u32, _: Arc<Script>) {}
     }
 
     #[test]

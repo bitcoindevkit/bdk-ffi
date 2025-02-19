@@ -1,4 +1,4 @@
-use crate::bitcoin::{Amount, FeeRate, Psbt, Script, Transaction};
+use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
@@ -9,8 +9,6 @@ use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex, LocalOutput,
     Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, Update,
 };
-
-use bitcoin_ffi::OutPoint;
 
 use bdk_wallet::bitcoin::{Network, Txid};
 use bdk_wallet::rusqlite::Connection as BdkConnection;
@@ -88,7 +86,7 @@ impl Wallet {
 
     pub fn get_utxo(&self, op: OutPoint) -> Option<LocalOutput> {
         self.get_wallet()
-            .get_utxo(op)
+            .get_utxo(op.into())
             .map(|local_output| local_output.into())
     }
 
