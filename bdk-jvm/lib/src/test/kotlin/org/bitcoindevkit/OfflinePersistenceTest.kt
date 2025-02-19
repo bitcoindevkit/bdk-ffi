@@ -2,7 +2,6 @@ package org.bitcoindevkit
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import org.rustbitcoin.bitcoin.Network
 
 class OfflinePersistenceTest {
     private val persistenceFilePath = run {

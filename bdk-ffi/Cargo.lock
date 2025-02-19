@@ -169,7 +169,6 @@ dependencies = [
  "bdk_electrum",
  "bdk_esplora",
  "bdk_wallet",
- "bitcoin-ffi",
  "thiserror",
  "uniffi",
 ]
@@ -277,16 +276,6 @@ dependencies = [
  "hex_lit",
  "secp256k1",
  "serde",
-]
-
-[[package]]
-name = "bitcoin-ffi"
-version = "0.1.2"
-source = "git+https://github.com/bitcoindevkit/bitcoin-ffi?tag=v0.1.2#402a23a94424c9ca554874d58499d5b5709fd593"
-dependencies = [
- "bitcoin",
- "thiserror",
- "uniffi",
 ]
 
 [[package]]

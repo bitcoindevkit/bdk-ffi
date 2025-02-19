@@ -158,6 +158,11 @@ interface ExtractTxError {
 };
 
 [Error]
+interface FeeRateError {
+  ArithmeticOverflow();
+};
+
+[Error]
 interface FromScriptError {
   UnrecognizedScript();
   WitnessProgram(string error_message);
@@ -211,6 +216,16 @@ interface MiniscriptError {
     UnexpectedStart();
     UnknownWrapper(string char);
     Unprintable(u8 byte);
+};
+
+[Error]
+interface ParseAmountError {
+  OutOfRange();
+  TooPrecise();
+  MissingDigits();
+  InputTooLarge();
+  InvalidCharacter(string error_message);
+  OtherParseAmountErr();
 };
 
 [Error]
@@ -1360,30 +1375,48 @@ dictionary TxIn {
   sequence<sequence<u8>> witness;
 };
 
-// ------------------------------------------------------------------------
-// types defined in external crate bitcoin-ffi
-// ------------------------------------------------------------------------
+interface Script {
+  constructor(sequence<u8> raw_output_script);
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern Script;
+  sequence<u8> to_bytes();
+};
 
-[External="bitcoin_ffi"]
-typedef extern Network;
+[NonExhaustive]
+enum Network {
+  "Bitcoin",
+  "Testnet",
+  "Signet",
+  "Regtest",
+  "Testnet4",
+};
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern Amount;
+interface Amount {
+  [Name=from_sat]
+  constructor(u64 from_sat);
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern FeeRate;
+  [Name=from_btc, Throws=ParseAmountError]
+  constructor(f64 from_btc);
 
-[External="bitcoin_ffi"]
-typedef extern Txid;
+  u64 to_sat();
 
-[External="bitcoin_ffi"]
-typedef extern OutPoint;
+  f64 to_btc();
+};
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern FeeRateError;
+interface FeeRate {
+  [Name=from_sat_per_vb, Throws=FeeRateError]
+  constructor(u64 sat_per_vb);
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern ParseAmountError;
+  [Name=from_sat_per_kwu]
+  constructor(u64 sat_per_kwu);
+
+  u64 to_sat_per_vb_ceil();
+
+  u64 to_sat_per_vb_floor();
+
+  u64 to_sat_per_kwu();
+};
+
+dictionary OutPoint {
+  string txid;
+  u32 vout;
+};

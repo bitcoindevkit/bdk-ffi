@@ -1,10 +1,8 @@
-use crate::error::PsbtFinalizeError;
 use crate::error::{
-    AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
+    AddressParseError, FeeRateError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
 };
-
-use bitcoin_ffi::OutPoint;
-use bitcoin_ffi::Script;
+use crate::error::{ParseAmountError, PsbtFinalizeError};
+use crate::{impl_from_core_type, impl_into_core_type};
 
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
@@ -14,11 +12,15 @@ use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
+use bdk_wallet::bitcoin::Amount as BdkAmount;
+use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
+use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
+use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Txid};
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
@@ -26,6 +28,104 @@ use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct OutPoint {
+    pub txid: String,
+    pub vout: u32,
+}
+
+impl From<&BdkOutPoint> for OutPoint {
+    fn from(outpoint: &BdkOutPoint) -> Self {
+        OutPoint {
+            txid: outpoint.txid.to_string(),
+            vout: outpoint.vout,
+        }
+    }
+}
+
+impl From<OutPoint> for BdkOutPoint {
+    fn from(outpoint: OutPoint) -> Self {
+        BdkOutPoint {
+            txid: Txid::from_str(&outpoint.txid).unwrap(),
+            vout: outpoint.vout,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct FeeRate(pub BdkFeeRate);
+
+impl FeeRate {
+    pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
+        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
+        match fee_rate {
+            Some(fee_rate) => Ok(FeeRate(fee_rate)),
+            None => Err(FeeRateError::ArithmeticOverflow),
+        }
+    }
+
+    pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
+        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
+    }
+
+    pub fn to_sat_per_vb_ceil(&self) -> u64 {
+        self.0.to_sat_per_vb_ceil()
+    }
+
+    pub fn to_sat_per_vb_floor(&self) -> u64 {
+        self.0.to_sat_per_vb_floor()
+    }
+
+    pub fn to_sat_per_kwu(&self) -> u64 {
+        self.0.to_sat_per_kwu()
+    }
+}
+
+impl_from_core_type!(BdkFeeRate, FeeRate);
+impl_into_core_type!(FeeRate, BdkFeeRate);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Amount(pub BdkAmount);
+
+impl Amount {
+    pub fn from_sat(sat: u64) -> Self {
+        Amount(BdkAmount::from_sat(sat))
+    }
+
+    pub fn from_btc(btc: f64) -> Result<Self, ParseAmountError> {
+        let bitcoin_amount = BdkAmount::from_btc(btc).map_err(ParseAmountError::from)?;
+        Ok(Amount(bitcoin_amount))
+    }
+
+    pub fn to_sat(&self) -> u64 {
+        self.0.to_sat()
+    }
+
+    pub fn to_btc(&self) -> f64 {
+        self.0.to_btc()
+    }
+}
+
+impl_from_core_type!(BdkAmount, Amount);
+impl_into_core_type!(Amount, BdkAmount);
+
+#[derive(Clone, Debug)]
+pub struct Script(pub BdkScriptBuf);
+
+impl Script {
+    pub fn new(raw_output_script: Vec<u8>) -> Self {
+        let script: BdkScriptBuf = raw_output_script.into();
+        Script(script)
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.0.to_bytes()
+    }
+}
+
+impl_from_core_type!(BdkScriptBuf, Script);
+impl_into_core_type!(Script, BdkScriptBuf);
 
 #[derive(Debug)]
 pub enum AddressData {
@@ -274,7 +374,7 @@ impl From<&BdkTxIn> for TxIn {
     fn from(tx_in: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
-                txid: tx_in.previous_output.txid,
+                txid: tx_in.previous_output.txid.to_string(),
                 vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script(tx_in.script_sig.clone())),

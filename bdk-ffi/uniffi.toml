@@ -8,7 +8,3 @@ cdylib_name = "bdkffi"
 [bindings.swift]
 module_name = "BitcoinDevKit"
 cdylib_name = "bdkffi"
-
-[bindings.kotlin.external_packages]
-# Map the crate names from [External={name}] into Kotlin package names
-bitcoin_ffi = "org.rustbitcoin.bitcoin"
