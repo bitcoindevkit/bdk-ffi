@@ -335,6 +335,7 @@ interface TxidParseError {
 // ------------------------------------------------------------------------
 
 /// Types of keychains
+[Remote]
 enum KeychainKind {
   /// External keychain, used for deriving recipient addresses.
   "External",
@@ -473,6 +474,7 @@ interface FullScanScriptInspector {
 };
 
 /// A changeset for [`Wallet`].
+[Remote]
 interface ChangeSet {};
 
 /// Options for a software signer.
@@ -529,6 +531,7 @@ dictionary SignOptions {
 // ------------------------------------------------------------------------
 
 /// Policy regarding the use of change outputs when creating a transaction
+[Remote]
 enum ChangeSpendPolicy {
   /// Use both change and non-change outputs (default)
   "ChangeAllowed",
@@ -1288,6 +1291,7 @@ interface AddressData {
 // bdk_wallet crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 
+[Remote]
 enum WordCount {
   "Words12",
   "Words15",
@@ -1381,7 +1385,7 @@ interface Script {
   sequence<u8> to_bytes();
 };
 
-[NonExhaustive]
+[NonExhaustive, Remote]
 enum Network {
   "Bitcoin",
   "Testnet",
