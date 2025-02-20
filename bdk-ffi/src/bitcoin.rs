@@ -200,17 +200,8 @@ impl Display for Address {
     }
 }
 
-impl From<Address> for BdkAddress {
-    fn from(address: Address) -> Self {
-        address.0
-    }
-}
-
-impl From<BdkAddress> for Address {
-    fn from(address: BdkAddress) -> Self {
-        Address(address)
-    }
-}
+impl_from_core_type!(BdkAddress, Address);
+impl_into_core_type!(Address, BdkAddress);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction(BdkTransaction);

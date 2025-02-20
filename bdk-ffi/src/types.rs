@@ -28,6 +28,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 
+use crate::{impl_from_core_type, impl_into_core_type};
 use bdk_esplora::esplora_client::api::Tx as BdkTx;
 use bdk_esplora::esplora_client::api::TxStatus as BdkTxStatus;
 
@@ -264,16 +265,10 @@ pub struct KeychainAndIndex {
 /// Descriptor spending policy
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Policy(BdkPolicy);
-impl From<BdkPolicy> for Policy {
-    fn from(value: BdkPolicy) -> Self {
-        Policy(value)
-    }
-}
-impl From<Policy> for BdkPolicy {
-    fn from(value: Policy) -> Self {
-        value.0
-    }
-}
+
+impl_from_core_type!(BdkPolicy, Policy);
+impl_into_core_type!(Policy, BdkPolicy);
+
 impl Policy {
     pub fn id(&self) -> String {
         self.0.id.clone()
