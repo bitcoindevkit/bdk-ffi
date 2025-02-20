@@ -51,7 +51,7 @@ print(f"Wallet balance is: {balance.total}")
 
 setup(
     name="bdkpython",
-    version="0.32.0",
+    version="0.32.1",
     description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
