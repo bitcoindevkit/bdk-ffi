@@ -1198,6 +1198,10 @@ interface ElectrumClient {
   /// Estimates the fee required in bitcoin per kilobyte to confirm a transaction in `number` blocks.
   [Throws=ElectrumError]
   f64 estimate_fee(u64 number);
+
+  /// Subscribes to notifications for new block headers, by sending a blockchain.headers.subscribe call.
+  [Throws=ElectrumError]
+  HeaderNotification block_headers_subscribe();
 };
 
 /// Response to an ElectrumClient.server_features request.
@@ -1219,6 +1223,15 @@ dictionary ServerFeaturesRes {
 
   /// Pruned height of the server.
   i64? pruning;
+};
+
+/// Notification of a new block header.
+dictionary HeaderNotification {
+  /// Block height.
+  u64 height;
+
+  /// Block hash.
+  string hash;
 };
 
 // ------------------------------------------------------------------------

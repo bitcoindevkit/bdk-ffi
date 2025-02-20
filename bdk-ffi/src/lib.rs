@@ -19,6 +19,7 @@ use crate::bitcoin::TxOut;
 use crate::bitcoin::WitnessProgram;
 use crate::descriptor::Descriptor;
 use crate::electrum::ElectrumClient;
+use crate::electrum::HeaderNotification;
 use crate::electrum::ServerFeaturesRes;
 use crate::error::AddressParseError;
 use crate::error::Bip32Error;
