@@ -1,6 +1,6 @@
 # Module bdk-android
 
-The [bitcoindevkit](https://bitcoindevkit.org/) language bindings library for Kotlin on the JVM.
+The [bitcoindevkit](https://bitcoindevkit.org/) language bindings library for Kotlin on Android.
 
 # Package org.bitcoindevkit
 
