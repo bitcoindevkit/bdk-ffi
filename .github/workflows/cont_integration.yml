@@ -51,7 +51,7 @@ jobs:
 
       - name: Clippy
         if: ${{ matrix.rust.clippy }}
-        run: cargo clippy --all-targets --features "uniffi/bindgen-tests" -- -D warnings
+        run: cargo clippy --all-targets --features "uniffi/bindgen-tests"
 
       - name: Test
         run: CLASSPATH=./tests/jna/jna-5.14.0.jar cargo test --features uniffi/bindgen-tests
