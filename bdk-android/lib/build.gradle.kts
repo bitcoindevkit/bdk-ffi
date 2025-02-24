@@ -130,6 +130,9 @@ tasks.withType<KotlinCompile> {
 }
 
 afterEvaluate {
+    tasks.named("mergeDebugJniLibFolders") {
+        mustRunAfter(tasks.named("moveNativeAndroidLibs"))
+    }
     tasks.named("mergeReleaseJniLibFolders") {
         mustRunAfter(tasks.named("moveNativeAndroidLibs"))
     }

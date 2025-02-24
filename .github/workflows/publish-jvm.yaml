@@ -4,7 +4,7 @@ on: [workflow_dispatch]
 jobs:
   build-macOS-native-libs:
     name: "Create M1 and x86_64 native binaries"
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - name: "Checkout publishing branch"
         uses: actions/checkout@v4
@@ -103,13 +103,13 @@ jobs:
           ./gradlew buildJvmLib
 
       - name: "Download macOS native binaries from previous job"
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: artifact-macos
           path: ./bdk-jvm/lib/src/main/resources/
 
       - name: "Download Windows native libraries from previous job"
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: artifact-windows
           path: ./bdk-jvm/lib/src/main/resources/

@@ -14,3 +14,4 @@ src/bdkpython/*.so
 build/
 
 testing-setup-py-simple-example.py
+.localenvironment/
