@@ -12,44 +12,15 @@ on:
 
 jobs:
   build:
-    runs-on: macos-12
+    runs-on: macos-14
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: "Set default Rust version to 1.77.1"
-        run: rustup default 1.77.1
-
-      - name: Install Rust targets
-        run: |
-          rustup install nightly-x86_64-apple-darwin
-          rustup component add rust-src --toolchain nightly-x86_64-apple-darwin
-          rustup target add aarch64-apple-darwin x86_64-apple-darwin
-
-      - name: Run bdk-ffi-bindgen
-        working-directory: bdk-ffi
-        run: cargo run --bin uniffi-bindgen generate src/bdk.udl --language swift --out-dir ../bdk-swift/Sources/BitcoinDevKit --no-format
-
-      - name: Build bdk-ffi for x86_64-apple-darwin
-        run: cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-darwin
-
-      - name: Build bdk-ffi for aarch64-apple-darwin
-        run: cargo build --package bdk-ffi --profile release-smaller --target aarch64-apple-darwin
-
-      - name: Create lipo-macos
-        run: |
-          mkdir -p target/lipo-macos/release-smaller
-          lipo target/aarch64-apple-darwin/release-smaller/libbdkffi.a target/x86_64-apple-darwin/release-smaller/libbdkffi.a -create -output target/lipo-macos/release-smaller/libbdkffi.a
-
-      - name: Create bdkFFI.xcframework
+      - name: "Build Swift package"
         working-directory: bdk-swift
-        run: |
-          mv Sources/BitcoinDevKit/bdk.swift Sources/BitcoinDevKit/BitcoinDevKit.swift
-          cp Sources/BitcoinDevKit/bdkFFI.h bdkFFI.xcframework/macos-arm64_x86_64/bdkFFI.framework/Headers
-          cp ../target/lipo-macos/release-smaller/libbdkffi.a bdkFFI.xcframework/macos-arm64_x86_64/bdkFFI.framework/bdkFFI
-          rm Sources/BitcoinDevKit/bdkFFI.h
-          rm Sources/BitcoinDevkit/bdkFFI.modulemap
+        run: bash ./build-xcframework.sh
 
-      - name: Run Swift tests
+      - name: "Run Swift tests"
         working-directory: bdk-swift
-        run: swift test
+        run: swift test --skip LiveElectrumClientTests --skip LiveMemoryWalletTests --skip LiveTransactionTests --skip LiveTxBuilderTests --skip LiveWalletTests

@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: "Check out PR branch"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Cache"
         uses: actions/cache@v3
@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
 
       - name: "Set default Rust version to 1.77.1"
         run: rustup default 1.77.1
