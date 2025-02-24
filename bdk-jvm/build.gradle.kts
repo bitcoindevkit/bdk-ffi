@@ -1,5 +1,5 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm").version("1.9.23").apply(false)
+    id("org.jetbrains.kotlin.jvm").version("2.1.10").apply(false)
     id("org.gradle.java-library")
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
