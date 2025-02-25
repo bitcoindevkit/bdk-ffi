@@ -1,14 +1,29 @@
-default:
-  just --list
+[group("Repo")]
+[doc("Default command; list all available commands.")]
+@list:
+  just --list --unsorted
 
+[group("Repo")]
+[doc("Open repo on GitHub in your default browser.")]
+repo:
+  open https://github.com/bitcoindevkit/bdk-ffi
+
+[group("Build")]
+[doc("Build the library.")]
 build:
   bash ./build-xcframework.sh
 
+[group("Build")]
+[doc("Remove all caches and previous builds to start from scratch.")]
 clean:
   rm -rf ../bdk-ffi/target/
 
-test:
-  swift test
+[group("Test")]
+[doc("Run all tests, unless a filter is provided.")]
+test *FILTER:
+  swift test {{ if FILTER == "" { "" } else { "--filter " + FILTER } }}
 
+[group("Test")]
+[doc("Run only offline tests.")]
 test-offline:
-  swift test --skip LiveElectrumClientTests --skip LiveMemoryWalletTests --skip LiveTransactionTests --skip LiveTxBuilderTests --skip LiveWalletTests
+  swift test --filter Offline
