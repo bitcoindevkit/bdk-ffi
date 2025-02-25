@@ -9,6 +9,8 @@ from bdkpython import Psbt
 from bdkpython import TxBuilder
 from bdkpython import Connection
 from bdkpython import Network
+from bdkpython import Amount
+from bdkpython import FeeRate
 
 import unittest
 import os
