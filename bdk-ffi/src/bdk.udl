@@ -1234,6 +1234,10 @@ interface ElectrumClient {
   /// Subscribes to notifications for new block headers, by sending a blockchain.headers.subscribe call.
   [Throws=ElectrumError]
   HeaderNotification block_headers_subscribe();
+
+  /// Pings the server.
+  [Throws=ElectrumError]
+  void ping();
 };
 
 /// Response to an ElectrumClient.server_features request.
