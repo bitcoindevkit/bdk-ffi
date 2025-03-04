@@ -120,6 +120,10 @@ impl ElectrumClient {
             .map_err(ElectrumError::from)
             .map(HeaderNotification::from)
     }
+
+    pub fn ping(&self) -> Result<(), ElectrumError> {
+        self.0.inner.ping().map_err(ElectrumError::from)
+    }
 }
 
 pub struct ServerFeaturesRes {
