@@ -1112,6 +1112,9 @@ interface Descriptor {
   /// "parallel" paths. For regular descriptors it will just return itself.
   [Throws=MiniscriptError]
   sequence<Descriptor> to_single_descriptors();
+
+  /// Get the DescriptorType of Descriptor
+  DescriptorType desc_type();
 };
 
 // ------------------------------------------------------------------------
@@ -1696,4 +1699,24 @@ interface FeeRate {
 dictionary OutPoint {
   string txid;
   u32 vout;
+};
+
+// ------------------------------------------------------------------------
+// bdk_wallet crate - miniscript re-exports
+// ------------------------------------------------------------------------
+
+/// Descriptor Type of the descriptor.
+[Remote]
+enum DescriptorType {
+    "Bare",
+    "Sh",
+    "Pkh",
+    "Wpkh",
+    "Wsh",
+    "ShWsh",
+    "ShWpkh",
+    "ShSortedMulti",
+    "WshSortedMulti",
+    "ShWshSortedMulti",
+    "Tr",
 };

@@ -94,6 +94,7 @@ use crate::wallet::Wallet;
 
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;
+use bdk_wallet::miniscript::descriptor::DescriptorType;
 use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::ChangeSet;
 use bdk_wallet::KeychainKind;
