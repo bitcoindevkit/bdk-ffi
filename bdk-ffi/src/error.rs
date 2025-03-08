@@ -782,13 +782,13 @@ pub enum TxidParseError {
     InvalidTxid { txid: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum LightClientBuilderError {
     #[error("the database could not be opened or created: {reason}")]
     DatabaseError { reason: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum LightClientError {
     #[error("the node is no longer running")]
     NodeStopped,
