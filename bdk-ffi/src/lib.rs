@@ -42,8 +42,6 @@ use crate::error::EsploraError;
 use crate::error::ExtractTxError;
 use crate::error::FeeRateError;
 use crate::error::FromScriptError;
-use crate::error::LightClientBuilderError;
-use crate::error::LightClientError;
 use crate::error::LoadWithPersistError;
 use crate::error::MiniscriptError;
 use crate::error::ParseAmountError;
@@ -99,14 +97,5 @@ use bdk_wallet::ChangeSet;
 use bdk_wallet::KeychainKind;
 
 use bdk_kyoto::NodeState;
-use kyoto::Client;
-use kyoto::IpAddress;
-use kyoto::LightClient;
-use kyoto::LightClientBuilder;
-use kyoto::LightNode;
-use kyoto::Log;
-use kyoto::Peer;
-use kyoto::ScanType;
-use kyoto::Warning;
 
 uniffi::include_scaffolding!("bdk");
