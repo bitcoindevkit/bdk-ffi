@@ -408,6 +408,8 @@ impl TxBuilder {
     }
 }
 
+/// A `BumpFeeTxBuilder` is created by calling `build_fee_bump` on a wallet. After assigning it, you set options on it
+/// until finally calling `finish` to consume the builder and generate the transaction.
 #[derive(Clone, uniffi::Object)]
 pub(crate) struct BumpFeeTxBuilder {
     pub(crate) txid: String,
@@ -433,6 +435,10 @@ impl BumpFeeTxBuilder {
         }
     }
 
+    /// Set an exact `nSequence` value.
+    ///
+    /// This can cause conflicts if the wallet’s descriptors contain an "older" (`OP_CSV`) operator and the given
+    /// `nsequence` is lower than the CSV value.
     pub(crate) fn set_exact_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             sequence: Some(nsequence),
@@ -440,6 +446,17 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Set the current blockchain height.
+    ///
+    /// This will be used to:
+    ///
+    /// 1. Set the `nLockTime` for preventing fee sniping. Note: This will be ignored if you manually specify a
+    /// `nlocktime` using `TxBuilder::nlocktime`.
+    ///
+    /// 2. Decide whether coinbase outputs are mature or not. If the coinbase outputs are not mature at `current_height`,
+    /// we ignore them in the coin selection. If you want to create a transaction that spends immature coinbase inputs,
+    /// manually add them using `TxBuilder::add_utxos`.
+    /// In both cases, if you don’t provide a current height, we use the last sync height.
     pub(crate) fn current_height(&self, height: u32) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             current_height: Some(height),
@@ -447,6 +464,9 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Use a specific nLockTime while creating the transaction.
+    ///
+    /// This can cause conflicts if the wallet’s descriptors contain an "after" (`OP_CLTV`) operator.
     pub(crate) fn nlocktime(&self, locktime: LockTime) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             locktime: Some(locktime),
@@ -454,6 +474,9 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Set whether the dust limit is checked.
+    ///
+    /// Note: by avoiding a dust limit check you may end up with a transaction that is non-standard.
     pub(crate) fn allow_dust(&self, allow_dust: bool) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             allow_dust,
@@ -461,6 +484,10 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Build a transaction with a specific version.
+    ///
+    /// The version should always be greater than 0 and greater than 1 if the wallet’s descriptors contain an "older"
+    /// (`OP_CSV`) operator.
     pub(crate) fn version(&self, version: i32) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             version: Some(version),
@@ -468,6 +495,14 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Finish building the transaction.
+    ///
+    /// Uses the thread-local random number generator (rng).
+    ///
+    /// Returns a new `Psbt` per BIP174.
+    ///
+    /// WARNING: To avoid change address reuse you must persist the changes resulting from one or more calls to this
+    /// method before closing the wallet. See `Wallet::reveal_next_address`.
     pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
             outpoint: self.txid.clone(),
