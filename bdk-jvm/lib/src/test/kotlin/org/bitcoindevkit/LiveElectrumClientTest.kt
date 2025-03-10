@@ -58,4 +58,12 @@ class LiveElectrumClientTest {
         val headerNotification: HeaderNotification = electrumClient.blockHeadersSubscribe()
         println("Latest known block:\n$headerNotification")
     }
+
+    @Test
+    fun testPing() {
+        val electrumClient: ElectrumClient = ElectrumClient("ssl://electrum.blockstream.info:60002")
+        val ping = electrumClient.ping()
+
+        assert(ping == Unit)
+    }
 }
