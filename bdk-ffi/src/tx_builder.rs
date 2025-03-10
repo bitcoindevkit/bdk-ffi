@@ -408,7 +408,7 @@ impl TxBuilder {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, uniffi::Object)]
 pub(crate) struct BumpFeeTxBuilder {
     pub(crate) txid: String,
     pub(crate) fee_rate: Arc<FeeRate>,
@@ -420,6 +420,7 @@ pub(crate) struct BumpFeeTxBuilder {
 }
 
 impl BumpFeeTxBuilder {
+    #[uniffi::constructor]
     pub(crate) fn new(txid: String, fee_rate: Arc<FeeRate>) -> Self {
         BumpFeeTxBuilder {
             txid,
