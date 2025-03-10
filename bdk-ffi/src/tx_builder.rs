@@ -18,7 +18,7 @@ use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 use std::sync::Arc;
 
-#[derive(Clone)]
+#[derive(Clone, uniffi::Object)]
 pub struct TxBuilder {
     pub(crate) add_global_xpubs: bool,
     pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
@@ -40,7 +40,9 @@ pub struct TxBuilder {
     pub(crate) version: Option<i32>,
 }
 
+#[uniffi::export]
 impl TxBuilder {
+    #[uniffi::constructor]
     pub(crate) fn new() -> Self {
         TxBuilder {
             add_global_xpubs: false,

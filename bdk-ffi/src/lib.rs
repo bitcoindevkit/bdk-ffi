@@ -61,7 +61,6 @@ use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
 use crate::store::Connection;
 use crate::tx_builder::BumpFeeTxBuilder;
-use crate::tx_builder::TxBuilder;
 use crate::types::AddressInfo;
 use crate::types::Balance;
 use crate::types::BlockId;
