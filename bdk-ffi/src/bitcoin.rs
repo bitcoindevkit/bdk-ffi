@@ -54,10 +54,12 @@ impl From<OutPoint> for BdkOutPoint {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, uniffi::Object)]
 pub struct FeeRate(pub BdkFeeRate);
 
+#[uniffi::export]
 impl FeeRate {
+    #[uniffi::constructor]
     pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
         let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
         match fee_rate {
@@ -66,6 +68,7 @@ impl FeeRate {
         }
     }
 
+    #[uniffi::constructor]
     pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
         FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
     }
