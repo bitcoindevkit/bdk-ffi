@@ -98,7 +98,7 @@ final class LiveWalletTests: XCTestCase {
         let psbt: Psbt = try
             TxBuilder()
             .addRecipient(script: recipient.scriptPubkey(), amount: Amount.fromSat(fromSat: 4200))
-                .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2))
+                .feeRate(feeRate: FeeRate.fromSatPerVb(satVb: 2))
                 .finish(wallet: wallet)
 
         print(psbt.serialize())

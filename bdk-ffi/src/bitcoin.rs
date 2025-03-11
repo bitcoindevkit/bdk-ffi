@@ -54,20 +54,27 @@ impl From<OutPoint> for BdkOutPoint {
     }
 }
 
-#[derive(Clone, Debug)]
+/// Represents fee rate.
+///
+/// This is an integer type representing fee rate in sat/kwu. It provides protection against mixing
+/// up the types as well as basic formatting features.
+#[derive(Clone, Debug, uniffi::Object)]
 pub struct FeeRate(pub BdkFeeRate);
 
+#[uniffi::export]
 impl FeeRate {
-    pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
-        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
+    #[uniffi::constructor]
+    pub fn from_sat_per_vb(sat_vb: u64) -> Result<Self, FeeRateError> {
+        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_vb);
         match fee_rate {
             Some(fee_rate) => Ok(FeeRate(fee_rate)),
             None => Err(FeeRateError::ArithmeticOverflow),
         }
     }
 
-    pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
-        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
+    #[uniffi::constructor]
+    pub fn from_sat_per_kwu(sat_kwu: u64) -> Self {
+        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_kwu))
     }
 
     pub fn to_sat_per_vb_ceil(&self) -> u64 {

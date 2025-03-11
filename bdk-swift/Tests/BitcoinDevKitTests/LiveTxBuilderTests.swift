@@ -61,7 +61,7 @@ final class LiveTxBuilderTests: XCTestCase {
         let recipient: Address = try Address(address: "tb1qrnfslnrve9uncz9pzpvf83k3ukz22ljgees989", network: .signet)
         let psbt: Psbt = try TxBuilder()
             .addRecipient(script: recipient.scriptPubkey(), amount: Amount.fromSat(fromSat: 4200))
-            .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 2))
+            .feeRate(feeRate: FeeRate.fromSatPerVb(satVb: 2))
             .finish(wallet: wallet)
 
         print(psbt.serialize())
@@ -101,7 +101,7 @@ final class LiveTxBuilderTests: XCTestCase {
 
         let psbt: Psbt = try TxBuilder()
             .setRecipients(recipients: allRecipients)
-            .feeRate(feeRate: FeeRate.fromSatPerVb(satPerVb: 4))
+            .feeRate(feeRate: FeeRate.fromSatPerVb(satVb: 4))
             .finish(wallet: wallet)
 
         let _ = try! wallet.sign(psbt: psbt)
