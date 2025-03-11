@@ -161,6 +161,11 @@ This release is the first alpha release of the 1.0 API for the bindings librarie
 - Create and sign transactions using the transaction builder
 - Broadcast transactions
 
+## [v0.32.1]
+This is a patch release, updating the bindings libraries to bdk version 0.30.2, fixing an issue with syncing very large wallets.
+
+See https://github.com/bitcoindevkit/bdk/releases/tag/v0.30.2 for details.
+
 ## [v0.31.0]
 This release updates the bindings libraries to bdk version 0.29.0, updating rust-bitcoin to version 0.30.2.
 
@@ -398,6 +403,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 [v1.0.0-alpha.11]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.7...v1.0.0-alpha.11
 [v1.0.0-alpha.7]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-alpha.2a...v1.0.0-alpha.7
 [v1.0.0-alpha.2a]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.31.0...v1.0.0-alpha.2a
+[v0.32.1]: (https://github.com/bitcoindevkit/bdk-ffi/compare/v0.32.0...v0.32.1)
 [v0.31.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.30.0...v0.31.0
 [v0.30.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.29.0...v0.30.0
 [v0.29.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v0.28.0...v0.29.0
