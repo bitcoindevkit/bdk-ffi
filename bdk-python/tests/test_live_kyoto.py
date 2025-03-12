@@ -1,4 +1,4 @@
-from bdkpython import *
+from bdkpython import Connection, Client, Network, Descriptor, KeychainKind, LightClientBuilder, LightClient, LightNode, IpAddress, ScanType, Peer, Update, Wallet
 import unittest
 import os
 import asyncio
@@ -39,10 +39,16 @@ class LiveKyotoTest(unittest.IsolatedAsyncioTestCase):
         light_client: LightClient = LightClientBuilder().scan_type(ScanType.NEW()).peers(peers).connections(1).build(wallet)
         client: Client = light_client.client
         node: LightNode = light_client.node
+        async def log_loop(client: Client):
+            while True:
+                log = await client.next_log()
+                print(log)
+        log_task = asyncio.create_task(log_loop(client))
         node.run()
-        update: Update = await client.update()
+        update: Update | None = await client.update()
         self.assertIsNotNone(update, "Update is None. This should not be possible.")
-        wallet.apply_update(update)
+        if update is not None:
+            wallet.apply_update(update)
         self.assertGreater(
             wallet.balance().total.to_sat(),
             0,
