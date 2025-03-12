@@ -16,12 +16,12 @@ Each supported language and the platform(s) it's packaged for has its own direct
 ## Supported target languages and platforms
 The below directories (a separate repository in the case of bdk-swift) include instructions for using, building, and publishing the native language binding for [bdk] supported by this project.
 
-| Language | Platform              | Published Package             | Building Documentation | API Docs              |
-| -------- |-----------------------|-------------------------------|------------------------|-----------------------|
-| Kotlin   | JVM                   | [bdk-jvm (Maven Central)]     | [Readme bdk-jvm]       | [Kotlin JVM API Docs] |
-| Kotlin   | Android               | [bdk-android (Maven Central)] | [Readme bdk-android]   | [Android API Docs]    |
-| Swift    | iOS, macOS            | [bdk-swift (GitHub)]          | [Readme bdk-swift]     |                       |
-| Python   | linux, macOS, Windows | [bdk-python (PyPI)]           | [Readme bdk-python]    |                       |
+| Language | Platform              | Published Package | Building Documentation | API Docs              |
+| -------- |-----------------------|-------------|------------------------|-----------------------|
+| Kotlin   | JVM                   | [bdk-jvm]   | [Readme bdk-jvm]       | [Kotlin JVM API Docs] |
+| Kotlin   | Android               | [bdk-android] | [Readme bdk-android]   | [Android API Docs]    |
+| Swift    | iOS, macOS            | [bdk-swift] | [Readme bdk-swift]     |                       |
+| Python   | linux, macOS, Windows | [bdk-python] | [Readme bdk-python]    |                       |
 
 ## Building and Testing the Libraries
 If you are familiar with the build tools for the specific languages you wish to build the libraries for, you can use their normal build/test workflows. We also include some [just](https://just.systems/) files to simplify the work across different languages. If you have the just tool installed on your system, you can simply call the commands defined in the `justfile`s, for example:
@@ -134,12 +134,10 @@ This project is made possible thanks to the wonderful work by the [mozilla/uniff
 [`bdk`]: https://github.com/bitcoindevkit/bdk
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
 ["Getting Started (Developer)"]: https://github.com/bitcoindevkit/bdk-ffi#getting-started-developer
-[bdk-jvm]: https://search.maven.org/artifact/org.bitcoindevkit/bdk-jvm/0.11.0/jar
-[bdk-android]: https://search.maven.org/artifact/org.bitcoindevkit/bdk-android/0.11.0/aar
-[bdk-jvm (Maven Central)]: https://central.sonatype.dev/artifact/org.bitcoindevkit/bdk-jvm/0.11.0
-[bdk-android (Maven Central)]: https://central.sonatype.dev/artifact/org.bitcoindevkit/bdk-android/0.11.0
-[bdk-swift (GitHub)]: https://github.com/bitcoindevkit/bdk-swift
-[bdk-python (PyPI)]: https://pypi.org/project/bdkpython/
+[bdk-jvm]: https://central.sonatype.com/artifact/org.bitcoindevkit/bdk-jvm/
+[bdk-android]: https://central.sonatype.com/artifact/org.bitcoindevkit/bdk-android/
+[bdk-swift]: https://github.com/bitcoindevkit/bdk-swift
+[bdk-python]: https://pypi.org/project/bdkpython/
 [mozilla/uniffi-rs]: https://github.com/mozilla/uniffi-rs
 [bdk]: https://github.com/bitcoindevkit/bdk
 [Bitcoin Dev Kit]: https://github.com/bitcoindevkit
