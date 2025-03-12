@@ -1,7 +1,7 @@
 # bdk-swift
 
 This project builds a Swift package that provides [Swift] language bindings for the
-[`bdk`] library. The Swift language bindings are created by the [`bdk-ffi`] project which is included as a module of this repository.
+[BDK] libraries. The Swift language bindings are created by the [`bdk-ffi`] project which is included as a module of this repository.
 
 Supported target platforms are:
 
@@ -11,7 +11,7 @@ Supported target platforms are:
 
 ## How to Use
 
-To use the Swift language bindings for [`bdk`] in your [Xcode] iOS or macOS project add
+To use the Swift language bindings for [BDK] in your [Xcode] iOS or macOS project add
 the GitHub repository https://github.com/bitcoindevkit/bdk-swift and select one of the
 release versions. You may then import and use the `BitcoinDevKit` library in your Swift
 code. For example:
@@ -43,10 +43,10 @@ If you are a maintainer of this project or want to build and publish this projec
 own GitHub repository use the following steps:
 
 1. If it doesn't already exist, create a new `release/0.MINOR` branch from the `master` branch.
-2. Add a tag `v0.MINOR.PATCH`.
-3. Run the `publish-spm` workflow on GitHub from the `bdk-swift` repo for  version `0.MINOR.PATCH`.
+2. Add a tag `vMAJOR.MINOR.PATCH`.
+3. Run the `publish-spm` workflow on GitHub from the `bdk-swift` repo for version `MAJOR.MINOR.PATCH`.
 
 [Swift]: https://developer.apple.com/swift/
 [Xcode]: https://developer.apple.com/documentation/Xcode
-[`bdk`]: https://github.com/bitcoindevkit/bdk
+[`BDK`]: https://github.com/bitcoindevkit/
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi

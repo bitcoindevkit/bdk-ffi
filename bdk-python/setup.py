@@ -12,7 +12,7 @@ pip install bdkpython
 
 ## Simple example
 ```python
-import bdkpython as bdk
+from bdkpython import Wallet
 ```
 """
 
