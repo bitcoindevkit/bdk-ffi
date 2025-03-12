@@ -1,15 +1,18 @@
 # bdk-python
+
 The Python language bindings for the [bitcoindevkit](https://github.com/bitcoindevkit).
 
 See the [package on PyPI](https://pypi.org/project/bdkpython/).  
 
 ## Install from PyPI
+
 Install the latest release using
 ```shell
 pip install bdkpython
 ```
 
 ## Run the tests
+
 ```shell
 pip install --requirement requirements.txt
 bash ./scripts/generate-linux.sh # here you should run the script appropriate for your platform
@@ -19,6 +22,7 @@ python -m unittest --verbose
 ```
 
 ## Build the package
+
 ```shell
 # Install dependencies
 pip install --requirement requirements.txt
@@ -31,6 +35,7 @@ python setup.py --verbose bdist_wheel
 ```
 
 ## Install locally
+
 ```shell
 pip install ./dist/bdkpython-<yourversion>.whl
 ```

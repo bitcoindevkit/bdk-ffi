@@ -1,8 +1,9 @@
 # bdk-jvm
-This project builds a .jar package for the JVM platform that provides Kotlin language bindings for the [`bdk`] library. The Kotlin language bindings are created by the `bdk-ffi` project which is included in the root of this repository.
+
+This project builds a .jar package for the JVM platform that provides Kotlin language bindings for the [BDK] libraries. The Kotlin language bindings are created by the `bdk-ffi` project which is included in the root of this repository.
 
 ## How to Use
-To use the Kotlin language bindings for [`bdk`] in your JVM project add the following to your gradle dependencies:
+To use the Kotlin language bindings for BDK in your JVM project add the following to your gradle dependencies:
 ```kotlin
 repositories {
     mavenCentral()
@@ -73,5 +74,5 @@ dependencies {
 }
 ```
 
-[`bdk`]: https://github.com/bitcoindevkit/bdk
+[BDK]: https://github.com/bitcoindevkit/
 [`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
