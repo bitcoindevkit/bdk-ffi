@@ -192,3 +192,21 @@ jobs:
 
       - name: "Run tests"
         run: python -m unittest discover --start "./tests/" --pattern "test_offline_*.py" --verbose
+
+  ruff:
+    name: "Lint tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bdk-python
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: "Install Ruff"
+        run: curl -LsSf https://astral.sh/ruff/install.sh | sh
+
+      - name: "Lint test targets"
+        run: ruff check ./tests/
