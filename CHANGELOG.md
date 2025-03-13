@@ -3,6 +3,36 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.1.0]
+
+This is our first stable release!
+
+This release uses the following Rust dependencies:
+    - bdk_wallet 1.1.0
+    - bdk_electrum 0.21.0
+    - bdk_esplora 0.20.1
+    - uniffi 0.29.0
+    - rust-bitcoin 0.32.5
+
+#### Added
+    - Expose `ElectrumClient::block_headers_subscribe` method [#664]
+    - Expose `EsploraClient::get_block_hash` method [#665]
+    - Expose `EsploraClient::get_tx_status` method [#666]
+    - Expose `EsploraClient::get_tx_info` method [#666]
+    - Support for Testnet 4 [#674]
+    - Add `AddressData` and `WitnessProgram` types from rust bitcoin [#671]
+    - Expose `Address::to_address_data` method [#671]
+
+#### Changed
+    - More complete `LocalOutput` type [#667]
+
+[#664]: https://github.com/bitcoindevkit/bdk-ffi/pull/664
+[#665]: https://github.com/bitcoindevkit/bdk-ffi/pull/665
+[#666]: https://github.com/bitcoindevkit/bdk-ffi/pull/666
+[#667]: https://github.com/bitcoindevkit/bdk-ffi/pull/667
+[#671]: https://github.com/bitcoindevkit/bdk-ffi/pull/671
+[#674]: https://github.com/bitcoindevkit/bdk-ffi/pull/674
+
 ## [v1.0.0-beta.7]
 This release updates the `bdk-ffi` libraries to the final `bdk_wallet` `1.0.0` and related libraries (Esplora, Electrum, etc).
 
@@ -396,6 +426,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v1.1.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.7...v1.1.0
 [v1.0.0-beta.7]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.6...v1.0.0-beta.7
 [v1.0.0-beta.6]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.5...v1.0.0-beta.6
 [v1.0.0-beta.5]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.2...v1.0.0-beta.5
