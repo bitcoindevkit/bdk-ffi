@@ -3,6 +3,7 @@ use bdk_kyoto::builder::ServiceFlags;
 use bdk_kyoto::builder::TrustedPeer;
 use bdk_kyoto::kyoto::tokio;
 use bdk_kyoto::kyoto::AddrV2;
+use bdk_kyoto::kyoto::LogLevel as BDKLogLevel;
 use bdk_kyoto::kyoto::ScriptBuf;
 use bdk_kyoto::LightClient as BDKLightClient;
 use bdk_kyoto::NodeDefault;
@@ -94,6 +95,8 @@ pub struct LightClientBuilder {
     connections: u8,
     data_dir: Option<String>,
     scan_type: ScanType,
+    log_level: LogLevel,
+    dns_resolver: Option<Arc<IpAddress>>,
     peers: Vec<Peer>,
 }
 
@@ -106,6 +109,8 @@ impl LightClientBuilder {
             connections: DEFAULT_CONNECTIONS,
             data_dir: None,
             scan_type: ScanType::default(),
+            log_level: LogLevel::default(),
+            dns_resolver: None,
             peers: Vec::new(),
         }
     }
@@ -135,10 +140,28 @@ impl LightClientBuilder {
         })
     }
 
+    /// Set the log level for the node. Production applications may want to omit `Debug` messages
+    /// to avoid heap allocations.
+    pub fn log_level(&self, log_level: LogLevel) -> Arc<Self> {
+        Arc::new(LightClientBuilder {
+            log_level,
+            ..self.clone()
+        })
+    }
+
     /// Bitcoin full-nodes to attempt a connection with.
     pub fn peers(&self, peers: Vec<Peer>) -> Arc<Self> {
         Arc::new(LightClientBuilder {
             peers,
+            ..self.clone()
+        })
+    }
+
+    /// Configure a custom DNS resolver when querying DNS seeds. Default is `1.1.1.1` managed by
+    /// CloudFlare.
+    pub fn dns_resolver(&self, dns_resolver: Arc<IpAddress>) -> Arc<Self> {
+        Arc::new(LightClientBuilder {
+            dns_resolver: Some(dns_resolver),
             ..self.clone()
         })
     }
@@ -157,12 +180,17 @@ impl LightClientBuilder {
             .map(|path| PathBuf::from(&path))
             .unwrap_or(PathBuf::from(CWD_PATH));
 
-        let builder = BDKLightClientBuilder::new()
+        let mut builder = BDKLightClientBuilder::new()
             .connections(self.connections)
             .data_dir(path_buf)
             .scan_type(self.scan_type.into())
+            .log_level(self.log_level.into())
             .timeout_duration(Duration::from_secs(TIMEOUT))
             .peers(trusted_peers);
+
+        if let Some(ip_addr) = self.dns_resolver.clone().map(|ip| ip.inner) {
+            builder = builder.dns_resolver(ip_addr);
+        }
 
         let BDKLightClient {
             requester,
@@ -357,6 +385,27 @@ impl From<Warn> for Warning {
             Warn::EmptyPeerDatabase => Warning::EmptyPeerDatabase,
             Warn::UnexpectedSyncError { warning } => Warning::UnexpectedSyncError { warning },
             Warn::ChannelDropped => Warning::RequestFailed,
+        }
+    }
+}
+
+/// Select the category of messages for the node to emit.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+pub enum LogLevel {
+    /// Send `Log::Debug` messages. These messages are intended for debugging or troubleshooting
+    /// node operation.
+    #[default]
+    Debug,
+    /// Omit `Log::Debug` messages, including their memory allocations. Ideal for a production
+    /// application that uses minimal logging.
+    Warning,
+}
+
+impl From<LogLevel> for BDKLogLevel {
+    fn from(value: LogLevel) -> Self {
+        match value {
+            LogLevel::Debug => Self::Debug,
+            LogLevel::Warning => Self::Warning,
         }
     }
 }
