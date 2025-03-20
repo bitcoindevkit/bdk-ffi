@@ -592,3 +592,11 @@ impl From<BdkTx> for Tx {
         }
     }
 }
+
+/// This type replaces the Rust tuple `(tx, last_seen)` used in the Wallet::apply_unconfirmed_txs` method,
+/// where `last_seen` is the timestamp of when the transaction `tx` was last seen in the mempool.
+#[derive(uniffi::Record)]
+pub struct UnconfirmedTx {
+    pub tx: Arc<Transaction>,
+    pub last_seen: u64,
+}

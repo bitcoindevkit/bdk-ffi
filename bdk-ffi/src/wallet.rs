@@ -7,7 +7,7 @@ use crate::error::{
 use crate::store::Connection;
 use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex, LocalOutput,
-    Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, Update,
+    Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, UnconfirmedTx, Update,
 };
 
 use bdk_wallet::bitcoin::{Network, Txid};
@@ -128,6 +128,14 @@ impl Wallet {
         self.get_wallet()
             .apply_update(update.0.clone())
             .map_err(CannotConnectError::from)
+    }
+
+    pub fn apply_unconfirmed_txs(&self, unconfirmed_txs: Vec<UnconfirmedTx>) {
+        self.get_wallet().apply_unconfirmed_txs(
+            unconfirmed_txs
+                .into_iter()
+                .map(|utx| (Arc::new(utx.tx.as_ref().into()), utx.last_seen)),
+        )
     }
 
     pub(crate) fn derivation_index(&self, keychain: KeychainKind) -> Option<u32> {

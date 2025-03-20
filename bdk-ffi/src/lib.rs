@@ -87,6 +87,7 @@ use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 use crate::types::Tx;
 use crate::types::TxStatus;
+use crate::types::UnconfirmedTx;
 use crate::types::Update;
 use crate::wallet::Wallet;
 
