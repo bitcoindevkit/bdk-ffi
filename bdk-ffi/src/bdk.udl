@@ -737,6 +737,15 @@ interface Wallet {
 
   [Throws=SqliteError]
   boolean persist(Connection connection);
+
+  /// Apply relevant unconfirmed transactions to the wallet.
+  /// Transactions that are not relevant are filtered out.
+  void apply_unconfirmed_txs(sequence<UnconfirmedTx> unconfirmed_txs);
+};
+
+dictionary UnconfirmedTx {
+    Transaction tx;
+    u64 last_seen;
 };
 
 interface Update {};
