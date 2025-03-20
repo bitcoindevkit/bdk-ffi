@@ -9,6 +9,7 @@ plugins {
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
     id("org.jetbrains.dokka")
+    id("org.jetbrains.dokka-javadoc")
 }
 
 android {
@@ -55,6 +56,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
     implementation("androidx.appcompat:appcompat:1.4.0")
     implementation("androidx.core:core-ktx:1.7.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     api("org.slf4j:slf4j-api:1.7.30")
 
     androidTestImplementation("com.github.tony19:logback-android:2.0.0")
@@ -115,4 +117,22 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
     sign(publishing.publications)
+}
+
+dokka {
+    moduleName.set("bdk-android")
+    moduleVersion.set(libraryVersion)
+    dokkaSourceSets.main {
+        includes.from("README.md")
+        sourceLink {
+            localDirectory.set(file("src/main/kotlin"))
+            remoteUrl("https://bitcoindevkit.org/")
+            remoteLineSuffix.set("#L")
+        }
+    }
+    pluginsConfiguration.html {
+        // customStyleSheets.from("styles.css")
+        // customAssets.from("logo.svg")
+        footerMessage.set("(c) Bitcoin Dev Kit Developers")
+    }
 }

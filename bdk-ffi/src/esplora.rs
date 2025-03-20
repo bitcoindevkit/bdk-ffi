@@ -1,5 +1,7 @@
 use crate::bitcoin::Transaction;
 use crate::error::EsploraError;
+use crate::types::Tx;
+use crate::types::TxStatus;
 use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
 
@@ -8,13 +10,13 @@ use bdk_esplora::EsploraExt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::Txid;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
-use bdk_wallet::chain::spk_client::FullScanResult as BdkFullScanResult;
+use bdk_wallet::chain::spk_client::FullScanResponse as BdkFullScanResponse;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
-use bdk_wallet::chain::spk_client::SyncResult as BdkSyncResult;
+use bdk_wallet::chain::spk_client::SyncResponse as BdkSyncResponse;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::Update as BdkUpdate;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -40,7 +42,7 @@ impl EsploraClient {
             .take()
             .ok_or(EsploraError::RequestAlreadyConsumed)?;
 
-        let result: BdkFullScanResult<KeychainKind> =
+        let result: BdkFullScanResponse<KeychainKind> =
             self.0
                 .full_scan(request, stop_gap as usize, parallel_requests as usize)?;
 
@@ -66,7 +68,7 @@ impl EsploraClient {
             .take()
             .ok_or(EsploraError::RequestAlreadyConsumed)?;
 
-        let result: BdkSyncResult = self.0.sync(request, parallel_requests as usize)?;
+        let result: BdkSyncResponse = self.0.sync(request, parallel_requests as usize)?;
 
         let update = BdkUpdate {
             last_active_indices: BTreeMap::default(),
@@ -92,5 +94,31 @@ impl EsploraClient {
 
     pub fn get_height(&self) -> Result<u32, EsploraError> {
         self.0.get_height().map_err(EsploraError::from)
+    }
+
+    pub fn get_fee_estimates(&self) -> Result<HashMap<u16, f64>, EsploraError> {
+        self.0.get_fee_estimates().map_err(EsploraError::from)
+    }
+
+    pub fn get_block_hash(&self, block_height: u32) -> Result<String, EsploraError> {
+        self.0
+            .get_block_hash(block_height)
+            .map(|hash| hash.to_string())
+            .map_err(EsploraError::from)
+    }
+    pub fn get_tx_status(&self, txid: String) -> Result<TxStatus, EsploraError> {
+        let txid = Txid::from_str(&txid)?;
+        self.0
+            .get_tx_status(&txid)
+            .map(TxStatus::from)
+            .map_err(EsploraError::from)
+    }
+
+    pub fn get_tx_info(&self, txid: String) -> Result<Option<Tx>, EsploraError> {
+        let txid = Txid::from_str(&txid)?;
+        self.0
+            .get_tx_info(&txid)
+            .map(|tx| tx.map(Tx::from))
+            .map_err(EsploraError::from)
     }
 }

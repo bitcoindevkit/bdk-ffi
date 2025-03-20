@@ -1,23 +1,27 @@
-use crate::error::PsbtFinalizeError;
 use crate::error::{
-    AddressParseError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
+    AddressParseError, FeeRateError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
 };
+use crate::error::{ParseAmountError, PsbtFinalizeError};
+use crate::{impl_from_core_type, impl_into_core_type};
 
-use bitcoin_ffi::OutPoint;
-use bitcoin_ffi::Script;
-
-use bdk_wallet::bitcoin::address::{NetworkChecked, NetworkUnchecked};
+use bdk_wallet::bitcoin::address::NetworkChecked;
+use bdk_wallet::bitcoin::address::NetworkUnchecked;
+use bdk_wallet::bitcoin::address::{Address as BdkAddress, AddressData as BdkAddressData};
+use bdk_wallet::bitcoin::blockdata::block::Header as BdkHeader;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
-use bdk_wallet::bitcoin::Address as BdkAddress;
+use bdk_wallet::bitcoin::Amount as BdkAmount;
+use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
+use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
+use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Txid};
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
@@ -25,6 +29,139 @@ use std::fmt::Display;
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct OutPoint {
+    pub txid: String,
+    pub vout: u32,
+}
+
+impl From<&BdkOutPoint> for OutPoint {
+    fn from(outpoint: &BdkOutPoint) -> Self {
+        OutPoint {
+            txid: outpoint.txid.to_string(),
+            vout: outpoint.vout,
+        }
+    }
+}
+
+impl From<OutPoint> for BdkOutPoint {
+    fn from(outpoint: OutPoint) -> Self {
+        BdkOutPoint {
+            txid: Txid::from_str(&outpoint.txid).unwrap(),
+            vout: outpoint.vout,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct FeeRate(pub BdkFeeRate);
+
+impl FeeRate {
+    pub fn from_sat_per_vb(sat_per_vb: u64) -> Result<Self, FeeRateError> {
+        let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_per_vb);
+        match fee_rate {
+            Some(fee_rate) => Ok(FeeRate(fee_rate)),
+            None => Err(FeeRateError::ArithmeticOverflow),
+        }
+    }
+
+    pub fn from_sat_per_kwu(sat_per_kwu: u64) -> Self {
+        FeeRate(BdkFeeRate::from_sat_per_kwu(sat_per_kwu))
+    }
+
+    pub fn to_sat_per_vb_ceil(&self) -> u64 {
+        self.0.to_sat_per_vb_ceil()
+    }
+
+    pub fn to_sat_per_vb_floor(&self) -> u64 {
+        self.0.to_sat_per_vb_floor()
+    }
+
+    pub fn to_sat_per_kwu(&self) -> u64 {
+        self.0.to_sat_per_kwu()
+    }
+}
+
+impl_from_core_type!(BdkFeeRate, FeeRate);
+impl_into_core_type!(FeeRate, BdkFeeRate);
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Amount(pub BdkAmount);
+
+impl Amount {
+    pub fn from_sat(sat: u64) -> Self {
+        Amount(BdkAmount::from_sat(sat))
+    }
+
+    pub fn from_btc(btc: f64) -> Result<Self, ParseAmountError> {
+        let bitcoin_amount = BdkAmount::from_btc(btc).map_err(ParseAmountError::from)?;
+        Ok(Amount(bitcoin_amount))
+    }
+
+    pub fn to_sat(&self) -> u64 {
+        self.0.to_sat()
+    }
+
+    pub fn to_btc(&self) -> f64 {
+        self.0.to_btc()
+    }
+}
+
+impl_from_core_type!(BdkAmount, Amount);
+impl_into_core_type!(Amount, BdkAmount);
+
+#[derive(Clone, Debug)]
+pub struct Script(pub BdkScriptBuf);
+
+impl Script {
+    pub fn new(raw_output_script: Vec<u8>) -> Self {
+        let script: BdkScriptBuf = raw_output_script.into();
+        Script(script)
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.0.to_bytes()
+    }
+}
+
+impl_from_core_type!(BdkScriptBuf, Script);
+impl_into_core_type!(Script, BdkScriptBuf);
+
+pub struct Header {
+    pub version: i32,
+    pub prev_blockhash: String,
+    pub merkle_root: String,
+    pub time: u32,
+    pub bits: u32,
+    pub nonce: u32,
+}
+
+impl From<BdkHeader> for Header {
+    fn from(bdk_header: BdkHeader) -> Self {
+        Header {
+            version: bdk_header.version.to_consensus(),
+            prev_blockhash: bdk_header.prev_blockhash.to_string(),
+            merkle_root: bdk_header.merkle_root.to_string(),
+            time: bdk_header.time,
+            bits: bdk_header.bits.to_consensus(),
+            nonce: bdk_header.nonce,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum AddressData {
+    P2pkh { pubkey_hash: String },
+    P2sh { script_hash: String },
+    Segwit { witness_program: WitnessProgram },
+}
+
+#[derive(Debug)]
+pub struct WitnessProgram {
+    pub version: u8,
+    pub program: Vec<u8>,
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Address(BdkAddress<NetworkChecked>);
@@ -59,6 +196,25 @@ impl Address {
             false
         }
     }
+
+    pub fn to_address_data(&self) -> AddressData {
+        match self.0.to_address_data() {
+            BdkAddressData::P2pkh { pubkey_hash } => AddressData::P2pkh {
+                pubkey_hash: pubkey_hash.to_string(),
+            },
+            BdkAddressData::P2sh { script_hash } => AddressData::P2sh {
+                script_hash: script_hash.to_string(),
+            },
+            BdkAddressData::Segwit { witness_program } => AddressData::Segwit {
+                witness_program: WitnessProgram {
+                    version: witness_program.version().to_num(),
+                    program: witness_program.program().as_bytes().to_vec(),
+                },
+            },
+            // AddressData is marked #[non_exhaustive] in bitcoin crate
+            _ => unimplemented!("Unsupported address type"),
+        }
+    }
 }
 
 impl Display for Address {
@@ -67,17 +223,8 @@ impl Display for Address {
     }
 }
 
-impl From<Address> for BdkAddress {
-    fn from(address: Address) -> Self {
-        address.0
-    }
-}
-
-impl From<BdkAddress> for Address {
-    fn from(address: BdkAddress) -> Self {
-        Address(address)
-    }
-}
+impl_from_core_type!(BdkAddress, Address);
+impl_into_core_type!(Address, BdkAddress);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transaction(BdkTransaction);
@@ -241,7 +388,7 @@ impl From<&BdkTxIn> for TxIn {
     fn from(tx_in: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
-                txid: tx_in.previous_output.txid,
+                txid: tx_in.previous_output.txid.to_string(),
                 vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script(tx_in.script_sig.clone())),
@@ -594,5 +741,35 @@ mod tests {
             bitcoin_regtest_p2sh_address.is_valid_for_network(Network::Regtest),
             "Address should be valid for Regtest"
         );
+    }
+
+    #[test]
+    fn test_to_address_data() {
+        // P2PKH address
+        let p2pkh = Address::new(
+            "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2".to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        let p2pkh_data = p2pkh.to_address_data();
+        println!("P2PKH data: {:#?}", p2pkh_data);
+
+        // P2SH address
+        let p2sh = Address::new(
+            "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy".to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        let p2sh_data = p2sh.to_address_data();
+        println!("P2SH data: {:#?}", p2sh_data);
+
+        // Segwit address (P2WPKH)
+        let segwit = Address::new(
+            "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4".to_string(),
+            Network::Bitcoin,
+        )
+        .unwrap();
+        let segwit_data = segwit.to_address_data();
+        println!("Segwit data: {:#?}", segwit_data);
     }
 }

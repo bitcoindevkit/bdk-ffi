@@ -1,9 +1,5 @@
-use crate::bitcoin::{Address, Transaction, TxOut};
+use crate::bitcoin::{Address, Amount, OutPoint, Script, Transaction, TxOut};
 use crate::error::{CreateTxError, RequestBuilderError};
-
-use bitcoin_ffi::Amount;
-use bitcoin_ffi::OutPoint;
-use bitcoin_ffi::Script;
 
 use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_core::spk_client::SyncItem;
@@ -17,11 +13,11 @@ use bdk_wallet::chain::tx_graph::CanonicalTx as BdkCanonicalTx;
 use bdk_wallet::chain::{
     ChainPosition as BdkChainPosition, ConfirmationBlockTime as BdkConfirmationBlockTime,
 };
-
 use bdk_wallet::descriptor::policy::{
     Condition as BdkCondition, PkOrF as BdkPkOrF, Policy as BdkPolicy,
     Satisfaction as BdkSatisfaction, SatisfiableItem as BdkSatisfiableItem,
 };
+use bdk_wallet::signer::{SignOptions as BdkSignOptions, TapLeavesOptions};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::KeychainKind;
@@ -32,14 +28,45 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 
+use crate::{impl_from_core_type, impl_into_core_type};
+use bdk_esplora::esplora_client::api::Tx as BdkTx;
+use bdk_esplora::esplora_client::api::TxStatus as BdkTxStatus;
+
 #[derive(Debug)]
 pub enum ChainPosition {
     Confirmed {
         confirmation_block_time: ConfirmationBlockTime,
+        transitively: Option<String>,
     },
     Unconfirmed {
-        timestamp: u64,
+        timestamp: Option<u64>,
     },
+}
+
+impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
+    fn from(chain_position: BdkChainPosition<BdkConfirmationBlockTime>) -> Self {
+        match chain_position {
+            BdkChainPosition::Confirmed {
+                anchor,
+                transitively,
+            } => {
+                let block_id = BlockId {
+                    height: anchor.block_id.height,
+                    hash: anchor.block_id.hash.to_string(),
+                };
+                ChainPosition::Confirmed {
+                    confirmation_block_time: ConfirmationBlockTime {
+                        block_id,
+                        confirmation_time: anchor.confirmation_time,
+                    },
+                    transitively: transitively.map(|t| t.to_string()),
+                }
+            }
+            BdkChainPosition::Unconfirmed { last_seen } => ChainPosition::Unconfirmed {
+                timestamp: last_seen,
+            },
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -61,25 +88,9 @@ pub struct CanonicalTx {
 
 impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for CanonicalTx {
     fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>) -> Self {
-        let chain_position = match tx.chain_position {
-            BdkChainPosition::Confirmed(anchor) => {
-                let block_id = BlockId {
-                    height: anchor.block_id.height,
-                    hash: anchor.block_id.hash.to_string(),
-                };
-                ChainPosition::Confirmed {
-                    confirmation_block_time: ConfirmationBlockTime {
-                        block_id,
-                        confirmation_time: anchor.confirmation_time,
-                    },
-                }
-            }
-            BdkChainPosition::Unconfirmed(timestamp) => ChainPosition::Unconfirmed { timestamp },
-        };
-
         CanonicalTx {
             transaction: Arc::new(Transaction::from(tx.tx_node.tx.as_ref().clone())),
-            chain_position,
+            chain_position: tx.chain_position.into(),
         }
     }
 }
@@ -132,13 +143,15 @@ pub struct LocalOutput {
     pub txout: TxOut,
     pub keychain: KeychainKind,
     pub is_spent: bool,
+    pub derivation_index: u32,
+    pub chain_position: ChainPosition,
 }
 
 impl From<BdkLocalOutput> for LocalOutput {
     fn from(local_utxo: BdkLocalOutput) -> Self {
         LocalOutput {
             outpoint: OutPoint {
-                txid: local_utxo.outpoint.txid,
+                txid: local_utxo.outpoint.txid.to_string(),
                 vout: local_utxo.outpoint.vout,
             },
             txout: TxOut {
@@ -147,6 +160,8 @@ impl From<BdkLocalOutput> for LocalOutput {
             },
             keychain: local_utxo.keychain,
             is_spent: local_utxo.is_spent,
+            derivation_index: local_utxo.derivation_index,
+            chain_position: local_utxo.chain_position.into(),
         }
     }
 }
@@ -250,16 +265,10 @@ pub struct KeychainAndIndex {
 /// Descriptor spending policy
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Policy(BdkPolicy);
-impl From<BdkPolicy> for Policy {
-    fn from(value: BdkPolicy) -> Self {
-        Policy(value)
-    }
-}
-impl From<Policy> for BdkPolicy {
-    fn from(value: Policy) -> Self {
-        value.0
-    }
-}
+
+impl_from_core_type!(BdkPolicy, Policy);
+impl_into_core_type!(Policy, BdkPolicy);
+
 impl Policy {
     pub fn id(&self) -> String {
         self.0.id.clone()
@@ -509,6 +518,77 @@ impl From<BdkCondition> for Condition {
         Condition {
             csv: value.csv.map(|e| e.to_consensus_u32()),
             timelock: value.timelock.map(|e| e.into()),
+        }
+    }
+}
+
+// This is a wrapper type around the bdk type [SignOptions](https://docs.rs/bdk_wallet/1.0.0/bdk_wallet/signer/struct.SignOptions.html)
+// because we did not want to expose the complexity behind the `TapLeavesOptions` type. When
+// transforming from a SignOption to a BdkSignOptions, we simply use the default values for
+// TapLeavesOptions.
+pub struct SignOptions {
+    pub trust_witness_utxo: bool,
+    pub assume_height: Option<u32>,
+    pub allow_all_sighashes: bool,
+    pub try_finalize: bool,
+    pub sign_with_tap_internal_key: bool,
+    pub allow_grinding: bool,
+}
+
+impl From<SignOptions> for BdkSignOptions {
+    fn from(options: SignOptions) -> BdkSignOptions {
+        BdkSignOptions {
+            trust_witness_utxo: options.trust_witness_utxo,
+            assume_height: options.assume_height,
+            allow_all_sighashes: options.allow_all_sighashes,
+            try_finalize: options.try_finalize,
+            tap_leaves_options: TapLeavesOptions::default(),
+            sign_with_tap_internal_key: options.sign_with_tap_internal_key,
+            allow_grinding: options.allow_grinding,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct TxStatus {
+    pub confirmed: bool,
+    pub block_height: Option<u32>,
+    pub block_hash: Option<String>,
+    pub block_time: Option<u64>,
+}
+
+impl From<BdkTxStatus> for TxStatus {
+    fn from(status: BdkTxStatus) -> Self {
+        TxStatus {
+            confirmed: status.confirmed,
+            block_height: status.block_height,
+            block_hash: status.block_hash.map(|h| h.to_string()),
+            block_time: status.block_time,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct Tx {
+    pub txid: String,
+    pub version: i32,
+    pub locktime: u32,
+    pub size: u64,
+    pub weight: u64,
+    pub fee: u64,
+    pub status: TxStatus,
+}
+
+impl From<BdkTx> for Tx {
+    fn from(tx: BdkTx) -> Self {
+        Self {
+            txid: tx.txid.to_string(),
+            version: tx.version,
+            locktime: tx.locktime,
+            size: tx.size as u64,
+            weight: tx.weight,
+            fee: tx.fee,
+            status: tx.status.into(),
         }
     }
 }

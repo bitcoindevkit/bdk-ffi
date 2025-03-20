@@ -5,7 +5,7 @@ python3 --version
 pip install -r requirements.txt
 
 cd ../bdk-ffi/
-rustup default 1.77.1
+rustup default 1.84.1
 rustup target add aarch64-apple-darwin
 
 echo "Generating native binaries..."

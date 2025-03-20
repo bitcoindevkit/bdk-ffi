@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: "Checkout publishing branch"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Cache"
         uses: actions/cache@v3
@@ -22,13 +22,13 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
       - name: "Set up JDK"
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 11
 
-      - name: "Set default Rust version to 1.77.1"
-        run: rustup default 1.77.1
+      - name: "Set default Rust version to 1.84.1"
+        run: rustup default 1.84.1
 
       - name: "Build library and run tests"
         run: |
@@ -41,7 +41,7 @@ jobs:
     runs-on: macos-14
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: "Build Swift package"
         working-directory: bdk-swift
@@ -68,14 +68,14 @@ jobs:
           - cp310-cp310
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: "Install Rust 1.77.1"
+      - name: "Install Rust 1.84.1"
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.77.1
+          toolchain: 1.84.1
 
       - name: "Generate bdk.py and binaries"
         run: bash ./scripts/generate-linux.sh

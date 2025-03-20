@@ -7,9 +7,6 @@ import org.junit.runner.RunWith
 import kotlin.test.AfterTest
 import kotlin.test.assertTrue
 import java.io.File
-import org.rustbitcoin.bitcoin.Network
-import org.rustbitcoin.bitcoin.Amount
-import org.rustbitcoin.bitcoin.FeeRate
 
 private const val SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
 private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
@@ -17,8 +14,8 @@ private const val TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 @RunWith(AndroidJUnit4::class)
 class LiveTxBuilderTest {
     private val persistenceFilePath = InstrumentationRegistry.getInstrumentation().targetContext.filesDir.path + "/bdk_persistence3.sqlite"
-    private val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)", Network.SIGNET)
-    private val changeDescriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)", Network.SIGNET)
+    private val descriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)", Network.SIGNET)
+    private val changeDescriptor = Descriptor("wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/*)", Network.SIGNET)
 
     @AfterTest
     fun cleanup() {

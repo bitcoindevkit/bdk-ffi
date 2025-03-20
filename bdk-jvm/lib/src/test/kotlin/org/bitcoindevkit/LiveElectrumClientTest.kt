@@ -1,17 +1,18 @@
 package org.bitcoindevkit
 
 import kotlin.test.Test
-import org.rustbitcoin.bitcoin.Network
+import kotlin.test.assertEquals
+import org.bitcoindevkit.ServerFeaturesRes
 
 private const val SIGNET_ELECTRUM_URL = "ssl://mempool.space:60602"
 
 class LiveElectrumClientTest {
     private val descriptor: Descriptor = Descriptor(
-        "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
+        "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)",
         Network.SIGNET
     )
     private val changeDescriptor: Descriptor = Descriptor(
-        "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/1/*)",
+        "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/*)",
         Network.SIGNET
     )
 
@@ -37,5 +38,32 @@ class LiveElectrumClientTest {
             println("Sent ${sentAndReceived.sent.toSat()}")
             println("Received ${sentAndReceived.received.toSat()}")
         }
+    }
+
+    @Test
+    fun testServerFeatures() {
+        val electrumClient: ElectrumClient = ElectrumClient("ssl://electrum.blockstream.info:60002")
+        val features: ServerFeaturesRes = electrumClient.serverFeatures()
+        println("Server Features:\n$features")
+
+        assertEquals(
+            expected = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943",
+            actual = features.genesisHash
+        )
+    }
+
+    @Test
+    fun testBlockSubscription() {
+        val electrumClient: ElectrumClient = ElectrumClient("ssl://electrum.blockstream.info:60002")
+        val headerNotification: HeaderNotification = electrumClient.blockHeadersSubscribe()
+        println("Latest known block:\n$headerNotification")
+    }
+
+    @Test
+    fun testPing() {
+        val electrumClient: ElectrumClient = ElectrumClient("ssl://electrum.blockstream.info:60002")
+        val ping = electrumClient.ping()
+
+        assert(ping == Unit)
     }
 }

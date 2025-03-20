@@ -1,10 +1,11 @@
-use bitcoin_ffi::OutPoint;
+use crate::OutPoint;
 
 use bdk_core::bitcoin::script::PushBytesError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
-use bdk_esplora::esplora_client::{Error as BdkEsploraError, Error};
+use bdk_esplora::esplora_client::Error as BdkEsploraError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
 use bdk_wallet::bitcoin::address::{FromScriptError as BdkFromScriptError, ParseError};
+use bdk_wallet::bitcoin::amount::ParseAmountError as BdkParseAmountError;
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk_wallet::bitcoin::hashes::hex::HexToArrayError as BdkHexToArrayError;
@@ -364,6 +365,9 @@ pub enum EsploraError {
 
     #[error("the request has already been consumed")]
     RequestAlreadyConsumed,
+
+    #[error("the server sent an invalid response")]
+    InvalidResponse,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -381,6 +385,11 @@ pub enum ExtractTxError {
         "this error is required because the bdk::bitcoin::psbt::ExtractTxError is non-exhaustive"
     )]
     OtherExtractTxErr,
+}
+#[derive(Debug, thiserror::Error)]
+pub enum FeeRateError {
+    #[error("arithmetic overflow on feerate")]
+    ArithmeticOverflow,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -529,6 +538,28 @@ pub enum MiniscriptError {
 
     #[error("unprintable character: {byte}")]
     Unprintable { byte: u8 },
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ParseAmountError {
+    #[error("amount out of range")]
+    OutOfRange,
+
+    #[error("amount has a too high precision")]
+    TooPrecise,
+
+    #[error("the input has too few digits")]
+    MissingDigits,
+
+    #[error("the input is too large")]
+    InputTooLarge,
+
+    #[error("invalid character: {error_message}")]
+    InvalidCharacter { error_message: String },
+
+    // Has to handle non-exhaustive
+    #[error("unknown parse amount error")]
+    OtherParseAmountErr,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -751,6 +782,18 @@ pub enum TxidParseError {
     InvalidTxid { txid: String },
 }
 
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum LightClientBuilderError {
+    #[error("the database could not be opened or created: {reason}")]
+    DatabaseError { reason: String },
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum LightClientError {
+    #[error("the node is no longer running")]
+    NodeStopped,
+}
+
 // ------------------------------------------------------------------------
 // error conversions
 // ------------------------------------------------------------------------
@@ -881,6 +924,7 @@ impl From<BdkCalculateFeeError> for CalculateFeeError {
     fn from(error: BdkCalculateFeeError) -> Self {
         match error {
             BdkCalculateFeeError::MissingTxOut(out_points) => {
+                let out_points = out_points.iter().map(OutPoint::from).collect();
                 CalculateFeeError::MissingTxOut { out_points }
             }
             BdkCalculateFeeError::NegativeFee(signed_amount) => CalculateFeeError::NegativeFee {
@@ -1084,7 +1128,7 @@ impl From<BdkEsploraError> for EsploraError {
             BdkEsploraError::Parsing(e) => EsploraError::Parsing {
                 error_message: e.to_string(),
             },
-            Error::StatusCode(e) => EsploraError::StatusCode {
+            BdkEsploraError::StatusCode(e) => EsploraError::StatusCode {
                 error_message: e.to_string(),
             },
             BdkEsploraError::BitcoinEncoding(e) => EsploraError::BitcoinEncoding {
@@ -1101,10 +1145,13 @@ impl From<BdkEsploraError> for EsploraError {
                 EsploraError::HeaderHeightNotFound { height }
             }
             BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
-            Error::InvalidHttpHeaderName(name) => EsploraError::InvalidHttpHeaderName { name },
+            BdkEsploraError::InvalidHttpHeaderName(name) => {
+                EsploraError::InvalidHttpHeaderName { name }
+            }
             BdkEsploraError::InvalidHttpHeaderValue(value) => {
                 EsploraError::InvalidHttpHeaderValue { value }
             }
+            BdkEsploraError::InvalidResponse => EsploraError::InvalidResponse,
         }
     }
 }
@@ -1122,7 +1169,7 @@ impl From<Box<BdkEsploraError>> for EsploraError {
             BdkEsploraError::Parsing(e) => EsploraError::Parsing {
                 error_message: e.to_string(),
             },
-            Error::StatusCode(e) => EsploraError::StatusCode {
+            BdkEsploraError::StatusCode(e) => EsploraError::StatusCode {
                 error_message: e.to_string(),
             },
             BdkEsploraError::BitcoinEncoding(e) => EsploraError::BitcoinEncoding {
@@ -1139,10 +1186,13 @@ impl From<Box<BdkEsploraError>> for EsploraError {
                 EsploraError::HeaderHeightNotFound { height }
             }
             BdkEsploraError::HeaderHashNotFound(_) => EsploraError::HeaderHashNotFound,
-            Error::InvalidHttpHeaderName(name) => EsploraError::InvalidHttpHeaderName { name },
+            BdkEsploraError::InvalidHttpHeaderName(name) => {
+                EsploraError::InvalidHttpHeaderName { name }
+            }
             BdkEsploraError::InvalidHttpHeaderValue(value) => {
                 EsploraError::InvalidHttpHeaderValue { value }
             }
+            BdkEsploraError::InvalidResponse => EsploraError::InvalidResponse,
         }
     }
 }
@@ -1272,6 +1322,21 @@ impl From<bdk_wallet::miniscript::Error> for MiniscriptError {
                 char: c.to_string(),
             },
             BdkMiniscriptError::Unprintable(b) => MiniscriptError::Unprintable { byte: b },
+        }
+    }
+}
+
+impl From<BdkParseAmountError> for ParseAmountError {
+    fn from(error: BdkParseAmountError) -> Self {
+        match error {
+            BdkParseAmountError::OutOfRange(_) => ParseAmountError::OutOfRange,
+            BdkParseAmountError::TooPrecise(_) => ParseAmountError::TooPrecise,
+            BdkParseAmountError::MissingDigits(_) => ParseAmountError::MissingDigits,
+            BdkParseAmountError::InputTooLarge(_) => ParseAmountError::InputTooLarge,
+            BdkParseAmountError::InvalidCharacter(c) => ParseAmountError::InvalidCharacter {
+                error_message: c.to_string(),
+            },
+            _ => ParseAmountError::OtherParseAmountErr,
         }
     }
 }
@@ -1447,6 +1512,20 @@ impl From<BdkSqliteError> for SqliteError {
         SqliteError::Sqlite {
             rusqlite_error: error.to_string(),
         }
+    }
+}
+
+impl From<bdk_kyoto::builder::SqlInitializationError> for LightClientBuilderError {
+    fn from(value: bdk_kyoto::builder::SqlInitializationError) -> Self {
+        LightClientBuilderError::DatabaseError {
+            reason: value.to_string(),
+        }
+    }
+}
+
+impl From<bdk_kyoto::kyoto::ClientError> for LightClientError {
+    fn from(_value: bdk_kyoto::kyoto::ClientError) -> Self {
+        LightClientError::NodeStopped
     }
 }
 

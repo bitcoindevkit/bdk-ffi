@@ -146,6 +146,7 @@ interface EsploraError {
   InvalidHttpHeaderName(string name);
   InvalidHttpHeaderValue(string value);
   RequestAlreadyConsumed();
+  InvalidResponse();
 };
 
 [Error]
@@ -154,6 +155,11 @@ interface ExtractTxError {
   MissingInputValue();
   SendingTooMuch();
   OtherExtractTxErr();
+};
+
+[Error]
+interface FeeRateError {
+  ArithmeticOverflow();
 };
 
 [Error]
@@ -210,6 +216,16 @@ interface MiniscriptError {
     UnexpectedStart();
     UnknownWrapper(string char);
     Unprintable(u8 byte);
+};
+
+[Error]
+interface ParseAmountError {
+  OutOfRange();
+  TooPrecise();
+  MissingDigits();
+  InputTooLarge();
+  InvalidCharacter(string error_message);
+  OtherParseAmountErr();
 };
 
 [Error]
@@ -319,6 +335,7 @@ interface TxidParseError {
 // ------------------------------------------------------------------------
 
 /// Types of keychains
+[Remote]
 enum KeychainKind {
   /// External keychain, used for deriving recipient addresses.
   "External",
@@ -376,6 +393,12 @@ dictionary LocalOutput {
 
   /// Whether this UTXO is spent or not
   boolean is_spent;
+
+  /// The derivation index for the script pubkey in the wallet
+  u32 derivation_index;
+
+  /// The position of the output in the blockchain.
+  ChainPosition chain_position;
 };
 
 /// Bitcoin transaction output.
@@ -396,11 +419,11 @@ dictionary TxOut {
 /// Represents the observed position of some chain data.
 [Enum]
 interface ChainPosition {
-  /// The chain data is seen as confirmed, and in anchored by `A`.
-  Confirmed(ConfirmationBlockTime confirmation_block_time);
+  /// The chain data is confirmed as it is anchored in the best chain by `A`.
+  Confirmed(ConfirmationBlockTime confirmation_block_time, string? transitively);
 
   /// The chain data is not confirmed and last seen in the mempool at this timestamp.
-  Unconfirmed(u64 timestamp);
+  Unconfirmed(u64? timestamp);
 };
 
 dictionary ConfirmationBlockTime {
@@ -451,13 +474,64 @@ interface FullScanScriptInspector {
 };
 
 /// A changeset for [`Wallet`].
+[Remote]
 interface ChangeSet {};
+
+/// Options for a software signer.
+///
+/// Adjust the behavior of our software signers and the way a transaction is finalized.
+dictionary SignOptions {
+    /// Whether the signer should trust the `witness_utxo`, if the `non_witness_utxo` hasn't been
+    /// provided
+    ///
+    /// Defaults to `false` to mitigate the "SegWit bug" which could trick the wallet into
+    /// paying a fee larger than expected.
+    ///
+    /// Some wallets, especially if relatively old, might not provide the `non_witness_utxo` for
+    /// SegWit transactions in the PSBT they generate: in those cases setting this to `true`
+    /// should correctly produce a signature, at the expense of an increased trust in the creator
+    /// of the PSBT.
+    ///
+    /// For more details see: <https://blog.trezor.io/details-of-firmware-updates-for-trezor-one-version-1-9-1-and-trezor-model-t-version-2-3-1-1eba8f60f2dd>
+    boolean trust_witness_utxo;
+
+    /// Whether the wallet should assume a specific height has been reached when trying to finalize
+    /// a transaction
+    ///
+    /// The wallet will only "use" a timelock to satisfy the spending policy of an input if the
+    /// timelock height has already been reached. This option allows overriding the "current height" to let the
+    /// wallet use timelocks in the future to spend a coin.
+    u32? assume_height;
+
+    /// Whether the signer should use the `sighash_type` set in the PSBT when signing, no matter
+    /// what its value is
+    ///
+    /// Defaults to `false` which will only allow signing using `SIGHASH_ALL`.
+    boolean allow_all_sighashes;
+
+    /// Whether to try finalizing the PSBT after the inputs are signed.
+    ///
+    /// Defaults to `true` which will try finalizing PSBT after inputs are signed.
+    boolean try_finalize;
+
+    /// Whether we should try to sign a taproot transaction with the taproot internal key
+    /// or not. This option is ignored if we're signing a non-taproot PSBT.
+    ///
+    /// Defaults to `true`, i.e., we always try to sign with the taproot internal key.
+    boolean sign_with_tap_internal_key;
+
+    /// Whether we should grind ECDSA signature to ensure signing with low r
+    /// or not.
+    /// Defaults to `true`, i.e., we always grind ECDSA signature to sign with low r.
+    boolean allow_grinding;
+};
 
 // ------------------------------------------------------------------------
 // bdk_wallet crate - wallet module
 // ------------------------------------------------------------------------
 
 /// Policy regarding the use of change outputs when creating a transaction
+[Remote]
 enum ChangeSpendPolicy {
   /// Use both change and non-change outputs (default)
   "ChangeAllowed",
@@ -514,10 +588,10 @@ interface Wallet {
   u32 next_derivation_index(KeychainKind keychain);
 
   /// Get the next unused address for the given `keychain`, i.e. the address with the lowest
-  /// derivation index that hasn't been used.
+  /// derivation index that hasn't been used in a transaction.
   ///
-  /// This will attempt to derive and reveal a new address if no newly revealed addresses
-  /// are available. See also [`reveal_next_address`](Self::reveal_next_address).
+  /// This will attempt to reveal a new address if all previously revealed addresses have
+  /// been used, in which case the returned address will be the same as calling [`Wallet::reveal_next_address`].
   ///
   /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
   /// calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
@@ -582,7 +656,7 @@ interface Wallet {
   /// signers will follow the options, but the "software signers" (WIF keys and `xprv`) defined
   /// in this library will.
   [Throws=SignerError]
-  boolean sign(Psbt psbt);
+  boolean sign(Psbt psbt, optional SignOptions? sign_options = null);
 
   /// Finalize a PSBT, i.e., for each input determine if sufficient data is available to pass
   /// validation and construct the respective `scriptSig` or `scriptWitness`. Please refer to
@@ -594,7 +668,7 @@ interface Wallet {
   ///
   /// The [`SignOptions`] can be used to tweak the behavior of the finalizer.
   [Throws=SignerError]
-  boolean finalize_psbt(Psbt psbt);
+  boolean finalize_psbt(Psbt psbt, optional SignOptions? sign_options = null);
 
   /// Compute the `tx`'s sent and received [`Amount`]s.
   ///
@@ -1030,41 +1104,156 @@ interface Descriptor {
 // bdk_esplora crate
 // ------------------------------------------------------------------------
 
+/// Wrapper around an esplora_client::BlockingClient which includes an internal in-memory transaction
+/// cache to avoid re-fetching already downloaded transactions.
 interface EsploraClient {
+  /// Creates a new bdk client from a esplora_client::BlockingClient
   constructor(string url);
 
+  /// Scan keychain scripts for transactions against Esplora, returning an update that can be
+  /// applied to the receiving structures.
+  ///
+  /// `request` provides the data required to perform a script-pubkey-based full scan
+  /// (see [`FullScanRequest`]). The full scan for each keychain (`K`) stops after a gap of
+  /// `stop_gap` script pubkeys with no associated transactions. `parallel_requests` specifies
+  /// the maximum number of HTTP requests to make in parallel.
   [Throws=EsploraError]
-  Update full_scan(FullScanRequest full_scan_request, u64 stop_gap, u64 parallel_requests);
+  Update full_scan(FullScanRequest request, u64 stop_gap, u64 parallel_requests);
 
+  /// Sync a set of scripts, txids, and/or outpoints against Esplora.
+  ///
+  /// `request` provides the data required to perform a script-pubkey-based sync (see
+  /// [`SyncRequest`]). `parallel_requests` specifies the maximum number of HTTP requests to make
+  /// in parallel.
   [Throws=EsploraError]
-  Update sync(SyncRequest sync_request, u64 parallel_requests);
+  Update sync(SyncRequest request, u64 parallel_requests);
 
+  /// Broadcast a [`Transaction`] to Esplora.
   [Throws=EsploraError]
   void broadcast([ByRef] Transaction transaction);
 
+  /// Get a [`Transaction`] option given its [`Txid`].
   [Throws=EsploraError]
   Transaction? get_tx(string txid);
 
+  /// Get the height of the current blockchain tip.
   [Throws=EsploraError]
   u32 get_height();
+
+  /// Get a map where the key is the confirmation target (in number of
+  /// blocks) and the value is the estimated feerate (in sat/vB).
+  [Throws=EsploraError]
+  record<u16, f64> get_fee_estimates();
+
+  /// Get the [`BlockHash`] of a specific block height
+  [Throws=EsploraError]
+  string get_block_hash(u32 block_height);
+
+  /// Get the status of a [`Transaction`] given its [`Txid`].
+  [Throws=EsploraError]
+  TxStatus get_tx_status(string txid);
+
+  /// Get transaction info given it's [`Txid`].
+  [Throws=EsploraError]
+  Tx? get_tx_info(string txid);
 };
 
 // ------------------------------------------------------------------------
 // bdk_electrum crate
 // ------------------------------------------------------------------------
 
+/// Wrapper around an electrum_client::ElectrumApi which includes an internal in-memory transaction
+/// cache to avoid re-fetching already downloaded transactions.
 interface ElectrumClient {
+  /// Creates a new bdk client from a electrum_client::ElectrumApi
   [Throws=ElectrumError]
   constructor(string url);
 
+  /// Full scan the keychain scripts specified with the blockchain (via an Electrum client) and
+  /// returns updates for bdk_chain data structures.
+  ///
+  /// - `request`: struct with data required to perform a spk-based blockchain client
+  ///   full scan, see `FullScanRequest`.
+  /// - `stop_gap`: the full scan for each keychain stops after a gap of script pubkeys with no
+  ///   associated transactions.
+  /// - `batch_size`: specifies the max number of script pubkeys to request for in a single batch
+  ///   request.
+  /// - `fetch_prev_txouts`: specifies whether we want previous `TxOuts` for fee calculation. Note
+  ///   that this requires additional calls to the Electrum server, but is necessary for
+  ///   calculating the fee on a transaction if your wallet does not own the inputs. Methods like
+  ///   `Wallet.calculate_fee` and `Wallet.calculate_fee_rate` will return a
+  ///   `CalculateFeeError::MissingTxOut` error if those TxOuts are not present in the transaction
+  ///   graph.
   [Throws=ElectrumError]
-  Update full_scan(FullScanRequest full_scan_request, u64 stop_gap, u64 batch_size, boolean fetch_prev_txouts);
+  Update full_scan(FullScanRequest request, u64 stop_gap, u64 batch_size, boolean fetch_prev_txouts);
 
+  /// Sync a set of scripts with the blockchain (via an Electrum client) for the data specified and returns updates for bdk_chain data structures.
+  ///
+  /// - `request`: struct with data required to perform a spk-based blockchain client
+  ///   sync, see `SyncRequest`.
+  /// - `batch_size`: specifies the max number of script pubkeys to request for in a single batch
+  ///   request.
+  /// - `fetch_prev_txouts`: specifies whether we want previous `TxOuts` for fee calculation. Note
+  ///   that this requires additional calls to the Electrum server, but is necessary for
+  ///   calculating the fee on a transaction if your wallet does not own the inputs. Methods like
+  ///   `Wallet.calculate_fee` and `Wallet.calculate_fee_rate` will return a
+  ///   `CalculateFeeError::MissingTxOut` error if those TxOuts are not present in the transaction
+  ///   graph.
+  ///
+  /// If the scripts to sync are unknown, such as when restoring or importing a keychain that may
+  /// include scripts that have been used, use full_scan with the keychain.
   [Throws=ElectrumError]
-  Update sync(SyncRequest sync_request, u64 batch_size, boolean fetch_prev_txouts);
+  Update sync(SyncRequest request, u64 batch_size, boolean fetch_prev_txouts);
 
+  /// Broadcasts a transaction to the network.
   [Throws=ElectrumError]
-  string broadcast([ByRef] Transaction transaction);
+  string transaction_broadcast([ByRef] Transaction tx);
+
+  /// Returns the capabilities of the server.
+  [Throws=ElectrumError]
+  ServerFeaturesRes server_features();
+
+  /// Estimates the fee required in bitcoin per kilobyte to confirm a transaction in `number` blocks.
+  [Throws=ElectrumError]
+  f64 estimate_fee(u64 number);
+
+  /// Subscribes to notifications for new block headers, by sending a blockchain.headers.subscribe call.
+  [Throws=ElectrumError]
+  HeaderNotification block_headers_subscribe();
+
+  /// Pings the server.
+  [Throws=ElectrumError]
+  void ping();
+};
+
+/// Response to an ElectrumClient.server_features request.
+dictionary ServerFeaturesRes {
+  /// Server version reported.
+  string server_version;
+
+  /// Hash of the genesis block.
+  string genesis_hash;
+
+  /// Minimum supported version of the protocol.
+  string protocol_min;
+
+  /// Maximum supported version of the protocol.
+  string protocol_max;
+
+  /// Hash function used to create the `ScriptHash`.
+  string? hash_function;
+
+  /// Pruned height of the server.
+  i64? pruning;
+};
+
+/// Notification of a new block header.
+dictionary HeaderNotification {
+  /// New block height.
+  u64 height;
+
+  /// Newly added header.
+  Header header;
 };
 
 // ------------------------------------------------------------------------
@@ -1086,10 +1275,63 @@ dictionary KeychainAndIndex {
     u32 index;
 };
 
+dictionary TxStatus {
+    boolean confirmed;
+    u32? block_height;
+    string? block_hash;
+    u64? block_time;
+};
+
+dictionary Tx {
+    string txid;
+    i32 version;
+    u32 locktime;
+    u64 size;
+    u64 weight;
+    u64 fee;
+    TxStatus status;
+};
+
+dictionary WitnessProgram {
+    u8 version;
+    sequence<u8> program;
+};
+
+[Enum]
+interface AddressData {
+    P2pkh(string pubkey_hash);
+    P2sh(string script_hash);
+    Segwit(WitnessProgram witness_program);
+};
+
+// ------------------------------------------------------------------------
+// bdk-kyoto crate
+// ------------------------------------------------------------------------
+
+/// The state of the node with respect to connected peers.
+[Remote]
+enum NodeState {
+  /// Behind on block headers according to our peers.
+  "Behind",
+
+  /// Downloading compact block filter headers.
+  "HeadersSynced",
+
+  /// Scanning compact block filters.
+  "FilterHeadersSynced",
+
+  /// Asking for blocks with matches.
+  "FiltersSynced",
+
+  /// Found all known transactions to the wallet.
+  "TransactionsSynced"
+};
+
 // ------------------------------------------------------------------------
 // bdk_wallet crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 
+[Remote]
 enum WordCount {
   "Words12",
   "Words15",
@@ -1111,6 +1353,31 @@ interface Address {
   string to_qr_uri();
 
   boolean is_valid_for_network(Network network);
+
+  AddressData to_address_data();
+};
+
+/// Bitcoin block header.
+/// Contains all the block’s information except the actual transactions, but including a root of a merkle tree
+/// committing to all transactions in the block.
+dictionary Header {
+  /// Block version, now repurposed for soft fork signalling.
+  i32 version;
+
+  /// Reference to the previous block in the chain.
+  string prev_blockhash;
+
+  /// The root hash of the merkle tree of transactions in the block.
+  string merkle_root;
+
+  /// The timestamp of the block, as claimed by the miner.
+  u32 time;
+
+  /// The target value below which the blockhash must lie.
+  u32 bits;
+
+  /// The nonce, selected to obtain a low enough blockhash.
+  u32 nonce;
 };
 
 interface Transaction {
@@ -1175,30 +1442,48 @@ dictionary TxIn {
   sequence<sequence<u8>> witness;
 };
 
-// ------------------------------------------------------------------------
-// types defined in external crate bitcoin-ffi
-// ------------------------------------------------------------------------
+interface Script {
+  constructor(sequence<u8> raw_output_script);
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern Script;
+  sequence<u8> to_bytes();
+};
 
-[External="bitcoin_ffi"]
-typedef extern Network;
+[NonExhaustive, Remote]
+enum Network {
+  "Bitcoin",
+  "Testnet",
+  "Signet",
+  "Regtest",
+  "Testnet4",
+};
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern Amount;
+interface Amount {
+  [Name=from_sat]
+  constructor(u64 from_sat);
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern FeeRate;
+  [Name=from_btc, Throws=ParseAmountError]
+  constructor(f64 from_btc);
 
-[External="bitcoin_ffi"]
-typedef extern Txid;
+  u64 to_sat();
 
-[External="bitcoin_ffi"]
-typedef extern OutPoint;
+  f64 to_btc();
+};
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern FeeRateError;
+interface FeeRate {
+  [Name=from_sat_per_vb, Throws=FeeRateError]
+  constructor(u64 sat_per_vb);
 
-[ExternalInterface="bitcoin_ffi"]
-typedef extern ParseAmountError;
+  [Name=from_sat_per_kwu]
+  constructor(u64 sat_per_kwu);
+
+  u64 to_sat_per_vb_ceil();
+
+  u64 to_sat_per_vb_floor();
+
+  u64 to_sat_per_kwu();
+};
+
+dictionary OutPoint {
+  string txid;
+  u32 vout;
+};

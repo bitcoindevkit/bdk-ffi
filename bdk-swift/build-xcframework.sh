@@ -5,8 +5,6 @@
 
 HEADERPATH="Sources/BitcoinDevKit/BitcoinDevKitFFI.h"
 MODMAPPATH="Sources/BitcoinDevKit/BitcoinDevKitFFI.modulemap"
-HEADERPATH_BITCOIN_FFI="Sources/BitcoinDevKit/BitcoinFFI.h"
-MODMAPPATH_BITCOIN_FFI="Sources/BitcoinDevKit/BitcoinFFI.modulemap"
 TARGETDIR="../bdk-ffi/target"
 OUTDIR="."
 RELDIR="release-smaller"
@@ -15,7 +13,7 @@ STATIC_LIB_NAME="lib${NAME}.a"
 NEW_HEADER_DIR="../bdk-ffi/target/include"
 
 # set required rust version and install component and targets
-rustup default 1.77.1
+rustup default 1.84.1
 rustup component add rust-src
 rustup target add aarch64-apple-ios      # iOS arm64
 rustup target add x86_64-apple-ios       # iOS x86_64
@@ -46,11 +44,8 @@ cd ../bdk-swift/ || exit
 # move bdk-ffi static lib header files to temporary directory
 mkdir -p "${NEW_HEADER_DIR}"
 mv "${HEADERPATH}" "${NEW_HEADER_DIR}"
-mv "${HEADERPATH_BITCOIN_FFI}" "${NEW_HEADER_DIR}"
 mv "${MODMAPPATH}" "${NEW_HEADER_DIR}/module.modulemap"
 echo -e "\n" >> "${NEW_HEADER_DIR}/module.modulemap"
-cat "${MODMAPPATH_BITCOIN_FFI}" >> "${NEW_HEADER_DIR}/module.modulemap"
-rm "${MODMAPPATH_BITCOIN_FFI}"
 
 # remove old xcframework directory
 rm -rf "${OUTDIR}/${NAME}.xcframework"

@@ -1,5 +1,8 @@
+# Rust related
 target
 build
+
+# Kotlin related
 .gradle
 wallet_db
 bdk_ffi_test
@@ -7,15 +10,16 @@ local.properties
 *.log
 *.dylib
 *.so
+*.db
+*/data/signet
 .DS_Store
 testdb
-xcuserdata
 .lsp
 .clj-kondo
 .idea/
 .editorconfig
 bdk.kt
-bitcoin.kt
+.kotlin/
 
 # Swift related
 /.build
@@ -35,12 +39,10 @@ bdk.swift
 .build
 *.xcframework/
 Info.plist
-BitcoinFFI.h
-Bitcoin.swift
-BitcoinFFi.modulemap
 bdkffi.xcframework
 Sources/
+xcuserdata
 
 # Python related
 __pycache__
-bitcoin.py
+.localenvironment/

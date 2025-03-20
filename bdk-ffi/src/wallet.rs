@@ -1,4 +1,4 @@
-use crate::bitcoin::{Psbt, Transaction};
+use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
@@ -7,14 +7,13 @@ use crate::error::{
 use crate::store::Connection;
 use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex, LocalOutput,
-    Policy, SentAndReceivedValues, SyncRequestBuilder, Update,
+    Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, Update,
 };
-
-use bitcoin_ffi::{Amount, FeeRate, OutPoint, Script};
 
 use bdk_wallet::bitcoin::{Network, Txid};
 use bdk_wallet::rusqlite::Connection as BdkConnection;
-use bdk_wallet::{KeychainKind, PersistedWallet, SignOptions, Wallet as BdkWallet};
+use bdk_wallet::signer::SignOptions as BdkSignOptions;
+use bdk_wallet::{KeychainKind, PersistedWallet, Wallet as BdkWallet};
 
 use std::borrow::BorrowMut;
 use std::str::FromStr;
@@ -87,7 +86,7 @@ impl Wallet {
 
     pub fn get_utxo(&self, op: OutPoint) -> Option<LocalOutput> {
         self.get_wallet()
-            .get_utxo(op)
+            .get_utxo(op.into())
             .map(|local_output| local_output.into())
     }
 
@@ -162,18 +161,32 @@ impl Wallet {
     pub(crate) fn sign(
         &self,
         psbt: Arc<Psbt>,
-        // sign_options: Option<SignOptions>,
+        sign_options: Option<SignOptions>,
     ) -> Result<bool, SignerError> {
         let mut psbt = psbt.0.lock().unwrap();
+        let bdk_sign_options: BdkSignOptions = match sign_options {
+            Some(sign_options) => BdkSignOptions::from(sign_options),
+            None => BdkSignOptions::default(),
+        };
+
         self.get_wallet()
-            .sign(&mut psbt, SignOptions::default())
+            .sign(&mut psbt, bdk_sign_options)
             .map_err(SignerError::from)
     }
 
-    pub fn finalize_psbt(&self, psbt: Arc<Psbt>) -> Result<bool, SignerError> {
+    pub fn finalize_psbt(
+        &self,
+        psbt: Arc<Psbt>,
+        sign_options: Option<SignOptions>,
+    ) -> Result<bool, SignerError> {
         let mut psbt = psbt.0.lock().unwrap();
+        let bdk_sign_options: BdkSignOptions = match sign_options {
+            Some(sign_options) => BdkSignOptions::from(sign_options),
+            None => BdkSignOptions::default(),
+        };
+
         self.get_wallet()
-            .finalize_psbt(&mut psbt, SignOptions::default())
+            .finalize_psbt(&mut psbt, bdk_sign_options)
             .map_err(SignerError::from)
     }
 

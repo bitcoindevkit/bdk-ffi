@@ -1,31 +1,50 @@
-default:
-  just --list
+[group("Repo")]
+[doc("Default command; list all available commands.")]
+@list:
+  just --list --unsorted
 
-build-linux:
-  bash ./scripts/build-linux-x86_64.sh
+[group("Repo")]
+[doc("Open repo on GitHub in your default browser.")]
+repo:
+  open https://github.com/bitcoindevkit/bdk-ffi
 
-build-macos-aarch64:
-  bash ./scripts/build-macos-aarch64.sh
+[group("Repo")]
+[doc("Build the API docs.")]
+docs:
+  ./gradlew :lib:dokkaGeneratePublicationHtml
 
-build-macos-x86_64:
-  bash ./scripts/build-macos-x86_64.sh
-  
-build-windows:
-  bash ./scripts/build-windows-x86_64.sh
+[group("Repo")]
+[doc("Publish the library to your local Maven repository.")]
+publish-local:
+  ./gradlew publishToMavenLocal -P localBuild
 
+[group("Build")]
+[doc("Build the library for given ARCH.")]
+build ARCH="macos-aarch64":
+  bash ./scripts/build-{{ARCH}}.sh
+
+[group("Build")]
+[doc("List available architectures for the build command.")]
+@list-architectures:
+    echo "Available architectures:"
+    echo "    - linux-x86_64"
+    echo "    - macos-aarch64"
+    echo "    - macos-x86_64"
+    echo "    - windows-x86_64"
+
+[group("Build")]
+[doc("Remove all caches and previous build directories to start from scratch.")]
 clean:
   rm -rf ../bdk-ffi/target/
   rm -rf ./build/
   rm -rf ./lib/build/
 
-publish-local:
-  ./gradlew publishToMavenLocal -P localBuild
+[group("Test")]
+[doc("Run all tests, unless a specific test is provided.")]
+test *TEST:
+  ./gradlew test {{ if TEST == "" { "" } else { "--tests " + TEST } }}
 
-test:
-  ./gradlew test
-
+[group("Test")]
+[doc("Run only offline tests.")]
 test-offline:
   ./gradlew test -P excludeConnectedTests
-
-test-specific TEST:
-  ./gradlew test --tests {{TEST}}

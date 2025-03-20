@@ -9,7 +9,7 @@ LIB_NAME="libbdkffi.dylib"
 cd ../bdk-ffi/ || exit
 
 # Build the Rust library
-rustup default 1.77.1
+rustup default 1.84.1
 rustup target add $COMPILATION_TARGET
 cargo build --profile release-smaller --target $COMPILATION_TARGET
 

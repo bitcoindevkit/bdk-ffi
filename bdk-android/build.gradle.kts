@@ -1,10 +1,11 @@
 plugins {
     id("com.android.library").version("8.3.1").apply(false)
-    id("org.jetbrains.kotlin.android").version("1.9.23").apply(false)
+    id("org.jetbrains.kotlin.android").version("2.1.10").apply(false)
     id("org.gradle.maven-publish")
     id("org.gradle.signing")
     id("io.github.gradle-nexus.publish-plugin").version("1.1.0").apply(true)
-    id("org.jetbrains.dokka").version("1.9.0").apply(false)
+    id("org.jetbrains.dokka").version("2.0.0").apply(false)
+    id("org.jetbrains.dokka-javadoc").version("2.0.0").apply(false)
 }
 
 // library version is defined in gradle.properties

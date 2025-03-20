@@ -18,7 +18,7 @@ RESOURCE_DIR_ARMEABI_V7A="armeabi-v7a"
 
 # Move to the Rust library directory
 cd ../bdk-ffi/ || exit
-rustup default 1.77.1
+rustup default 1.84.1
 rustup target add $COMPILATION_TARGET_ARM64_V8A $COMPILATION_TARGET_ARMEABI_V7A $COMPILATION_TARGET_X86_64 
 
 # Build the binaries
