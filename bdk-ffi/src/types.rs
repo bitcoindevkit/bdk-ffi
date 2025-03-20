@@ -592,3 +592,7 @@ impl From<BdkTx> for Tx {
         }
     }
 }
+pub struct UnconfirmedTx {
+    pub tx: Arc<Transaction>,
+    pub last_seen: u64,
+}
