@@ -99,8 +99,8 @@ pub struct Amount(pub BdkAmount);
 #[uniffi::export]
 impl Amount {
     #[uniffi::constructor]
-    pub fn from_sat(sat: u64) -> Self {
-        Amount(BdkAmount::from_sat(sat))
+    pub fn from_sat(satoshi: u64) -> Self {
+        Amount(BdkAmount::from_sat(satoshi))
     }
 
     #[uniffi::constructor]
