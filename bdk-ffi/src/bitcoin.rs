@@ -93,14 +93,17 @@ impl FeeRate {
 impl_from_core_type!(BdkFeeRate, FeeRate);
 impl_into_core_type!(FeeRate, BdkFeeRate);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Object)]
 pub struct Amount(pub BdkAmount);
 
+#[uniffi::export]
 impl Amount {
+    #[uniffi::constructor]
     pub fn from_sat(sat: u64) -> Self {
         Amount(BdkAmount::from_sat(sat))
     }
 
+    #[uniffi::constructor]
     pub fn from_btc(btc: f64) -> Result<Self, ParseAmountError> {
         let bitcoin_amount = BdkAmount::from_btc(btc).map_err(ParseAmountError::from)?;
         Ok(Amount(bitcoin_amount))

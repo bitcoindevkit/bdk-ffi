@@ -1463,17 +1463,7 @@ enum Network {
   "Testnet4",
 };
 
-interface Amount {
-  [Name=from_sat]
-  constructor(u64 from_sat);
-
-  [Name=from_btc, Throws=ParseAmountError]
-  constructor(f64 from_btc);
-
-  u64 to_sat();
-
-  f64 to_btc();
-};
+typedef interface Amount;
 
 typedef interface FeeRate;
 
