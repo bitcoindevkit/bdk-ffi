@@ -26,7 +26,7 @@ pub struct Descriptor {
 }
 
 impl Descriptor {
-    pub(crate) fn new(descriptor: String, network: Network) -> Result<Self, DescriptorError> {
+    pub fn new(descriptor: String, network: Network) -> Result<Self, DescriptorError> {
         let secp = Secp256k1::new();
         let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network)?;
         Ok(Self {
@@ -35,7 +35,7 @@ impl Descriptor {
         })
     }
 
-    pub(crate) fn new_bip44(
+    pub fn new_bip44(
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network: Network,
@@ -61,7 +61,7 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn new_bip44_public(
+    pub fn new_bip44_public(
         public_key: &DescriptorPublicKey,
         fingerprint: String,
         keychain_kind: KeychainKind,
@@ -92,7 +92,7 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn new_bip49(
+    pub fn new_bip49(
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network: Network,
@@ -118,7 +118,7 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn new_bip49_public(
+    pub fn new_bip49_public(
         public_key: &DescriptorPublicKey,
         fingerprint: String,
         keychain_kind: KeychainKind,
@@ -149,7 +149,7 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn new_bip84(
+    pub fn new_bip84(
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network: Network,
@@ -175,7 +175,7 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn new_bip84_public(
+    pub fn new_bip84_public(
         public_key: &DescriptorPublicKey,
         fingerprint: String,
         keychain_kind: KeychainKind,
@@ -206,7 +206,7 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn new_bip86(
+    pub fn new_bip86(
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network: Network,
@@ -232,7 +232,7 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn new_bip86_public(
+    pub fn new_bip86_public(
         public_key: &DescriptorPublicKey,
         fingerprint: String,
         keychain_kind: KeychainKind,
@@ -263,17 +263,17 @@ impl Descriptor {
         }
     }
 
-    pub(crate) fn to_string_with_secret(&self) -> String {
+    pub fn to_string_with_secret(&self) -> String {
         let descriptor = &self.extended_descriptor;
         let key_map = &self.key_map;
         descriptor.to_string_with_secret(key_map)
     }
 
-    pub(crate) fn is_multipath(&self) -> bool {
+    pub fn is_multipath(&self) -> bool {
         self.extended_descriptor.is_multipath()
     }
 
-    pub(crate) fn to_single_descriptors(&self) -> Result<Vec<Arc<Descriptor>>, MiniscriptError> {
+    pub fn to_single_descriptors(&self) -> Result<Vec<Arc<Descriptor>>, MiniscriptError> {
         self.extended_descriptor
             .clone()
             .into_single_descriptors()
