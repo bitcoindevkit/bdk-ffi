@@ -138,7 +138,7 @@ impl Wallet {
         )
     }
 
-    pub(crate) fn derivation_index(&self, keychain: KeychainKind) -> Option<u32> {
+    pub fn derivation_index(&self, keychain: KeychainKind) -> Option<u32> {
         self.get_wallet().derivation_index(keychain)
     }
 
@@ -166,7 +166,7 @@ impl Wallet {
         self.get_wallet().is_mine(script.0.clone())
     }
 
-    pub(crate) fn sign(
+    pub fn sign(
         &self,
         psbt: Arc<Psbt>,
         sign_options: Option<SignOptions>,
