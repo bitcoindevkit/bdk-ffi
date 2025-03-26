@@ -23,9 +23,12 @@ use std::sync::Arc;
 pub struct EsploraClient(BlockingClient);
 
 impl EsploraClient {
-    pub fn new(url: String) -> Self {
-        let client = Builder::new(url.as_str()).build_blocking();
-        Self(client)
+    pub fn new(url: String, proxy: Option<String>) -> Self {
+        let mut builder = Builder::new(url.as_str());
+        if let Some(proxy) = proxy {
+            builder = builder.proxy(proxy.as_str());
+        }
+        Self(builder.build_blocking())
     }
 
     pub fn full_scan(

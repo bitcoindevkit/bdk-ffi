@@ -921,7 +921,8 @@ interface Descriptor {
 /// cache to avoid re-fetching already downloaded transactions.
 interface EsploraClient {
   /// Creates a new bdk client from a esplora_client::BlockingClient
-  constructor(string url);
+  /// Optional: Set the proxy of the builder
+  constructor(string url, optional string? proxy = null);
 
   /// Scan keychain scripts for transactions against Esplora, returning an update that can be
   /// applied to the receiving structures.
@@ -979,8 +980,9 @@ interface EsploraClient {
 /// cache to avoid re-fetching already downloaded transactions.
 interface ElectrumClient {
   /// Creates a new bdk client from a electrum_client::ElectrumApi
+  /// Optional: Set the proxy of the builder
   [Throws=ElectrumError]
-  constructor(string url);
+  constructor(string url, optional string? socks5 = null);
 
   /// Full scan the keychain scripts specified with the blockchain (via an Electrum client) and
   /// returns updates for bdk_chain data structures.

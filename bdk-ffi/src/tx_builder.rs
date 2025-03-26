@@ -608,7 +608,7 @@ mod tests {
             Arc::new(Connection::new_in_memory().unwrap()),
         )
         .unwrap();
-        let client = EsploraClient::new("https://mutinynet.com/api/".to_string());
+        let client = EsploraClient::new("https://mutinynet.com/api/".to_string(), None);
         let full_scan_builder = wallet.start_full_scan();
         let full_scan_request = full_scan_builder
             .inspect_spks_for_all_keychains(Arc::new(FullScanInspector))

@@ -25,9 +25,15 @@ use std::sync::Arc;
 pub struct ElectrumClient(BdkBdkElectrumClient<bdk_electrum::electrum_client::Client>);
 
 impl ElectrumClient {
-    pub fn new(url: String) -> Result<Self, ElectrumError> {
-        let inner_client: bdk_electrum::electrum_client::Client =
-            bdk_electrum::electrum_client::Client::new(url.as_str())?;
+    pub fn new(url: String, socks5: Option<String>) -> Result<Self, ElectrumError> {
+        let mut config = bdk_electrum::electrum_client::ConfigBuilder::new();
+        if let Some(socks5) = socks5 {
+            config = config.socks5(Some(bdk_electrum::electrum_client::Socks5Config::new(
+                socks5.as_str(),
+            )));
+        }
+        let inner_client =
+            bdk_electrum::electrum_client::Client::from_config(url.as_str(), config.build())?;
         let client = BdkBdkElectrumClient::new(inner_client);
         Ok(Self(client))
     }
