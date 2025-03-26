@@ -22,30 +22,30 @@ use std::sync::Arc;
 /// calling `finish` to consume the builder and generate the transaction.
 #[derive(Clone, uniffi::Object)]
 pub struct TxBuilder {
-    pub(crate) add_global_xpubs: bool,
-    pub(crate) recipients: Vec<(BdkScriptBuf, BdkAmount)>,
-    pub(crate) utxos: Vec<BdkOutPoint>,
-    pub(crate) unspendable: Vec<BdkOutPoint>,
-    pub(crate) internal_policy_path: Option<BTreeMap<String, Vec<usize>>>,
-    pub(crate) external_policy_path: Option<BTreeMap<String, Vec<usize>>>,
-    pub(crate) change_policy: ChangeSpendPolicy,
-    pub(crate) manually_selected_only: bool,
-    pub(crate) fee_rate: Option<FeeRate>,
-    pub(crate) fee_absolute: Option<Arc<Amount>>,
-    pub(crate) drain_wallet: bool,
-    pub(crate) drain_to: Option<BdkScriptBuf>,
-    pub(crate) sequence: Option<u32>,
-    pub(crate) data: Vec<u8>,
-    pub(crate) current_height: Option<u32>,
-    pub(crate) locktime: Option<LockTime>,
-    pub(crate) allow_dust: bool,
-    pub(crate) version: Option<i32>,
+    add_global_xpubs: bool,
+    recipients: Vec<(BdkScriptBuf, BdkAmount)>,
+    utxos: Vec<BdkOutPoint>,
+    unspendable: Vec<BdkOutPoint>,
+    internal_policy_path: Option<BTreeMap<String, Vec<usize>>>,
+    external_policy_path: Option<BTreeMap<String, Vec<usize>>>,
+    change_policy: ChangeSpendPolicy,
+    manually_selected_only: bool,
+    fee_rate: Option<FeeRate>,
+    fee_absolute: Option<Arc<Amount>>,
+    drain_wallet: bool,
+    drain_to: Option<BdkScriptBuf>,
+    sequence: Option<u32>,
+    data: Vec<u8>,
+    current_height: Option<u32>,
+    locktime: Option<LockTime>,
+    allow_dust: bool,
+    version: Option<i32>,
 }
 
 #[uniffi::export]
 impl TxBuilder {
     #[uniffi::constructor]
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         TxBuilder {
             add_global_xpubs: false,
             recipients: Vec::new(),
@@ -73,7 +73,7 @@ impl TxBuilder {
     ///
     /// This is useful for offline signers that take part to a multisig. Some hardware wallets like BitBox and ColdCard
     /// are known to require this.
-    pub(crate) fn add_global_xpubs(&self) -> Arc<Self> {
+    pub fn add_global_xpubs(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             add_global_xpubs: true,
             ..self.clone()
@@ -81,7 +81,7 @@ impl TxBuilder {
     }
 
     /// Add a recipient to the internal list of recipients.
-    pub(crate) fn add_recipient(&self, script: &Script, amount: Arc<Amount>) -> Arc<Self> {
+    pub fn add_recipient(&self, script: &Script, amount: Arc<Amount>) -> Arc<Self> {
         let mut recipients: Vec<(BdkScriptBuf, BdkAmount)> = self.recipients.clone();
         recipients.append(&mut vec![(script.0.clone(), amount.0)]);
 
@@ -92,7 +92,7 @@ impl TxBuilder {
     }
 
     /// Replace the recipients already added with a new list of recipients.
-    pub(crate) fn set_recipients(&self, recipients: Vec<ScriptAmount>) -> Arc<Self> {
+    pub fn set_recipients(&self, recipients: Vec<ScriptAmount>) -> Arc<Self> {
         let recipients = recipients
             .iter()
             .map(|script_amount| (script_amount.script.0.clone(), script_amount.amount.0)) //;
@@ -106,7 +106,7 @@ impl TxBuilder {
     /// Add a utxo to the internal list of unspendable utxos.
     ///
     /// It’s important to note that the "must-be-spent" utxos added with `TxBuilder::add_utxo` have priority over this.
-    pub(crate) fn add_unspendable(&self, unspendable: OutPoint) -> Arc<Self> {
+    pub fn add_unspendable(&self, unspendable: OutPoint) -> Arc<Self> {
         let mut unspendable_vec: Vec<BdkOutPoint> = self.unspendable.clone();
         unspendable_vec.push(unspendable.into());
 
@@ -119,7 +119,7 @@ impl TxBuilder {
     /// Replace the internal list of unspendable utxos with a new list.
     ///
     /// It’s important to note that the "must-be-spent" utxos added with `TxBuilder::add_utxo` have priority over these.
-    pub(crate) fn unspendable(&self, unspendable: Vec<OutPoint>) -> Arc<Self> {
+    pub fn unspendable(&self, unspendable: Vec<OutPoint>) -> Arc<Self> {
         let new_unspendable_vec: Vec<BdkOutPoint> =
             unspendable.into_iter().map(BdkOutPoint::from).collect();
 
@@ -133,7 +133,7 @@ impl TxBuilder {
     ///
     /// These have priority over the "unspendable" utxos, meaning that if a utxo is present both in the "utxos" and the
     /// "unspendable" list, it will be spent.
-    pub(crate) fn add_utxo(&self, outpoint: OutPoint) -> Arc<Self> {
+    pub fn add_utxo(&self, outpoint: OutPoint) -> Arc<Self> {
         self.add_utxos(vec![outpoint])
     }
 
@@ -142,7 +142,7 @@ impl TxBuilder {
     // If an error occurs while adding any of the UTXOs then none of them are added and the error is returned.
     //
     // These have priority over the “unspendable” utxos, meaning that if a utxo is present both in the “utxos” and the “unspendable” list, it will be spent.
-    pub(crate) fn add_utxos(&self, outpoints: Vec<OutPoint>) -> Arc<Self> {
+    pub fn add_utxos(&self, outpoints: Vec<OutPoint>) -> Arc<Self> {
         let mut utxos: Vec<BdkOutPoint> = self.utxos.clone();
         utxos.extend(outpoints.into_iter().map(BdkOutPoint::from));
         Arc::new(TxBuilder {
@@ -152,7 +152,7 @@ impl TxBuilder {
     }
 
     /// The TxBuilder::policy_path is a complex API. See the Rust docs for complete       information: https://docs.rs/bdk_wallet/latest/bdk_wallet/struct.TxBuilder.html#method.policy_path
-    pub(crate) fn policy_path(
+    pub fn policy_path(
         &self,
         policy_path: HashMap<String, Vec<u64>>,
         keychain: KeychainKind,
@@ -173,7 +173,7 @@ impl TxBuilder {
 
     /// Set a specific `ChangeSpendPolicy`. See `TxBuilder::do_not_spend_change` and `TxBuilder::only_spend_change` for
     /// some shortcuts. This method assumes the presence of an internal keychain, otherwise it has no effect.
-    pub(crate) fn change_policy(&self, change_policy: ChangeSpendPolicy) -> Arc<Self> {
+    pub fn change_policy(&self, change_policy: ChangeSpendPolicy) -> Arc<Self> {
         Arc::new(TxBuilder {
             change_policy,
             ..self.clone()
@@ -184,7 +184,7 @@ impl TxBuilder {
     ///
     /// This effectively adds all the change outputs to the "unspendable" list. See `TxBuilder::unspendable`. This method
     /// assumes the presence of an internal keychain, otherwise it has no effect.
-    pub(crate) fn do_not_spend_change(&self) -> Arc<Self> {
+    pub fn do_not_spend_change(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             change_policy: ChangeSpendPolicy::ChangeForbidden,
             ..self.clone()
@@ -195,7 +195,7 @@ impl TxBuilder {
     ///
     /// This effectively adds all the non-change outputs to the "unspendable" list. See `TxBuilder::unspendable`. This
     /// method assumes the presence of an internal keychain, otherwise it has no effect.
-    pub(crate) fn only_spend_change(&self) -> Arc<Self> {
+    pub fn only_spend_change(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             change_policy: ChangeSpendPolicy::OnlyChange,
             ..self.clone()
@@ -205,7 +205,7 @@ impl TxBuilder {
     /// Only spend utxos added by `TxBuilder::add_utxo`.
     ///
     /// The wallet will not add additional utxos to the transaction even if they are needed to make the transaction valid.
-    pub(crate) fn manually_selected_only(&self) -> Arc<Self> {
+    pub fn manually_selected_only(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             manually_selected_only: true,
             ..self.clone()
@@ -220,7 +220,7 @@ impl TxBuilder {
     ///
     /// Note that this is really a minimum feerate – it’s possible to overshoot it slightly since adding a change output
     /// to drain the remaining excess might not be viable.
-    pub(crate) fn fee_rate(&self, fee_rate: &FeeRate) -> Arc<Self> {
+    pub fn fee_rate(&self, fee_rate: &FeeRate) -> Arc<Self> {
         Arc::new(TxBuilder {
             fee_rate: Some(fee_rate.clone()),
             ..self.clone()
@@ -232,7 +232,7 @@ impl TxBuilder {
     /// called last, as the `FeeRate` and `FeeAmount` are mutually exclusive.
     ///
     /// Note that this is really a minimum absolute fee – it’s possible to overshoot it slightly since adding a change output to drain the remaining excess might not be viable.
-    pub(crate) fn fee_absolute(&self, fee_amount: Arc<Amount>) -> Arc<Self> {
+    pub fn fee_absolute(&self, fee_amount: Arc<Amount>) -> Arc<Self> {
         Arc::new(TxBuilder {
             fee_absolute: Some(fee_amount),
             ..self.clone()
@@ -240,7 +240,7 @@ impl TxBuilder {
     }
 
     /// Spend all the available inputs. This respects filters like `TxBuilder::unspendable` and the change policy.
-    pub(crate) fn drain_wallet(&self) -> Arc<Self> {
+    pub fn drain_wallet(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             drain_wallet: true,
             ..self.clone()
@@ -258,7 +258,7 @@ impl TxBuilder {
     /// If you choose not to set any recipients, you should provide the utxos that the transaction should spend via
     /// `add_utxos`. `drain_to` is very useful for draining all the coins in a wallet with `drain_wallet` to a single
     /// address.
-    pub(crate) fn drain_to(&self, script: &Script) -> Arc<Self> {
+    pub fn drain_to(&self, script: &Script) -> Arc<Self> {
         Arc::new(TxBuilder {
             drain_to: Some(script.0.clone()),
             ..self.clone()
@@ -269,7 +269,7 @@ impl TxBuilder {
     ///
     /// This can cause conflicts if the wallet’s descriptors contain an "older" (`OP_CSV`) operator and the given
     /// `nsequence` is lower than the CSV value.
-    pub(crate) fn set_exact_sequence(&self, nsequence: u32) -> Arc<Self> {
+    pub fn set_exact_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(TxBuilder {
             sequence: Some(nsequence),
             ..self.clone()
@@ -277,7 +277,7 @@ impl TxBuilder {
     }
 
     /// Add data as an output using `OP_RETURN`.
-    pub(crate) fn add_data(&self, data: Vec<u8>) -> Arc<Self> {
+    pub fn add_data(&self, data: Vec<u8>) -> Arc<Self> {
         Arc::new(TxBuilder {
             data,
             ..self.clone()
@@ -295,7 +295,7 @@ impl TxBuilder {
     /// we ignore them in the coin selection. If you want to create a transaction that spends immature coinbase inputs,
     /// manually add them using `TxBuilder::add_utxos`.
     /// In both cases, if you don’t provide a current height, we use the last sync height.
-    pub(crate) fn current_height(&self, height: u32) -> Arc<Self> {
+    pub fn current_height(&self, height: u32) -> Arc<Self> {
         Arc::new(TxBuilder {
             current_height: Some(height),
             ..self.clone()
@@ -305,7 +305,7 @@ impl TxBuilder {
     /// Use a specific nLockTime while creating the transaction.
     ///
     /// This can cause conflicts if the wallet’s descriptors contain an "after" (`OP_CLTV`) operator.
-    pub(crate) fn nlocktime(&self, locktime: LockTime) -> Arc<Self> {
+    pub fn nlocktime(&self, locktime: LockTime) -> Arc<Self> {
         Arc::new(TxBuilder {
             locktime: Some(locktime),
             ..self.clone()
@@ -315,7 +315,7 @@ impl TxBuilder {
     /// Set whether or not the dust limit is checked.
     ///
     /// Note: by avoiding a dust limit check you may end up with a transaction that is non-standard.
-    pub(crate) fn allow_dust(&self, allow_dust: bool) -> Arc<Self> {
+    pub fn allow_dust(&self, allow_dust: bool) -> Arc<Self> {
         Arc::new(TxBuilder {
             allow_dust,
             ..self.clone()
@@ -326,7 +326,7 @@ impl TxBuilder {
     ///
     /// The version should always be greater than 0 and greater than 1 if the wallet’s descriptors contain an "older"
     /// (`OP_CSV`) operator.
-    pub(crate) fn version(&self, version: i32) -> Arc<Self> {
+    pub fn version(&self, version: i32) -> Arc<Self> {
         Arc::new(TxBuilder {
             version: Some(version),
             ..self.clone()
@@ -341,7 +341,7 @@ impl TxBuilder {
     ///
     /// WARNING: To avoid change address reuse you must persist the changes resulting from one or more calls to this
     /// method before closing the wallet. See `Wallet::reveal_next_address`.
-    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
+    pub fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
         let mut tx_builder = wallet.build_tx();
@@ -411,20 +411,20 @@ impl TxBuilder {
 /// A `BumpFeeTxBuilder` is created by calling `build_fee_bump` on a wallet. After assigning it, you set options on it
 /// until finally calling `finish` to consume the builder and generate the transaction.
 #[derive(Clone, uniffi::Object)]
-pub(crate) struct BumpFeeTxBuilder {
-    pub(crate) txid: String,
-    pub(crate) fee_rate: Arc<FeeRate>,
-    pub(crate) sequence: Option<u32>,
-    pub(crate) current_height: Option<u32>,
-    pub(crate) locktime: Option<LockTime>,
-    pub(crate) allow_dust: bool,
-    pub(crate) version: Option<i32>,
+pub struct BumpFeeTxBuilder {
+    txid: String,
+    fee_rate: Arc<FeeRate>,
+    sequence: Option<u32>,
+    current_height: Option<u32>,
+    locktime: Option<LockTime>,
+    allow_dust: bool,
+    version: Option<i32>,
 }
 
 #[uniffi::export]
 impl BumpFeeTxBuilder {
     #[uniffi::constructor]
-    pub(crate) fn new(txid: String, fee_rate: Arc<FeeRate>) -> Self {
+    pub fn new(txid: String, fee_rate: Arc<FeeRate>) -> Self {
         BumpFeeTxBuilder {
             txid,
             fee_rate,
@@ -440,7 +440,7 @@ impl BumpFeeTxBuilder {
     ///
     /// This can cause conflicts if the wallet’s descriptors contain an "older" (`OP_CSV`) operator and the given
     /// `nsequence` is lower than the CSV value.
-    pub(crate) fn set_exact_sequence(&self, nsequence: u32) -> Arc<Self> {
+    pub fn set_exact_sequence(&self, nsequence: u32) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             sequence: Some(nsequence),
             ..self.clone()
@@ -458,7 +458,7 @@ impl BumpFeeTxBuilder {
     /// we ignore them in the coin selection. If you want to create a transaction that spends immature coinbase inputs,
     /// manually add them using `TxBuilder::add_utxos`.
     /// In both cases, if you don’t provide a current height, we use the last sync height.
-    pub(crate) fn current_height(&self, height: u32) -> Arc<Self> {
+    pub fn current_height(&self, height: u32) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             current_height: Some(height),
             ..self.clone()
@@ -468,7 +468,7 @@ impl BumpFeeTxBuilder {
     /// Use a specific nLockTime while creating the transaction.
     ///
     /// This can cause conflicts if the wallet’s descriptors contain an "after" (`OP_CLTV`) operator.
-    pub(crate) fn nlocktime(&self, locktime: LockTime) -> Arc<Self> {
+    pub fn nlocktime(&self, locktime: LockTime) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             locktime: Some(locktime),
             ..self.clone()
@@ -478,7 +478,7 @@ impl BumpFeeTxBuilder {
     /// Set whether the dust limit is checked.
     ///
     /// Note: by avoiding a dust limit check you may end up with a transaction that is non-standard.
-    pub(crate) fn allow_dust(&self, allow_dust: bool) -> Arc<Self> {
+    pub fn allow_dust(&self, allow_dust: bool) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             allow_dust,
             ..self.clone()
@@ -489,7 +489,7 @@ impl BumpFeeTxBuilder {
     ///
     /// The version should always be greater than 0 and greater than 1 if the wallet’s descriptors contain an "older"
     /// (`OP_CSV`) operator.
-    pub(crate) fn version(&self, version: i32) -> Arc<Self> {
+    pub fn version(&self, version: i32) -> Arc<Self> {
         Arc::new(BumpFeeTxBuilder {
             version: Some(version),
             ..self.clone()
@@ -504,7 +504,7 @@ impl BumpFeeTxBuilder {
     ///
     /// WARNING: To avoid change address reuse you must persist the changes resulting from one or more calls to this
     /// method before closing the wallet. See `Wallet::reveal_next_address`.
-    pub(crate) fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
+    pub fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
             outpoint: self.txid.clone(),
         })?;
