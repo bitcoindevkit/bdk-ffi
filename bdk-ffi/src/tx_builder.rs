@@ -421,6 +421,7 @@ pub(crate) struct BumpFeeTxBuilder {
     pub(crate) version: Option<i32>,
 }
 
+#[uniffi::export]
 impl BumpFeeTxBuilder {
     #[uniffi::constructor]
     pub(crate) fn new(txid: String, fee_rate: Arc<FeeRate>) -> Self {
