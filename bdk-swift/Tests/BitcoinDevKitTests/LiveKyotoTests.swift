@@ -29,7 +29,7 @@ final class LiveKyotoTests: XCTestCase {
             connection: connection
         )
         let trustedPeer = Peer(address: peer, port: nil, v2Transport: false)
-        let lightClient = try LightClientBuilder()
+        let lightClient = try CbfBuilder()
             .peers(peers: [trustedPeer])
             .connections(connections: 1)
             .scanType(scanType: ScanType.new)

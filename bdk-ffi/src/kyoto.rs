@@ -1,4 +1,4 @@
-use bdk_kyoto::builder::LightClientBuilder as BDKLightClientBuilder;
+use bdk_kyoto::builder::LightClientBuilder as BDKCbfBuilder;
 use bdk_kyoto::builder::ServiceFlags;
 use bdk_kyoto::builder::TrustedPeer;
 use bdk_kyoto::kyoto::tokio;
@@ -24,7 +24,7 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 
 use crate::bitcoin::Transaction;
-use crate::error::{LightClientBuilderError, LightClientError};
+use crate::error::{CbfBuilderError, CbfError};
 use crate::wallet::Wallet;
 use crate::FeeRate;
 use crate::Update;
@@ -35,35 +35,35 @@ const TIMEOUT: u64 = 10;
 const DEFAULT_CONNECTIONS: u8 = 2;
 const CWD_PATH: &str = ".";
 
-/// Receive a [`Client`] and [`LightNode`].
+/// Receive a [`CbfClient`] and [`CbfNode`].
 #[derive(Debug, uniffi::Record)]
-pub struct LightClient {
+pub struct CbfComponents {
     /// Publish events to the node, like broadcasting transactions or adding scripts.
-    pub client: Arc<Client>,
+    pub client: Arc<CbfClient>,
     /// The node to run and fetch transactions for a [`Wallet`].
-    pub node: Arc<LightNode>,
+    pub node: Arc<CbfNode>,
 }
 
-/// A [`Client`] handles wallet updates from a [`LightNode`].
+/// A [`CbfClient`] handles wallet updates from a [`CbfNode`].
 #[derive(Debug, uniffi::Object)]
-pub struct Client {
+pub struct CbfClient {
     sender: Arc<Requester>,
     log_rx: Mutex<Receiver<bdk_kyoto::Log>>,
     warning_rx: Mutex<UnboundedReceiver<bdk_kyoto::Warning>>,
     update_rx: Mutex<UpdateSubscriber>,
 }
 
-/// A [`LightNode`] gathers transactions for a [`Wallet`].
+/// A [`CbfNode`] gathers transactions for a [`Wallet`].
 /// To receive [`Update`] for [`Wallet`], refer to the
-/// [`Client`]. The [`LightNode`] will run until instructed
+/// [`CbfClient`]. The [`CbfNode`] will run until instructed
 /// to stop.
 #[derive(Debug, uniffi::Object)]
-pub struct LightNode {
+pub struct CbfNode {
     node: NodeDefault,
 }
 
 #[uniffi::export]
-impl LightNode {
+impl CbfNode {
     /// Start the node on a detached OS thread and immediately return.
     pub fn run(self: Arc<Self>) {
         std::thread::spawn(|| {
@@ -92,7 +92,7 @@ impl LightNode {
 /// `lookahead` value will be used. To ensure all transactions are recovered, the
 /// `lookahead` should be roughly the number of transactions in the wallet history.
 #[derive(Clone, uniffi::Object)]
-pub struct LightClientBuilder {
+pub struct CbfBuilder {
     connections: u8,
     data_dir: Option<String>,
     scan_type: ScanType,
@@ -102,11 +102,11 @@ pub struct LightClientBuilder {
 }
 
 #[uniffi::export]
-impl LightClientBuilder {
-    /// Start a new [`LightClientBuilder`]
+impl CbfBuilder {
+    /// Start a new [`CbfBuilder`]
     #[uniffi::constructor]
     pub fn new() -> Self {
-        LightClientBuilder {
+        CbfBuilder {
             connections: DEFAULT_CONNECTIONS,
             data_dir: None,
             scan_type: ScanType::default(),
@@ -118,7 +118,7 @@ impl LightClientBuilder {
 
     /// The number of connections for the light client to maintain. Default is two.
     pub fn connections(&self, connections: u8) -> Arc<Self> {
-        Arc::new(LightClientBuilder {
+        Arc::new(CbfBuilder {
             connections,
             ..self.clone()
         })
@@ -127,7 +127,7 @@ impl LightClientBuilder {
     /// Directory to store block headers and peers. If none is provided, the current
     /// working directory will be used.
     pub fn data_dir(&self, data_dir: String) -> Arc<Self> {
-        Arc::new(LightClientBuilder {
+        Arc::new(CbfBuilder {
             data_dir: Some(data_dir),
             ..self.clone()
         })
@@ -135,7 +135,7 @@ impl LightClientBuilder {
 
     /// Select between syncing, recovering, or scanning for new wallets.
     pub fn scan_type(&self, scan_type: ScanType) -> Arc<Self> {
-        Arc::new(LightClientBuilder {
+        Arc::new(CbfBuilder {
             scan_type,
             ..self.clone()
         })
@@ -144,7 +144,7 @@ impl LightClientBuilder {
     /// Set the log level for the node. Production applications may want to omit `Debug` messages
     /// to avoid heap allocations.
     pub fn log_level(&self, log_level: LogLevel) -> Arc<Self> {
-        Arc::new(LightClientBuilder {
+        Arc::new(CbfBuilder {
             log_level,
             ..self.clone()
         })
@@ -152,7 +152,7 @@ impl LightClientBuilder {
 
     /// Bitcoin full-nodes to attempt a connection with.
     pub fn peers(&self, peers: Vec<Peer>) -> Arc<Self> {
-        Arc::new(LightClientBuilder {
+        Arc::new(CbfBuilder {
             peers,
             ..self.clone()
         })
@@ -161,14 +161,14 @@ impl LightClientBuilder {
     /// Configure a custom DNS resolver when querying DNS seeds. Default is `1.1.1.1` managed by
     /// CloudFlare.
     pub fn dns_resolver(&self, dns_resolver: Arc<IpAddress>) -> Arc<Self> {
-        Arc::new(LightClientBuilder {
+        Arc::new(CbfBuilder {
             dns_resolver: Some(dns_resolver),
             ..self.clone()
         })
     }
 
-    /// Construct a [`LightClient`] for a [`Wallet`].
-    pub fn build(&self, wallet: &Wallet) -> Result<LightClient, LightClientBuilderError> {
+    /// Construct a [`CbfComponents`] for a [`Wallet`].
+    pub fn build(&self, wallet: &Wallet) -> Result<CbfComponents, CbfBuilderError> {
         let wallet = wallet.get_wallet();
 
         let mut trusted_peers = Vec::new();
@@ -181,7 +181,7 @@ impl LightClientBuilder {
             .map(|path| PathBuf::from(&path))
             .unwrap_or(PathBuf::from(CWD_PATH));
 
-        let mut builder = BDKLightClientBuilder::new()
+        let mut builder = BDKCbfBuilder::new()
             .connections(self.connections)
             .data_dir(path_buf)
             .scan_type(self.scan_type.into())
@@ -201,16 +201,16 @@ impl LightClientBuilder {
             node,
         } = builder.build(&wallet)?;
 
-        let node = LightNode { node };
+        let node = CbfNode { node };
 
-        let client = Client {
+        let client = CbfClient {
             sender: Arc::new(requester),
             log_rx: Mutex::new(log_subscriber),
             warning_rx: Mutex::new(warning_subscriber),
             update_rx: Mutex::new(update_subscriber),
         };
 
-        Ok(LightClient {
+        Ok(CbfComponents {
             client: Arc::new(client),
             node: Arc::new(node),
         })
@@ -218,25 +218,25 @@ impl LightClientBuilder {
 }
 
 #[uniffi::export]
-impl Client {
+impl CbfClient {
     /// Return the next available log message from a node. If none is returned, the node has stopped.
-    pub async fn next_log(&self) -> Result<Log, LightClientError> {
+    pub async fn next_log(&self) -> Result<Log, CbfError> {
         let mut log_rx = self.log_rx.lock().await;
         log_rx
             .recv()
             .await
             .map(|log| log.into())
-            .ok_or(LightClientError::NodeStopped)
+            .ok_or(CbfError::NodeStopped)
     }
 
     /// Return the next available warning message from a node. If none is returned, the node has stopped.
-    pub async fn next_warning(&self) -> Result<Warning, LightClientError> {
+    pub async fn next_warning(&self) -> Result<Warning, CbfError> {
         let mut warn_rx = self.warning_rx.lock().await;
         warn_rx
             .recv()
             .await
             .map(|warn| warn.into())
-            .ok_or(LightClientError::NodeStopped)
+            .ok_or(CbfError::NodeStopped)
     }
 
     /// Return an [`Update`]. This is method returns once the node syncs to the rest of
@@ -250,7 +250,7 @@ impl Client {
     /// a transaction or revealing a receive address.
     ///
     /// Note that only future blocks will be checked for these scripts, not past blocks.
-    pub async fn add_revealed_scripts(&self, wallet: &Wallet) -> Result<(), LightClientError> {
+    pub async fn add_revealed_scripts(&self, wallet: &Wallet) -> Result<(), CbfError> {
         let script_iter: Vec<ScriptBuf> = {
             let wallet_lock = wallet.get_wallet();
             wallet_lock.peek_revealed_plus_lookahead().collect()
@@ -259,23 +259,23 @@ impl Client {
             self.sender
                 .add_script(script)
                 .await
-                .map_err(|_| LightClientError::NodeStopped)?
+                .map_err(|_| CbfError::NodeStopped)?
         }
         Ok(())
     }
 
     /// Broadcast a transaction to the network, erroring if the node has stopped running.
-    pub async fn broadcast(&self, transaction: &Transaction) -> Result<(), LightClientError> {
+    pub async fn broadcast(&self, transaction: &Transaction) -> Result<(), CbfError> {
         let tx = transaction.into();
         self.sender.broadcast_random(tx).await.map_err(From::from)
     }
 
     /// The minimum fee rate required to broadcast a transcation to all connected peers.
-    pub async fn min_broadcast_feerate(&self) -> Result<Arc<FeeRate>, LightClientError> {
+    pub async fn min_broadcast_feerate(&self) -> Result<Arc<FeeRate>, CbfError> {
         self.sender
             .broadcast_min_feerate()
             .await
-            .map_err(|_| LightClientError::NodeStopped)
+            .map_err(|_| CbfError::NodeStopped)
             .map(|fee| Arc::new(FeeRate(fee)))
     }
 
@@ -284,8 +284,8 @@ impl Client {
         self.sender.is_running().await
     }
 
-    /// Stop the [`LightNode`]. Errors if the node is already stopped.
-    pub async fn shutdown(&self) -> Result<(), LightClientError> {
+    /// Stop the [`CbfNode`]. Errors if the node is already stopped.
+    pub async fn shutdown(&self) -> Result<(), CbfError> {
         self.sender.shutdown().await.map_err(From::from)
     }
 }

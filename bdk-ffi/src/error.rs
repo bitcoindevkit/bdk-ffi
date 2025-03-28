@@ -783,13 +783,13 @@ pub enum TxidParseError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
-pub enum LightClientBuilderError {
+pub enum CbfBuilderError {
     #[error("the database could not be opened or created: {reason}")]
     DatabaseError { reason: String },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
-pub enum LightClientError {
+pub enum CbfError {
     #[error("the node is no longer running")]
     NodeStopped,
 }
@@ -1515,17 +1515,17 @@ impl From<BdkSqliteError> for SqliteError {
     }
 }
 
-impl From<bdk_kyoto::builder::SqlInitializationError> for LightClientBuilderError {
+impl From<bdk_kyoto::builder::SqlInitializationError> for CbfBuilderError {
     fn from(value: bdk_kyoto::builder::SqlInitializationError) -> Self {
-        LightClientBuilderError::DatabaseError {
+        CbfBuilderError::DatabaseError {
             reason: value.to_string(),
         }
     }
 }
 
-impl From<bdk_kyoto::kyoto::ClientError> for LightClientError {
+impl From<bdk_kyoto::kyoto::ClientError> for CbfError {
     fn from(_value: bdk_kyoto::kyoto::ClientError) -> Self {
-        LightClientError::NodeStopped
+        CbfError::NodeStopped
     }
 }
 

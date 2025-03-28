@@ -32,7 +32,7 @@ class LiveKyotoTest {
         val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, conn)
         val peers = listOf(peer)
         runBlocking {
-            val lightClient = LightClientBuilder()
+            val lightClient = CbfBuilder()
                 .peers(peers)
                 .connections(1u)
                 .scanType(ScanType.New)
