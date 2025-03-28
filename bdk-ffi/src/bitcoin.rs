@@ -93,26 +93,35 @@ impl FeeRate {
 impl_from_core_type!(BdkFeeRate, FeeRate);
 impl_into_core_type!(FeeRate, BdkFeeRate);
 
+/// The Amount type can be used to express Bitcoin amounts that support arithmetic and conversion
+/// to various denominations. The operations that Amount implements will panic when overflow or
+/// underflow occurs. Also note that since the internal representation of amounts is unsigned,
+/// subtracting below zero is considered an underflow and will cause a panic.
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Object)]
 pub struct Amount(pub BdkAmount);
 
 #[uniffi::export]
 impl Amount {
+    /// Create an Amount with satoshi precision and the given number of satoshis.
     #[uniffi::constructor]
     pub fn from_sat(satoshi: u64) -> Self {
         Amount(BdkAmount::from_sat(satoshi))
     }
 
+    /// Convert from a value expressing bitcoins to an Amount.
     #[uniffi::constructor]
     pub fn from_btc(btc: f64) -> Result<Self, ParseAmountError> {
         let bitcoin_amount = BdkAmount::from_btc(btc).map_err(ParseAmountError::from)?;
         Ok(Amount(bitcoin_amount))
     }
 
+    /// Get the number of satoshis in this Amount.
     pub fn to_sat(&self) -> u64 {
         self.0.to_sat()
     }
 
+    /// Express this Amount as a floating-point value in Bitcoin. Please be aware of the risk of
+    /// using floating-point numbers.
     pub fn to_btc(&self) -> f64 {
         self.0.to_btc()
     }
