@@ -245,11 +245,14 @@ impl Display for Address {
 impl_from_core_type!(BdkAddress, Address);
 impl_into_core_type!(Address, BdkAddress);
 
+/// Bitcoin transaction.
+/// An authenticated movement of coins.
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Object)]
 pub struct Transaction(BdkTransaction);
 
 #[uniffi::export]
 impl Transaction {
+    /// Creates a new `Transaction` instance from serialized transaction bytes.
     #[uniffi::constructor]
     pub fn new(transaction_bytes: Vec<u8>) -> Result<Self, TransactionError> {
         let mut decoder = Cursor::new(transaction_bytes);
@@ -257,50 +260,109 @@ impl Transaction {
         Ok(Transaction(tx))
     }
 
+    /// Computes the Txid.
+    /// Hashes the transaction excluding the segwit data (i.e. the marker, flag bytes, and the witness fields themselves).
     pub fn compute_txid(&self) -> String {
         self.0.compute_txid().to_string()
     }
 
+    /// Returns the weight of this transaction, as defined by BIP-141.
+    ///
+    /// > Transaction weight is defined as Base transaction size * 3 + Total transaction size (ie.
+    /// > the same method as calculating Block weight from Base size and Total size).
+    ///
+    /// For transactions with an empty witness, this is simply the consensus-serialized size times
+    /// four. For transactions with a witness, this is the non-witness consensus-serialized size
+    /// multiplied by three plus the with-witness consensus-serialized size.
+    ///
+    /// For transactions with no inputs, this function will return a value 2 less than the actual
+    /// weight of the serialized transaction. The reason is that zero-input transactions, post-segwit,
+    /// cannot be unambiguously serialized; we make a choice that adds two extra bytes. For more
+    /// details see [BIP 141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki)
+    /// which uses a "input count" of `0x00` as a `marker` for a Segwit-encoded transaction.
+    ///
+    /// If you need to use 0-input transactions, we strongly recommend you do so using the PSBT
+    /// API. The unsigned transaction encoded within PSBT is always a non-segwit transaction
+    /// and can therefore avoid this ambiguity.
+    #[inline]
     pub fn weight(&self) -> u64 {
         self.0.weight().to_wu()
     }
 
+    /// Returns the total transaction size
+    ///
+    /// Total transaction size is the transaction size in bytes serialized as described in BIP144,
+    /// including base data and witness data.
     pub fn total_size(&self) -> u64 {
         self.0.total_size() as u64
     }
 
+    /// Returns the "virtual size" (vsize) of this transaction.
+    ///
+    /// Will be `ceil(weight / 4.0)`. Note this implements the virtual size as per [`BIP141`], which
+    /// is different to what is implemented in Bitcoin Core.
+    /// > Virtual transaction size is defined as Transaction weight / 4 (rounded up to the next integer).
+    ///
+    /// [`BIP141`]: https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki
+    #[inline]
     pub fn vsize(&self) -> u64 {
         self.0.vsize() as u64
     }
 
+    /// Checks if this is a coinbase transaction.
+    /// The first transaction in the block distributes the mining reward and is called the coinbase transaction.
+    /// It is impossible to check if the transaction is first in the block, so this function checks the structure
+    /// of the transaction instead - the previous output must be all-zeros (creates satoshis “out of thin air”).
     pub fn is_coinbase(&self) -> bool {
         self.0.is_coinbase()
     }
 
+    /// Returns `true` if the transaction itself opted in to be BIP-125-replaceable (RBF).
+    ///
+    /// # Warning
+    ///
+    /// **Incorrectly relying on RBF may lead to monetary loss!**
+    ///
+    /// This **does not** cover the case where a transaction becomes replaceable due to ancestors
+    /// being RBF. Please note that transactions **may be replaced** even if they **do not** include
+    /// the RBF signal: <https://bitcoinops.org/en/newsletters/2022/10/19/#transaction-replacement-option>.
     pub fn is_explicitly_rbf(&self) -> bool {
         self.0.is_explicitly_rbf()
     }
 
+    /// Returns `true` if this transactions nLockTime is enabled ([BIP-65]).
+    ///
+    /// [BIP-65]: https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki
     pub fn is_lock_time_enabled(&self) -> bool {
         self.0.is_lock_time_enabled()
     }
 
+    /// The protocol version, is currently expected to be 1 or 2 (BIP 68).
     pub fn version(&self) -> i32 {
         self.0.version.0
     }
 
+    /// Serialize transaction into consensus-valid format. See https://docs.rs/bitcoin/latest/bitcoin/struct.Transaction.html#serialization-notes for more notes on transaction serialization.
     pub fn serialize(&self) -> Vec<u8> {
         serialize(&self.0)
     }
 
+    /// List of transaction inputs.
     pub fn input(&self) -> Vec<TxIn> {
         self.0.input.iter().map(|tx_in| tx_in.into()).collect()
     }
 
+    /// List of transaction outputs.
     pub fn output(&self) -> Vec<TxOut> {
         self.0.output.iter().map(|tx_out| tx_out.into()).collect()
     }
 
+    /// Block height or timestamp. Transaction cannot be included in a block until this height/time.
+    ///
+    /// /// ### Relevant BIPs
+    ///
+    /// * [BIP-65 OP_CHECKLOCKTIMEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki)
+    /// * [BIP-113 Median time-past as endpoint for lock-time calculations](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)
     pub fn lock_time(&self) -> u32 {
         self.0.lock_time.to_consensus_u32()
     }
