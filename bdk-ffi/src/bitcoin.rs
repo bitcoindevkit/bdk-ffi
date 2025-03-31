@@ -245,10 +245,12 @@ impl Display for Address {
 impl_from_core_type!(BdkAddress, Address);
 impl_into_core_type!(Address, BdkAddress);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Object)]
 pub struct Transaction(BdkTransaction);
 
+#[uniffi::export]
 impl Transaction {
+    #[uniffi::constructor]
     pub fn new(transaction_bytes: Vec<u8>) -> Result<Self, TransactionError> {
         let mut decoder = Cursor::new(transaction_bytes);
         let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;

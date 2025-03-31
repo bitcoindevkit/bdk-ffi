@@ -900,34 +900,7 @@ dictionary Header {
   u32 nonce;
 };
 
-interface Transaction {
-  [Throws=TransactionError]
-  constructor(sequence<u8> transaction_bytes);
-
-  string compute_txid();
-
-  u64 total_size();
-
-  u64 vsize();
-
-  boolean is_coinbase();
-
-  boolean is_explicitly_rbf();
-
-  boolean is_lock_time_enabled();
-
-  i32 version();
-
-  sequence<u8> serialize();
-
-  u64 weight();
-
-  sequence<TxIn> input();
-
-  sequence<TxOut> output();
-
-  u32 lock_time();
-};
+typedef interface Transaction;
 
 typedef interface Psbt;
 
