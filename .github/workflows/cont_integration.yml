@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Generate cache key"
         env:
@@ -74,6 +76,8 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Set default toolchain"
         run: rustup default nightly
