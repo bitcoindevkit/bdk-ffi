@@ -15,6 +15,7 @@ use bdk_wallet::template::{
 use bdk_wallet::KeychainKind;
 
 use crate::error::MiniscriptError;
+use bdk_wallet::miniscript::descriptor::DescriptorType;
 use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -289,6 +290,10 @@ impl Descriptor {
                     })
                     .collect()
             })
+    }
+
+    pub(crate) fn desc_type(&self) -> DescriptorType {
+        self.extended_descriptor.desc_type()
     }
 }
 
