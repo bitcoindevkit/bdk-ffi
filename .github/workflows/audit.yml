@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: "Check out PR branch"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Run audit"
         run: |

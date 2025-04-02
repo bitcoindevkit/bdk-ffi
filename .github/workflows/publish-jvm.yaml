@@ -1,6 +1,8 @@
 name: Publish bdk-jvm to Maven Central
 on: [workflow_dispatch]
 
+permissions: {}
+
 jobs:
   build-macOS-native-libs:
     name: "Create M1 and x86_64 native binaries"
@@ -8,6 +10,8 @@ jobs:
     steps:
       - name: "Checkout publishing branch"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Cache"
         uses: actions/cache@v3
@@ -42,6 +46,8 @@ jobs:
     steps:
       - name: "Checkout publishing branch"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Set up JDK"
         uses: actions/setup-java@v4
@@ -67,6 +73,8 @@ jobs:
     steps:
       - name: "Checkout publishing branch"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Cache"
         uses: actions/cache@v3

@@ -7,6 +7,8 @@ on:
     paths:
       - "bdk-ffi/**"
 
+permissions: {}
+
 jobs:
   build-test:
     name: "Build and test"
@@ -22,9 +24,14 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Generate cache key"
-        run: echo "${{ matrix.rust.version }} ${{ matrix.features }}" | tee .cache_key
+        env:
+          MATRIX_RUST_VERSION: ${{ matrix.rust.version }}
+          MATRIX_FEATURES: ${{ matrix.features }}
+        run: echo "$MATRIX_RUST_VERSION $MATRIX_FEATURES" | tee .cache_key
 
       - name: "Cache"
         uses: actions/cache@v3
@@ -36,7 +43,9 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('.cache_key') }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
       - name: "Set default toolchain"
-        run: rustup default ${{ matrix.rust.version }}
+        env:
+          MATRIX_RUST_VERSION: ${{ matrix.rust.version }}
+        run: rustup default $MATRIX_RUST_VERSION
 
       - name: "Set profile"
         run: rustup set profile minimal
@@ -67,6 +76,8 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Set default toolchain"
         run: rustup default nightly
