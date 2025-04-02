@@ -1120,29 +1120,6 @@ interface AddressData {
 };
 
 // ------------------------------------------------------------------------
-// bdk-kyoto crate
-// ------------------------------------------------------------------------
-
-/// The state of the node with respect to connected peers.
-[Remote]
-enum NodeState {
-  /// Behind on block headers according to our peers.
-  "Behind",
-
-  /// Downloading compact block filter headers.
-  "HeadersSynced",
-
-  /// Scanning compact block filters.
-  "FilterHeadersSynced",
-
-  /// Asking for blocks with matches.
-  "FiltersSynced",
-
-  /// Found all known transactions to the wallet.
-  "TransactionsSynced"
-};
-
-// ------------------------------------------------------------------------
 // bdk_wallet crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 

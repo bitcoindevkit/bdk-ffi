@@ -95,6 +95,4 @@ use bdk_wallet::tx_builder::ChangeSpendPolicy;
 use bdk_wallet::ChangeSet;
 use bdk_wallet::KeychainKind;
 
-use bdk_kyoto::NodeState;
-
 uniffi::include_scaffolding!("bdk");

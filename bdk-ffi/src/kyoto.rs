@@ -6,11 +6,9 @@ use bdk_kyoto::kyoto::AddrV2;
 use bdk_kyoto::kyoto::ScriptBuf;
 use bdk_kyoto::LightClient as BDKLightClient;
 use bdk_kyoto::NodeDefault;
-use bdk_kyoto::NodeState;
 use bdk_kyoto::Receiver;
 use bdk_kyoto::RejectReason;
 use bdk_kyoto::Requester;
-use bdk_kyoto::ScanType as WalletScanType;
 use bdk_kyoto::UnboundedReceiver;
 use bdk_kyoto::UpdateSubscriber;
 use bdk_kyoto::WalletExt;
@@ -30,6 +28,8 @@ use crate::FeeRate;
 use crate::Update;
 
 type LogLevel = bdk_kyoto::kyoto::LogLevel;
+type NodeState = bdk_kyoto::NodeState;
+type ScanType = bdk_kyoto::ScanType;
 
 const TIMEOUT: u64 = 10;
 const DEFAULT_CONNECTIONS: u8 = 2;
@@ -184,7 +184,7 @@ impl CbfBuilder {
         let mut builder = BDKCbfBuilder::new()
             .connections(self.connections)
             .data_dir(path_buf)
-            .scan_type(self.scan_type.into())
+            .scan_type(self.scan_type)
             .log_level(self.log_level)
             .timeout_duration(Duration::from_secs(TIMEOUT))
             .peers(trusted_peers);
@@ -401,9 +401,23 @@ pub enum LogLevel {
     Warning,
 }
 
+/// The state of the node with respect to connected peers.
+#[uniffi::remote(Enum)]
+pub enum NodeState {
+    /// We are behind on block headers according to our peers.
+    Behind,
+    /// We may start downloading compact block filter headers.
+    HeadersSynced,
+    /// We may start scanning compact block filters.
+    FilterHeadersSynced,
+    /// We may start asking for blocks with matches.
+    FiltersSynced,
+    /// We found all known transactions to the wallet.
+    TransactionsSynced,
+}
 /// Sync a wallet from the last known block hash, recover a wallet from a specified height,
 /// or perform an expedited block header download for a new wallet.
-#[derive(Debug, Clone, Copy, Default, uniffi::Enum)]
+#[uniffi::remote(Enum)]
 pub enum ScanType {
     /// Perform an expedited header and filter download for a new wallet.
     /// If this option is not set, and the wallet has no history, the
@@ -414,16 +428,6 @@ pub enum ScanType {
     Sync,
     /// Recover an existing wallet by scanning from the specified height.
     Recovery { from_height: u32 },
-}
-
-impl From<ScanType> for WalletScanType {
-    fn from(value: ScanType) -> Self {
-        match value {
-            ScanType::New => WalletScanType::New,
-            ScanType::Recovery { from_height } => WalletScanType::Recovery { from_height },
-            ScanType::Sync => WalletScanType::Sync,
-        }
-    }
 }
 
 /// A peer to connect to over the Bitcoin peer-to-peer network.
