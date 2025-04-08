@@ -1,4 +1,4 @@
-from bdkpython import Connection, Client, Network, Descriptor, KeychainKind, CbfBuilder, CbfComponents, CbfClient, CbfNode, IpAddress, ScanType, Peer, Update, Wallet
+from bdkpython import Connection, Network, Descriptor, KeychainKind, CbfBuilder, CbfComponents, CbfClient, CbfNode, IpAddress, ScanType, Peer, Update, Wallet
 import unittest
 import os
 import asyncio
@@ -39,7 +39,7 @@ class LiveKyotoTest(unittest.IsolatedAsyncioTestCase):
         light_client: CbfComponents = CbfBuilder().scan_type(ScanType.NEW()).peers(peers).connections(1).build(wallet)
         client: CbfClient = light_client.client
         node: CbfNode = light_client.node
-        async def log_loop(client: Client):
+        async def log_loop(client: CbfClient):
             while True:
                 log = await client.next_log()
                 print(log)

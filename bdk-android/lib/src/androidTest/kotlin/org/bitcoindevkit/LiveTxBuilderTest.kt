@@ -74,7 +74,6 @@ class LiveTxBuilderTest {
         val psbt: Psbt = TxBuilder()
             .setRecipients(allRecipients)
             .feeRate(FeeRate.fromSatPerVb(4uL))
-            .changePolicy(ChangeSpendPolicy.CHANGE_FORBIDDEN)
             .finish(wallet)
 
         wallet.sign(psbt)
