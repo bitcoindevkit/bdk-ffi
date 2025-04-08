@@ -7,7 +7,7 @@ on:
 jobs:
   jvm-tests:
     name: "Build and test JVM library on Linux"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
       - name: "Checkout publishing branch"
         uses: actions/checkout@v4
@@ -53,7 +53,7 @@ jobs:
 
   python-tests:
     name: "Build and test Python library on Linux"
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: bdk-python
