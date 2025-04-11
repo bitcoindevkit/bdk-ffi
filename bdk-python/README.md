@@ -7,6 +7,7 @@ See the [package on PyPI](https://pypi.org/project/bdkpython/).
 ## Install from PyPI
 
 Install the latest release using
+
 ```shell
 pip install bdkpython
 ```
