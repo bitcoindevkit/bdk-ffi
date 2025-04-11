@@ -35,7 +35,7 @@ swift test
 
 ### Example Projects
 
-* [BDKSwiftExampleWallet](https://github.com/bitcoindevkit/BDKSwiftExampleWallet), iOS
+- [BDKSwiftExampleWallet](https://github.com/bitcoindevkit/BDKSwiftExampleWallet), iOS
 
 ## How to Build and Publish
 

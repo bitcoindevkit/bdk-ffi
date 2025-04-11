@@ -43,15 +43,15 @@ _Note that Kotlin version `2.1.10` or later is required to build the library._
 git clone https://github.com/bitcoindevkit/bdk-ffi
 ```
 2. Install Android SDK and Build-Tools for API level 30+
-3. Setup `ANDROID_SDK_ROOT` and `ANDROID_NDK_ROOT` path variables which are required by the build tool. Note that currently, NDK version 25.2.9519653 or above is required. For example:
+3. Setup `ANDROID_SDK_ROOT` and `ANDROID_NDK_ROOT` path variables which are required by the build tool. Note that currently, NDK version 27.2.12479018 or above is recommended. For example:
 ```shell
 # macOS
 export ANDROID_SDK_ROOT=~/Library/Android/sdk
-export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
+export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
 
 # Linux
 export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
-export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.2.9519653
+export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
 ```
 4. Build Kotlin bindings
 ```sh
