@@ -18,7 +18,7 @@ from bdkpython import Wallet
 
 setup(
     name="bdkpython",
-    version="1.2.0.dev0",
+    version="1.2.0",
     description="The Python language bindings for the Bitcoin Development Kit",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
