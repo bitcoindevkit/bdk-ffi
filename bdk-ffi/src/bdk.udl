@@ -805,13 +805,7 @@ dictionary Condition {
 // bdk_sqlite crate
 // ------------------------------------------------------------------------
 
-interface Connection {
-  [Throws=SqliteError]
-  constructor(string path);
-
-  [Name=new_in_memory, Throws=SqliteError]
-  constructor();
-};
+typedef interface Connection;
 
 // ------------------------------------------------------------------------
 // bdk crate - descriptor module
