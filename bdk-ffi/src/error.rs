@@ -121,7 +121,7 @@ pub enum Bip39Error {
     AmbiguousLanguages { languages: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum CalculateFeeError {
     #[error("missing transaction output: {out_points:?}")]
     MissingTxOut { out_points: Vec<OutPoint> },
@@ -130,7 +130,7 @@ pub enum CalculateFeeError {
     NegativeFee { amount: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum CannotConnectError {
     #[error("cannot include height: {height}")]
     Include { height: u32 },
@@ -205,7 +205,7 @@ pub enum CreateTxError {
     LockTimeConversionError,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum CreateWithPersistError {
     #[error("sqlite persistence error: {error_message}")]
     Persist { error_message: String },
@@ -414,7 +414,7 @@ pub enum RequestBuilderError {
     RequestAlreadyConsumed,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum LoadWithPersistError {
     #[error("sqlite persistence error: {error_message}")]
     Persist { error_message: String },
@@ -691,7 +691,7 @@ pub enum PsbtFinalizeError {
     InputIdxOutofBounds { psbt_inp: u32, requested: u32 },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum SignerError {
     #[error("missing key for signing")]
     MissingKey,
@@ -745,7 +745,7 @@ pub enum SignerError {
     Psbt { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum SqliteError {
     #[error("sqlite error: {rusqlite_error}")]
     Sqlite { rusqlite_error: String },
@@ -776,7 +776,7 @@ pub enum TransactionError {
     OtherTransactionErr,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum TxidParseError {
     #[error("invalid txid: {txid}")]
     InvalidTxid { txid: String },
@@ -1535,12 +1535,12 @@ impl From<bdk_kyoto::kyoto::ClientError> for CbfError {
 
 #[cfg(test)]
 mod test {
+    use crate::error::SignerError;
     use crate::error::{
         Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError,
         ElectrumError, EsploraError, ExtractTxError, PersistenceError, PsbtError, PsbtParseError,
         RequestBuilderError, TransactionError, TxidParseError,
     };
-    use crate::SignerError;
 
     #[test]
     fn test_error_bip32() {
