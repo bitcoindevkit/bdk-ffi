@@ -77,7 +77,7 @@ final class LiveMemoryWalletTests: XCTestCase {
 
 }
 
-final class FullScriptInspector: FullScanScriptInspector {
+class FullScriptInspector: FullScanScriptInspector {
     func inspect(keychain: KeychainKind, index: UInt32, script: Script) {
         print("Inspecting index \(index) for keychain \(keychain)")
     }
