@@ -59,7 +59,6 @@ use crate::keys::DerivationPath;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
-use crate::store::Connection;
 use crate::types::AddressInfo;
 use crate::types::Balance;
 use crate::types::BlockId;
@@ -85,9 +84,7 @@ use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 use crate::types::Tx;
 use crate::types::TxStatus;
-use crate::types::UnconfirmedTx;
 use crate::types::Update;
-use crate::wallet::Wallet;
 
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;
