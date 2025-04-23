@@ -1,5 +1,6 @@
 use crate::error::{
-    AddressParseError, FeeRateError, FromScriptError, PsbtError, PsbtParseError, TransactionError,ExtractTxError
+    AddressParseError, ExtractTxError, FeeRateError, FromScriptError, PsbtError, PsbtParseError,
+    TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::{impl_from_core_type, impl_into_core_type};
@@ -321,28 +322,48 @@ impl From<&Transaction> for BdkTransaction {
     }
 }
 
+/// A Partially Signed Transaction.
 #[derive(uniffi::Object)]
 pub struct Psbt(pub(crate) Mutex<BdkPsbt>);
 
 #[uniffi::export]
 impl Psbt {
+    /// Creates a new `Psbt` instance from a base64-encoded string.
     #[uniffi::constructor]
     pub(crate) fn new(psbt_base64: String) -> Result<Self, PsbtParseError> {
         let psbt: BdkPsbt = BdkPsbt::from_str(&psbt_base64)?;
         Ok(Psbt(Mutex::new(psbt)))
     }
 
+    /// Serialize the PSBT into a base64-encoded string.
     pub(crate) fn serialize(&self) -> String {
         let psbt = self.0.lock().unwrap().clone();
         psbt.to_string()
     }
 
+    /// Extracts the `Transaction` from a `Psbt` by filling in the available signature information.
+    ///
+    /// #### Errors
+    ///
+    /// `ExtractTxError` variants will contain either the `Psbt` itself or the `Transaction`
+    /// that was extracted. These can be extracted from the Errors in order to recover.
+    /// See the error documentation for info on the variants. In general, it covers large fees.
     pub(crate) fn extract_tx(&self) -> Result<Arc<Transaction>, ExtractTxError> {
         let tx: BdkTransaction = self.0.lock().unwrap().clone().extract_tx()?;
         let transaction: Transaction = tx.into();
         Ok(Arc::new(transaction))
     }
 
+    /// Calculates transaction fee.
+    ///
+    /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
+    /// and outputs i.e., the difference in value of the total inputs and the total outputs.
+    ///
+    /// #### Errors
+    ///
+    /// - `MissingUtxo` when UTXO information for any input is not present or is invalid.
+    /// - `NegativeFee` if calculated value is negative.
+    /// - `FeeOverflow` if an integer overflow occurs.
     pub(crate) fn fee(&self) -> Result<u64, PsbtError> {
         self.0
             .lock()
@@ -352,6 +373,9 @@ impl Psbt {
             .map_err(PsbtError::from)
     }
 
+    /// Combines this `Psbt` with `other` PSBT as described by BIP 174.
+    ///
+    /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
     pub(crate) fn combine(&self, other: Arc<Psbt>) -> Result<Arc<Psbt>, PsbtError> {
         let mut original_psbt = self.0.lock().unwrap().clone();
         let other_psbt = other.0.lock().unwrap().clone();
@@ -359,6 +383,9 @@ impl Psbt {
         Ok(Arc::new(Psbt(Mutex::new(original_psbt))))
     }
 
+    /// Finalizes the current PSBT and produces a result indicating
+    ///
+    /// whether the finalization was successful or not.
     pub(crate) fn finalize(&self) -> FinalizedPsbtResult {
         let curve = Secp256k1::verification_only();
         let finalized = self.0.lock().unwrap().clone().finalize(&curve);
@@ -379,6 +406,7 @@ impl Psbt {
         }
     }
 
+    /// Serializes the PSBT into a JSON string representation.
     pub(crate) fn json_serialize(&self) -> String {
         let psbt = self.0.lock().unwrap();
         serde_json::to_string(psbt.deref()).unwrap()
