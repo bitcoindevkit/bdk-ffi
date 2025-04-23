@@ -9,7 +9,6 @@ use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
-use bdk_wallet::ChangeSpendPolicy;
 use bdk_wallet::KeychainKind;
 
 use std::collections::BTreeMap;
@@ -17,6 +16,8 @@ use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 use std::sync::Arc;
+
+type ChangeSpendPolicy = bdk_wallet::ChangeSpendPolicy;
 
 /// A `TxBuilder` is created by calling `build_tx` on a wallet. After assigning it, you set options on it until finally
 /// calling `finish` to consume the builder and generate the transaction.
@@ -532,6 +533,18 @@ impl BumpFeeTxBuilder {
 
         Ok(Arc::new(psbt.into()))
     }
+}
+
+/// Policy regarding the use of change outputs when creating a transaction.
+#[uniffi::remote(Enum)]
+pub enum ChangeSpendPolicy {
+    /// Use both change and non-change outputs (default).
+    #[default]
+    ChangeAllowed,
+    /// Only use change outputs (see [`bdk_wallet::TxBuilder::only_spend_change`]).
+    OnlyChange,
+    /// Only use non-change outputs (see [`bdk_wallet::TxBuilder::do_not_spend_change`]).
+    ChangeForbidden,
 }
 
 #[cfg(test)]

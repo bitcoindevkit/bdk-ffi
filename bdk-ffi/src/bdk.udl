@@ -466,19 +466,6 @@ dictionary SignOptions {
 // bdk_wallet crate - wallet module
 // ------------------------------------------------------------------------
 
-/// Policy regarding the use of change outputs when creating a transaction
-[Remote]
-enum ChangeSpendPolicy {
-  /// Use both change and non-change outputs (default)
-  "ChangeAllowed",
-  /// Only use change outputs (see [`TxBuilder::only_spend_change`])
-  "OnlyChange",
-  /// Only use non-change outputs
-  "ChangeForbidden"
-};
-
-typedef interface Wallet;
-
 interface Update {};
 
 interface Policy {
