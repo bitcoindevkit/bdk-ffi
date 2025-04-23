@@ -132,14 +132,6 @@ interface EsploraError {
 };
 
 [Error]
-interface ExtractTxError {
-  AbsurdFeeRate(u64 fee_rate);
-  MissingInputValue();
-  SendingTooMuch();
-  OtherExtractTxErr();
-};
-
-[Error]
 interface FeeRateError {
   ArithmeticOverflow();
 };

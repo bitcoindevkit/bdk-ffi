@@ -36,7 +36,6 @@ use crate::error::DescriptorError;
 use crate::error::DescriptorKeyError;
 use crate::error::ElectrumError;
 use crate::error::EsploraError;
-use crate::error::ExtractTxError;
 use crate::error::FeeRateError;
 use crate::error::FromScriptError;
 use crate::error::MiniscriptError;

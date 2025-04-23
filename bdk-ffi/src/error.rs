@@ -370,7 +370,7 @@ pub enum EsploraError {
     InvalidResponse,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum ExtractTxError {
     #[error("an absurdly high fee rate of {fee_rate} sat/vbyte")]
     AbsurdFeeRate { fee_rate: u64 },
