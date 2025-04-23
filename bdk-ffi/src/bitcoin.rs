@@ -1,5 +1,5 @@
 use crate::error::{
-    AddressParseError, FeeRateError, FromScriptError, PsbtError, PsbtParseError, TransactionError,
+    AddressParseError, FeeRateError, FromScriptError, PsbtError, PsbtParseError, TransactionError,ExtractTxError
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::{impl_from_core_type, impl_into_core_type};
@@ -11,7 +11,6 @@ use bdk_wallet::bitcoin::blockdata::block::Header as BdkHeader;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::io::Cursor;
-use bdk_wallet::bitcoin::psbt::ExtractTxError;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
@@ -322,9 +321,12 @@ impl From<&Transaction> for BdkTransaction {
     }
 }
 
+#[derive(uniffi::Object)]
 pub struct Psbt(pub(crate) Mutex<BdkPsbt>);
 
+#[uniffi::export]
 impl Psbt {
+    #[uniffi::constructor]
     pub(crate) fn new(psbt_base64: String) -> Result<Self, PsbtParseError> {
         let psbt: BdkPsbt = BdkPsbt::from_str(&psbt_base64)?;
         Ok(Psbt(Mutex::new(psbt)))
@@ -389,6 +391,7 @@ impl From<BdkPsbt> for Psbt {
     }
 }
 
+#[derive(uniffi::Object)]
 pub struct FinalizedPsbtResult {
     pub psbt: Arc<Psbt>,
     pub could_finalize: bool,

@@ -929,31 +929,7 @@ interface Transaction {
   u32 lock_time();
 };
 
-interface Psbt {
-  [Throws=PsbtParseError]
-  constructor(string psbt_base64);
-
-  string serialize();
-
-  [Throws=ExtractTxError]
-  Transaction extract_tx();
-
-  [Throws=PsbtError]
-  u64 fee();
-
-  [Throws=PsbtError]
-  Psbt combine(Psbt other);
-
-  FinalizedPsbtResult finalize();
-
-  string json_serialize();
-};
-
-dictionary FinalizedPsbtResult {
-  Psbt psbt;
-  boolean could_finalize;
-  sequence<PsbtFinalizeError>? errors;
-};
+typedef interface Psbt;
 
 dictionary TxIn {
   OutPoint previous_output;
