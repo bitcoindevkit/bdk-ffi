@@ -44,7 +44,6 @@ use crate::error::PsbtFinalizeError;
 use crate::error::PsbtParseError;
 use crate::error::RequestBuilderError;
 use crate::error::TransactionError;
-use crate::esplora::EsploraClient;
 use crate::keys::DerivationPath;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;

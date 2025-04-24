@@ -22,11 +22,14 @@ use std::sync::Arc;
 
 /// Wrapper around an esplora_client::BlockingClient which includes an internal in-memory transaction
 /// cache to avoid re-fetching already downloaded transactions.
+#[derive(uniffi::Object)]
 pub struct EsploraClient(BlockingClient);
 
+#[uniffi::export]
 impl EsploraClient {
     /// Creates a new bdk client from an esplora_client::BlockingClient.
     /// Optional: Set the proxy of the builder.
+    #[uniffi::constructor(default(proxy = None))]
     pub fn new(url: String, proxy: Option<String>) -> Self {
         let mut builder = Builder::new(url.as_str());
         if let Some(proxy) = proxy {
