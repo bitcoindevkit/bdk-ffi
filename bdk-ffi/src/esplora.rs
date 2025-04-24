@@ -20,9 +20,13 @@ use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 use std::sync::Arc;
 
+/// Wrapper around an esplora_client::BlockingClient which includes an internal in-memory transaction
+/// cache to avoid re-fetching already downloaded transactions.
 pub struct EsploraClient(BlockingClient);
 
 impl EsploraClient {
+    /// Creates a new bdk client from an esplora_client::BlockingClient.
+    /// Optional: Set the proxy of the builder.
     pub fn new(url: String, proxy: Option<String>) -> Self {
         let mut builder = Builder::new(url.as_str());
         if let Some(proxy) = proxy {
@@ -31,6 +35,13 @@ impl EsploraClient {
         Self(builder.build_blocking())
     }
 
+    /// Scan keychain scripts for transactions against Esplora, returning an update that can be
+    /// applied to the receiving structures.
+    ///
+    /// `request` provides the data required to perform a script-pubkey-based full scan
+    /// (see [`FullScanRequest`]). The full scan for each keychain (`K`) stops after a gap of
+    /// `stop_gap` script pubkeys with no associated transactions. `parallel_requests` specifies
+    /// the maximum number of HTTP requests to make in parallel.
     pub fn full_scan(
         &self,
         request: Arc<FullScanRequest>,
@@ -58,6 +69,11 @@ impl EsploraClient {
         Ok(Arc::new(Update(update)))
     }
 
+    /// Sync a set of scripts, txids, and/or outpoints against Esplora.
+    ///
+    /// `request` provides the data required to perform a script-pubkey-based sync (see
+    /// [`SyncRequest`]). `parallel_requests` specifies the maximum number of HTTP requests to make
+    /// in parallel.
     pub fn sync(
         &self,
         request: Arc<SyncRequest>,
@@ -82,6 +98,7 @@ impl EsploraClient {
         Ok(Arc::new(Update(update)))
     }
 
+    /// Broadcast a [`Transaction`] to Esplora.
     pub fn broadcast(&self, transaction: &Transaction) -> Result<(), EsploraError> {
         let bdk_transaction: BdkTransaction = transaction.into();
         self.0
@@ -89,26 +106,33 @@ impl EsploraClient {
             .map_err(EsploraError::from)
     }
 
+    /// Get a [`Transaction`] option given its [`Txid`].
     pub fn get_tx(&self, txid: String) -> Result<Option<Arc<Transaction>>, EsploraError> {
         let txid = Txid::from_str(&txid)?;
         let tx_opt = self.0.get_tx(&txid)?;
         Ok(tx_opt.map(|inner| Arc::new(Transaction::from(inner))))
     }
 
+    /// Get the height of the current blockchain tip.
     pub fn get_height(&self) -> Result<u32, EsploraError> {
         self.0.get_height().map_err(EsploraError::from)
     }
 
+    /// Get a map where the key is the confirmation target (in number of
+    /// blocks) and the value is the estimated feerate (in sat/vB).
     pub fn get_fee_estimates(&self) -> Result<HashMap<u16, f64>, EsploraError> {
         self.0.get_fee_estimates().map_err(EsploraError::from)
     }
 
+    /// Get the [`BlockHash`] of a specific block height.
     pub fn get_block_hash(&self, block_height: u32) -> Result<String, EsploraError> {
         self.0
             .get_block_hash(block_height)
             .map(|hash| hash.to_string())
             .map_err(EsploraError::from)
     }
+
+    /// Get the status of a [`Transaction`] given its [`Txid`].
     pub fn get_tx_status(&self, txid: String) -> Result<TxStatus, EsploraError> {
         let txid = Txid::from_str(&txid)?;
         self.0
@@ -117,6 +141,7 @@ impl EsploraClient {
             .map_err(EsploraError::from)
     }
 
+    /// Get transaction info given its [`Txid`].
     pub fn get_tx_info(&self, txid: String) -> Result<Option<Tx>, EsploraError> {
         let txid = Txid::from_str(&txid)?;
         self.0
