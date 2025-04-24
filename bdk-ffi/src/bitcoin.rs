@@ -483,7 +483,7 @@ impl From<BdkPsbt> for Psbt {
     }
 }
 
-#[derive(uniffi::Object)]
+#[derive(uniffi::Record)]
 pub struct FinalizedPsbtResult {
     pub psbt: Arc<Psbt>,
     pub could_finalize: bool,
