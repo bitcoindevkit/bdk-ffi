@@ -130,15 +130,18 @@ impl Amount {
 impl_from_core_type!(BdkAmount, Amount);
 impl_into_core_type!(Amount, BdkAmount);
 
-#[derive(Clone, Debug)]
+/// A bitcoin script: https://en.bitcoin.it/wiki/Script
+#[derive(Clone, Debug, uniffi::Object)]
 pub struct Script(pub BdkScriptBuf);
 
 impl Script {
+    /// Interpret an array of bytes as a bitcoin script.
     pub fn new(raw_output_script: Vec<u8>) -> Self {
         let script: BdkScriptBuf = raw_output_script.into();
         Script(script)
     }
 
+    /// Convert a script into an array of bytes.
     pub fn to_bytes(&self) -> Vec<u8> {
         self.0.to_bytes()
     }
@@ -182,10 +185,15 @@ pub struct WitnessProgram {
     pub program: Vec<u8>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+/// A bitcoin address
+#[derive(Debug, PartialEq, Eq, uniffi::Object)]
+#[uniffi::export(Eq, Display)]
 pub struct Address(BdkAddress<NetworkChecked>);
 
+#[uniffi::export]
 impl Address {
+    /// Parse a string as an address for the given network.
+    #[uniffi::constructor]
     pub fn new(address: String, network: Network) -> Result<Self, AddressParseError> {
         let parsed_address = address.parse::<bdk_wallet::bitcoin::Address<NetworkUnchecked>>()?;
         let network_checked_address = parsed_address.require_network(network)?;
@@ -193,20 +201,25 @@ impl Address {
         Ok(Address(network_checked_address))
     }
 
+    /// Parse a script as an address for the given network
+    #[uniffi::constructor]
     pub fn from_script(script: Arc<Script>, network: Network) -> Result<Self, FromScriptError> {
         let address = BdkAddress::from_script(&script.0.clone(), network)?;
 
         Ok(Address(address))
     }
 
+    /// Return the `scriptPubKey` underlying an address.
     pub fn script_pubkey(&self) -> Arc<Script> {
         Arc::new(Script(self.0.script_pubkey()))
     }
 
+    /// Return a BIP-21 URI string for this address.
     pub fn to_qr_uri(&self) -> String {
         self.0.to_qr_uri()
     }
 
+    /// Is the address valid for the provided network
     pub fn is_valid_for_network(&self, network: Network) -> bool {
         let address_str = self.0.to_string();
         if let Ok(unchecked_address) = address_str.parse::<BdkAddress<NetworkUnchecked>>() {
@@ -216,6 +229,7 @@ impl Address {
         }
     }
 
+    /// Return the data for the address.
     pub fn to_address_data(&self) -> AddressData {
         match self.0.to_address_data() {
             BdkAddressData::P2pkh { pubkey_hash } => AddressData::P2pkh {

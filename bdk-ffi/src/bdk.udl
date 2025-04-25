@@ -681,22 +681,7 @@ enum WordCount {
   "Words24",
 };
 
-[Traits=(Display)]
-interface Address {
-  [Throws=AddressParseError]
-  constructor(string address, Network network);
-
-  [Name=from_script, Throws=FromScriptError]
-  constructor(Script script, Network network);
-
-  Script script_pubkey();
-
-  string to_qr_uri();
-
-  boolean is_valid_for_network(Network network);
-
-  AddressData to_address_data();
-};
+typedef interface Address;
 
 /// Bitcoin block header.
 /// Contains all the block’s information except the actual transactions, but including a root of a merkle tree
@@ -732,11 +717,7 @@ dictionary TxIn {
   sequence<sequence<u8>> witness;
 };
 
-interface Script {
-  constructor(sequence<u8> raw_output_script);
-
-  sequence<u8> to_bytes();
-};
+typedef interface Script;
 
 [NonExhaustive, Remote]
 enum Network {
