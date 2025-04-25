@@ -19,9 +19,15 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
+/// A mnemonic seed phrase to recover a BIP-32 wallet.
+#[derive(uniffi::Object)]
+#[uniffi::export(Display)]
 pub struct Mnemonic(BdkMnemonic);
 
+#[uniffi::export]
 impl Mnemonic {
+    /// Generate a mnemonic given a word count.
+    #[uniffi::constructor]
     pub fn new(word_count: WordCount) -> Self {
         // TODO 4: I DON'T KNOW IF THIS IS A DECENT WAY TO GENERATE ENTROPY PLEASE CONFIRM
         let mut rng = rand::thread_rng();
@@ -33,13 +39,18 @@ impl Mnemonic {
         let mnemonic = BdkMnemonic::parse_in(Language::English, generated_key.to_string()).unwrap();
         Mnemonic(mnemonic)
     }
-
+    /// Parse a string as a mnemonic seed phrase.
+    #[uniffi::constructor]
     pub fn from_string(mnemonic: String) -> Result<Self, Bip39Error> {
         BdkMnemonic::from_str(&mnemonic)
             .map(Mnemonic)
             .map_err(Bip39Error::from)
     }
 
+    /// Construct a mnemonic given an array of bytes. Note that using weak entropy will result in a loss
+    /// of funds. To ensure the entropy is generated properly, read about your operating
+    /// system specific ways to generate secure random numbers.
+    #[uniffi::constructor]
     pub fn from_entropy(entropy: Vec<u8>) -> Result<Self, Bip39Error> {
         BdkMnemonic::from_entropy(entropy.as_slice())
             .map(Mnemonic)
@@ -53,11 +64,16 @@ impl Display for Mnemonic {
     }
 }
 
+/// A BIP-32 derivation path.
+#[derive(uniffi::Object)]
 pub struct DerivationPath {
     inner_mutex: Mutex<BdkDerivationPath>,
 }
 
+#[uniffi::export]
 impl DerivationPath {
+    /// Parse a string as a BIP-32 derivation path.
+    #[uniffi::constructor]
     pub fn new(path: String) -> Result<Self, Bip32Error> {
         BdkDerivationPath::from_str(&path)
             .map(|x| DerivationPath {

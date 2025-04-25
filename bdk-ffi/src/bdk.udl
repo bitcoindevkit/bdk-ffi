@@ -443,26 +443,6 @@ dictionary Condition {
 };
 
 // ------------------------------------------------------------------------
-// bdk crate - descriptor module
-// ------------------------------------------------------------------------
-
-[Traits=(Display)]
-interface Mnemonic {
-  constructor(WordCount word_count);
-
-  [Name=from_string, Throws=Bip39Error]
-  constructor(string mnemonic);
-
-  [Name=from_entropy, Throws=Bip39Error]
-  constructor(sequence<u8> entropy);
-};
-
-interface DerivationPath {
-  [Throws=Bip32Error]
-  constructor(string path);
-};
-
-// ------------------------------------------------------------------------
 // bdk-ffi-defined types
 // ------------------------------------------------------------------------
 

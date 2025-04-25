@@ -33,8 +33,6 @@ use crate::error::PsbtFinalizeError;
 use crate::error::PsbtParseError;
 use crate::error::RequestBuilderError;
 use crate::error::TransactionError;
-use crate::keys::DerivationPath;
-use crate::keys::Mnemonic;
 use crate::types::ChainPosition;
 use crate::types::Condition;
 use crate::types::FullScanRequest;
