@@ -338,31 +338,31 @@ mod test {
     #[test]
     fn test_descriptor_templates() {
         let master: DescriptorSecretKey = get_descriptor_secret_key();
-        println!("Master: {:?}", master.as_string());
+        println!("Master: {:?}", master.to_string());
         // tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h
         let handmade_public_44 = master
             .derive(&DerivationPath::new("m/44h/1h/0h".to_string()).unwrap())
             .unwrap()
             .as_public();
-        println!("Public 44: {}", handmade_public_44.as_string());
+        println!("Public 44: {}", handmade_public_44);
         // Public 44: [d1d04177/44'/1'/0']tpubDCoPjomfTqh1e7o1WgGpQtARWtkueXQAepTeNpWiitS3Sdv8RKJ1yvTrGHcwjDXp2SKyMrTEca4LoN7gEUiGCWboyWe2rz99Kf4jK4m2Zmx/*
         let handmade_public_49 = master
             .derive(&DerivationPath::new("m/49h/1h/0h".to_string()).unwrap())
             .unwrap()
             .as_public();
-        println!("Public 49: {}", handmade_public_49.as_string());
+        println!("Public 49: {}", handmade_public_49);
         // Public 49: [d1d04177/49'/1'/0']tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR/*
         let handmade_public_84 = master
             .derive(&DerivationPath::new("m/84h/1h/0h".to_string()).unwrap())
             .unwrap()
             .as_public();
-        println!("Public 84: {}", handmade_public_84.as_string());
+        println!("Public 84: {}", handmade_public_84);
         // Public 84: [d1d04177/84'/1'/0']tpubDDNxbq17egjFk2edjv8oLnzxk52zny9aAYNv9CMqTzA4mQDiQq818sEkNe9Gzmd4QU8558zftqbfoVBDQorG3E4Wq26tB2JeE4KUoahLkx6/*
         let handmade_public_86 = master
             .derive(&DerivationPath::new("m/86h/1h/0h".to_string()).unwrap())
             .unwrap()
             .as_public();
-        println!("Public 86: {}", handmade_public_86.as_string());
+        println!("Public 86: {}", handmade_public_86);
         // Public 86: [d1d04177/86'/1'/0']tpubDCJzjbcGbdEfXMWaL6QmgVmuSfXkrue7m2YNoacWwyc7a2XjXaKojRqNEbo41CFL3PyYmKdhwg2fkGpLX4SQCbQjCGxAkWHJTw9WEeenrJb/*
         let template_private_44 =
             Descriptor::new_bip44(&master, KeychainKind::External, Network::Testnet);
@@ -405,7 +405,7 @@ mod test {
         println!("Template public 44: {}", template_public_44);
         println!("Template public 84: {}", template_public_84);
         println!("Template public 86: {}", template_public_86);
-        // when using a public key, both to_string and as_string_private return the same string
+        // when using a public key, both to_string and to_string_private return the same string
         assert_eq!(
             template_public_44.to_string_with_secret(),
             template_public_44.to_string()

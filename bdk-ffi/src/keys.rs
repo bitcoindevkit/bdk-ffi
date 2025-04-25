@@ -67,10 +67,15 @@ impl DerivationPath {
     }
 }
 
-#[derive(Debug)]
+/// A descriptor containing secret data.
+#[derive(Debug, uniffi::Object)]
+#[uniffi::export(Debug, Display)]
 pub struct DescriptorSecretKey(pub(crate) BdkDescriptorSecretKey);
 
+#[uniffi::export]
 impl DescriptorSecretKey {
+    /// Construct a secret descriptor using a mnemonic.
+    #[uniffi::constructor]
     pub fn new(network: Network, mnemonic: &Mnemonic, password: Option<String>) -> Self {
         let mnemonic = mnemonic.0.clone();
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key().unwrap();
@@ -83,12 +88,15 @@ impl DescriptorSecretKey {
         Self(descriptor_secret_key)
     }
 
+    /// Attempt to parse a string as a descriptor secret key.
+    #[uniffi::constructor]
     pub fn from_string(private_key: String) -> Result<Self, DescriptorKeyError> {
         let descriptor_secret_key = BdkDescriptorSecretKey::from_str(private_key.as_str())
             .map_err(DescriptorKeyError::from)?;
         Ok(Self(descriptor_secret_key))
     }
 
+    /// Derive a descriptor secret key at a given derivation path.
     pub fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let secp = Secp256k1::new();
         let descriptor_secret_key = &self.0;
@@ -116,6 +124,7 @@ impl DescriptorSecretKey {
         }
     }
 
+    /// Extend the descriptor secret key by the derivation path.
     pub fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let descriptor_secret_key = &self.0;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
@@ -135,12 +144,14 @@ impl DescriptorSecretKey {
         }
     }
 
+    /// Return the descriptor public key corresponding to this secret.
     pub fn as_public(&self) -> Arc<DescriptorPublicKey> {
         let secp = Secp256k1::new();
         let descriptor_public_key = self.0.to_public(&secp).unwrap();
         Arc::new(DescriptorPublicKey(descriptor_public_key))
     }
 
+    /// Return the bytes of this descriptor secret key.
     pub fn secret_bytes(&self) -> Vec<u8> {
         let inner = &self.0;
         let secret_bytes: Vec<u8> = match inner {
@@ -157,22 +168,30 @@ impl DescriptorSecretKey {
 
         secret_bytes
     }
+}
 
-    pub fn as_string(&self) -> String {
-        self.0.to_string()
+impl Display for DescriptorSecretKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 
-#[derive(Debug)]
+/// A descriptor public key.
+#[derive(Debug, uniffi::Object)]
+#[uniffi::export(Debug, Display)]
 pub struct DescriptorPublicKey(pub(crate) BdkDescriptorPublicKey);
 
+#[uniffi::export]
 impl DescriptorPublicKey {
+    /// Attempt to parse a string as a descriptor public key.
+    #[uniffi::constructor]
     pub fn from_string(public_key: String) -> Result<Self, DescriptorKeyError> {
         let descriptor_public_key = BdkDescriptorPublicKey::from_str(public_key.as_str())
             .map_err(DescriptorKeyError::from)?;
         Ok(Self(descriptor_public_key))
     }
 
+    /// Derive the descriptor public key at the given derivation path.
     pub fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let secp = Secp256k1::new();
         let descriptor_public_key = &self.0;
@@ -201,6 +220,7 @@ impl DescriptorPublicKey {
         }
     }
 
+    /// Extend the descriptor public key by the given derivation path.
     pub fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let descriptor_public_key = &self.0;
         let path = path.inner_mutex.lock().unwrap().deref().clone();
@@ -220,16 +240,20 @@ impl DescriptorPublicKey {
         }
     }
 
-    pub fn as_string(&self) -> String {
-        self.0.to_string()
-    }
-
+    /// Whether or not this key has multiple derivation paths.
     pub fn is_multipath(&self) -> bool {
         self.0.is_multipath()
     }
 
+    /// The fingerprint of the master key associated with this key, `0x00000000` if none.
     pub fn master_fingerprint(&self) -> String {
         self.0.master_fingerprint().to_string()
+    }
+}
+
+impl Display for DescriptorPublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }
 
@@ -280,38 +304,38 @@ mod test {
     #[test]
     fn test_generate_descriptor_secret_key() {
         let master_dsk = get_inner();
-        assert_eq!(master_dsk.as_string(), "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h/*");
-        assert_eq!(master_dsk.as_public().as_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/*");
+        assert_eq!(master_dsk.to_string(), "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h/*");
+        assert_eq!(master_dsk.as_public().to_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/*");
     }
 
     #[test]
     fn test_derive_self() {
         let master_dsk = get_inner();
         let derived_dsk: &DescriptorSecretKey = &derive_dsk(&master_dsk, "m").unwrap();
-        assert_eq!(derived_dsk.as_string(), "[d1d04177]tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h/*");
+        assert_eq!(derived_dsk.to_string(), "[d1d04177]tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h/*");
         let master_dpk: &DescriptorPublicKey = &master_dsk.as_public();
         let derived_dpk: &DescriptorPublicKey = &derive_dpk(master_dpk, "m").unwrap();
-        assert_eq!(derived_dpk.as_string(), "[d1d04177]tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/*");
+        assert_eq!(derived_dpk.to_string(), "[d1d04177]tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/*");
     }
 
     #[test]
     fn test_derive_descriptors_keys() {
         let master_dsk = get_inner();
         let derived_dsk: &DescriptorSecretKey = &derive_dsk(&master_dsk, "m/0").unwrap();
-        assert_eq!(derived_dsk.as_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/*");
+        assert_eq!(derived_dsk.to_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/*");
         let master_dpk: &DescriptorPublicKey = &master_dsk.as_public();
         let derived_dpk: &DescriptorPublicKey = &derive_dpk(master_dpk, "m/0").unwrap();
-        assert_eq!(derived_dpk.as_string(), "[d1d04177/0]tpubD9oaCiP1MPmQdndm7DCD3D3QU34pWd6BbKSRedoZF1UJcNhEk3PJwkALNYkhxeTKL29oGNR7psqvT1KZydCGqUDEKXN6dVQJY2R8ooLPy8m/*");
+        assert_eq!(derived_dpk.to_string(), "[d1d04177/0]tpubD9oaCiP1MPmQdndm7DCD3D3QU34pWd6BbKSRedoZF1UJcNhEk3PJwkALNYkhxeTKL29oGNR7psqvT1KZydCGqUDEKXN6dVQJY2R8ooLPy8m/*");
     }
 
     #[test]
     fn test_extend_descriptor_keys() {
         let master_dsk = get_inner();
         let extended_dsk: &DescriptorSecretKey = &extend_dsk(&master_dsk, "m/0").unwrap();
-        assert_eq!(extended_dsk.as_string(), "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h/0/*");
+        assert_eq!(extended_dsk.to_string(), "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h/0/*");
         let master_dpk: &DescriptorPublicKey = &master_dsk.as_public();
         let extended_dpk: &DescriptorPublicKey = &extend_dpk(master_dpk, "m/0").unwrap();
-        assert_eq!(extended_dpk.as_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/0/*");
+        assert_eq!(extended_dpk.to_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/0/*");
         let wif = "L2wTu6hQrnDMiFNWA5na6jB12ErGQqtXwqpSL7aWquJaZG8Ai3ch";
         let extended_key = DescriptorSecretKey::from_string(wif.to_string()).unwrap();
         let result = extended_key.derive(&DerivationPath::new("m/0".to_string()).unwrap());
@@ -337,10 +361,10 @@ mod test {
         let master_dsk = get_inner();
         // derive DescriptorSecretKey with path "m/0" from master
         let derived_dsk: &DescriptorSecretKey = &derive_dsk(&master_dsk, "m/0").unwrap();
-        assert_eq!(derived_dsk.as_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/*");
+        assert_eq!(derived_dsk.to_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/*");
         // extend derived_dsk with path "m/0"
         let extended_dsk: &DescriptorSecretKey = &extend_dsk(derived_dsk, "m/0").unwrap();
-        assert_eq!(extended_dsk.as_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/0/*");
+        assert_eq!(extended_dsk.to_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ/0/*");
     }
 
     #[test]

@@ -462,44 +462,6 @@ interface DerivationPath {
   constructor(string path);
 };
 
-interface DescriptorSecretKey {
-  constructor(Network network, [ByRef] Mnemonic mnemonic, string? password);
-
-  [Name=from_string, Throws=DescriptorKeyError]
-  constructor(string secret_key);
-
-  [Throws=DescriptorKeyError]
-  DescriptorSecretKey derive([ByRef] DerivationPath path);
-
-  [Throws=DescriptorKeyError]
-  DescriptorSecretKey extend([ByRef] DerivationPath path);
-
-  DescriptorPublicKey as_public();
-
-  sequence<u8> secret_bytes();
-
-  string as_string();
-};
-
-interface DescriptorPublicKey {
-  [Name=from_string, Throws=DescriptorKeyError]
-  constructor(string public_key);
-
-  [Throws=DescriptorKeyError]
-  DescriptorPublicKey derive([ByRef] DerivationPath path);
-
-  [Throws=DescriptorKeyError]
-  DescriptorPublicKey extend([ByRef] DerivationPath path);
-
-  string as_string();
-
-  /// Whether or not this key has multiple derivation paths.
-  boolean is_multipath();
-
-  /// The fingerprint of the master key associated with this key, `0x00000000` if none.
-  string master_fingerprint();
-};
-
 // ------------------------------------------------------------------------
 // bdk-ffi-defined types
 // ------------------------------------------------------------------------
