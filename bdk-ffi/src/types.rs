@@ -79,15 +79,21 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
     }
 }
 
-#[derive(Debug)]
+/// Represents the confirmation block and time of a transaction.
+#[derive(Debug, uniffi::Record)]
 pub struct ConfirmationBlockTime {
+    /// The anchor block.
     pub block_id: BlockId,
+    /// The confirmation time of the transaction being anchored.
     pub confirmation_time: u64,
 }
 
-#[derive(Debug)]
+/// A reference to a block in the canonical chain.
+#[derive(Debug, uniffi::Record)]
 pub struct BlockId {
+    /// The height of the block.
     pub height: u32,
+    /// The hash of the block.
     pub hash: String,
 }
 

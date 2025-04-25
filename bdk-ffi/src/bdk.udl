@@ -317,15 +317,7 @@ interface ChainPosition {
   Unconfirmed(u64? timestamp);
 };
 
-dictionary ConfirmationBlockTime {
-  BlockId block_id;
-  u64 confirmation_time;
-};
-
-dictionary BlockId {
-  u32 height;
-  string hash;
-};
+typedef dictionary ConfirmationBlockTime;
 
 dictionary CanonicalTx {
   Transaction transaction;
