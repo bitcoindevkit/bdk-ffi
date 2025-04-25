@@ -20,7 +20,6 @@ use bdk_wallet::descriptor::policy::{
 use bdk_wallet::signer::{SignOptions as BdkSignOptions, TapLeavesOptions};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
-use bdk_wallet::KeychainKind;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
 
@@ -31,6 +30,17 @@ use std::sync::{Arc, Mutex};
 use crate::{impl_from_core_type, impl_into_core_type};
 use bdk_esplora::esplora_client::api::Tx as BdkTx;
 use bdk_esplora::esplora_client::api::TxStatus as BdkTxStatus;
+
+type KeychainKind = bdk_wallet::KeychainKind;
+
+/// Types of keychains.
+#[uniffi::remote(Enum)]
+pub enum KeychainKind {
+    /// External keychain, used for deriving recipient addresses.
+    External = 0,
+    /// Internal keychain, used for deriving change addresses.
+    Internal = 1,
+}
 
 #[derive(Debug)]
 pub enum ChainPosition {

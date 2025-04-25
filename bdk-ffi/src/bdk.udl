@@ -270,15 +270,7 @@ interface TransactionError {
 // bdk_wallet crate - types module
 // ------------------------------------------------------------------------
 
-/// Types of keychains
-[Remote]
-enum KeychainKind {
-  /// External keychain, used for deriving recipient addresses.
-  "External",
-
-  /// Internal keychain, used for deriving change addresses.
-  "Internal",
-};
+typedef enum KeychainKind;
 
 /// A derived address and the index it was found at.
 dictionary AddressInfo {
