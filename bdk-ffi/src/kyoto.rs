@@ -23,9 +23,9 @@ use tokio::sync::Mutex;
 
 use crate::bitcoin::Transaction;
 use crate::error::{CbfBuilderError, CbfError};
+use crate::types::Update;
 use crate::wallet::Wallet;
 use crate::FeeRate;
-use crate::Update;
 
 type LogLevel = bdk_kyoto::kyoto::LogLevel;
 type NodeState = bdk_kyoto::NodeState;

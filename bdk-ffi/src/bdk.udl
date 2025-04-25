@@ -466,7 +466,7 @@ dictionary SignOptions {
 // bdk_wallet crate - wallet module
 // ------------------------------------------------------------------------
 
-interface Update {};
+typedef interface Update;
 
 interface Policy {
   string id();

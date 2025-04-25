@@ -250,6 +250,8 @@ impl FullScanRequestBuilder {
     }
 }
 
+/// An update for a wallet containing chain, descriptor index, and transaction data.
+#[derive(uniffi::Object)]
 pub struct Update(pub(crate) BdkUpdate);
 
 pub struct SentAndReceivedValues {
