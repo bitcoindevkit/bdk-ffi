@@ -44,7 +44,6 @@ use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::keys::Mnemonic;
 use crate::types::AddressInfo;
-use crate::types::Balance;
 use crate::types::BlockId;
 use crate::types::CanonicalTx;
 use crate::types::ChainPosition;
