@@ -42,15 +42,19 @@ pub enum KeychainKind {
     Internal = 1,
 }
 
-#[derive(Debug)]
+/// Represents the observed position of some chain data.
+#[derive(Debug, uniffi::Enum)]
 pub enum ChainPosition {
+    /// The chain data is confirmed as it is anchored in the best chain by `A`.
     Confirmed {
         confirmation_block_time: ConfirmationBlockTime,
+        /// A child transaction that has been confirmed. Due to incomplete information,
+        /// it is only known that this transaction is confirmed at a chain height less than
+        /// or equal to this child TXID.
         transitively: Option<String>,
     },
-    Unconfirmed {
-        timestamp: Option<u64>,
-    },
+    /// The transaction was last seen in the mempool at this timestamp.
+    Unconfirmed { timestamp: Option<u64> },
 }
 
 impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {

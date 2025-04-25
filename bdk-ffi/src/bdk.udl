@@ -307,17 +307,7 @@ dictionary LocalOutput {
 
 typedef dictionary TxOut;
 
-/// Represents the observed position of some chain data.
-[Enum]
-interface ChainPosition {
-  /// The chain data is confirmed as it is anchored in the best chain by `A`.
-  Confirmed(ConfirmationBlockTime confirmation_block_time, string? transitively);
-
-  /// The chain data is not confirmed and last seen in the mempool at this timestamp.
-  Unconfirmed(u64? timestamp);
-};
-
-typedef dictionary ConfirmationBlockTime;
+typedef enum ChainPosition;
 
 dictionary CanonicalTx {
   Transaction transaction;

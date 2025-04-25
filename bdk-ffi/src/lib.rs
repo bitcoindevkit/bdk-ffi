@@ -47,7 +47,6 @@ use crate::types::AddressInfo;
 use crate::types::CanonicalTx;
 use crate::types::ChainPosition;
 use crate::types::Condition;
-use crate::types::ConfirmationBlockTime;
 use crate::types::FullScanRequest;
 use crate::types::FullScanRequestBuilder;
 use crate::types::FullScanScriptInspector;
