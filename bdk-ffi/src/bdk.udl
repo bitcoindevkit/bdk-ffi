@@ -337,20 +337,7 @@ dictionary LocalOutput {
   ChainPosition chain_position;
 };
 
-/// Bitcoin transaction output.
-///
-/// Defines new coins to be created as a result of the transaction,
-/// along with spending conditions ("script", aka "output script"),
-/// which an input spending it must satisfy.
-///
-/// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
-dictionary TxOut {
-  /// The value of the output, in satoshis.
-  u64 value;
-
-  /// The script which must be satisfied for the output to be spent.
-  Script script_pubkey;
-};
+typedef dictionary TxOut;
 
 /// Represents the observed position of some chain data.
 [Enum]

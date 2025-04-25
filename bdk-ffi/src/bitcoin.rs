@@ -533,9 +533,18 @@ impl From<&BdkTxIn> for TxIn {
     }
 }
 
-#[derive(Debug, Clone)]
+/// Bitcoin transaction output.
+///
+/// Defines new coins to be created as a result of the transaction,
+/// along with spending conditions ("script", aka "output script"),
+/// which an input spending it must satisfy.
+///
+/// An output that is not yet spent by an input is called Unspent Transaction Output ("UTXO").
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct TxOut {
+    /// The value of the output, in satoshis.
     pub value: u64,
+    /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: Arc<Script>,
 }
 
