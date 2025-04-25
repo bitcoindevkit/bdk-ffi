@@ -19,13 +19,18 @@ use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::Arc;
 
-#[derive(Debug)]
+/// An expression of how to derive output scripts: https://github.com/bitcoin/bitcoin/blob/master/doc/descriptors.md
+#[derive(Debug, uniffi::Object)]
+#[uniffi::export(Debug, Display)]
 pub struct Descriptor {
     pub extended_descriptor: ExtendedDescriptor,
     pub key_map: KeyMap,
 }
 
+#[uniffi::export]
 impl Descriptor {
+    /// Parse a string as a descriptor for the given network.
+    #[uniffi::constructor]
     pub fn new(descriptor: String, network: Network) -> Result<Self, DescriptorError> {
         let secp = Secp256k1::new();
         let (extended_descriptor, key_map) = descriptor.into_wallet_descriptor(&secp, network)?;
@@ -35,6 +40,8 @@ impl Descriptor {
         })
     }
 
+    /// Multi-account hierarchy descriptor: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
+    #[uniffi::constructor]
     pub fn new_bip44(
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
@@ -61,6 +68,8 @@ impl Descriptor {
         }
     }
 
+    /// Multi-account hierarchy descriptor: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
+    #[uniffi::constructor]
     pub fn new_bip44_public(
         public_key: &DescriptorPublicKey,
         fingerprint: String,
@@ -92,6 +101,8 @@ impl Descriptor {
         }
     }
 
+    /// P2SH nested P2WSH descriptor: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
+    #[uniffi::constructor]
     pub fn new_bip49(
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
@@ -118,6 +129,8 @@ impl Descriptor {
         }
     }
 
+    /// P2SH nested P2WSH descriptor: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
+    #[uniffi::constructor]
     pub fn new_bip49_public(
         public_key: &DescriptorPublicKey,
         fingerprint: String,
@@ -149,6 +162,8 @@ impl Descriptor {
         }
     }
 
+    /// Pay to witness PKH descriptor: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
+    #[uniffi::constructor]
     pub fn new_bip84(
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
@@ -175,6 +190,8 @@ impl Descriptor {
         }
     }
 
+    /// Pay to witness PKH descriptor: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
+    #[uniffi::constructor]
     pub fn new_bip84_public(
         public_key: &DescriptorPublicKey,
         fingerprint: String,
@@ -206,6 +223,8 @@ impl Descriptor {
         }
     }
 
+    /// Single key P2TR descriptor: https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
+    #[uniffi::constructor]
     pub fn new_bip86(
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
@@ -232,6 +251,8 @@ impl Descriptor {
         }
     }
 
+    /// Single key P2TR descriptor: https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
+    #[uniffi::constructor]
     pub fn new_bip86_public(
         public_key: &DescriptorPublicKey,
         fingerprint: String,
@@ -263,16 +284,19 @@ impl Descriptor {
         }
     }
 
+    /// Dangerously convert the descriptor to a string.
     pub fn to_string_with_secret(&self) -> String {
         let descriptor = &self.extended_descriptor;
         let key_map = &self.key_map;
         descriptor.to_string_with_secret(key_map)
     }
 
+    /// Does this descriptor contain paths: https://github.com/bitcoin/bips/blob/master/bip-0389.mediawiki
     pub fn is_multipath(&self) -> bool {
         self.extended_descriptor.is_multipath()
     }
 
+    /// Return descriptors for all valid paths.
     pub fn to_single_descriptors(&self) -> Result<Vec<Arc<Descriptor>>, MiniscriptError> {
         self.extended_descriptor
             .clone()
@@ -300,7 +324,8 @@ impl Display for Descriptor {
 
 #[cfg(test)]
 mod test {
-    use crate::*;
+    use super::*;
+    use crate::keys::{DerivationPath, Mnemonic};
     use assert_matches::assert_matches;
     use bdk_wallet::bitcoin::Network;
     use bdk_wallet::KeychainKind;

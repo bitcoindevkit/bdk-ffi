@@ -11,7 +11,7 @@ final class OfflineDescriptorTests: XCTestCase {
         )
         let descriptor: Descriptor = Descriptor.newBip86(
             secretKey: descriptorSecretKey,
-            keychain: KeychainKind.external,
+            keychainKind: KeychainKind.external,
             network: Network.testnet
         )
 

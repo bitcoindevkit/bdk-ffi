@@ -500,48 +500,6 @@ interface DescriptorPublicKey {
   string master_fingerprint();
 };
 
-[Traits=(Display)]
-interface Descriptor {
-  [Throws=DescriptorError]
-  constructor(string descriptor, Network network);
-
-  [Name=new_bip44]
-  constructor([ByRef] DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
-
-  [Name=new_bip44_public]
-  constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
-
-  [Name=new_bip49]
-  constructor([ByRef] DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
-
-  [Name=new_bip49_public]
-  constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
-
-  [Name=new_bip84]
-  constructor([ByRef] DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
-
-  [Name=new_bip84_public]
-  constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
-
-  [Name=new_bip86]
-  constructor([ByRef] DescriptorSecretKey secret_key, KeychainKind keychain, Network network);
-
-  [Name=new_bip86_public]
-  constructor([ByRef] DescriptorPublicKey public_key, string fingerprint, KeychainKind keychain, Network network);
-
-  string to_string_with_secret();
-
-  /// Whether or not this key has multiple derivation paths.
-  boolean is_multipath();
-
-  /// Get as many descriptors as different paths in this descriptor.
-  ///
-  /// For multipath descriptors it will return as many descriptors as there is
-  /// "parallel" paths. For regular descriptors it will just return itself.
-  [Throws=MiniscriptError]
-  sequence<Descriptor> to_single_descriptors();
-};
-
 // ------------------------------------------------------------------------
 // bdk-ffi-defined types
 // ------------------------------------------------------------------------
