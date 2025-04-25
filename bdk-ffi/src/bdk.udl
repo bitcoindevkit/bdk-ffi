@@ -309,10 +309,7 @@ typedef dictionary TxOut;
 
 typedef enum ChainPosition;
 
-dictionary CanonicalTx {
-  Transaction transaction;
-  ChainPosition chain_position;
-};
+typedef dictionary CanonicalTx;
 
 /// Builds a [`FullScanRequest`].
 interface FullScanRequestBuilder {

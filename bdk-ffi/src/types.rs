@@ -101,8 +101,12 @@ pub struct BlockId {
     pub hash: String,
 }
 
+/// A transaction that is deemed to be part of the canonical history.
+#[derive(uniffi::Record)]
 pub struct CanonicalTx {
+    /// The transaction.
     pub transaction: Arc<Transaction>,
+    /// How the transaction is observed in the canonical chain (confirmed or unconfirmed).
     pub chain_position: ChainPosition,
 }
 
