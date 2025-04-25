@@ -12,7 +12,6 @@ mod types;
 mod wallet;
 
 use crate::bitcoin::Address;
-use crate::bitcoin::AddressData;
 use crate::bitcoin::Amount;
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::Header;
@@ -21,7 +20,6 @@ use crate::bitcoin::Script;
 use crate::bitcoin::Transaction;
 use crate::bitcoin::TxIn;
 use crate::bitcoin::TxOut;
-use crate::bitcoin::WitnessProgram;
 use crate::descriptor::Descriptor;
 use crate::error::AddressParseError;
 use crate::error::Bip32Error;

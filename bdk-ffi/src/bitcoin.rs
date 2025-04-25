@@ -172,16 +172,23 @@ impl From<BdkHeader> for Header {
     }
 }
 
-#[derive(Debug)]
+/// The type of address.
+#[derive(Debug, uniffi::Enum)]
 pub enum AddressData {
+    /// Legacy.
     P2pkh { pubkey_hash: String },
+    /// Wrapped Segwit
     P2sh { script_hash: String },
+    /// Segwit
     Segwit { witness_program: WitnessProgram },
 }
 
-#[derive(Debug)]
+/// The version and program of a Segwit address.
+#[derive(Debug, uniffi::Record)]
 pub struct WitnessProgram {
+    /// Version. For example 1 for Taproot.
     pub version: u8,
+    /// The witness program.
     pub program: Vec<u8>,
 }
 
