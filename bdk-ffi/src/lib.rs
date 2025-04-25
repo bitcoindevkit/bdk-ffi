@@ -23,9 +23,6 @@ use crate::bitcoin::TxIn;
 use crate::bitcoin::TxOut;
 use crate::bitcoin::WitnessProgram;
 use crate::descriptor::Descriptor;
-use crate::electrum::ElectrumClient;
-use crate::electrum::HeaderNotification;
-use crate::electrum::ServerFeaturesRes;
 use crate::error::AddressParseError;
 use crate::error::Bip32Error;
 use crate::error::Bip39Error;
@@ -73,7 +70,6 @@ use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 use crate::types::Tx;
 use crate::types::TxStatus;
-use crate::types::Update;
 
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;
