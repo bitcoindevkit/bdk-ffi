@@ -15,10 +15,10 @@ use bdk_wallet::template::{
 use bdk_wallet::KeychainKind;
 
 use crate::error::MiniscriptError;
+use regex::Regex;
 use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::Arc;
-use regex::Regex;
 
 #[derive(Debug)]
 pub struct Descriptor {
@@ -273,23 +273,20 @@ impl Descriptor {
     pub fn to_x_pub(&self) -> String {
         let descriptor_public_key = &self.extended_descriptor;
         let descriptor = descriptor_public_key.to_string();
-    
-        let pattern = r"tpub[a-zA-Z0-9]+";
+
+        let pattern = r"[xtyvXYV]pub[a-zA-Z0-9]+"; // regex to idenfity any network
         let regex = match Regex::new(pattern) {
             Ok(r) => r,
             Err(_) => {
-                println!("Regex inválido.");
                 return "".to_string();
             }
         };
-    
+
         if let Some(captures) = regex.find(&descriptor) {
             let tpub = &descriptor[captures.range()];
-            println!("tpub {}", tpub);
-            return tpub.to_string();
+            tpub.to_string()
         } else {
-            println!("Nenhum tpub encontrado.");
-            return "".to_string();
+            "".to_string()
         }
     }
 
@@ -450,12 +447,19 @@ mod test {
 
     #[test]
     fn test_xpub() {
-        let result = Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Signet);
+        let result = Descriptor::new(
+            "wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(),
+            Network::Signet,
+        );
+
         match result {
             Ok(value) => {
-                println!("tpub encontrado: {}", value.to_x_pub());
+                let xpub = value.to_x_pub();
+                assert!(!xpub.is_empty(), "invalid xPub");
             }
-            Err(error) => print!("Error {}", error)
+            Err(error) => {
+                panic!("Create xPub error: {}", error);
+            }
         }
     }
 }
