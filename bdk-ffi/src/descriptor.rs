@@ -18,6 +18,7 @@ use crate::error::MiniscriptError;
 use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::Arc;
+use regex::Regex;
 
 #[derive(Debug)]
 pub struct Descriptor {
@@ -269,6 +270,29 @@ impl Descriptor {
         descriptor.to_string_with_secret(key_map)
     }
 
+    pub fn to_x_pub(&self) -> String {
+        let descriptor_public_key = &self.extended_descriptor;
+        let descriptor = descriptor_public_key.to_string();
+    
+        let pattern = r"tpub[a-zA-Z0-9]+";
+        let regex = match Regex::new(pattern) {
+            Ok(r) => r,
+            Err(_) => {
+                println!("Regex inválido.");
+                return "".to_string();
+            }
+        };
+    
+        if let Some(captures) = regex.find(&descriptor) {
+            let tpub = &descriptor[captures.range()];
+            println!("tpub {}", tpub);
+            return tpub.to_string();
+        } else {
+            println!("Nenhum tpub encontrado.");
+            return "".to_string();
+        }
+    }
+
     pub fn is_multipath(&self) -> bool {
         self.extended_descriptor.is_multipath()
     }
@@ -422,5 +446,16 @@ mod test {
         // Creating a Descriptor using an extended key that doesn't match the network provided will throw a DescriptorError::Key with inner InvalidNetwork error
         assert!(descriptor1.is_ok());
         assert_matches!(descriptor2.unwrap_err(), DescriptorError::Key { .. });
+    }
+
+    #[test]
+    fn test_xpub() {
+        let result = Descriptor::new("wpkh(tprv8hwWMmPE4BVNxGdVt3HhEERZhondQvodUY7Ajyseyhudr4WabJqWKWLr4Wi2r26CDaNCQhhxEftEaNzz7dPGhWuKFU4VULesmhEfZYyBXdE/0/*)".to_string(), Network::Signet);
+        match result {
+            Ok(value) => {
+                println!("tpub encontrado: {}", value.to_x_pub());
+            }
+            Err(error) => print!("Error {}", error)
+        }
     }
 }
