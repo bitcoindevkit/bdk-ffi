@@ -531,7 +531,7 @@ interface Descriptor {
 
   string to_string_with_secret();
 
-  // Get a xPub from the descriptor
+  /// Get a xPub from the descriptor
   string to_x_pub();
 
   /// Whether or not this key has multiple derivation paths.
