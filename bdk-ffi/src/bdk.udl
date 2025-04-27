@@ -272,18 +272,6 @@ interface TransactionError {
 
 typedef enum KeychainKind;
 
-/// A derived address and the index it was found at.
-dictionary AddressInfo {
-  /// Child index of this address
-  u32 index;
-
-  /// Address
-  Address address;
-
-  /// Type of keychain
-  KeychainKind keychain;
-};
-
 /// An unspent output owned by a [`Wallet`].
 dictionary LocalOutput {
   /// Reference to a transaction output
@@ -558,27 +546,7 @@ interface Descriptor {
 // bdk-ffi-defined types
 // ------------------------------------------------------------------------
 
-dictionary ScriptAmount {
-  Script script;
-  Amount amount;
-};
-
-dictionary SentAndReceivedValues {
-    Amount sent;
-    Amount received;
-};
-
-dictionary KeychainAndIndex {
-    KeychainKind keychain;
-    u32 index;
-};
-
-dictionary TxStatus {
-    boolean confirmed;
-    u32? block_height;
-    string? block_hash;
-    u64? block_time;
-};
+typedef dictionary TxStatus;
 
 dictionary Tx {
     string txid;
@@ -607,8 +575,6 @@ typedef interface Address;
 
 typedef dictionary Header;
 
-typedef interface Transaction;
-
 typedef interface Psbt;
 
 dictionary TxIn {
@@ -628,8 +594,6 @@ enum Network {
   "Regtest",
   "Testnet4",
 };
-
-typedef interface Amount;
 
 typedef interface FeeRate;
 

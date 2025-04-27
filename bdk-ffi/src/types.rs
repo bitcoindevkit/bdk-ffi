@@ -119,14 +119,23 @@ impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for
     }
 }
 
+/// A bitcoin script and associated amount.
+#[derive(uniffi::Record)]
 pub struct ScriptAmount {
+    /// The underlying script.
     pub script: Arc<Script>,
+    /// The amount owned by the script.
     pub amount: Arc<Amount>,
 }
 
+/// A derived address and the index it was found at.
+#[derive(uniffi::Record)]
 pub struct AddressInfo {
+    /// Child index of this address
     pub index: u32,
+    /// The address
     pub address: Arc<Address>,
+    /// Type of keychain
     pub keychain: KeychainKind,
 }
 
@@ -289,13 +298,21 @@ impl FullScanRequestBuilder {
 #[derive(uniffi::Object)]
 pub struct Update(pub(crate) BdkUpdate);
 
+/// The total value sent and received.
+#[derive(uniffi::Record)]
 pub struct SentAndReceivedValues {
+    /// Amount sent in the transaction.
     pub sent: Arc<Amount>,
+    /// The amount received in the transaction, possibly as a change output(s).
     pub received: Arc<Amount>,
 }
 
+/// The keychain kind and the index in that keychain.
+#[derive(uniffi::Record)]
 pub struct KeychainAndIndex {
+    /// Type of keychains.
     pub keychain: KeychainKind,
+    /// The index in the keychain.
     pub index: u32,
 }
 
@@ -586,11 +603,16 @@ impl From<SignOptions> for BdkSignOptions {
     }
 }
 
-#[derive(Debug)]
+/// Transaction confirmation metadata.
+#[derive(uniffi::Record, Debug)]
 pub struct TxStatus {
+    /// Is the transaction in a block.
     pub confirmed: bool,
+    /// Height of the block this transaction was included.
     pub block_height: Option<u32>,
+    /// Hash of the block.
     pub block_hash: Option<String>,
+    /// The time shown in the block, not necessarily the same time as when the block was found.
     pub block_time: Option<u64>,
 }
 
