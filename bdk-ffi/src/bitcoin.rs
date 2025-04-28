@@ -150,12 +150,22 @@ impl Script {
 impl_from_core_type!(BdkScriptBuf, Script);
 impl_into_core_type!(Script, BdkScriptBuf);
 
+/// Bitcoin block header.
+/// Contains all the block’s information except the actual transactions, but including a root of a merkle tree
+/// committing to all transactions in the block.
+#[derive(uniffi::Record)]
 pub struct Header {
+    /// Block version, now repurposed for soft fork signalling.
     pub version: i32,
+    /// Reference to the previous block in the chain.
     pub prev_blockhash: String,
+    /// The root hash of the merkle tree of transactions in the block.
     pub merkle_root: String,
+    /// The timestamp of the block, as claimed by the miner.
     pub time: u32,
+    /// The target value below which the blockhash must lie.
     pub bits: u32,
+    /// The nonce, selected to obtain a low enough blockhash.
     pub nonce: u32,
 }
 

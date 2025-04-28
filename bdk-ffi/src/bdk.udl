@@ -605,28 +605,7 @@ enum WordCount {
 
 typedef interface Address;
 
-/// Bitcoin block header.
-/// Contains all the block’s information except the actual transactions, but including a root of a merkle tree
-/// committing to all transactions in the block.
-dictionary Header {
-  /// Block version, now repurposed for soft fork signalling.
-  i32 version;
-
-  /// Reference to the previous block in the chain.
-  string prev_blockhash;
-
-  /// The root hash of the merkle tree of transactions in the block.
-  string merkle_root;
-
-  /// The timestamp of the block, as claimed by the miner.
-  u32 time;
-
-  /// The target value below which the blockhash must lie.
-  u32 bits;
-
-  /// The nonce, selected to obtain a low enough blockhash.
-  u32 nonce;
-};
+typedef dictionary Header;
 
 typedef interface Transaction;
 

@@ -14,7 +14,6 @@ mod wallet;
 use crate::bitcoin::Address;
 use crate::bitcoin::Amount;
 use crate::bitcoin::FeeRate;
-use crate::bitcoin::Header;
 use crate::bitcoin::OutPoint;
 use crate::bitcoin::Script;
 use crate::bitcoin::Transaction;
