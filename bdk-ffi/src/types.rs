@@ -580,12 +580,48 @@ impl From<BdkCondition> for Condition {
 // because we did not want to expose the complexity behind the `TapLeavesOptions` type. When
 // transforming from a SignOption to a BdkSignOptions, we simply use the default values for
 // TapLeavesOptions.
+/// Options for a software signer.
+///
+/// Adjust the behavior of our software signers and the way a transaction is finalized.
+#[derive(uniffi::Record)]
 pub struct SignOptions {
+    /// Whether the signer should trust the `witness_utxo`, if the `non_witness_utxo` hasn't been
+    /// provided
+    ///
+    /// Defaults to `false` to mitigate the "SegWit bug" which could trick the wallet into
+    /// paying a fee larger than expected.
+    ///
+    /// Some wallets, especially if relatively old, might not provide the `non_witness_utxo` for
+    /// SegWit transactions in the PSBT they generate: in those cases setting this to `true`
+    /// should correctly produce a signature, at the expense of an increased trust in the creator
+    /// of the PSBT.
+    ///
+    /// For more details see: <https://blog.trezor.io/details-of-firmware-updates-for-trezor-one-version-1-9-1-and-trezor-model-t-version-2-3-1-1eba8f60f2dd>
     pub trust_witness_utxo: bool,
+    /// Whether the wallet should assume a specific height has been reached when trying to finalize
+    /// a transaction
+    ///
+    /// The wallet will only "use" a timelock to satisfy the spending policy of an input if the
+    /// timelock height has already been reached. This option allows overriding the "current height" to let the
+    /// wallet use timelocks in the future to spend a coin.
     pub assume_height: Option<u32>,
+    /// Whether the signer should use the `sighash_type` set in the PSBT when signing, no matter
+    /// what its value is
+    ///
+    /// Defaults to `false` which will only allow signing using `SIGHASH_ALL`.
     pub allow_all_sighashes: bool,
+    /// Whether to try finalizing the PSBT after the inputs are signed.
+    ///
+    /// Defaults to `true` which will try finalizing PSBT after inputs are signed.
     pub try_finalize: bool,
+    /// Whether we should try to sign a taproot transaction with the taproot internal key
+    /// or not. This option is ignored if we're signing a non-taproot PSBT.
+    ///
+    /// Defaults to `true`, i.e., we always try to sign with the taproot internal key.
     pub sign_with_tap_internal_key: bool,
+    /// Whether we should grind ECDSA signature to ensure signing with low r
+    /// or not.
+    /// Defaults to `true`, i.e., we always grind ECDSA signature to sign with low r.
     pub allow_grinding: bool,
 }
 

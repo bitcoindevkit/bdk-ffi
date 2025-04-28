@@ -44,7 +44,6 @@ use crate::types::PkOrF;
 use crate::types::Policy;
 use crate::types::Satisfaction;
 use crate::types::SatisfiableItem;
-use crate::types::SignOptions;
 use crate::types::SyncRequest;
 use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
