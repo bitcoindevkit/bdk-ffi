@@ -30,9 +30,12 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+/// A reference to an unspent output by TXID and output index.
+#[derive(Debug, Clone, Eq, PartialEq, uniffi:: Record)]
 pub struct OutPoint {
+    /// The transaction.
     pub txid: String,
+    /// The index of the output in the transaction.
     pub vout: u32,
 }
 
@@ -521,11 +524,16 @@ pub struct FinalizedPsbtResult {
     pub errors: Option<Vec<PsbtFinalizeError>>,
 }
 
-#[derive(Debug, Clone)]
+/// A transcation input.
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct TxIn {
+    /// A pointer to the previous output this input spends from.
     pub previous_output: OutPoint,
+    /// The script corresponding to the `scriptPubKey`, empty in SegWit transactions.
     pub script_sig: Arc<Script>,
+    /// https://bitcoin.stackexchange.com/questions/87372/what-does-the-sequence-in-a-transaction-input-mean
     pub sequence: u32,
+    /// A proof for the script that authorizes the spend of the output.
     pub witness: Vec<Vec<u8>>,
 }
 
