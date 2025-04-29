@@ -577,12 +577,7 @@ typedef dictionary Header;
 
 typedef interface Psbt;
 
-dictionary TxIn {
-  OutPoint previous_output;
-  Script script_sig;
-  u32 sequence;
-  sequence<sequence<u8>> witness;
-};
+typedef dictionary TxIn;
 
 typedef interface Script;
 
@@ -597,7 +592,4 @@ enum Network {
 
 typedef interface FeeRate;
 
-dictionary OutPoint {
-  string txid;
-  u32 vout;
-};
+typedef dictionary OutPoint;

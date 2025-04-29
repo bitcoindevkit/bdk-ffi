@@ -14,7 +14,6 @@ mod wallet;
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
 use crate::bitcoin::Script;
-use crate::bitcoin::TxIn;
 use crate::bitcoin::TxOut;
 use crate::descriptor::Descriptor;
 use crate::error::AddressParseError;
