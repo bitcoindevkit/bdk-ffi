@@ -272,27 +272,6 @@ interface TransactionError {
 
 typedef enum KeychainKind;
 
-/// An unspent output owned by a [`Wallet`].
-dictionary LocalOutput {
-  /// Reference to a transaction output
-  OutPoint outpoint;
-
-  /// Transaction output
-  TxOut txout;
-
-  /// Type of keychain
-  KeychainKind keychain;
-
-  /// Whether this UTXO is spent or not
-  boolean is_spent;
-
-  /// The derivation index for the script pubkey in the wallet
-  u32 derivation_index;
-
-  /// The position of the output in the blockchain.
-  ChainPosition chain_position;
-};
-
 typedef dictionary TxOut;
 
 typedef enum ChainPosition;
@@ -399,15 +378,7 @@ dictionary Condition {
 
 typedef dictionary TxStatus;
 
-dictionary Tx {
-    string txid;
-    i32 version;
-    u32 locktime;
-    u64 size;
-    u64 weight;
-    u64 fee;
-    TxStatus status;
-};
+typedef dictionary Tx;
 
 // ------------------------------------------------------------------------
 // bdk_wallet crate - bitcoin re-exports

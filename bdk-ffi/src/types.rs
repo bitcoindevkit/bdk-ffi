@@ -182,12 +182,20 @@ impl From<BdkBalance> for Balance {
     }
 }
 
+/// An unspent output owned by a [`Wallet`].
+#[derive(uniffi::Record)]
 pub struct LocalOutput {
+    /// Reference to a transaction output
     pub outpoint: OutPoint,
+    /// Transaction output
     pub txout: TxOut,
+    /// Type of keychain
     pub keychain: KeychainKind,
+    /// Whether this UTXO is spent or not
     pub is_spent: bool,
+    /// The derivation index for the script pubkey in the wallet
     pub derivation_index: u32,
+    /// The position of the output in the blockchain.
     pub chain_position: ChainPosition,
 }
 
@@ -663,14 +671,22 @@ impl From<BdkTxStatus> for TxStatus {
     }
 }
 
-#[derive(Debug)]
+/// Bitcoin transaction metadata.
+#[derive(Debug, uniffi::Record)]
 pub struct Tx {
+    /// The transaction identifier.
     pub txid: String,
+    /// The transaction version, of which 0, 1, 2 are standard.
     pub version: i32,
+    /// The block height or time restriction on the transaction.
     pub locktime: u32,
+    /// The size of the transaction in bytes.
     pub size: u64,
+    /// The weight units of this transaction.
     pub weight: u64,
+    /// The fee of this transaction in satoshis.
     pub fee: u64,
+    /// Confirmation status and data.
     pub status: TxStatus,
 }
 
