@@ -272,12 +272,6 @@ interface TransactionError {
 
 typedef enum KeychainKind;
 
-typedef dictionary TxOut;
-
-typedef enum ChainPosition;
-
-typedef dictionary CanonicalTx;
-
 /// Builds a [`FullScanRequest`].
 interface FullScanRequestBuilder {
   [Throws=RequestBuilderError]
@@ -373,14 +367,6 @@ dictionary Condition {
 };
 
 // ------------------------------------------------------------------------
-// bdk-ffi-defined types
-// ------------------------------------------------------------------------
-
-typedef dictionary TxStatus;
-
-typedef dictionary Tx;
-
-// ------------------------------------------------------------------------
 // bdk_wallet crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 
@@ -393,14 +379,6 @@ enum WordCount {
   "Words24",
 };
 
-typedef interface Address;
-
-typedef dictionary Header;
-
-typedef interface Psbt;
-
-typedef dictionary TxIn;
-
 typedef interface Script;
 
 [NonExhaustive, Remote]
@@ -411,7 +389,3 @@ enum Network {
   "Regtest",
   "Testnet4",
 };
-
-typedef interface FeeRate;
-
-typedef dictionary OutPoint;
