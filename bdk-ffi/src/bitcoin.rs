@@ -1,27 +1,33 @@
 use crate::error::{
-    AddressParseError, ExtractTxError, FeeRateError, FromScriptError, PsbtError, PsbtParseError,
-    TransactionError,
+    AddressParseError, ExtractTxError, FeeRateError, FromScriptError, HashParseError, PsbtError,
+    PsbtParseError, TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
-use crate::{impl_from_core_type, impl_into_core_type};
+use crate::{impl_from_core_type, impl_hash_like, impl_into_core_type};
 
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
 use bdk_wallet::bitcoin::address::{Address as BdkAddress, AddressData as BdkAddressData};
 use bdk_wallet::bitcoin::blockdata::block::Header as BdkHeader;
+use bdk_wallet::bitcoin::consensus::encode::deserialize;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
+use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
+use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
+use bdk_wallet::bitcoin::BlockHash as BitcoinBlockHash;
 use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
 use bdk_wallet::bitcoin::Network;
+use bdk_wallet::bitcoin::OutPoint as BdkOutPoint;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
-use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Txid};
+use bdk_wallet::bitcoin::Txid as BitcoinTxid;
+use bdk_wallet::bitcoin::Wtxid as BitcoinWtxid;
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
@@ -51,7 +57,7 @@ impl From<&BdkOutPoint> for OutPoint {
 impl From<OutPoint> for BdkOutPoint {
     fn from(outpoint: OutPoint) -> Self {
         BdkOutPoint {
-            txid: Txid::from_str(&outpoint.txid).unwrap(),
+            txid: BitcoinTxid::from_str(&outpoint.txid).unwrap(),
             vout: outpoint.vout,
         }
     }
@@ -574,6 +580,42 @@ impl From<&BdkTxOut> for TxOut {
         }
     }
 }
+
+/// A bitcoin Block hash
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct BlockHash(pub(crate) BitcoinBlockHash);
+
+impl_hash_like!(BlockHash, BitcoinBlockHash);
+
+/// A bitcoin transaction identifier
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct Txid(pub(crate) BitcoinTxid);
+
+impl_hash_like!(Txid, BitcoinTxid);
+
+/// A bitcoin transaction identifier, including witness data.
+/// For transactions with no SegWit inputs, the `txid` will be equivalent to `wtxid`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct Wtxid(pub(crate) BitcoinWtxid);
+
+impl_hash_like!(Wtxid, BitcoinWtxid);
+
+/// A collision-proof unique identifier for a descriptor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct DescriptorId(pub(crate) BitcoinSha256Hash);
+
+impl_hash_like!(DescriptorId, BitcoinSha256Hash);
+
+/// The merkle root of the merkle tree corresponding to a block's transactions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct TxMerkleNode(pub(crate) BitcoinDoubleSha256Hash);
+
+impl_hash_like!(TxMerkleNode, BitcoinDoubleSha256Hash);
 
 #[cfg(test)]
 mod tests {
