@@ -19,3 +19,32 @@ macro_rules! impl_into_core_type {
         }
     };
 }
+
+#[macro_export]
+macro_rules! impl_hash_like {
+    ($ffi_type:ident, $core_type:ident) => {
+        #[uniffi::export]
+        impl $ffi_type {
+            /// Construct a hash-like type from 32 bytes.
+            #[uniffi::constructor]
+            pub fn from_bytes(bytes: Vec<u8>) -> Result<Self, HashParseError> {
+                let hash_like: $core_type = deserialize(&bytes).map_err(|_| {
+                    let len = bytes.len() as u32;
+                    HashParseError::InvalidHash { len }
+                })?;
+                Ok(Self(hash_like))
+            }
+
+            /// Serialize this type into a 32 byte array.
+            pub fn serialize(&self) -> Vec<u8> {
+                serialize(&self.0)
+            }
+        }
+
+        impl std::fmt::Display for $ffi_type {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.0.fmt(f)
+            }
+        }
+    };
+}
