@@ -45,10 +45,8 @@ class LiveKyotoTest(unittest.IsolatedAsyncioTestCase):
                 print(log)
         log_task = asyncio.create_task(log_loop(client))
         node.run()
-        update: Update | None = await client.update()
-        self.assertIsNotNone(update, "Update is None. This should not be possible.")
-        if update is not None:
-            wallet.apply_update(update)
+        update: Update = await client.update()
+        wallet.apply_update(update)
         self.assertGreater(
             wallet.balance().total.to_sat(),
             0,
