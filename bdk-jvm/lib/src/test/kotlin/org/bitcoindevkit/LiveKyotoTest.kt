@@ -44,12 +44,11 @@ class LiveKyotoTest {
             val logJob = launch {
                 while (true) {
                     val log = client.nextLog()
-                    println("$log")
+                    println(log)
                 }
             }
             node.run()
-            val updateOpt: Update? = client.update()
-            val update = assertNotNull(updateOpt)
+            val update: Update = client.update()
             wallet.applyUpdate(update)
             assert(wallet.balance().total.toSat() > 0uL) {
                 "Wallet balance must be greater than 0! Please send funds to ${wallet.revealNextAddress(KeychainKind.EXTERNAL).address} and try again."
