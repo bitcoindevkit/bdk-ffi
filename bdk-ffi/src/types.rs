@@ -1,4 +1,6 @@
-use crate::bitcoin::{Address, Amount, OutPoint, Script, Transaction, TxOut};
+use crate::bitcoin::{
+    Address, Amount, BlockHash, DescriptorId, HashableOutPoint, OutPoint, Script, Transaction, TxOut, Txid
+};
 use crate::error::{CreateTxError, RequestBuilderError};
 
 use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
@@ -23,7 +25,7 @@ use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 
@@ -66,7 +68,7 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
             } => {
                 let block_id = BlockId {
                     height: anchor.block_id.height,
-                    hash: anchor.block_id.hash.to_string(),
+                    hash: Arc::new(BlockHash(anchor.block_id.hash)),
                 };
                 ChainPosition::Confirmed {
                     confirmation_block_time: ConfirmationBlockTime {
@@ -84,7 +86,7 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
 }
 
 /// Represents the confirmation block and time of a transaction.
-#[derive(Debug, uniffi::Record)]
+#[derive(Debug, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
 pub struct ConfirmationBlockTime {
     /// The anchor block.
     pub block_id: BlockId,
@@ -92,13 +94,49 @@ pub struct ConfirmationBlockTime {
     pub confirmation_time: u64,
 }
 
+impl From<BdkConfirmationBlockTime> for ConfirmationBlockTime {
+    fn from(value: BdkConfirmationBlockTime) -> Self {
+        Self {
+            block_id: value.block_id.into(),
+            confirmation_time: value.confirmation_time,
+        }
+    }
+}
+
+impl From<ConfirmationBlockTime> for BdkConfirmationBlockTime {
+    fn from(value: ConfirmationBlockTime) -> Self {
+        Self {
+            block_id: value.block_id.into(),
+            confirmation_time: value.confirmation_time,
+        }
+    }
+}
+
 /// A reference to a block in the canonical chain.
-#[derive(Debug, uniffi::Record)]
+#[derive(Debug, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
 pub struct BlockId {
     /// The height of the block.
     pub height: u32,
     /// The hash of the block.
-    pub hash: String,
+    pub hash: Arc<BlockHash>,
+}
+
+impl From<bdk_wallet::chain::BlockId> for BlockId {
+    fn from(value: bdk_wallet::chain::BlockId) -> Self {
+        Self {
+            height: value.height,
+            hash: Arc::new(BlockHash(value.hash)),
+        }
+    }
+}
+
+impl From<BlockId> for bdk_wallet::chain::BlockId {
+    fn from(value: BlockId) -> Self {
+        Self {
+            height: value.height,
+            hash: value.hash.0,
+        }
+    }
 }
 
 /// A transaction that is deemed to be part of the canonical history.
@@ -203,7 +241,7 @@ impl From<BdkLocalOutput> for LocalOutput {
     fn from(local_utxo: BdkLocalOutput) -> Self {
         LocalOutput {
             outpoint: OutPoint {
-                txid: local_utxo.outpoint.txid.to_string(),
+                txid: Arc::new(Txid(local_utxo.outpoint.txid)),
                 vout: local_utxo.outpoint.vout,
             },
             txout: TxOut {
@@ -710,4 +748,151 @@ impl From<BdkTx> for Tx {
 pub struct UnconfirmedTx {
     pub tx: Arc<Transaction>,
     pub last_seen: u64,
+}
+
+/// Mapping of descriptors to their last revealed index.
+#[derive(Debug, uniffi::Record)]
+pub struct IndexerChangeSet {
+    pub last_revealed: HashMap<Arc<DescriptorId>, u32>,
+}
+
+impl From<bdk_wallet::chain::indexer::keychain_txout::ChangeSet> for IndexerChangeSet {
+    fn from(mut value: bdk_wallet::chain::indexer::keychain_txout::ChangeSet) -> Self {
+        let mut changes = HashMap::new();
+        for (id, index) in core::mem::take(&mut value.last_revealed) {
+            changes.insert(Arc::new(DescriptorId(id.0)), index);
+        }
+        Self {
+            last_revealed: changes,
+        }
+    }
+}
+
+impl From<IndexerChangeSet> for bdk_wallet::chain::indexer::keychain_txout::ChangeSet {
+    fn from(mut value: IndexerChangeSet) -> Self {
+        let mut changes = BTreeMap::new();
+        for (id, index) in core::mem::take(&mut value.last_revealed) {
+            let descriptor_id = bdk_wallet::chain::DescriptorId(id.0);
+            changes.insert(descriptor_id, index);
+        }
+        Self {
+            last_revealed: changes,
+        }
+    }
+}
+
+/// The hash added or removed at the given height.
+#[derive(Debug, uniffi::Record)]
+pub struct ChainChange {
+    /// Effected height
+    pub height: u32,
+    /// A hash was added or must be removed.
+    pub hash: Option<Arc<BlockHash>>,
+}
+
+/// Changes to the local chain
+#[derive(Debug, uniffi::Record)]
+pub struct LocalChainChangeSet {
+    pub changes: Vec<ChainChange>,
+}
+
+impl From<bdk_wallet::chain::local_chain::ChangeSet> for LocalChainChangeSet {
+    fn from(mut value: bdk_wallet::chain::local_chain::ChangeSet) -> Self {
+        let mut changes = Vec::with_capacity(value.blocks.len());
+        for (height, hash) in core::mem::take(&mut value.blocks) {
+            let hash = hash.map(|h| Arc::new(BlockHash(h)));
+            let change = ChainChange { height, hash };
+            changes.push(change);
+        }
+        Self { changes }
+    }
+}
+
+impl From<LocalChainChangeSet> for bdk_wallet::chain::local_chain::ChangeSet {
+    fn from(mut value: LocalChainChangeSet) -> Self {
+        let mut changes = BTreeMap::new();
+        for change in core::mem::take(&mut value.changes) {
+            let height = change.height;
+            let hash = change.hash.map(|h| h.0);
+            changes.insert(height, hash);
+        }
+        Self { blocks: changes }
+    }
+}
+
+#[derive(Debug, uniffi::Record)]
+pub struct Anchor {
+    pub confirmation_block_time: ConfirmationBlockTime,
+    pub txid: Arc<Txid>,
+}
+
+#[derive(Debug, uniffi::Record)]
+pub struct TxGraphChangeSet {
+    pub txs: Vec<Arc<Transaction>>,
+    pub txouts: HashMap<Arc<HashableOutPoint>, TxOut>,
+    pub anchors: Vec<Anchor>,
+    pub last_seen: HashMap<Arc<Txid>, u64>,
+}
+
+impl From<bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime>> for TxGraphChangeSet {
+    fn from(mut value: bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime>) -> Self {
+        let btree_txs = core::mem::take(&mut value.txs);
+        let txs = btree_txs
+            .into_iter()
+            .map(|tx| Arc::new(tx.as_ref().into()))
+            .collect::<Vec<Arc<Transaction>>>();
+        let mut txouts = HashMap::new();
+        for (outpoint, txout) in core::mem::take(&mut value.txouts) {
+            txouts.insert(Arc::new(HashableOutPoint(outpoint.into())), txout.into());
+        }
+        let mut anchors = Vec::new();
+        for anchor in core::mem::take(&mut value.anchors) {
+            let confirmation_block_time = anchor.0.into();
+            let txid = Arc::new(Txid(anchor.1));
+            let anchor = Anchor {
+                confirmation_block_time,
+                txid,
+            };
+            anchors.push(anchor);
+        }
+        let mut last_seens = HashMap::new();
+        for (txid, time) in core::mem::take(&mut value.last_seen) {
+            last_seens.insert(Arc::new(Txid(txid)), time);
+        }
+        TxGraphChangeSet {
+            txs,
+            txouts,
+            anchors,
+            last_seen: last_seens,
+        }
+    }
+}
+
+impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime> {
+    fn from(mut value: TxGraphChangeSet) -> Self {
+        let mut txs = BTreeSet::new();
+        for tx in core::mem::take(&mut value.txs) {
+            let tx = Arc::new(tx.as_ref().into());
+            txs.insert(tx);
+        }
+        let mut txouts = BTreeMap::new();
+        for txout in core::mem::take(&mut value.txouts) {
+            txouts.insert(txout.0.outpoint().into(), txout.1.into());
+        }
+        let mut anchors = BTreeSet::new();
+        for anchor in core::mem::take(&mut value.anchors) {
+            let txid = anchor.txid.0;
+            anchors.insert((anchor.confirmation_block_time.into(), txid));
+        }
+        let mut last_seen = BTreeMap::new();
+        for (txid, time) in core::mem::take(&mut value.last_seen) {
+            last_seen.insert(txid.0, time);
+        }
+        Self {
+            txs,
+            txouts,
+            anchors,
+            last_seen,
+        }
+    }
 }

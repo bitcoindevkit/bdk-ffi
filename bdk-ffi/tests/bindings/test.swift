@@ -10,4 +10,4 @@ import BitcoinDevKit
 let network = Network.testnet
 
 // A type from the bdk-ffi library
-let blockId = BlockId(height: 32, hash: "abcd")
+let condition = Condition(csv: nil, timelock: nil)
