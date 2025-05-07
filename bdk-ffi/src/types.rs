@@ -2,6 +2,7 @@ use crate::bitcoin::{
     Address, Amount, BlockHash, DescriptorId, HashableOutPoint, OutPoint, Script, Transaction,
     TxOut, Txid,
 };
+use crate::descriptor::Descriptor;
 use crate::error::{CreateTxError, RequestBuilderError};
 
 use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
@@ -899,6 +900,66 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
             txouts,
             anchors,
             last_seen,
+        }
+    }
+}
+
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct ChangeSet {
+    pub descriptor: Option<Arc<Descriptor>>,
+    pub change_descriptor: Option<Arc<Descriptor>>,
+    pub network: Option<bdk_wallet::bitcoin::Network>,
+    pub local_chain: LocalChainChangeSet,
+    pub tx_graph: TxGraphChangeSet,
+    pub indexer: IndexerChangeSet,
+}
+
+impl From<ChangeSet> for bdk_wallet::ChangeSet {
+    fn from(value: ChangeSet) -> Self {
+        let descriptor = value.descriptor.map(|d| d.extended_descriptor.clone());
+        let change_descriptor = value
+            .change_descriptor
+            .map(|d| d.extended_descriptor.clone());
+        let network = value.network;
+        let local_chain = value.local_chain.into();
+        let tx_graph = value.tx_graph.into();
+        let indexer = value.indexer.into();
+        Self {
+            descriptor,
+            change_descriptor,
+            network,
+            local_chain,
+            tx_graph,
+            indexer,
+        }
+    }
+}
+
+impl From<bdk_wallet::ChangeSet> for ChangeSet {
+    fn from(value: bdk_wallet::ChangeSet) -> Self {
+        let descriptor = value.descriptor.map(|d| {
+            Arc::new(Descriptor {
+                extended_descriptor: d,
+                key_map: BTreeMap::new(),
+            })
+        });
+        let change_descriptor = value.change_descriptor.map(|d| {
+            Arc::new(Descriptor {
+                extended_descriptor: d,
+                key_map: BTreeMap::new(),
+            })
+        });
+        let network = value.network;
+        let local_chain = value.local_chain.into();
+        let tx_graph = value.tx_graph.into();
+        let indexer = value.indexer.into();
+        Self {
+            descriptor,
+            change_descriptor,
+            network,
+            local_chain,
+            tx_graph,
+            indexer,
         }
     }
 }

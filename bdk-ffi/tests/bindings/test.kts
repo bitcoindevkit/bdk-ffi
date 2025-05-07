@@ -4,7 +4,6 @@
  */
 
 import org.bitcoindevkit.bitcoin.Network
-import org.bitcoindevkit.Condition
 
 // A type from bitcoin-ffi
 val network = Network.TESTNET
