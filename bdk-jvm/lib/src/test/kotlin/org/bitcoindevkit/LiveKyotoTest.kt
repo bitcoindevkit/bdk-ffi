@@ -28,7 +28,7 @@ class LiveKyotoTest {
 
     @Test
     fun testKyoto() {
-        val conn: Connection = Connection.newInMemory()
+        val conn: Persister = Persister.newInMemory()
         val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, conn)
         val peers = listOf(peer)
         runBlocking {

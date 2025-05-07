@@ -35,12 +35,12 @@ final class LiveTxBuilderTests: XCTestCase {
     }
 
     func testTxBuilder() throws {
-        let connection = try Connection.newInMemory()
+        let connection = try Persister.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
             network: .signet,
-            connection: connection
+            persistence: connection
         )
         let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
         let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
@@ -69,12 +69,12 @@ final class LiveTxBuilderTests: XCTestCase {
     }
 
     func testComplexTxBuilder() throws {
-        let connection = try Connection.newInMemory()
+        let connection = try Persister.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
             network: .signet,
-            connection: connection
+            persistence: connection
         )
         let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
         let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()

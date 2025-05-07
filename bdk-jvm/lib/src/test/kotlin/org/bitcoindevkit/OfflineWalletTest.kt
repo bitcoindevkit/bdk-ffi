@@ -28,7 +28,7 @@ class OfflineWalletTest {
 
    @Test
    fun testNewAddress() {
-        var conn: Connection = Connection.newInMemory()
+        var conn: Persister = Persister.newInMemory()
         val wallet: Wallet = Wallet(
             descriptor,
             changeDescriptor,
@@ -50,7 +50,7 @@ class OfflineWalletTest {
 
     @Test
     fun testBalance() {
-        var conn: Connection = Connection.newInMemory()
+        var conn: Persister = Persister.newInMemory()
         val wallet: Wallet = Wallet(
             descriptor,
             changeDescriptor,
