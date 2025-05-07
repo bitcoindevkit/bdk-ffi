@@ -1,4 +1,4 @@
-from bdkpython import BlockId
+from bdkpython import Condition
 from bdkpython.bitcoin import Network
 
 import unittest
