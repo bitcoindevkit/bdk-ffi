@@ -37,10 +37,10 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 /// A reference to an unspent output by TXID and output index.
-#[derive(Debug, Clone, Eq, PartialEq, uniffi:: Record)]
+#[derive(Debug, Clone, Eq, PartialEq, std::hash::Hash, uniffi:: Record)]
 pub struct OutPoint {
     /// The transaction.
-    pub txid: String,
+    pub txid: Arc<Txid>,
     /// The index of the output in the transaction.
     pub vout: u32,
 }
@@ -48,8 +48,17 @@ pub struct OutPoint {
 impl From<&BdkOutPoint> for OutPoint {
     fn from(outpoint: &BdkOutPoint) -> Self {
         OutPoint {
-            txid: outpoint.txid.to_string(),
+            txid: Arc::new(Txid(outpoint.txid)),
             vout: outpoint.vout,
+        }
+    }
+}
+
+impl From<BdkOutPoint> for OutPoint {
+    fn from(value: BdkOutPoint) -> Self {
+        Self {
+            txid: Arc::new(Txid(value.txid)),
+            vout: value.vout,
         }
     }
 }
@@ -57,9 +66,22 @@ impl From<&BdkOutPoint> for OutPoint {
 impl From<OutPoint> for BdkOutPoint {
     fn from(outpoint: OutPoint) -> Self {
         BdkOutPoint {
-            txid: BitcoinTxid::from_str(&outpoint.txid).unwrap(),
+            txid: BitcoinTxid::from_raw_hash(outpoint.txid.0.into()),
             vout: outpoint.vout,
         }
+    }
+}
+
+/// An [`OutPoint`] suitable as a key in a hash map.
+#[derive(Debug, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Debug, Eq, Hash)]
+pub struct HashableOutPoint(pub(crate) OutPoint);
+
+#[uniffi::export]
+impl HashableOutPoint {
+    /// Get the internal [`OutPoint`]
+    pub fn outpoint(&self) -> OutPoint {
+        self.0.clone()
     }
 }
 
@@ -547,7 +569,7 @@ impl From<&BdkTxIn> for TxIn {
     fn from(tx_in: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
-                txid: tx_in.previous_output.txid.to_string(),
+                txid: Arc::new(Txid(tx_in.previous_output.txid)),
                 vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script(tx_in.script_sig.clone())),
@@ -577,6 +599,24 @@ impl From<&BdkTxOut> for TxOut {
         TxOut {
             value: tx_out.value.to_sat(),
             script_pubkey: Arc::new(Script(tx_out.script_pubkey.clone())),
+        }
+    }
+}
+
+impl From<BdkTxOut> for TxOut {
+    fn from(tx_out: BdkTxOut) -> Self {
+        Self {
+            value: tx_out.value.to_sat(),
+            script_pubkey: Arc::new(Script(tx_out.script_pubkey)),
+        }
+    }
+}
+
+impl From<TxOut> for BdkTxOut {
+    fn from(tx_out: TxOut) -> Self {
+        Self {
+            value: BdkAmount::from_sat(tx_out.value),
+            script_pubkey: tx_out.script_pubkey.0.clone(),
         }
     }
 }

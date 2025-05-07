@@ -1,4 +1,4 @@
-from bdkpython import BlockId
+from bdkpython import Condition
 from bdkpython.bitcoin import Network
 
 import unittest
@@ -11,7 +11,7 @@ class TestBdk(unittest.TestCase):
 
     # A type from the bdk-ffi library
     def test_some_dict(self):
-        block_id = BlockId(height=0, hash="abcd")
+        condition = Condition(csv = None, timelock = None)
 
 if __name__=='__main__':
     unittest.main()
