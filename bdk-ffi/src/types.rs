@@ -1,7 +1,9 @@
 use crate::bitcoin::{
-    Address, Amount, BlockHash, DescriptorId, HashableOutPoint, OutPoint, Script, Transaction, TxOut, Txid
+    Address, Amount, BlockHash, DescriptorId, HashableOutPoint, OutPoint, Script, Transaction,
+    TxOut, Txid,
 };
 use crate::error::{CreateTxError, RequestBuilderError};
+use crate::keys::DescriptorPublicKey;
 
 use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_core::spk_client::SyncItem;
@@ -893,6 +895,64 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
             txouts,
             anchors,
             last_seen,
+        }
+    }
+}
+
+#[derive(Debug, uniffi::Record)]
+pub struct ChangeSet {
+    pub descriptor: Option<Arc<DescriptorPublicKey>>,
+    pub change_descriptor: Option<Arc<DescriptorPublicKey>>,
+    pub network: Option<bdk_wallet::bitcoin::Network>,
+    pub local_chain: LocalChainChangeSet,
+    pub tx_graph: TxGraphChangeSet,
+    pub indexer: IndexerChangeSet,
+}
+
+impl From<ChangeSet> for bdk_wallet::ChangeSet {
+    fn from(value: ChangeSet) -> Self {
+        let descriptor = value.descriptor.map(|d| {
+            let str_repr = d.to_string();
+            str_repr.parse::<bdk_wallet::miniscript::Descriptor<bdk_wallet::miniscript::DescriptorPublicKey>>().unwrap()
+        });
+        let change_descriptor = value.change_descriptor.map(|d| {
+            let str_repr = d.to_string();
+            str_repr.parse::<bdk_wallet::miniscript::Descriptor<bdk_wallet::miniscript::DescriptorPublicKey>>().unwrap()
+        });
+        let network = value.network;
+        let local_chain = value.local_chain.into();
+        let tx_graph = value.tx_graph.into();
+        let indexer = value.indexer.into();
+        Self {
+            descriptor,
+            change_descriptor,
+            network,
+            local_chain,
+            tx_graph,
+            indexer,
+        }
+    }
+}
+
+impl From<bdk_wallet::ChangeSet> for ChangeSet {
+    fn from(value: bdk_wallet::ChangeSet) -> Self {
+        let descriptor = value
+            .descriptor
+            .map(|d| Arc::new(DescriptorPublicKey::from_string(d.to_string()).unwrap()));
+        let change_descriptor = value
+            .change_descriptor
+            .map(|d| Arc::new(DescriptorPublicKey::from_string(d.to_string()).unwrap()));
+        let network = value.network;
+        let local_chain = value.local_chain.into();
+        let tx_graph = value.tx_graph.into();
+        let indexer = value.indexer.into();
+        Self {
+            descriptor,
+            change_descriptor,
+            network,
+            local_chain,
+            tx_graph,
+            indexer,
         }
     }
 }
