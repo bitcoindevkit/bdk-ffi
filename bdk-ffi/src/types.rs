@@ -88,7 +88,7 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
 }
 
 /// Represents the confirmation block and time of a transaction.
-#[derive(Debug, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
 pub struct ConfirmationBlockTime {
     /// The anchor block.
     pub block_id: BlockId,
@@ -115,7 +115,7 @@ impl From<ConfirmationBlockTime> for BdkConfirmationBlockTime {
 }
 
 /// A reference to a block in the canonical chain.
-#[derive(Debug, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
+#[derive(Debug, Clone, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
 pub struct BlockId {
     /// The height of the block.
     pub height: u32,
@@ -753,7 +753,7 @@ pub struct UnconfirmedTx {
 }
 
 /// Mapping of descriptors to their last revealed index.
-#[derive(Debug, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct IndexerChangeSet {
     pub last_revealed: HashMap<Arc<DescriptorId>, u32>,
 }
@@ -784,7 +784,7 @@ impl From<IndexerChangeSet> for bdk_wallet::chain::indexer::keychain_txout::Chan
 }
 
 /// The hash added or removed at the given height.
-#[derive(Debug, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct ChainChange {
     /// Effected height
     pub height: u32,
@@ -793,7 +793,7 @@ pub struct ChainChange {
 }
 
 /// Changes to the local chain
-#[derive(Debug, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct LocalChainChangeSet {
     pub changes: Vec<ChainChange>,
 }
@@ -822,13 +822,13 @@ impl From<LocalChainChangeSet> for bdk_wallet::chain::local_chain::ChangeSet {
     }
 }
 
-#[derive(Debug, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct Anchor {
     pub confirmation_block_time: ConfirmationBlockTime,
     pub txid: Arc<Txid>,
 }
 
-#[derive(Debug, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct TxGraphChangeSet {
     pub txs: Vec<Arc<Transaction>>,
     pub txouts: HashMap<Arc<HashableOutPoint>, TxOut>,
@@ -899,7 +899,7 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
     }
 }
 
-#[derive(Debug, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Record)]
 pub struct ChangeSet {
     pub descriptor: Option<Arc<DescriptorPublicKey>>,
     pub change_descriptor: Option<Arc<DescriptorPublicKey>>,

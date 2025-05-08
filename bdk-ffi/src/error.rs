@@ -565,7 +565,7 @@ pub enum ParseAmountError {
 #[derive(Debug, thiserror::Error)]
 pub enum PersistenceError {
     #[error("writing to persistence error: {error_message}")]
-    Write { error_message: String },
+    Reason { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -743,12 +743,6 @@ pub enum SignerError {
 
     #[error("Psbt error: {error_message}")]
     Psbt { error_message: String },
-}
-
-#[derive(Debug, thiserror::Error, uniffi::Error)]
-pub enum SqliteError {
-    #[error("sqlite error: {rusqlite_error}")]
-    Sqlite { rusqlite_error: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1343,7 +1337,7 @@ impl From<BdkParseAmountError> for ParseAmountError {
 
 impl From<std::io::Error> for PersistenceError {
     fn from(error: std::io::Error) -> Self {
-        PersistenceError::Write {
+        PersistenceError::Reason {
             error_message: error.to_string(),
         }
     }
@@ -1513,10 +1507,10 @@ pub enum HashParseError {
     InvalidHash { len: u32 },
 }
 
-impl From<BdkSqliteError> for SqliteError {
+impl From<BdkSqliteError> for PersistenceError {
     fn from(error: BdkSqliteError) -> Self {
-        SqliteError::Sqlite {
-            rusqlite_error: error.to_string(),
+        PersistenceError::Reason {
+            error_message: error.to_string(),
         }
     }
 }
@@ -1941,7 +1935,7 @@ mod test {
                 "writing to persistence error: unable to persist the new address",
             ),
             (
-                PersistenceError::Write {
+                PersistenceError::Reason {
                     error_message: "failed to write to storage".to_string(),
                 },
                 "writing to persistence error: failed to write to storage",
