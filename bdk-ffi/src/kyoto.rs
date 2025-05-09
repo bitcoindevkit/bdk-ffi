@@ -1,14 +1,15 @@
-use bdk_kyoto::builder::LightClientBuilder as BDKCbfBuilder;
-use bdk_kyoto::builder::ServiceFlags;
-use bdk_kyoto::builder::TrustedPeer;
+use bdk_kyoto::builder::NodeBuilder as BDKCbfBuilder;
+use bdk_kyoto::builder::NodeBuilderExt;
 use bdk_kyoto::kyoto::tokio;
 use bdk_kyoto::kyoto::AddrV2;
 use bdk_kyoto::kyoto::ScriptBuf;
+use bdk_kyoto::kyoto::ServiceFlags;
 use bdk_kyoto::LightClient as BDKLightClient;
 use bdk_kyoto::NodeDefault;
 use bdk_kyoto::Receiver;
 use bdk_kyoto::RejectReason;
 use bdk_kyoto::Requester;
+use bdk_kyoto::TrustedPeer;
 use bdk_kyoto::UnboundedReceiver;
 use bdk_kyoto::UpdateSubscriber;
 use bdk_kyoto::WalletExt;
@@ -17,7 +18,6 @@ use bdk_kyoto::Warning as Warn;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
 
 use tokio::sync::Mutex;
 
@@ -31,7 +31,6 @@ type LogLevel = bdk_kyoto::kyoto::LogLevel;
 type NodeState = bdk_kyoto::NodeState;
 type ScanType = bdk_kyoto::ScanType;
 
-const TIMEOUT: u64 = 10;
 const DEFAULT_CONNECTIONS: u8 = 2;
 const CWD_PATH: &str = ".";
 
@@ -48,7 +47,8 @@ pub struct CbfComponents {
 #[derive(Debug, uniffi::Object)]
 pub struct CbfClient {
     sender: Arc<Requester>,
-    log_rx: Mutex<Receiver<bdk_kyoto::Log>>,
+    log_rx: Mutex<Receiver<String>>,
+    info_rx: Mutex<Receiver<bdk_kyoto::Info>>,
     warning_rx: Mutex<UnboundedReceiver<bdk_kyoto::Warning>>,
     update_rx: Mutex<UpdateSubscriber>,
 }
@@ -98,6 +98,7 @@ pub struct CbfBuilder {
     scan_type: ScanType,
     log_level: LogLevel,
     dns_resolver: Option<Arc<IpAddress>>,
+    socks5_proxy: Option<Socks5Proxy>,
     peers: Vec<Peer>,
 }
 
@@ -112,6 +113,7 @@ impl CbfBuilder {
             scan_type: ScanType::default(),
             log_level: LogLevel::default(),
             dns_resolver: None,
+            socks5_proxy: None,
             peers: Vec::new(),
         }
     }
@@ -167,6 +169,13 @@ impl CbfBuilder {
         })
     }
 
+    pub fn socks5_proxy(&self, proxy: Socks5Proxy) -> Arc<Self> {
+        Arc::new(CbfBuilder {
+            socks5_proxy: Some(proxy),
+            ..self.clone()
+        })
+    }
+
     /// Construct a [`CbfComponents`] for a [`Wallet`].
     pub fn build(&self, wallet: &Wallet) -> Result<CbfComponents, CbfBuilderError> {
         let wallet = wallet.get_wallet();
@@ -181,31 +190,41 @@ impl CbfBuilder {
             .map(|path| PathBuf::from(&path))
             .unwrap_or(PathBuf::from(CWD_PATH));
 
-        let mut builder = BDKCbfBuilder::new()
-            .connections(self.connections)
+        let mut builder = BDKCbfBuilder::new(wallet.network())
+            .required_peers(self.connections)
             .data_dir(path_buf)
-            .scan_type(self.scan_type)
             .log_level(self.log_level)
-            .timeout_duration(Duration::from_secs(TIMEOUT))
-            .peers(trusted_peers);
+            .add_peers(trusted_peers);
 
         if let Some(ip_addr) = self.dns_resolver.clone().map(|ip| ip.inner) {
             builder = builder.dns_resolver(ip_addr);
         }
 
+        if let Some(proxy) = &self.socks5_proxy {
+            let port = proxy.port;
+            let addr = proxy.address.inner;
+            builder = builder.socks5_proxy((addr, port));
+        }
+
         let BDKLightClient {
             requester,
             log_subscriber,
+            info_subscriber,
             warning_subscriber,
             update_subscriber,
             node,
-        } = builder.build(&wallet)?;
+        } = builder
+            .build_with_wallet(&wallet, self.scan_type)
+            .map_err(|e| CbfBuilderError::DatabaseError {
+                reason: e.to_string(),
+            })?;
 
         let node = CbfNode { node };
 
         let client = CbfClient {
             sender: Arc::new(requester),
             log_rx: Mutex::new(log_subscriber),
+            info_rx: Mutex::new(info_subscriber),
             warning_rx: Mutex::new(warning_subscriber),
             update_rx: Mutex::new(update_subscriber),
         };
@@ -220,12 +239,17 @@ impl CbfBuilder {
 #[uniffi::export]
 impl CbfClient {
     /// Return the next available log message from a node. If none is returned, the node has stopped.
-    pub async fn next_log(&self) -> Result<Log, CbfError> {
+    pub async fn next_log(&self) -> Result<String, CbfError> {
         let mut log_rx = self.log_rx.lock().await;
-        log_rx
+        log_rx.recv().await.ok_or(CbfError::NodeStopped)
+    }
+
+    pub async fn next_info(&self) -> Result<Info, CbfError> {
+        let mut info_rx = self.info_rx.lock().await;
+        info_rx
             .recv()
             .await
-            .map(|log| log.into())
+            .map(|e| e.into())
             .ok_or(CbfError::NodeStopped)
     }
 
@@ -241,16 +265,16 @@ impl CbfClient {
 
     /// Return an [`Update`]. This is method returns once the node syncs to the rest of
     /// the network or a new block has been gossiped.
-    pub async fn update(&self) -> Option<Arc<Update>> {
+    pub async fn update(&self) -> Arc<Update> {
         let update = self.update_rx.lock().await.update().await;
-        update.map(|update| Arc::new(Update(update)))
+        Arc::new(Update(update))
     }
 
     /// Add scripts for the node to watch for as they are revealed. Typically used after creating
     /// a transaction or revealing a receive address.
     ///
     /// Note that only future blocks will be checked for these scripts, not past blocks.
-    pub async fn add_revealed_scripts(&self, wallet: &Wallet) -> Result<(), CbfError> {
+    pub fn add_revealed_scripts(&self, wallet: &Wallet) -> Result<(), CbfError> {
         let script_iter: Vec<ScriptBuf> = {
             let wallet_lock = wallet.get_wallet();
             wallet_lock.peek_revealed_plus_lookahead().collect()
@@ -258,16 +282,15 @@ impl CbfClient {
         for script in script_iter.into_iter() {
             self.sender
                 .add_script(script)
-                .await
                 .map_err(|_| CbfError::NodeStopped)?
         }
         Ok(())
     }
 
     /// Broadcast a transaction to the network, erroring if the node has stopped running.
-    pub async fn broadcast(&self, transaction: &Transaction) -> Result<(), CbfError> {
+    pub fn broadcast(&self, transaction: &Transaction) -> Result<(), CbfError> {
         let tx = transaction.into();
-        self.sender.broadcast_random(tx).await.map_err(From::from)
+        self.sender.broadcast_random(tx).map_err(From::from)
     }
 
     /// The minimum fee rate required to broadcast a transcation to all connected peers.
@@ -280,44 +303,41 @@ impl CbfClient {
     }
 
     /// Check if the node is still running in the background.
-    pub async fn is_running(&self) -> bool {
-        self.sender.is_running().await
+    pub fn is_running(&self) -> bool {
+        self.sender.is_running()
     }
 
     /// Stop the [`CbfNode`]. Errors if the node is already stopped.
-    pub async fn shutdown(&self) -> Result<(), CbfError> {
-        self.sender.shutdown().await.map_err(From::from)
+    pub fn shutdown(&self) -> Result<(), CbfError> {
+        self.sender.shutdown().map_err(From::from)
     }
 }
 
 /// A log message from the node.
 #[derive(Debug, uniffi::Enum)]
-pub enum Log {
-    /// A human-readable debug message.
-    Debug { log: String },
+pub enum Info {
     /// All the required connections have been met. This is subject to change.
     ConnectionsMet,
     /// A percentage value of filters that have been scanned.
     Progress { progress: f32 },
     /// A state in the node syncing process.
     StateUpdate { node_state: NodeState },
-    /// A transaction was broadcast over the wire.
+    /// A transaction was broadcast over the wire to a peer that requested it from our inventory.
     /// The transaction may or may not be rejected by recipient nodes.
-    TxSent { txid: String },
+    TxGossiped { wtxid: String },
 }
 
-impl From<bdk_kyoto::Log> for Log {
-    fn from(value: bdk_kyoto::Log) -> Log {
+impl From<bdk_kyoto::Info> for Info {
+    fn from(value: bdk_kyoto::Info) -> Info {
         match value {
-            bdk_kyoto::Log::Debug(log) => Log::Debug { log },
-            bdk_kyoto::Log::ConnectionsMet => Log::ConnectionsMet,
-            bdk_kyoto::Log::Progress(progress) => Log::Progress {
+            bdk_kyoto::Info::ConnectionsMet => Info::ConnectionsMet,
+            bdk_kyoto::Info::Progress(progress) => Info::Progress {
                 progress: progress.percentage_complete(),
             },
-            bdk_kyoto::Log::TxSent(txid) => Log::TxSent {
-                txid: txid.to_string(),
+            bdk_kyoto::Info::TxGossiped(wtxid) => Info::TxGossiped {
+                wtxid: wtxid.to_string(),
             },
-            bdk_kyoto::Log::StateChange(state) => Log::StateUpdate { node_state: state },
+            bdk_kyoto::Info::StateChange(state) => Info::StateUpdate { node_state: state },
         }
     }
 }
@@ -354,7 +374,7 @@ pub enum Warning {
     EvaluatingFork,
     /// The peer database has no values.
     EmptyPeerDatabase,
-    /// An unexpected error occured processing a peer-to-peer message.
+    /// An unexpected error occurred processing a peer-to-peer message.
     UnexpectedSyncError { warning: String },
     /// The node failed to respond to a message sent from the client.
     RequestFailed,
@@ -393,11 +413,13 @@ impl From<Warn> for Warning {
 /// Select the category of messages for the node to emit.
 #[uniffi::remote(Enum)]
 pub enum LogLevel {
-    /// Send `Log::Debug` messages. These messages are intended for debugging or troubleshooting
+    /// Send string messages. These messages are intended for debugging or troubleshooting
     /// node operation.
     Debug,
-    /// Omit `Log::Debug` messages, including their memory allocations. Ideal for a production
-    /// application that uses minimal logging.
+    /// Send info and warning messages, but omit debug strings - including their memory allocations.
+    /// Ideal for a production application that uses minimal logging.
+    Info,
+    /// Omit debug strings and info messages, including their memory allocations.
     Warning,
 }
 
@@ -415,6 +437,7 @@ pub enum NodeState {
     /// We found all known transactions to the wallet.
     TransactionsSynced,
 }
+
 /// Sync a wallet from the last known block hash, recover a wallet from a specified height,
 /// or perform an expedited block header download for a new wallet.
 #[uniffi::remote(Enum)]
@@ -466,6 +489,16 @@ impl IpAddress {
             inner: IpAddr::V6(Ipv6Addr::new(a, b, c, d, e, f, g, h)),
         }
     }
+}
+
+/// A proxy to route network traffic, most likely through a Tor daemon. Normally this proxy is
+/// exposed at 127.0.0.1:9050.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct Socks5Proxy {
+    /// The IP address, likely `127.0.0.1`
+    pub address: Arc<IpAddress>,
+    /// The listening port, likely `9050`
+    pub port: u16,
 }
 
 impl From<Peer> for TrustedPeer {

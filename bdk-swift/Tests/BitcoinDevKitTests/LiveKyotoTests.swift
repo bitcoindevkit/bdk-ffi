@@ -46,18 +46,14 @@ final class LiveKyotoTests: XCTestCase {
             }
         }
         let update = await client.update()
-        if let update = update {
-            try wallet.applyUpdate(update: update)
-            let address = wallet.revealNextAddress(keychain: KeychainKind.external).address.description
-            XCTAssertGreaterThan(
-                wallet.balance().total.toSat(),
-                UInt64(0),
-                "Wallet must have positive balance, please send funds to \(address)"
-            )
-            print("Update applied correctly")
-            try await client.shutdown()
-        } else {
-            print("Update is nil. Ensure this test is ran infrequently.")
-        }
+        try wallet.applyUpdate(update: update)
+        let address = wallet.revealNextAddress(keychain: KeychainKind.external).address.description
+        XCTAssertGreaterThan(
+            wallet.balance().total.toSat(),
+            UInt64(0),
+            "Wallet must have positive balance, please send funds to \(address)"
+        )
+        print("Update applied correctly")
+        try client.shutdown()
     }
 }
