@@ -1507,6 +1507,12 @@ impl From<BdkEncodeError> for TransactionError {
     }
 }
 
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum HashParseError {
+    #[error("invalid hash: expected length 32 bytes, got {len} bytes")]
+    InvalidHash { len: u32 },
+}
+
 impl From<BdkSqliteError> for SqliteError {
     fn from(error: BdkSqliteError) -> Self {
         SqliteError::Sqlite {

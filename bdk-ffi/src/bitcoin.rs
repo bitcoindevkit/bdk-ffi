@@ -1,27 +1,33 @@
 use crate::error::{
-    AddressParseError, ExtractTxError, FeeRateError, FromScriptError, PsbtError, PsbtParseError,
-    TransactionError,
+    AddressParseError, ExtractTxError, FeeRateError, FromScriptError, HashParseError, PsbtError,
+    PsbtParseError, TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
-use crate::{impl_from_core_type, impl_into_core_type};
+use crate::{impl_from_core_type, impl_hash_like, impl_into_core_type};
 
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
 use bdk_wallet::bitcoin::address::{Address as BdkAddress, AddressData as BdkAddressData};
 use bdk_wallet::bitcoin::blockdata::block::Header as BdkHeader;
+use bdk_wallet::bitcoin::consensus::encode::deserialize;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
+use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
+use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
+use bdk_wallet::bitcoin::BlockHash as BitcoinBlockHash;
 use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
 use bdk_wallet::bitcoin::Network;
+use bdk_wallet::bitcoin::OutPoint as BdkOutPoint;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
-use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Txid};
+use bdk_wallet::bitcoin::Txid as BitcoinTxid;
+use bdk_wallet::bitcoin::Wtxid as BitcoinWtxid;
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
@@ -31,10 +37,10 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 /// A reference to an unspent output by TXID and output index.
-#[derive(Debug, Clone, Eq, PartialEq, uniffi:: Record)]
+#[derive(Debug, Clone, Eq, PartialEq, std::hash::Hash, uniffi:: Record)]
 pub struct OutPoint {
     /// The transaction.
-    pub txid: String,
+    pub txid: Arc<Txid>,
     /// The index of the output in the transaction.
     pub vout: u32,
 }
@@ -42,8 +48,17 @@ pub struct OutPoint {
 impl From<&BdkOutPoint> for OutPoint {
     fn from(outpoint: &BdkOutPoint) -> Self {
         OutPoint {
-            txid: outpoint.txid.to_string(),
+            txid: Arc::new(Txid(outpoint.txid)),
             vout: outpoint.vout,
+        }
+    }
+}
+
+impl From<BdkOutPoint> for OutPoint {
+    fn from(value: BdkOutPoint) -> Self {
+        Self {
+            txid: Arc::new(Txid(value.txid)),
+            vout: value.vout,
         }
     }
 }
@@ -51,9 +66,22 @@ impl From<&BdkOutPoint> for OutPoint {
 impl From<OutPoint> for BdkOutPoint {
     fn from(outpoint: OutPoint) -> Self {
         BdkOutPoint {
-            txid: Txid::from_str(&outpoint.txid).unwrap(),
+            txid: BitcoinTxid::from_raw_hash(outpoint.txid.0.into()),
             vout: outpoint.vout,
         }
+    }
+}
+
+/// An [`OutPoint`] suitable as a key in a hash map.
+#[derive(Debug, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Debug, Eq, Hash)]
+pub struct HashableOutPoint(pub(crate) OutPoint);
+
+#[uniffi::export]
+impl HashableOutPoint {
+    /// Get the internal [`OutPoint`]
+    pub fn outpoint(&self) -> OutPoint {
+        self.0.clone()
     }
 }
 
@@ -541,7 +569,7 @@ impl From<&BdkTxIn> for TxIn {
     fn from(tx_in: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
-                txid: tx_in.previous_output.txid.to_string(),
+                txid: Arc::new(Txid(tx_in.previous_output.txid)),
                 vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script(tx_in.script_sig.clone())),
@@ -574,6 +602,60 @@ impl From<&BdkTxOut> for TxOut {
         }
     }
 }
+
+impl From<BdkTxOut> for TxOut {
+    fn from(tx_out: BdkTxOut) -> Self {
+        Self {
+            value: tx_out.value.to_sat(),
+            script_pubkey: Arc::new(Script(tx_out.script_pubkey)),
+        }
+    }
+}
+
+impl From<TxOut> for BdkTxOut {
+    fn from(tx_out: TxOut) -> Self {
+        Self {
+            value: BdkAmount::from_sat(tx_out.value),
+            script_pubkey: tx_out.script_pubkey.0.clone(),
+        }
+    }
+}
+
+/// A bitcoin Block hash
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct BlockHash(pub(crate) BitcoinBlockHash);
+
+impl_hash_like!(BlockHash, BitcoinBlockHash);
+
+/// A bitcoin transaction identifier
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct Txid(pub(crate) BitcoinTxid);
+
+impl_hash_like!(Txid, BitcoinTxid);
+
+/// A bitcoin transaction identifier, including witness data.
+/// For transactions with no SegWit inputs, the `txid` will be equivalent to `wtxid`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct Wtxid(pub(crate) BitcoinWtxid);
+
+impl_hash_like!(Wtxid, BitcoinWtxid);
+
+/// A collision-proof unique identifier for a descriptor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct DescriptorId(pub(crate) BitcoinSha256Hash);
+
+impl_hash_like!(DescriptorId, BitcoinSha256Hash);
+
+/// The merkle root of the merkle tree corresponding to a block's transactions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash)]
+pub struct TxMerkleNode(pub(crate) BitcoinDoubleSha256Hash);
+
+impl_hash_like!(TxMerkleNode, BitcoinDoubleSha256Hash);
 
 #[cfg(test)]
 mod tests {
