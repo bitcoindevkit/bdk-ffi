@@ -2,20 +2,18 @@ use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
-    LoadWithPersistError, SignerError, SqliteError, TxidParseError,
+    LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
 };
-use crate::store::Connection;
+use crate::store::{AnyPersistence, Persister};
 use crate::types::{
     AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex, LocalOutput,
     Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, UnconfirmedTx, Update,
 };
 
 use bdk_wallet::bitcoin::{Network, Txid};
-use bdk_wallet::rusqlite::Connection as BdkConnection;
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{KeychainKind, PersistedWallet, Wallet as BdkWallet};
 
-use std::borrow::BorrowMut;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
@@ -33,7 +31,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 /// script pubkeys. See KeychainTxOutIndex::insert_descriptor() for more details.
 #[derive(uniffi::Object)]
 pub struct Wallet {
-    inner_mutex: Mutex<PersistedWallet<BdkConnection>>,
+    inner_mutex: Mutex<PersistedWallet<AnyPersistence>>,
 }
 
 #[uniffi::export]
@@ -46,17 +44,18 @@ impl Wallet {
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         network: Network,
-        connection: Arc<Connection>,
+        persistence: Arc<dyn Persister>,
     ) -> Result<Self, CreateWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let mut binding = connection.get_store();
-        let db: &mut BdkConnection = binding.borrow_mut();
-
-        let wallet: PersistedWallet<BdkConnection> =
+        let mut any_persist = AnyPersistence::new(persistence);
+        let wallet: PersistedWallet<AnyPersistence> =
             BdkWallet::create(descriptor, change_descriptor)
                 .network(network)
-                .create_wallet(db)?;
+                .create_wallet(&mut any_persist)
+                .map_err(|e| CreateWithPersistError::Persist {
+                    error_message: e.to_string(),
+                })?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -70,18 +69,20 @@ impl Wallet {
     pub fn load(
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
-        connection: Arc<Connection>,
+        persistence: Arc<dyn Persister>,
     ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let mut binding = connection.get_store();
-        let db: &mut BdkConnection = binding.borrow_mut();
+        let mut any_persist = AnyPersistence::new(persistence);
 
-        let wallet: PersistedWallet<BdkConnection> = BdkWallet::load()
+        let wallet: PersistedWallet<AnyPersistence> = BdkWallet::load()
             .descriptor(KeychainKind::External, Some(descriptor))
             .descriptor(KeychainKind::Internal, Some(change_descriptor))
             .extract_keys()
-            .load_wallet(db)?
+            .load_wallet(&mut any_persist)
+            .map_err(|e| LoadWithPersistError::Persist {
+                error_message: e.to_string(),
+            })?
             .ok_or(LoadWithPersistError::CouldNotLoad)?;
 
         Ok(Wallet {
@@ -407,19 +408,18 @@ impl Wallet {
     /// Returns whether any new changes were persisted.
     ///
     /// If the persister errors, the staged changes will not be cleared.
-    pub fn persist(&self, connection: Arc<Connection>) -> Result<bool, SqliteError> {
-        let mut binding = connection.get_store();
-        let db: &mut BdkConnection = binding.borrow_mut();
+    pub fn persist(&self, connection: Arc<dyn Persister>) -> Result<bool, PersistenceError> {
+        let mut persister = AnyPersistence::new(connection);
         self.get_wallet()
-            .persist(db)
-            .map_err(|e| SqliteError::Sqlite {
-                rusqlite_error: e.to_string(),
+            .persist(&mut persister)
+            .map_err(|e| PersistenceError::Reason {
+                error_message: e.to_string(),
             })
     }
 }
 
 impl Wallet {
-    pub(crate) fn get_wallet(&self) -> MutexGuard<PersistedWallet<BdkConnection>> {
+    pub(crate) fn get_wallet(&self) -> MutexGuard<PersistedWallet<AnyPersistence>> {
         self.inner_mutex.lock().expect("wallet")
     }
 }

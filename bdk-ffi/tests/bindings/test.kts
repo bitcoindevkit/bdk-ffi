@@ -4,10 +4,10 @@
  */
 
 import org.bitcoindevkit.bitcoin.Network
-import org.bitcoindevkit.BlockId
+import org.bitcoindevkit.Condition
 
 // A type from bitcoin-ffi
 val network = Network.TESTNET
 
 // A type from bdk-ffi
-val blockId = BlockId(0uL, "abcd")
+val condition = Condition(null, null)

@@ -197,7 +197,7 @@ interface ParseAmountError {
 
 [Error]
 interface PersistenceError {
-  Write(string error_message);
+  Reason(string error_message);
 };
 
 [Error]
@@ -303,10 +303,6 @@ interface SyncScriptInspector {
 interface FullScanScriptInspector {
   void inspect(KeychainKind keychain, u32 index, Script script);
 };
-
-/// A changeset for [`Wallet`].
-[Remote]
-interface ChangeSet {};
 
 // ------------------------------------------------------------------------
 // bdk_wallet crate - wallet module
