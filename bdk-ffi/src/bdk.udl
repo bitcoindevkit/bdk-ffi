@@ -361,10 +361,7 @@ interface Satisfaction {
     None(string msg);
 };
 
-dictionary Condition {
-  u32? csv;
-  LockTime? timelock;
-};
+typedef record Condition;
 
 // ------------------------------------------------------------------------
 // bdk_wallet crate - bitcoin re-exports
