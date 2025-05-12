@@ -1,8 +1,9 @@
-use crate::bitcoin::{Address, Amount, OutPoint, Script, Transaction, TxOut};
+use crate::bitcoin::{Address, Amount, BlockHash, OutPoint, Script, Transaction, TxOut};
 use crate::error::{CreateTxError, RequestBuilderError};
 
 use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_core::spk_client::SyncItem;
+use bdk_core::BlockId as BdkBlockId;
 
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
@@ -66,7 +67,7 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
             } => {
                 let block_id = BlockId {
                     height: anchor.block_id.height,
-                    hash: anchor.block_id.hash.to_string(),
+                    hash: Arc::new(BlockHash(anchor.block_id.hash)),
                 };
                 ChainPosition::Confirmed {
                     confirmation_block_time: ConfirmationBlockTime {
@@ -98,7 +99,16 @@ pub struct BlockId {
     /// The height of the block.
     pub height: u32,
     /// The hash of the block.
-    pub hash: String,
+    pub hash: Arc<BlockHash>,
+}
+
+impl From<BdkBlockId> for BlockId {
+    fn from(block_id: BdkBlockId) -> Self {
+        BlockId {
+            height: block_id.height,
+            hash: Arc::new(BlockHash(block_id.hash)),
+        }
+    }
 }
 
 /// A transaction that is deemed to be part of the canonical history.

@@ -6,8 +6,9 @@ use crate::error::{
 };
 use crate::store::Connection;
 use crate::types::{
-    AddressInfo, Balance, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex, LocalOutput,
-    Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, UnconfirmedTx, Update,
+    AddressInfo, Balance, BlockId, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex,
+    LocalOutput, Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, UnconfirmedTx,
+    Update,
 };
 
 use bdk_wallet::bitcoin::{Network, Txid};
@@ -415,6 +416,11 @@ impl Wallet {
             .map_err(|e| SqliteError::Sqlite {
                 rusqlite_error: e.to_string(),
             })
+    }
+
+    /// Returns the latest checkpoint.
+    pub fn latest_checkpoint(&self) -> BlockId {
+        self.get_wallet().latest_checkpoint().block_id().into()
     }
 }
 

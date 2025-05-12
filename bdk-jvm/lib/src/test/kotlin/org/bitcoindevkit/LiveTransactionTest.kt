@@ -40,5 +40,8 @@ class LiveTransactionTest {
         println("Is explicitly RBF: ${transaction.isExplicitlyRbf()}")
         println("Inputs: ${transaction.input()}")
         println("Outputs: ${transaction.output()}")
+
+        val blockId = wallet.latestCheckpoint().toString()
+        println("Latest checkpoint: $blockId")
     }
 }
