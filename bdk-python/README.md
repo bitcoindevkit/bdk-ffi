@@ -40,3 +40,11 @@ python setup.py --verbose bdist_wheel
 ```shell
 pip install ./dist/bdkpython-<yourversion>.whl
 ```
+
+## generate the docs
+
+```shell
+pip3 install --requirement requirements-dev.txt
+python3 scripts/generate_docs.py
+sphinx-build -b  html -W --keep-going  docs/ docs/_build/html
+```
