@@ -143,8 +143,10 @@ impl_into_core_type!(Amount, BdkAmount);
 #[derive(Clone, Debug, uniffi::Object)]
 pub struct Script(pub BdkScriptBuf);
 
+#[uniffi::export]
 impl Script {
     /// Interpret an array of bytes as a bitcoin script.
+    #[uniffi::constructor]
     pub fn new(raw_output_script: Vec<u8>) -> Self {
         let script: BdkScriptBuf = raw_output_script.into();
         Script(script)
