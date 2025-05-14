@@ -1,5 +1,6 @@
 import XCTest
 @testable import BitcoinDevKit
+import Darwin
 
 private let SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
 private let TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
@@ -52,6 +53,11 @@ final class LiveWalletTests: XCTestCase {
         try wallet.applyUpdate(update: update)
         let address = wallet.revealNextAddress(keychain: KeychainKind.external).address.description
 
+        print("testSyncedBalance - Before balance assertion. Address: \(address)")
+        print("testSyncedBalance - Before balance assertion. Wallet Balance: \(wallet.balance()))")
+        print("testSyncedBalance - Before balance assertion. Wallet Balance Total To Sat: \(wallet.balance().total.toSat())")
+        fflush(stdout)
+
         XCTAssertGreaterThan(
             wallet.balance().total.toSat(),
             UInt64(0),
@@ -86,6 +92,10 @@ final class LiveWalletTests: XCTestCase {
         try wallet.applyUpdate(update: update)
         let address = wallet.revealNextAddress(keychain: KeychainKind.external).address.description
         
+        print("testBroadcastTransaction - Before balance assertion. Address: \(address)")
+        print("testBroadcastTransaction - Before balance assertion. Wallet Balance: \(wallet.balance()))")
+        print("testBroadcastTransaction - Before balance assertion. Wallet Balance Total To Sat: \(wallet.balance().total.toSat())")
+        fflush(stdout)
         XCTAssertGreaterThan(
             wallet.balance().total.toSat(),
             UInt64(0),
