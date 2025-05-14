@@ -1,4 +1,4 @@
-use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction};
+use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction, Txid};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
@@ -11,13 +11,12 @@ use crate::types::{
     Update,
 };
 
-use bdk_wallet::bitcoin::{Network, Txid};
+use bdk_wallet::bitcoin::Network;
 use bdk_wallet::rusqlite::Connection as BdkConnection;
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{KeychainKind, PersistedWallet, Wallet as BdkWallet};
 
 use std::borrow::BorrowMut;
-use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 /// A Bitcoin wallet.
@@ -335,10 +334,8 @@ impl Wallet {
     ///   confirmed or unconfirmed. If the transaction is confirmed, the anchor which proves the
     ///   confirmation is provided. If the transaction is unconfirmed, the unix timestamp of when
     ///   the transaction was last seen in the mempool is provided.
-    pub fn get_tx(&self, txid: String) -> Result<Option<CanonicalTx>, TxidParseError> {
-        let txid =
-            Txid::from_str(txid.as_str()).map_err(|_| TxidParseError::InvalidTxid { txid })?;
-        Ok(self.get_wallet().get_tx(txid).map(|tx| tx.into()))
+    pub fn get_tx(&self, txid: Arc<Txid>) -> Result<Option<CanonicalTx>, TxidParseError> {
+        Ok(self.get_wallet().get_tx(txid.0).map(|tx| tx.into()))
     }
 
     /// Calculates the fee of a given transaction. Returns [`Amount::ZERO`] if `tx` is a coinbase transaction.

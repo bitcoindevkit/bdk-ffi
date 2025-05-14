@@ -1,4 +1,4 @@
-use crate::bitcoin::{Address, Amount, BlockHash, OutPoint, Script, Transaction, TxOut};
+use crate::bitcoin::{Address, Amount, BlockHash, OutPoint, Script, Transaction, TxOut, Txid};
 use crate::error::{CreateTxError, RequestBuilderError};
 
 use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
@@ -52,7 +52,7 @@ pub enum ChainPosition {
         /// A child transaction that has been confirmed. Due to incomplete information,
         /// it is only known that this transaction is confirmed at a chain height less than
         /// or equal to this child TXID.
-        transitively: Option<String>,
+        transitively: Option<Arc<Txid>>,
     },
     /// The transaction was last seen in the mempool at this timestamp.
     Unconfirmed { timestamp: Option<u64> },
@@ -74,7 +74,7 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
                         block_id,
                         confirmation_time: anchor.confirmation_time,
                     },
-                    transitively: transitively.map(|t| t.to_string()),
+                    transitively: transitively.map(|t| Arc::new(Txid(t))),
                 }
             }
             BdkChainPosition::Unconfirmed { last_seen } => ChainPosition::Unconfirmed {
@@ -213,7 +213,7 @@ impl From<BdkLocalOutput> for LocalOutput {
     fn from(local_utxo: BdkLocalOutput) -> Self {
         LocalOutput {
             outpoint: OutPoint {
-                txid: local_utxo.outpoint.txid.to_string(),
+                txid: Arc::new(Txid(local_utxo.outpoint.txid)),
                 vout: local_utxo.outpoint.vout,
             },
             txout: TxOut {
@@ -668,7 +668,7 @@ pub struct TxStatus {
     /// Height of the block this transaction was included.
     pub block_height: Option<u32>,
     /// Hash of the block.
-    pub block_hash: Option<String>,
+    pub block_hash: Option<Arc<BlockHash>>,
     /// The time shown in the block, not necessarily the same time as when the block was found.
     pub block_time: Option<u64>,
 }
@@ -678,7 +678,7 @@ impl From<BdkTxStatus> for TxStatus {
         TxStatus {
             confirmed: status.confirmed,
             block_height: status.block_height,
-            block_hash: status.block_hash.map(|h| h.to_string()),
+            block_hash: status.block_hash.map(|h| Arc::new(BlockHash(h))),
             block_time: status.block_time,
         }
     }
@@ -688,7 +688,7 @@ impl From<BdkTxStatus> for TxStatus {
 #[derive(Debug, uniffi::Record)]
 pub struct Tx {
     /// The transaction identifier.
-    pub txid: String,
+    pub txid: Arc<Txid>,
     /// The transaction version, of which 0, 1, 2 are standard.
     pub version: i32,
     /// The block height or time restriction on the transaction.
@@ -706,7 +706,7 @@ pub struct Tx {
 impl From<BdkTx> for Tx {
     fn from(tx: BdkTx) -> Self {
         Self {
-            txid: tx.txid.to_string(),
+            txid: Arc::new(Txid(tx.txid)),
             version: tx.version,
             locktime: tx.locktime,
             size: tx.size as u64,

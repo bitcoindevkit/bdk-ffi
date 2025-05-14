@@ -1,3 +1,4 @@
+use crate::bitcoin::DescriptorId;
 use crate::error::DescriptorError;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
@@ -5,6 +6,7 @@ use crate::keys::DescriptorSecretKey;
 use bdk_wallet::bitcoin::bip32::Fingerprint;
 use bdk_wallet::bitcoin::key::Secp256k1;
 use bdk_wallet::bitcoin::Network;
+use bdk_wallet::chain::DescriptorExt;
 use bdk_wallet::descriptor::{ExtendedDescriptor, IntoWalletDescriptor};
 use bdk_wallet::keys::DescriptorPublicKey as BdkDescriptorPublicKey;
 use bdk_wallet::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, KeyMap};
@@ -294,6 +296,12 @@ impl Descriptor {
     /// Does this descriptor contain paths: https://github.com/bitcoin/bips/blob/master/bip-0389.mediawiki
     pub fn is_multipath(&self) -> bool {
         self.extended_descriptor.is_multipath()
+    }
+
+    /// A unique identifier for the descriptor.
+    pub fn descriptor_id(&self) -> Arc<DescriptorId> {
+        let d_id = self.extended_descriptor.descriptor_id();
+        Arc::new(DescriptorId(d_id.0))
     }
 
     /// Return descriptors for all valid paths.

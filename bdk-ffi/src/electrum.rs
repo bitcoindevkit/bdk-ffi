@@ -1,4 +1,4 @@
-use crate::bitcoin::{Header, Transaction};
+use crate::bitcoin::{BlockHash, Header, Transaction, Txid};
 use crate::error::ElectrumError;
 use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
@@ -131,12 +131,12 @@ impl ElectrumClient {
     }
 
     /// Broadcasts a transaction to the network.
-    pub fn transaction_broadcast(&self, tx: &Transaction) -> Result<String, ElectrumError> {
+    pub fn transaction_broadcast(&self, tx: &Transaction) -> Result<Arc<Txid>, ElectrumError> {
         let bdk_transaction: BdkTransaction = tx.into();
         self.0
             .transaction_broadcast(&bdk_transaction)
             .map_err(ElectrumError::from)
-            .map(|txid| txid.to_string())
+            .map(|txid| Arc::new(Txid(txid)))
     }
 
     /// Returns the capabilities of the server.
@@ -177,7 +177,7 @@ pub struct ServerFeaturesRes {
     /// Server version reported.
     pub server_version: String,
     /// Hash of the genesis block.
-    pub genesis_hash: String,
+    pub genesis_hash: Arc<BlockHash>,
     /// Minimum supported version of the protocol.
     pub protocol_min: String,
     /// Maximum supported version of the protocol.
@@ -190,9 +190,11 @@ pub struct ServerFeaturesRes {
 
 impl From<BdkServerFeaturesRes> for ServerFeaturesRes {
     fn from(value: BdkServerFeaturesRes) -> ServerFeaturesRes {
+        let hash_str = value.genesis_hash.to_hex_string(Case::Lower);
+        let blockhash = hash_str.parse::<bdk_core::bitcoin::BlockHash>().unwrap();
         ServerFeaturesRes {
             server_version: value.server_version,
-            genesis_hash: value.genesis_hash.to_hex_string(Case::Lower),
+            genesis_hash: Arc::new(BlockHash(blockhash)),
             protocol_min: value.protocol_min,
             protocol_max: value.protocol_max,
             hash_function: value.hash_function,

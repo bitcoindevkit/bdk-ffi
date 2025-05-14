@@ -40,7 +40,7 @@ use std::sync::{Arc, Mutex};
 #[derive(Debug, Clone, Eq, PartialEq, uniffi:: Record)]
 pub struct OutPoint {
     /// The transaction.
-    pub txid: String,
+    pub txid: Arc<Txid>,
     /// The index of the output in the transaction.
     pub vout: u32,
 }
@@ -48,7 +48,7 @@ pub struct OutPoint {
 impl From<&BdkOutPoint> for OutPoint {
     fn from(outpoint: &BdkOutPoint) -> Self {
         OutPoint {
-            txid: outpoint.txid.to_string(),
+            txid: Arc::new(Txid(outpoint.txid)),
             vout: outpoint.vout,
         }
     }
@@ -57,7 +57,7 @@ impl From<&BdkOutPoint> for OutPoint {
 impl From<OutPoint> for BdkOutPoint {
     fn from(outpoint: OutPoint) -> Self {
         BdkOutPoint {
-            txid: BitcoinTxid::from_str(&outpoint.txid).unwrap(),
+            txid: BitcoinTxid::from_raw_hash(outpoint.txid.0.to_raw_hash()),
             vout: outpoint.vout,
         }
     }
@@ -169,9 +169,9 @@ pub struct Header {
     /// Block version, now repurposed for soft fork signalling.
     pub version: i32,
     /// Reference to the previous block in the chain.
-    pub prev_blockhash: String,
+    pub prev_blockhash: Arc<BlockHash>,
     /// The root hash of the merkle tree of transactions in the block.
-    pub merkle_root: String,
+    pub merkle_root: Arc<TxMerkleNode>,
     /// The timestamp of the block, as claimed by the miner.
     pub time: u32,
     /// The target value below which the blockhash must lie.
@@ -184,8 +184,8 @@ impl From<BdkHeader> for Header {
     fn from(bdk_header: BdkHeader) -> Self {
         Header {
             version: bdk_header.version.to_consensus(),
-            prev_blockhash: bdk_header.prev_blockhash.to_string(),
-            merkle_root: bdk_header.merkle_root.to_string(),
+            prev_blockhash: Arc::new(BlockHash(bdk_header.prev_blockhash)),
+            merkle_root: Arc::new(TxMerkleNode(bdk_header.merkle_root.to_raw_hash())),
             time: bdk_header.time,
             bits: bdk_header.bits.to_consensus(),
             nonce: bdk_header.nonce,
@@ -304,8 +304,8 @@ impl Transaction {
 
     /// Computes the Txid.
     /// Hashes the transaction excluding the segwit data (i.e. the marker, flag bytes, and the witness fields themselves).
-    pub fn compute_txid(&self) -> String {
-        self.0.compute_txid().to_string()
+    pub fn compute_txid(&self) -> Arc<Txid> {
+        Arc::new(Txid(self.0.compute_txid()))
     }
 
     /// Returns the weight of this transaction, as defined by BIP-141.
@@ -549,7 +549,7 @@ impl From<&BdkTxIn> for TxIn {
     fn from(tx_in: &BdkTxIn) -> Self {
         TxIn {
             previous_output: OutPoint {
-                txid: tx_in.previous_output.txid.to_string(),
+                txid: Arc::new(Txid(tx_in.previous_output.txid)),
                 vout: tx_in.previous_output.vout,
             },
             script_sig: Arc::new(Script(tx_in.script_sig.clone())),

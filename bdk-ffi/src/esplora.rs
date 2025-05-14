@@ -1,4 +1,6 @@
+use crate::bitcoin::BlockHash;
 use crate::bitcoin::Transaction;
+use crate::bitcoin::Txid;
 use crate::error::EsploraError;
 use crate::types::Tx;
 use crate::types::TxStatus;
@@ -8,7 +10,6 @@ use crate::types::{FullScanRequest, SyncRequest};
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
-use bdk_wallet::bitcoin::Txid;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanResponse as BdkFullScanResponse;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
@@ -17,7 +18,6 @@ use bdk_wallet::KeychainKind;
 use bdk_wallet::Update as BdkUpdate;
 
 use std::collections::{BTreeMap, HashMap};
-use std::str::FromStr;
 use std::sync::Arc;
 
 /// Wrapper around an esplora_client::BlockingClient which includes an internal in-memory transaction
@@ -110,9 +110,8 @@ impl EsploraClient {
     }
 
     /// Get a [`Transaction`] option given its [`Txid`].
-    pub fn get_tx(&self, txid: String) -> Result<Option<Arc<Transaction>>, EsploraError> {
-        let txid = Txid::from_str(&txid)?;
-        let tx_opt = self.0.get_tx(&txid)?;
+    pub fn get_tx(&self, txid: Arc<Txid>) -> Result<Option<Arc<Transaction>>, EsploraError> {
+        let tx_opt = self.0.get_tx(&txid.0)?;
         Ok(tx_opt.map(|inner| Arc::new(Transaction::from(inner))))
     }
 
@@ -128,27 +127,25 @@ impl EsploraClient {
     }
 
     /// Get the [`BlockHash`] of a specific block height.
-    pub fn get_block_hash(&self, block_height: u32) -> Result<String, EsploraError> {
+    pub fn get_block_hash(&self, block_height: u32) -> Result<Arc<BlockHash>, EsploraError> {
         self.0
             .get_block_hash(block_height)
-            .map(|hash| hash.to_string())
+            .map(|hash| Arc::new(BlockHash(hash)))
             .map_err(EsploraError::from)
     }
 
     /// Get the status of a [`Transaction`] given its [`Txid`].
-    pub fn get_tx_status(&self, txid: String) -> Result<TxStatus, EsploraError> {
-        let txid = Txid::from_str(&txid)?;
+    pub fn get_tx_status(&self, txid: Arc<Txid>) -> Result<TxStatus, EsploraError> {
         self.0
-            .get_tx_status(&txid)
+            .get_tx_status(&txid.0)
             .map(TxStatus::from)
             .map_err(EsploraError::from)
     }
 
     /// Get transaction info given its [`Txid`].
-    pub fn get_tx_info(&self, txid: String) -> Result<Option<Tx>, EsploraError> {
-        let txid = Txid::from_str(&txid)?;
+    pub fn get_tx_info(&self, txid: Arc<Txid>) -> Result<Option<Tx>, EsploraError> {
         self.0
-            .get_tx_info(&txid)
+            .get_tx_info(&txid.0)
             .map(|tx| tx.map(Tx::from))
             .map_err(EsploraError::from)
     }
