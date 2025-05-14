@@ -1,4 +1,4 @@
-use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script};
+use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Txid};
 use crate::error::CreateTxError;
 use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
@@ -8,13 +8,12 @@ use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
-use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Txid};
+use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence};
 use bdk_wallet::KeychainKind;
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
-use std::str::FromStr;
 use std::sync::Arc;
 
 type ChangeSpendPolicy = bdk_wallet::ChangeSpendPolicy;
@@ -413,7 +412,7 @@ impl TxBuilder {
 /// until finally calling `finish` to consume the builder and generate the transaction.
 #[derive(Clone, uniffi::Object)]
 pub struct BumpFeeTxBuilder {
-    txid: String,
+    txid: Arc<Txid>,
     fee_rate: Arc<FeeRate>,
     sequence: Option<u32>,
     current_height: Option<u32>,
@@ -425,7 +424,7 @@ pub struct BumpFeeTxBuilder {
 #[uniffi::export]
 impl BumpFeeTxBuilder {
     #[uniffi::constructor]
-    pub fn new(txid: String, fee_rate: Arc<FeeRate>) -> Self {
+    pub fn new(txid: Arc<Txid>, fee_rate: Arc<FeeRate>) -> Self {
         BumpFeeTxBuilder {
             txid,
             fee_rate,
@@ -506,11 +505,10 @@ impl BumpFeeTxBuilder {
     /// WARNING: To avoid change address reuse you must persist the changes resulting from one or more calls to this
     /// method before closing the wallet. See `Wallet::reveal_next_address`.
     pub fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
-        let txid = Txid::from_str(self.txid.as_str()).map_err(|_| CreateTxError::UnknownUtxo {
-            outpoint: self.txid.clone(),
-        })?;
         let mut wallet = wallet.get_wallet();
-        let mut tx_builder = wallet.build_fee_bump(txid).map_err(CreateTxError::from)?;
+        let mut tx_builder = wallet
+            .build_fee_bump(self.txid.0)
+            .map_err(CreateTxError::from)?;
         tx_builder.fee_rate(self.fee_rate.0);
         if let Some(sequence) = self.sequence {
             tx_builder.set_exact_sequence(Sequence(sequence));
