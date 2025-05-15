@@ -312,33 +312,9 @@ interface ChangeSet {};
 // bdk_wallet crate - wallet module
 // ------------------------------------------------------------------------
 
-interface Policy {
-  string id();
-  
-  string as_string();
+typedef interface Policy;
 
-  boolean requires_path();
-  
-  SatisfiableItem item();
-  
-  Satisfaction satisfaction();
-
-  Satisfaction contribution();
-};
-
-[Enum]
-interface SatisfiableItem {
-  EcdsaSignature(PkOrF key);
-  SchnorrSignature(PkOrF key);
-  Sha256Preimage(string hash);
-  Hash256Preimage(string hash);
-  Ripemd160Preimage(string hash);
-  Hash160Preimage(string hash);
-  AbsoluteTimelock(LockTime value);
-  RelativeTimelock(u32 value);
-  Multisig(sequence<PkOrF> keys, u64 threshold);
-  Thresh(sequence<Policy> items, u64 threshold);
-};
+typedef enum SatisfiableItem;
 
 [Enum]
 interface PkOrF {
@@ -353,13 +329,7 @@ interface LockTime {
   Seconds(u32 consensus_time);
 };
 
-[Enum]
-interface Satisfaction {
-    Partial(u64 n, u64 m, sequence<u64> items, boolean? sorted, record<u32, sequence<Condition>> conditions);
-    PartialComplete(u64 n, u64 m, sequence<u64> items, boolean? sorted, record<sequence<u32>, sequence<Condition>> conditions);
-    Complete(Condition condition);
-    None(string msg);
-};
+typedef enum Satisfaction;
 
 typedef record Condition;
 
