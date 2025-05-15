@@ -48,7 +48,7 @@ class LiveElectrumClientTest {
 
         assertEquals(
             expected = "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943",
-            actual = features.genesisHash
+            actual = features.genesisHash.toString()
         )
     }
 
