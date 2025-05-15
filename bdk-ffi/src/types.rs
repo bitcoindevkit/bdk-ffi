@@ -325,12 +325,13 @@ pub struct KeychainAndIndex {
 }
 
 /// Descriptor spending policy
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, uniffi::Object)]
 pub struct Policy(BdkPolicy);
 
 impl_from_core_type!(BdkPolicy, Policy);
 impl_into_core_type!(Policy, BdkPolicy);
 
+#[uniffi::export]
 impl Policy {
     pub fn id(&self) -> String {
         self.0.id.clone()
@@ -357,7 +358,7 @@ impl Policy {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, uniffi::Enum)]
 pub enum SatisfiableItem {
     EcdsaSignature {
         key: PkOrF,
@@ -490,7 +491,7 @@ impl TryFrom<&LockTime> for BdkLockTime {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, uniffi::Enum)]
 pub enum Satisfaction {
     Partial {
         n: u64,
