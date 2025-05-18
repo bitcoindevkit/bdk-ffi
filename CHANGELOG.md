@@ -3,6 +3,37 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.2.0]
+
+This release brings in a new experimental compact block filters client!
+
+The release uses the following Rust dependencies:
+    - bdk_wallet `1.2.0`
+    - bdk_electrum `0.21.0`
+    - bdk_esplora `0.20.1`
+    - bdk_kyoto `0.8.0`
+    - uniffi `0.29.1`
+    - rust-bitcoin `0.32.5`
+
+### Added
+    - New CBF client (Kyoto) [#591], [#716]
+    - Add optional `proxy` parameter to Esplora client constructor [#711]
+    - Add optional `socks5` parameter to Electrum client constructor [#711]
+    - Add `ElectrumClient::ping` method [#689]
+    - New API docs for a lot of types
+	  - Add `Wallet::apply_unconfirmed_txs` method [#704]
+	  - Add `UnconfirmedTx` type [#704]
+
+### Changed
+    - The `Amount::from_sat` constructor renamed its `sat` argument to `satoshi` [#708]
+
+[#591]: https://github.com/bitcoindevkit/bdk-ffi/pull/591
+[#689]: https://github.com/bitcoindevkit/bdk-ffi/pull/689
+[#704]: https://github.com/bitcoindevkit/bdk-ffi/pull/704
+[#708]: https://github.com/bitcoindevkit/bdk-ffi/pull/708
+[#711]: https://github.com/bitcoindevkit/bdk-ffi/pull/711
+[#716]: https://github.com/bitcoindevkit/bdk-ffi/pull/716
+
 ## [v1.1.0]
 
 This is our first stable release!
@@ -426,6 +457,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v1.2.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.7...v1.1.0
 [v1.0.0-beta.7]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.6...v1.0.0-beta.7
 [v1.0.0-beta.6]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.5...v1.0.0-beta.6

@@ -19,12 +19,16 @@ use bdk_electrum::electrum_client::ElectrumApi;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-// NOTE: We are keeping our naming convention where the alias of the inner type is the Rust type
-//       prefixed with `Bdk`. In this case the inner type is `BdkElectrumClient`, so the alias is
-//       funnily enough named `BdkBdkElectrumClient`.
+/// Wrapper around an electrum_client::ElectrumApi which includes an internal in-memory transaction
+/// cache to avoid re-fetching already downloaded transactions.
+#[derive(uniffi::Object)]
 pub struct ElectrumClient(BdkBdkElectrumClient<bdk_electrum::electrum_client::Client>);
 
+#[uniffi::export]
 impl ElectrumClient {
+    /// Creates a new bdk client from a electrum_client::ElectrumApi
+    /// Optional: Set the proxy of the builder
+    #[uniffi::constructor(default(socks5 = None))]
     pub fn new(url: String, socks5: Option<String>) -> Result<Self, ElectrumError> {
         let mut config = bdk_electrum::electrum_client::ConfigBuilder::new();
         if let Some(socks5) = socks5 {
@@ -38,6 +42,21 @@ impl ElectrumClient {
         Ok(Self(client))
     }
 
+    /// Full scan the keychain scripts specified with the blockchain (via an Electrum client) and
+    /// returns updates for bdk_chain data structures.
+    ///
+    /// - `request`: struct with data required to perform a spk-based blockchain client
+    ///   full scan, see `FullScanRequest`.
+    /// - `stop_gap`: the full scan for each keychain stops after a gap of script pubkeys with no
+    ///   associated transactions.
+    /// - `batch_size`: specifies the max number of script pubkeys to request for in a single batch
+    ///   request.
+    /// - `fetch_prev_txouts`: specifies whether we want previous `TxOuts` for fee calculation. Note
+    ///   that this requires additional calls to the Electrum server, but is necessary for
+    ///   calculating the fee on a transaction if your wallet does not own the inputs. Methods like
+    ///   `Wallet.calculate_fee` and `Wallet.calculate_fee_rate` will return a
+    ///   `CalculateFeeError::MissingTxOut` error if those TxOuts are not present in the transaction
+    ///   graph.
     pub fn full_scan(
         &self,
         request: Arc<FullScanRequest>,
@@ -69,6 +88,21 @@ impl ElectrumClient {
         Ok(Arc::new(Update(update)))
     }
 
+    /// Sync a set of scripts with the blockchain (via an Electrum client) for the data specified and returns updates for bdk_chain data structures.
+    ///
+    /// - `request`: struct with data required to perform a spk-based blockchain client
+    ///   sync, see `SyncRequest`.
+    /// - `batch_size`: specifies the max number of script pubkeys to request for in a single batch
+    ///   request.
+    /// - `fetch_prev_txouts`: specifies whether we want previous `TxOuts` for fee calculation. Note
+    ///   that this requires additional calls to the Electrum server, but is necessary for
+    ///   calculating the fee on a transaction if your wallet does not own the inputs. Methods like
+    ///   `Wallet.calculate_fee` and `Wallet.calculate_fee_rate` will return a
+    ///   `CalculateFeeError::MissingTxOut` error if those TxOuts are not present in the transaction
+    ///   graph.
+    ///
+    /// If the scripts to sync are unknown, such as when restoring or importing a keychain that may
+    /// include scripts that have been used, use full_scan with the keychain.
     pub fn sync(
         &self,
         request: Arc<SyncRequest>,
@@ -96,6 +130,7 @@ impl ElectrumClient {
         Ok(Arc::new(Update(update)))
     }
 
+    /// Broadcasts a transaction to the network.
     pub fn transaction_broadcast(&self, tx: &Transaction) -> Result<String, ElectrumError> {
         let bdk_transaction: BdkTransaction = tx.into();
         self.0
@@ -104,6 +139,7 @@ impl ElectrumClient {
             .map(|txid| txid.to_string())
     }
 
+    /// Returns the capabilities of the server.
     pub fn server_features(&self) -> Result<ServerFeaturesRes, ElectrumError> {
         self.0
             .inner
@@ -112,6 +148,7 @@ impl ElectrumClient {
             .map(ServerFeaturesRes::from)
     }
 
+    /// Estimates the fee required in bitcoin per kilobyte to confirm a transaction in `number` blocks.
     pub fn estimate_fee(&self, number: u64) -> Result<f64, ElectrumError> {
         self.0
             .inner
@@ -119,6 +156,7 @@ impl ElectrumClient {
             .map_err(ElectrumError::from)
     }
 
+    /// Subscribes to notifications for new block headers, by sending a blockchain.headers.subscribe call.
     pub fn block_headers_subscribe(&self) -> Result<HeaderNotification, ElectrumError> {
         self.0
             .inner
@@ -127,17 +165,26 @@ impl ElectrumClient {
             .map(HeaderNotification::from)
     }
 
+    /// Pings the server.
     pub fn ping(&self) -> Result<(), ElectrumError> {
         self.0.inner.ping().map_err(ElectrumError::from)
     }
 }
 
+/// Response to an ElectrumClient.server_features request.
+#[derive(uniffi::Record)]
 pub struct ServerFeaturesRes {
+    /// Server version reported.
     pub server_version: String,
+    /// Hash of the genesis block.
     pub genesis_hash: String,
+    /// Minimum supported version of the protocol.
     pub protocol_min: String,
+    /// Maximum supported version of the protocol.
     pub protocol_max: String,
+    /// Hash function used to create the `ScriptHash`.
     pub hash_function: Option<String>,
+    /// Pruned height of the server.
     pub pruning: Option<i64>,
 }
 
@@ -154,8 +201,12 @@ impl From<BdkServerFeaturesRes> for ServerFeaturesRes {
     }
 }
 
+/// Notification of a new block header.
+#[derive(uniffi::Record)]
 pub struct HeaderNotification {
+    /// New block height.
     pub height: u64,
+    /// Newly added header.
     pub header: Header,
 }
 
