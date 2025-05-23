@@ -1,4 +1,3 @@
-from bdkpython import BlockId
 from bdkpython.bitcoin import Network
 
 import unittest
