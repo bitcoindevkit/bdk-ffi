@@ -197,7 +197,7 @@ interface ParseAmountError {
 
 [Error]
 interface PersistenceError {
-  Write(string error_message);
+  Reason(string error_message);
 };
 
 [Error]
