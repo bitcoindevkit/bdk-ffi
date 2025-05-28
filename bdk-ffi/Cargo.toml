@@ -22,7 +22,7 @@ bdk_wallet = { version = "1.2.0", features = ["all-keys", "keys-bip39", "rusqlit
 bdk_core = { version = "0.4.1" }
 bdk_esplora = { version = "0.20.1", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
 bdk_electrum = { version = "0.21.0", default-features = false, features = ["use-rustls-ring"] }
-bdk_kyoto = { version = "0.9.0" }
+bdk_kyoto = { version = "0.10.0" }
 
 uniffi = { version = "=0.29.1" }
 thiserror = "1.0.58"

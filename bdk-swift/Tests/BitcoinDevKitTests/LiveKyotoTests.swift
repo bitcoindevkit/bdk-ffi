@@ -45,7 +45,7 @@ final class LiveKyotoTests: XCTestCase {
                 }
             }
         }
-        let update = await client.update()
+        let update = try await client.update()
         try wallet.applyUpdate(update: update)
         let address = wallet.revealNextAddress(keychain: KeychainKind.external).address.description
         XCTAssertGreaterThan(
