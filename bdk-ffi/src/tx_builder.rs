@@ -617,6 +617,7 @@ mod tests {
             Arc::new(Descriptor::new(internal_descriptor, Network::Signet).unwrap()),
             Network::Signet,
             Arc::new(Connection::new_in_memory().unwrap()),
+            25,
         )
         .unwrap();
         let client = EsploraClient::new("https://mutinynet.com/api/".to_string(), None);

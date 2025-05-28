@@ -41,23 +41,22 @@ impl Wallet {
     /// Build a new Wallet.
     ///
     /// If you have previously created a wallet, use load instead.
-    #[uniffi::constructor]
+    #[uniffi::constructor(default(lookahead = 25))]
     pub fn new(
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         network: Network,
         connection: Arc<Connection>,
+        lookahead: u32,
     ) -> Result<Self, CreateWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
         let mut binding = connection.get_store();
         let db: &mut BdkConnection = binding.borrow_mut();
-
-        let wallet: PersistedWallet<BdkConnection> =
-            BdkWallet::create(descriptor, change_descriptor)
-                .network(network)
-                .create_wallet(db)?;
-
+        let params = BdkWallet::create(descriptor, change_descriptor)
+            .network(network)
+            .lookahead(lookahead);
+        let wallet: PersistedWallet<BdkConnection> = params.create_wallet(db)?;
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
         })
