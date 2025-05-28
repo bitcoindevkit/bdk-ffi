@@ -15,3 +15,10 @@ build/
 
 testing-setup-py-simple-example.py
 localenvironment/
+venv
+env
+
+# API docs
+api.rst
+index.rst
+_build/
