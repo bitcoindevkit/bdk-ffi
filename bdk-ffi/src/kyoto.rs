@@ -265,9 +265,15 @@ impl CbfClient {
 
     /// Return an [`Update`]. This is method returns once the node syncs to the rest of
     /// the network or a new block has been gossiped.
-    pub async fn update(&self) -> Arc<Update> {
-        let update = self.update_rx.lock().await.update().await;
-        Arc::new(Update(update))
+    pub async fn update(&self) -> Result<Update, CbfError> {
+        let update = self
+            .update_rx
+            .lock()
+            .await
+            .update()
+            .await
+            .map_err(|_| CbfError::NodeStopped)?;
+        Ok(Update(update))
     }
 
     /// Add scripts for the node to watch for as they are revealed. Typically used after creating
@@ -318,6 +324,8 @@ impl CbfClient {
 pub enum Info {
     /// All the required connections have been met. This is subject to change.
     ConnectionsMet,
+    /// The node was able to successfully connect to a remote peer.
+    SuccessfulHandshake,
     /// A percentage value of filters that have been scanned.
     Progress { progress: f32 },
     /// A state in the node syncing process.
@@ -331,6 +339,7 @@ impl From<bdk_kyoto::Info> for Info {
     fn from(value: bdk_kyoto::Info) -> Info {
         match value {
             bdk_kyoto::Info::ConnectionsMet => Info::ConnectionsMet,
+            bdk_kyoto::Info::SuccessfulHandshake => Info::SuccessfulHandshake,
             bdk_kyoto::Info::Progress(progress) => Info::Progress {
                 progress: progress.percentage_complete(),
             },
@@ -365,7 +374,7 @@ pub enum Warning {
     CorruptedHeaders,
     /// A transaction got rejected, likely for being an insufficient fee or non-standard transaction.
     TransactionRejected {
-        txid: String,
+        wtxid: String,
         reason: Option<String>,
     },
     /// A database failed to persist some data and may retry again
@@ -397,7 +406,7 @@ impl From<Warn> for Warning {
             Warn::TransactionRejected { payload } => {
                 let reason = payload.reason.map(|r| r.into_string());
                 Warning::TransactionRejected {
-                    txid: payload.txid.to_string(),
+                    wtxid: payload.wtxid.to_string(),
                     reason,
                 }
             }

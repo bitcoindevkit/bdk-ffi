@@ -1,4 +1,4 @@
-from bdkpython import Connection, Network, Descriptor, KeychainKind, CbfBuilder, CbfComponents, CbfClient, CbfNode, IpAddress, ScanType, Peer, Update, Wallet
+from bdkpython import Connection, Network, Descriptor, KeychainKind, CbfBuilder, CbfComponents, CbfClient, CbfNode, CbfError, IpAddress, ScanType, Peer, Update, Wallet
 import unittest
 import os
 import asyncio
@@ -45,15 +45,18 @@ class LiveKyotoTest(unittest.IsolatedAsyncioTestCase):
                 print(log)
         log_task = asyncio.create_task(log_loop(client))
         node.run()
-        update: Update = await client.update()
-        wallet.apply_update(update)
-        self.assertGreater(
-            wallet.balance().total.to_sat(),
-            0,
-            f"Wallet balance must be greater than 0! Please send funds to {wallet.reveal_next_address(KeychainKind.EXTERNAL).address} and try again."
-        )
-        log_task.cancel()
-        await client.shutdown()
+        try:
+            update: Update = await client.update()
+            wallet.apply_update(update)
+            self.assertGreater(
+                wallet.balance().total.to_sat(),
+                0,
+                f"Wallet balance must be greater than 0! Please send funds to {wallet.reveal_next_address(KeychainKind.EXTERNAL).address} and try again."
+            )
+            log_task.cancel()
+            client.shutdown()
+        except CbfError as e:
+            raise e
 
 if __name__ == "__main__":
     unittest.main()
