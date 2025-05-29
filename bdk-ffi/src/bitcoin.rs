@@ -308,6 +308,11 @@ impl Transaction {
         Arc::new(Txid(self.0.compute_txid()))
     }
 
+    /// Compute the Wtxid, which includes the witness in the transaction hash.
+    pub fn compute_wtxid(&self) -> Arc<Wtxid> {
+        Arc::new(Wtxid(self.0.compute_wtxid()))
+    }
+
     /// Returns the weight of this transaction, as defined by BIP-141.
     ///
     /// > Transaction weight is defined as Base transaction size * 3 + Total transaction size (ie.
