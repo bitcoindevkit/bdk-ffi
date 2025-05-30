@@ -18,6 +18,7 @@ use bdk_kyoto::Warning as Warn;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::Duration;
 
 use tokio::sync::Mutex;
 
@@ -33,6 +34,8 @@ type ScanType = bdk_kyoto::ScanType;
 
 const DEFAULT_CONNECTIONS: u8 = 2;
 const CWD_PATH: &str = ".";
+const TCP_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(2);
+const MESSAGE_RESPONSE_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Receive a [`CbfClient`] and [`CbfNode`].
 #[derive(Debug, uniffi::Record)]
@@ -94,6 +97,8 @@ impl CbfNode {
 #[derive(Clone, uniffi::Object)]
 pub struct CbfBuilder {
     connections: u8,
+    handshake_timeout: Duration,
+    response_timeout: Duration,
     data_dir: Option<String>,
     scan_type: ScanType,
     log_level: LogLevel,
@@ -109,6 +114,8 @@ impl CbfBuilder {
     pub fn new() -> Self {
         CbfBuilder {
             connections: DEFAULT_CONNECTIONS,
+            handshake_timeout: TCP_HANDSHAKE_TIMEOUT,
+            response_timeout: MESSAGE_RESPONSE_TIMEOUT,
             data_dir: None,
             scan_type: ScanType::default(),
             log_level: LogLevel::default(),
@@ -160,6 +167,17 @@ impl CbfBuilder {
         })
     }
 
+    /// Configure the time in milliseconds that a node has to:
+    /// 1. Respond to the initial connection
+    /// 2. Respond to a request
+    pub fn configure_timeout_millis(&self, handshake: u64, response: u64) -> Arc<Self> {
+        Arc::new(CbfBuilder {
+            handshake_timeout: Duration::from_millis(handshake),
+            response_timeout: Duration::from_millis(response),
+            ..self.clone()
+        })
+    }
+
     /// Configure a custom DNS resolver when querying DNS seeds. Default is `1.1.1.1` managed by
     /// CloudFlare.
     pub fn dns_resolver(&self, dns_resolver: Arc<IpAddress>) -> Arc<Self> {
@@ -193,6 +211,8 @@ impl CbfBuilder {
         let mut builder = BDKCbfBuilder::new(wallet.network())
             .required_peers(self.connections)
             .data_dir(path_buf)
+            .handshake_timeout(self.handshake_timeout)
+            .response_timeout(self.response_timeout)
             .log_level(self.log_level)
             .add_peers(trusted_peers);
 
