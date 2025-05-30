@@ -5,9 +5,9 @@ use crate::bitcoin::{
 use crate::descriptor::Descriptor;
 use crate::error::{CreateTxError, RequestBuilderError};
 
-use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
-use bdk_core::spk_client::SyncItem;
-use bdk_core::BlockId as BdkBlockId;
+use bdk_wallet::chain::bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
+use bdk_wallet::chain::bdk_core::spk_client::SyncItem;
+use bdk_wallet::chain::bdk_core::BlockId as BdkBlockId;
 
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;

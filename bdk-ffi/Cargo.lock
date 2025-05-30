@@ -110,7 +110,6 @@ name = "bdk-ffi"
 version = "2.0.0-alpha.0"
 dependencies = [
  "assert_matches",
- "bdk_core",
  "bdk_electrum",
  "bdk_esplora",
  "bdk_kyoto",
@@ -427,9 +426,9 @@ checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 
 [[package]]
 name = "electrum-client"
-version = "0.23.0"
+version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8ed4d35bb98a55540bb5b735731486febddf9cc9b6e96f5b3fd2536eed81a4e"
+checksum = "5ed9a037f88aa61d3627a20af1c68fa0405ed5a16d9a0d9dc0e66adcda44afbe"
 dependencies = [
  "bitcoin",
  "byteorder",

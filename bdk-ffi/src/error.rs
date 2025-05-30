@@ -1,6 +1,6 @@
 use crate::OutPoint;
 
-use bdk_core::bitcoin::script::PushBytesError;
+use bdk_wallet::chain::bdk_core::bitcoin::script::PushBytesError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::Error as BdkEsploraError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
