@@ -32,7 +32,7 @@ class LiveWalletTest {
 
     @Test
     fun testSyncedBalance() {
-        val connection = Connection(persistenceFilePath)
+        val connection = Persister.newSqlite(persistenceFilePath)
         val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, connection)
         val esploraClient: EsploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
@@ -57,7 +57,7 @@ class LiveWalletTest {
 
     @Test
     fun testBroadcastTransaction() {
-        val connection = Connection(persistenceFilePath)
+        val connection = Persister.newSqlite(persistenceFilePath)
         val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, connection)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan().build()

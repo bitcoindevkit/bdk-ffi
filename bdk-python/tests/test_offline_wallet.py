@@ -1,7 +1,7 @@
 from bdkpython import Descriptor
 from bdkpython import Wallet
 from bdkpython import KeychainKind
-from bdkpython import Connection
+from bdkpython import Persister
 from bdkpython import AddressInfo
 from bdkpython import Network
 
@@ -24,7 +24,7 @@ class OfflineWalletTest(unittest.TestCase):
             os.remove("./bdk_persistence.sqlite")
     
     def test_new_address(self):
-        connection: Connection = Connection.new_in_memory()
+        connection: Persister = Persister.new_in_memory()
         wallet: Wallet = Wallet(
             descriptor,
             change_descriptor,
@@ -41,7 +41,7 @@ class OfflineWalletTest(unittest.TestCase):
         self.assertEqual("tb1qhjys9wxlfykmte7ftryptx975uqgd6kcm6a7z4", address_info.address.__str__())
     
     def test_balance(self):
-        connection: Connection = Connection.new_in_memory()
+        connection: Persister = Persister.new_in_memory()
         wallet: Wallet = Wallet(
             descriptor,
             change_descriptor,

@@ -18,7 +18,7 @@ class LiveElectrumClientTest {
 
     @Test
     fun testSyncedBalance() {
-        var conn: Connection = Connection.newInMemory()
+        var conn: Persister = Persister.newInMemory()
         val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, conn)
         val electrumClient: ElectrumClient = ElectrumClient(SIGNET_ELECTRUM_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
