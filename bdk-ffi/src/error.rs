@@ -1,6 +1,5 @@
 use crate::OutPoint;
 
-use bdk_wallet::chain::bdk_core::bitcoin::script::PushBytesError;
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::Error as BdkEsploraError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
@@ -13,6 +12,7 @@ use bdk_wallet::bitcoin::hex::DisplayHex;
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
+use bdk_wallet::chain::bdk_core::bitcoin::script::PushBytesError;
 use bdk_wallet::chain::local_chain::CannotConnectError as BdkCannotConnectError;
 use bdk_wallet::chain::rusqlite::Error as BdkSqliteError;
 use bdk_wallet::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
