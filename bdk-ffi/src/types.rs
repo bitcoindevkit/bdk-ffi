@@ -5,9 +5,9 @@ use crate::bitcoin::{
 use crate::descriptor::Descriptor;
 use crate::error::{CreateTxError, RequestBuilderError};
 
-use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
-use bdk_core::spk_client::SyncItem;
-use bdk_core::BlockId as BdkBlockId;
+use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
+use bdk_wallet::chain::spk_client::SyncItem;
+use bdk_wallet::chain::BlockId as BdkBlockId;
 
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
@@ -81,7 +81,7 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
                     transitively: transitively.map(|t| Arc::new(Txid(t))),
                 }
             }
-            BdkChainPosition::Unconfirmed { last_seen } => ChainPosition::Unconfirmed {
+            BdkChainPosition::Unconfirmed { last_seen, .. } => ChainPosition::Unconfirmed {
                 timestamp: last_seen,
             },
         }
@@ -784,6 +784,7 @@ impl From<IndexerChangeSet> for bdk_wallet::chain::indexer::keychain_txout::Chan
         }
         Self {
             last_revealed: changes,
+            spk_cache: Default::default(),
         }
     }
 }
@@ -900,6 +901,8 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
             txouts,
             anchors,
             last_seen,
+            first_seen: Default::default(),
+            last_evicted: Default::default(),
         }
     }
 }
