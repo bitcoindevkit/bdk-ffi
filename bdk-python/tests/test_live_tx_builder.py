@@ -7,7 +7,7 @@ from bdkpython import FullScanRequest
 from bdkpython import Address
 from bdkpython import Psbt
 from bdkpython import TxBuilder
-from bdkpython import Connection
+from bdkpython import Persister
 from bdkpython import Network
 from bdkpython import Amount
 from bdkpython import FeeRate
@@ -34,7 +34,7 @@ class LiveTxBuilderTest(unittest.TestCase):
             os.remove("./bdk_persistence.sqlite")
 
     def test_tx_builder(self):
-        connection: Connection = Connection.new_in_memory()
+        connection: Persister = Persister.new_in_memory()
         wallet: Wallet = Wallet(
             descriptor,
             change_descriptor,
@@ -66,12 +66,12 @@ class LiveTxBuilderTest(unittest.TestCase):
         self.assertTrue(psbt.serialize().startswith("cHNi"), "The PSBT should start with cHNi")
 
     def complex_tx_builder(self):
-        connection: Connection = Connection.new_in_memory()
+        persister: Persister = Persister.new_in_memory()
         wallet: Wallet = Wallet(
             descriptor,
             change_descriptor,
             Network.SIGNET,
-            connection
+            persister
         )
         esplora_client: EsploraClient = EsploraClient(url = SIGNET_ESPLORA_URL)
         full_scan_request: FullScanRequest = wallet.start_full_scan().build()

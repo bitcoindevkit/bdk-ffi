@@ -28,7 +28,7 @@ class LiveWalletTest {
 
     @Test
     fun testSyncedBalance() {
-        var conn: Connection = Connection.newInMemory()
+        var conn: Persister = Persister.newInMemory()
         val wallet: Wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, conn)
         val esploraClient: EsploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
@@ -54,7 +54,7 @@ class LiveWalletTest {
 
     @Test
     fun testBroadcastTransaction() {
-        var conn: Connection = Connection.newInMemory()
+        var conn: Persister = Persister.newInMemory()
         val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, conn)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan().build()

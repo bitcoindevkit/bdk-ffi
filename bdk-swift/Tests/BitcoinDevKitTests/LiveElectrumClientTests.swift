@@ -14,12 +14,12 @@ final class LiveElectrumClientTests: XCTestCase {
     )
 
     func testSyncedBalance() throws {
-        let connection = try Connection.newInMemory()
+        let persister = try Persister.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
             network: Network.signet,
-            connection: connection
+            persister: persister
         )
         let electrumClient: ElectrumClient = try ElectrumClient(url: SIGNET_ELECTRUM_URL)
         let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()

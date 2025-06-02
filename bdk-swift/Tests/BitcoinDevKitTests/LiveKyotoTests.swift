@@ -21,12 +21,12 @@ final class LiveKyotoTests: XCTestCase {
     }
 
     func testSuccessfullySyncs() async throws {
-        let connection = try Connection.newInMemory()
+        let persister = try Persister.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
             network: Network.signet,
-            connection: connection
+            persister: persister
         )
         let trustedPeer = Peer(address: peer, port: nil, v2Transport: false)
         let lightClient = try CbfBuilder()
