@@ -49,7 +49,7 @@ pub enum KeychainKind {
 }
 
 /// Represents the observed position of some chain data.
-#[derive(Debug, uniffi::Enum)]
+#[derive(Debug, uniffi::Enum, Clone)]
 pub enum ChainPosition {
     /// The chain data is confirmed as it is anchored in the best chain by `A`.
     Confirmed {
@@ -1091,6 +1091,33 @@ impl From<bdk_wallet::ChangeSet> for ChangeSet {
             local_chain,
             tx_graph,
             indexer,
+        }
+    }
+}
+
+#[derive(uniffi::Record, Debug, Clone)]
+pub struct TxDetails {
+    pub txid: Arc<Txid>,
+    pub sent: Arc<Amount>,
+    pub received: Arc<Amount>,
+    pub fee: Option<Arc<Amount>>,
+    pub fee_rate: Option<f32>,
+    pub balance_delta: i64,
+    pub chain_position: ChainPosition,
+    pub tx: Arc<Transaction>,
+}
+
+impl From<bdk_wallet::TxDetails> for TxDetails {
+    fn from(details: bdk_wallet::TxDetails) -> Self {
+        TxDetails {
+            txid: Arc::new(Txid(details.txid)),
+            sent: Arc::new(details.sent.into()),
+            received: Arc::new(details.received.into()),
+            fee: details.fee.map(|f| Arc::new(f.into())),
+            fee_rate: details.fee_rate.map(|fr| fr.to_sat_per_vb_ceil() as f32),
+            balance_delta: details.balance_delta.to_sat(),
+            chain_position: details.chain_position.into(),
+            tx: Arc::new(Transaction::from(details.tx.as_ref().clone())),
         }
     }
 }

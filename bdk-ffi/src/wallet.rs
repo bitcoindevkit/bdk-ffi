@@ -426,6 +426,13 @@ impl Wallet {
     pub fn latest_checkpoint(&self) -> BlockId {
         self.get_wallet().latest_checkpoint().block_id().into()
     }
+
+    /// Get the [`TxDetails`] of a wallet transaction.
+    pub fn tx_details(&self, txid: Arc<Txid>) -> Option<crate::types::TxDetails> {
+        self.get_wallet()
+            .tx_details(txid.0)
+            .map(|details| details.into())
+    }
 }
 
 impl Wallet {
