@@ -5,9 +5,9 @@ use crate::bitcoin::{
 use crate::descriptor::Descriptor;
 use crate::error::{CreateTxError, RequestBuilderError};
 
-use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
-use bdk_core::spk_client::SyncItem;
-use bdk_core::BlockId as BdkBlockId;
+use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
+use bdk_wallet::chain::spk_client::SyncItem;
+use bdk_wallet::chain::BlockId as BdkBlockId;
 
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
@@ -48,7 +48,7 @@ pub enum KeychainKind {
 }
 
 /// Represents the observed position of some chain data.
-#[derive(Debug, uniffi::Enum)]
+#[derive(Debug, uniffi::Enum, Clone)]
 pub enum ChainPosition {
     /// The chain data is confirmed as it is anchored in the best chain by `A`.
     Confirmed {
@@ -81,7 +81,7 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
                     transitively: transitively.map(|t| Arc::new(Txid(t))),
                 }
             }
-            BdkChainPosition::Unconfirmed { last_seen } => ChainPosition::Unconfirmed {
+            BdkChainPosition::Unconfirmed { last_seen, .. } => ChainPosition::Unconfirmed {
                 timestamp: last_seen,
             },
         }
@@ -784,6 +784,7 @@ impl From<IndexerChangeSet> for bdk_wallet::chain::indexer::keychain_txout::Chan
         }
         Self {
             last_revealed: changes,
+            spk_cache: Default::default(),
         }
     }
 }
@@ -900,6 +901,8 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
             txouts,
             anchors,
             last_seen,
+            first_seen: Default::default(),
+            last_evicted: Default::default(),
         }
     }
 }
@@ -960,6 +963,33 @@ impl From<bdk_wallet::ChangeSet> for ChangeSet {
             local_chain,
             tx_graph,
             indexer,
+        }
+    }
+}
+
+#[derive(uniffi::Record, Debug, Clone)]
+pub struct TxDetails {
+    pub txid: Arc<Txid>,
+    pub sent: Arc<Amount>,
+    pub received: Arc<Amount>,
+    pub fee: Option<Arc<Amount>>,
+    pub fee_rate: Option<f32>,
+    pub balance_delta: i64,
+    pub chain_position: ChainPosition,
+    pub tx: Arc<Transaction>,
+}
+
+impl From<bdk_wallet::TxDetails> for TxDetails {
+    fn from(details: bdk_wallet::TxDetails) -> Self {
+        TxDetails {
+            txid: Arc::new(Txid(details.txid)),
+            sent: Arc::new(details.sent.into()),
+            received: Arc::new(details.received.into()),
+            fee: details.fee.map(|f| Arc::new(f.into())),
+            fee_rate: details.fee_rate.map(|fr| fr.to_sat_per_vb_ceil() as f32),
+            balance_delta: details.balance_delta.to_sat(),
+            chain_position: details.chain_position.into(),
+            tx: Arc::new(Transaction::from(details.tx.as_ref().clone())),
         }
     }
 }
