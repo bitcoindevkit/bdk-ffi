@@ -3,19 +3,19 @@ use crate::error::ElectrumError;
 use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
 
-use bdk_core::spk_client::FullScanRequest as BdkFullScanRequest;
-use bdk_core::spk_client::FullScanResponse as BdkFullScanResponse;
-use bdk_core::spk_client::SyncRequest as BdkSyncRequest;
-use bdk_core::spk_client::SyncResponse as BdkSyncResponse;
 use bdk_electrum::electrum_client::HeaderNotification as BdkHeaderNotification;
 use bdk_electrum::electrum_client::ServerFeaturesRes as BdkServerFeaturesRes;
 use bdk_electrum::BdkElectrumClient as BdkBdkElectrumClient;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
+use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
+use bdk_wallet::chain::spk_client::FullScanResponse as BdkFullScanResponse;
+use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
+use bdk_wallet::chain::spk_client::SyncResponse as BdkSyncResponse;
 use bdk_wallet::KeychainKind;
 use bdk_wallet::Update as BdkUpdate;
 
-use bdk_core::bitcoin::hex::{Case, DisplayHex};
 use bdk_electrum::electrum_client::ElectrumApi;
+use bdk_wallet::bitcoin::hex::{Case, DisplayHex};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -191,7 +191,7 @@ pub struct ServerFeaturesRes {
 impl From<BdkServerFeaturesRes> for ServerFeaturesRes {
     fn from(value: BdkServerFeaturesRes) -> ServerFeaturesRes {
         let hash_str = value.genesis_hash.to_hex_string(Case::Lower);
-        let blockhash = hash_str.parse::<bdk_core::bitcoin::BlockHash>().unwrap();
+        let blockhash = hash_str.parse::<bdk_wallet::bitcoin::BlockHash>().unwrap();
         ServerFeaturesRes {
             server_version: value.server_version,
             genesis_hash: Arc::new(BlockHash(blockhash)),
