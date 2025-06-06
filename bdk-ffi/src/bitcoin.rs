@@ -605,7 +605,7 @@ impl From<&BdkTxIn> for TxIn {
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct TxOut {
     /// The value of the output, in satoshis.
-    pub value: u64,
+    pub value: Arc<Amount>,
     /// The script which must be satisfied for the output to be spent.
     pub script_pubkey: Arc<Script>,
 }
@@ -613,7 +613,7 @@ pub struct TxOut {
 impl From<&BdkTxOut> for TxOut {
     fn from(tx_out: &BdkTxOut) -> Self {
         TxOut {
-            value: tx_out.value.to_sat(),
+            value: Arc::new(Amount(tx_out.value)),
             script_pubkey: Arc::new(Script(tx_out.script_pubkey.clone())),
         }
     }
@@ -622,7 +622,7 @@ impl From<&BdkTxOut> for TxOut {
 impl From<BdkTxOut> for TxOut {
     fn from(tx_out: BdkTxOut) -> Self {
         Self {
-            value: tx_out.value.to_sat(),
+            value: Arc::new(Amount(tx_out.value)),
             script_pubkey: Arc::new(Script(tx_out.script_pubkey)),
         }
     }
@@ -631,7 +631,7 @@ impl From<BdkTxOut> for TxOut {
 impl From<TxOut> for BdkTxOut {
     fn from(tx_out: TxOut) -> Self {
         Self {
-            value: BdkAmount::from_sat(tx_out.value),
+            value: tx_out.value.0,
             script_pubkey: tx_out.script_pubkey.0.clone(),
         }
     }
