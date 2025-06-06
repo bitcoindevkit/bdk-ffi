@@ -248,7 +248,7 @@ impl From<BdkLocalOutput> for LocalOutput {
                 vout: local_utxo.outpoint.vout,
             },
             txout: TxOut {
-                value: local_utxo.txout.value.to_sat(),
+                value: Arc::new(Amount(local_utxo.txout.value)),
                 script_pubkey: Arc::new(Script(local_utxo.txout.script_pubkey)),
             },
             keychain: local_utxo.keychain,
