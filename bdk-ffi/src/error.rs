@@ -564,8 +564,8 @@ pub enum ParseAmountError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum PersistenceError {
-    #[error("writing to persistence error: {error_message}")]
-    Write { error_message: String },
+    #[error("persistence error: {error_message}")]
+    Reason { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -743,12 +743,6 @@ pub enum SignerError {
 
     #[error("Psbt error: {error_message}")]
     Psbt { error_message: String },
-}
-
-#[derive(Debug, thiserror::Error, uniffi::Error)]
-pub enum SqliteError {
-    #[error("sqlite error: {rusqlite_error}")]
-    Sqlite { rusqlite_error: String },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -1251,6 +1245,14 @@ impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistEr
     }
 }
 
+impl From<BdkSqliteError> for PersistenceError {
+    fn from(error: BdkSqliteError) -> Self {
+        PersistenceError::Reason {
+            error_message: error.to_string(),
+        }
+    }
+}
+
 impl From<bdk_wallet::miniscript::Error> for MiniscriptError {
     fn from(error: bdk_wallet::miniscript::Error) -> Self {
         use bdk_wallet::miniscript::Error as BdkMiniscriptError;
@@ -1343,7 +1345,7 @@ impl From<BdkParseAmountError> for ParseAmountError {
 
 impl From<std::io::Error> for PersistenceError {
     fn from(error: std::io::Error) -> Self {
-        PersistenceError::Write {
+        PersistenceError::Reason {
             error_message: error.to_string(),
         }
     }
@@ -1513,14 +1515,6 @@ pub enum HashParseError {
     InvalidHash { len: u32 },
 }
 
-impl From<BdkSqliteError> for SqliteError {
-    fn from(error: BdkSqliteError) -> Self {
-        SqliteError::Sqlite {
-            rusqlite_error: error.to_string(),
-        }
-    }
-}
-
 impl From<bdk_kyoto::builder::SqlInitializationError> for CbfBuilderError {
     fn from(value: bdk_kyoto::builder::SqlInitializationError) -> Self {
         CbfBuilderError::DatabaseError {
@@ -1544,7 +1538,7 @@ mod test {
     use crate::error::SignerError;
     use crate::error::{
         Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError,
-        ElectrumError, EsploraError, ExtractTxError, PersistenceError, PsbtError, PsbtParseError,
+        ElectrumError, EsploraError, ExtractTxError, PsbtError, PsbtParseError,
         RequestBuilderError, TransactionError, TxidParseError,
     };
 
@@ -1923,30 +1917,6 @@ mod test {
             RequestBuilderError::RequestAlreadyConsumed,
             "the request has already been consumed",
         )];
-
-        for (error, expected_message) in cases {
-            assert_eq!(error.to_string(), expected_message);
-        }
-    }
-
-    #[test]
-    fn test_persistence_error() {
-        let cases = vec![
-            (
-                std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "unable to persist the new address",
-                )
-                .into(),
-                "writing to persistence error: unable to persist the new address",
-            ),
-            (
-                PersistenceError::Write {
-                    error_message: "failed to write to storage".to_string(),
-                },
-                "writing to persistence error: failed to write to storage",
-            ),
-        ];
 
         for (error, expected_message) in cases {
             assert_eq!(error.to_string(), expected_message);

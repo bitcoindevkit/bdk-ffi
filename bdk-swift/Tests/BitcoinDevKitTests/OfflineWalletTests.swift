@@ -12,12 +12,12 @@ final class OfflineWalletTests: XCTestCase {
     )
     
     func testNewAddress() throws {
-        let connection = try Connection.newInMemory()
+        let persister = try Persister.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
             network: .signet,
-            connection: connection
+            persister: persister
         )
         let addressInfo: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
 
@@ -34,12 +34,12 @@ final class OfflineWalletTests: XCTestCase {
     }
     
     func testBalance() throws {
-        let connection = try Connection.newInMemory()
+        let persister = try Persister.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
             network: .signet,
-            connection: connection
+            persister: persister
         )
 
         XCTAssertEqual(wallet.balance().total.toSat(), 0)

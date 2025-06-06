@@ -1,4 +1,4 @@
-from bdkpython import Connection, Network, Descriptor, KeychainKind, CbfBuilder, CbfComponents, CbfClient, CbfNode, CbfError, IpAddress, ScanType, Peer, Update, Wallet
+from bdkpython import Persister, Network, Descriptor, KeychainKind, CbfBuilder, CbfComponents, CbfClient, CbfNode, CbfError, IpAddress, ScanType, Peer, Update, Wallet
 import unittest
 import os
 import asyncio
@@ -28,12 +28,12 @@ class LiveKyotoTest(unittest.IsolatedAsyncioTestCase):
             os.remove("./data/signet/peers.db")
 
     async def testKyoto(self) -> None:
-        connection: Connection = Connection.new_in_memory()
+        persister: Persister = Persister.new_in_memory()
         wallet: Wallet = Wallet(
             descriptor,
             change_descriptor,
             network,
-            connection
+            persister
         )
         peers = [peer]
         light_client: CbfComponents = CbfBuilder().scan_type(ScanType.NEW()).peers(peers).connections(1).build(wallet)

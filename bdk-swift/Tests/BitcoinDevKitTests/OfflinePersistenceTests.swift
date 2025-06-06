@@ -26,11 +26,11 @@ final class OfflinePersistenceTests: XCTestCase {
     }
 
     func testPersistence() throws {
-        let connection = try Connection(path: dbFilePath.path)
+        let persister = try Persister.newSqlite(path: dbFilePath.path)
         let wallet = try Wallet.load(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
-            connection: connection
+            persister: persister
         )
         let nextAddress: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
         print("Address: \(nextAddress)")
@@ -40,7 +40,7 @@ final class OfflinePersistenceTests: XCTestCase {
     }
 
     func testPersistenceWithDescriptor() throws {
-        let connection = try Connection(path: dbFilePath.path)
+        let persister = try Persister.newSqlite(path: dbFilePath.path)
         
         let descriptorPub = try Descriptor(
             descriptor: "wpkh([9122d9e0/84'/1'/0']tpubDCYVtmaSaDzTxcgvoP5AHZNbZKZzrvoNH9KARep88vESc6MxRqAp4LmePc2eeGX6XUxBcdhAmkthWTDqygPz2wLAyHWisD299Lkdrj5egY6/0/*)#zpaanzgu",
@@ -54,7 +54,7 @@ final class OfflinePersistenceTests: XCTestCase {
         let wallet = try Wallet.load(
             descriptor: descriptorPub,
             changeDescriptor: changeDescriptorPub,
-            connection: connection
+            persister: persister
         )
         let nextAddress: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
         print("Address: \(nextAddress)")

@@ -32,7 +32,7 @@ class LiveTxBuilderTest {
 
     @Test
     fun testTxBuilder() {
-        val connection: Connection = Connection(persistenceFilePath)
+        val connection: Persister = Persister.newSqlite(persistenceFilePath)
         val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, connection)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan().build()
@@ -58,7 +58,7 @@ class LiveTxBuilderTest {
 
     @Test
     fun complexTxBuilder() {
-        val connection: Connection = Connection(persistenceFilePath)
+        val connection: Persister = Persister.newSqlite(persistenceFilePath)
         val wallet = Wallet(descriptor, changeDescriptor, Network.SIGNET, connection)
         val esploraClient = EsploraClient(SIGNET_ESPLORA_URL)
         val fullScanRequest: FullScanRequest = wallet.startFullScan().build()

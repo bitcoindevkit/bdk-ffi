@@ -6,7 +6,7 @@ from bdkpython import FullScanRequest
 from bdkpython import Address
 from bdkpython import Psbt
 from bdkpython import TxBuilder
-from bdkpython import Connection
+from bdkpython import Persister
 from bdkpython import Network
 from bdkpython import Amount
 from bdkpython import FeeRate
@@ -33,12 +33,12 @@ class LiveWalletTest(unittest.TestCase):
             os.remove("./bdk_persistence.sqlite")
 
     def test_synced_balance(self):
-        connection: Connection = Connection.new_in_memory()
+        persister: Persister = Persister.new_in_memory()
         wallet: Wallet = Wallet(
             descriptor,
             change_descriptor,
             Network.SIGNET,
-            connection
+            persister
         )
         esplora_client: EsploraClient = EsploraClient(url = SIGNET_ESPLORA_URL)
         full_scan_request: FullScanRequest = wallet.start_full_scan().build()
@@ -65,12 +65,12 @@ class LiveWalletTest(unittest.TestCase):
 
 
     def test_broadcast_transaction(self):
-        connection: Connection = Connection.new_in_memory()
+        persister: Persister = Persister.new_in_memory()
         wallet: Wallet = Wallet(
             descriptor,
             change_descriptor,
             Network.SIGNET,
-            connection
+            persister
         )
         esplora_client: EsploraClient = EsploraClient(url = SIGNET_ESPLORA_URL)
         full_scan_request: FullScanRequest = wallet.start_full_scan().build()

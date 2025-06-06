@@ -7,7 +7,7 @@ use crate::error::{CreateTxError, RequestBuilderError};
 
 use bdk_core::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_core::spk_client::SyncItem;
-use bdk_core::BlockId as BdkBlockId;
+use bdk_core::{BlockId as BdkBlockId, Merge};
 
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
@@ -788,6 +788,12 @@ impl From<IndexerChangeSet> for bdk_wallet::chain::indexer::keychain_txout::Chan
     }
 }
 
+impl Default for IndexerChangeSet {
+    fn default() -> Self {
+        bdk_wallet::chain::indexer::keychain_txout::ChangeSet::default().into()
+    }
+}
+
 /// The hash added or removed at the given height.
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct ChainChange {
@@ -824,6 +830,12 @@ impl From<LocalChainChangeSet> for bdk_wallet::chain::local_chain::ChangeSet {
             changes.insert(height, hash);
         }
         Self { blocks: changes }
+    }
+}
+
+impl Default for LocalChainChangeSet {
+    fn default() -> Self {
+        bdk_wallet::chain::local_chain::ChangeSet::default().into()
     }
 }
 
@@ -875,6 +887,12 @@ impl From<bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime>> for 
     }
 }
 
+impl Default for TxGraphChangeSet {
+    fn default() -> Self {
+        bdk_wallet::chain::tx_graph::ChangeSet::default().into()
+    }
+}
+
 impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime> {
     fn from(mut value: TxGraphChangeSet) -> Self {
         let mut txs = BTreeSet::new();
@@ -904,14 +922,123 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
     }
 }
 
-#[derive(Debug, Clone, uniffi::Record)]
+#[derive(Debug, Clone, uniffi::Object)]
 pub struct ChangeSet {
-    pub descriptor: Option<Arc<Descriptor>>,
-    pub change_descriptor: Option<Arc<Descriptor>>,
-    pub network: Option<bdk_wallet::bitcoin::Network>,
-    pub local_chain: LocalChainChangeSet,
-    pub tx_graph: TxGraphChangeSet,
-    pub indexer: IndexerChangeSet,
+    descriptor: Option<Arc<Descriptor>>,
+    change_descriptor: Option<Arc<Descriptor>>,
+    network: Option<bdk_wallet::bitcoin::Network>,
+    local_chain: LocalChainChangeSet,
+    tx_graph: TxGraphChangeSet,
+    indexer: IndexerChangeSet,
+}
+
+#[uniffi::export]
+impl ChangeSet {
+    /// Create an empty `ChangeSet`.
+    #[uniffi::constructor]
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Self {
+        bdk_wallet::ChangeSet::default().into()
+    }
+
+    #[uniffi::constructor]
+    pub fn from_aggregate(
+        descriptor: Option<Arc<Descriptor>>,
+        change_descriptor: Option<Arc<Descriptor>>,
+        network: Option<bdk_wallet::bitcoin::Network>,
+        local_chain: LocalChainChangeSet,
+        tx_graph: TxGraphChangeSet,
+        indexer: IndexerChangeSet,
+    ) -> Self {
+        Self {
+            descriptor,
+            change_descriptor,
+            network,
+            local_chain,
+            tx_graph,
+            indexer,
+        }
+    }
+
+    #[uniffi::constructor]
+    pub fn from_descriptor_and_network(
+        descriptor: Option<Arc<Descriptor>>,
+        change_descriptor: Option<Arc<Descriptor>>,
+        network: Option<bdk_wallet::bitcoin::Network>,
+    ) -> Self {
+        Self {
+            descriptor,
+            change_descriptor,
+            network,
+            local_chain: LocalChainChangeSet::default(),
+            tx_graph: TxGraphChangeSet::default(),
+            indexer: IndexerChangeSet::default(),
+        }
+    }
+
+    /// Start a wallet `ChangeSet` from local chain changes.
+    #[uniffi::constructor]
+    pub fn from_local_chain_changes(local_chain_changes: LocalChainChangeSet) -> Self {
+        let local_chain: bdk_wallet::chain::local_chain::ChangeSet = local_chain_changes.into();
+        let changeset: bdk_wallet::ChangeSet = local_chain.into();
+        changeset.into()
+    }
+
+    /// Start a wallet `ChangeSet` from indexer changes.
+    #[uniffi::constructor]
+    pub fn from_indexer_changeset(indexer_changes: IndexerChangeSet) -> Self {
+        let indexer: bdk_wallet::chain::indexer::keychain_txout::ChangeSet = indexer_changes.into();
+        let changeset: bdk_wallet::ChangeSet = indexer.into();
+        changeset.into()
+    }
+
+    /// Start a wallet `ChangeSet` from transaction graph changes.
+    #[uniffi::constructor]
+    pub fn from_tx_graph_changeset(tx_graph_changeset: TxGraphChangeSet) -> Self {
+        let tx_graph: bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime> =
+            tx_graph_changeset.into();
+        let changeset: bdk_wallet::ChangeSet = tx_graph.into();
+        changeset.into()
+    }
+
+    /// Build a `ChangeSet` by merging together two `ChangeSet`.
+    #[uniffi::constructor]
+    pub fn from_merge(left: Arc<ChangeSet>, right: Arc<ChangeSet>) -> Self {
+        let mut left: bdk_wallet::ChangeSet = left.as_ref().clone().into();
+        let right: bdk_wallet::ChangeSet = right.as_ref().clone().into();
+        left.merge(right);
+        left.into()
+    }
+
+    /// Get the receiving `Descriptor`.
+    pub fn descriptor(&self) -> Option<Arc<Descriptor>> {
+        self.descriptor.clone()
+    }
+
+    /// Get the change `Descriptor`
+    pub fn change_descriptor(&self) -> Option<Arc<Descriptor>> {
+        self.change_descriptor.clone()
+    }
+
+    /// Get the `Network`
+    pub fn network(&self) -> Option<bdk_wallet::bitcoin::Network> {
+        self.network
+    }
+
+    /// Get the changes to the local chain.
+    pub fn localchain_changeset(&self) -> LocalChainChangeSet {
+        self.local_chain.clone()
+    }
+
+    /// Get the changes to the transaction graph.
+    pub fn tx_graph_changeset(&self) -> TxGraphChangeSet {
+        self.tx_graph.clone()
+    }
+
+    /// Get the changes to the indexer.
+    pub fn indexer_changeset(&self) -> IndexerChangeSet {
+        self.indexer.clone()
+    }
 }
 
 impl From<ChangeSet> for bdk_wallet::ChangeSet {

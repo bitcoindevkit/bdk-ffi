@@ -36,12 +36,12 @@ final class LiveWalletTests: XCTestCase {
     }
 
     func testSyncedBalance() throws {
-        let connection = try Connection.newInMemory()
+        let persister = try Persister.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
             network: .signet,
-            connection: connection
+            persister: persister
         )
         let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
         let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
@@ -75,12 +75,12 @@ final class LiveWalletTests: XCTestCase {
     }
     
     func testBroadcastTransaction() throws {
-        let connection = try Connection.newInMemory()
+        let persister = try Persister.newInMemory()
         let wallet = try Wallet(
             descriptor: descriptor,
             changeDescriptor: changeDescriptor,
             network: .signet,
-            connection: connection
+            persister: persister
         )
         let esploraClient = EsploraClient(url: SIGNET_ESPLORA_URL)
         let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()

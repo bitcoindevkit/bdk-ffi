@@ -549,7 +549,7 @@ pub enum ChangeSpendPolicy {
 mod tests {
     use crate::bitcoin::{Amount, Script};
     use crate::{
-        descriptor::Descriptor, esplora::EsploraClient, store::Connection,
+        descriptor::Descriptor, esplora::EsploraClient, store::Persister,
         types::FullScanScriptInspector, wallet::Wallet,
     };
     use bdk_wallet::bitcoin::Network;
@@ -616,7 +616,7 @@ mod tests {
             Arc::new(Descriptor::new(external_descriptor, Network::Signet).unwrap()),
             Arc::new(Descriptor::new(internal_descriptor, Network::Signet).unwrap()),
             Network::Signet,
-            Arc::new(Connection::new_in_memory().unwrap()),
+            Arc::new(Persister::new_in_memory().unwrap()),
             25,
         )
         .unwrap();
