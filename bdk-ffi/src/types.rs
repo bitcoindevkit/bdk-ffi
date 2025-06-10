@@ -853,6 +853,8 @@ pub struct TxGraphChangeSet {
     pub txouts: HashMap<Arc<HashableOutPoint>, TxOut>,
     pub anchors: Vec<Anchor>,
     pub last_seen: HashMap<Arc<Txid>, u64>,
+    pub first_seen: HashMap<Arc<Txid>, u64>,
+    pub last_evicted: HashMap<Arc<Txid>, u64>,
 }
 
 impl From<bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime>> for TxGraphChangeSet {
@@ -876,15 +878,28 @@ impl From<bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime>> for 
             };
             anchors.push(anchor);
         }
-        let mut last_seens = HashMap::new();
+        let mut last_seen = HashMap::new();
         for (txid, time) in core::mem::take(&mut value.last_seen) {
-            last_seens.insert(Arc::new(Txid(txid)), time);
+            last_seen.insert(Arc::new(Txid(txid)), time);
         }
+
+        let mut first_seen = HashMap::new();
+        for (txid, time) in core::mem::take(&mut value.first_seen) {
+            first_seen.insert(Arc::new(Txid(txid)), time);
+        }
+
+        let mut last_evicted = HashMap::new();
+        for (txid, time) in core::mem::take(&mut value.last_evicted) {
+            last_evicted.insert(Arc::new(Txid(txid)), time);
+        }
+
         TxGraphChangeSet {
             txs,
             txouts,
             anchors,
-            last_seen: last_seens,
+            last_seen,
+            first_seen,
+            last_evicted,
         }
     }
 }
@@ -915,13 +930,24 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
         for (txid, time) in core::mem::take(&mut value.last_seen) {
             last_seen.insert(txid.0, time);
         }
+
+        let mut first_seen = BTreeMap::new();
+        for (txid, time) in core::mem::take(&mut value.first_seen) {
+            first_seen.insert(txid.0, time);
+        }
+
+        let mut last_evicted = BTreeMap::new();
+        for (txid, time) in core::mem::take(&mut value.last_evicted) {
+            last_evicted.insert(txid.0, time);
+        }
+
         Self {
             txs,
             txouts,
             anchors,
             last_seen,
-            first_seen: Default::default(),
-            last_evicted: Default::default(),
+            first_seen,
+            last_evicted,
         }
     }
 }
