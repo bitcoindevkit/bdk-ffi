@@ -20,7 +20,7 @@ change_descriptor: bdk.Descriptor = bdk.Descriptor(
 )
 
 
-serialized_persistence = """{"descriptor": "wpkh([44250c36/84'/1'/0']tpubDCrUjjHLB1fxk1oRveETjw62z8jsUuqx7JkBUW44VBszGmcY3Eun3apwVcE5X2bfF5MsM3uvuQDed6Do33ZN8GiWcnj2QPqVDspFT1AyZJ9/0/*)#9q4e992d", "change_descriptor": "wpkh([44250c36/84'/1'/0']tpubDCrUjjHLB1fxk1oRveETjw62z8jsUuqx7JkBUW44VBszGmcY3Eun3apwVcE5X2bfF5MsM3uvuQDed6Do33ZN8GiWcnj2QPqVDspFT1AyZJ9/1/*)#55sccs64", "network": "REGTEST", "local_chain": {"changes": [{"height": 0, "hash": "06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f"}]}, "tx_graph": {"txs": ["0200000000010101d7eb881ab8cac7d6adc6a7f9aa13e694813d95330c7299cee3623e5d14bd590000000000fdffffff02c5e6c1010000000016001407103a1cccf6a1ea654bee964a4020d20c41fb055c819725010000001600146337ec04bf42015e5d077b90cae05c06925c491a0247304402206aae2bf32da4c3b71cb95e6633c22f9f5a4a4f459975965c0c39b0ab439737b702200c4b16d2029383190965b07adeb87e6d634c68c70d2742f25e456874e8dc273a012103930326d6d72f8663340ce4341d0d3bdb1a1c0734d46e5df8a3003ab6bb50073b00000000", "02000000000101b0db431cffebeeeeec19ee8a09a2ae4755722ea73232dbb99b8e754eaad6ac300100000000fdffffff024ad24201000000001600146a7b71a68b261b0b7c79e5bb00f0f3d65d5ae4a285ae542401000000160014e43ff61232ca20061ef1d241e73f322a149a23d902473044022059f4b2fa8b9da34dbb57e491f3d5b8a47a623d7e6ebc1b6adfe6d2be744c9640022073cfc8311c49a8d48d69076466d32be591d3c0092b965828cfbcaca69fd409c90121027aa62d03db46272fa31bc1a6cb095bb66bc5409dd74b25e88e3099d84a17a3e469000000"], "txouts": {}, "anchors": [], "last_seen": {"2d2f7cedc21b4272bf57e3eaaeec241959d15bfa7b710ae984ec1ef2b804c1c0": 0, "b0db431cffebeeeeec19ee8a09a2ae4755722ea73232dbb99b8e754eaad6ac30": 0}}, "indexer": {"last_revealed": {"d29ab90c8fe23b5f43f94462e9128ae15368e83d628a466108d64a08c4abd41f": 8}}}"""
+serialized_persistence = """{"descriptor": "wpkh([44250c36/84'/1'/0']tpubDCrUjjHLB1fxk1oRveETjw62z8jsUuqx7JkBUW44VBszGmcY3Eun3apwVcE5X2bfF5MsM3uvuQDed6Do33ZN8GiWcnj2QPqVDspFT1AyZJ9/0/*)#9q4e992d", "change_descriptor": "wpkh([44250c36/84'/1'/0']tpubDCrUjjHLB1fxk1oRveETjw62z8jsUuqx7JkBUW44VBszGmcY3Eun3apwVcE5X2bfF5MsM3uvuQDed6Do33ZN8GiWcnj2QPqVDspFT1AyZJ9/1/*)#55sccs64", "network": "REGTEST", "local_chain": {"changes": [{"height": 0, "hash": "06226e46111a0b59caaf126043eb5bbf28c34f3a5e332a1fc7b2b73cf188910f"}]}, "tx_graph": {"txs": ["0200000000010101d7eb881ab8cac7d6adc6a7f9aa13e694813d95330c7299cee3623e5d14bd590000000000fdffffff02c5e6c1010000000016001407103a1cccf6a1ea654bee964a4020d20c41fb055c819725010000001600146337ec04bf42015e5d077b90cae05c06925c491a0247304402206aae2bf32da4c3b71cb95e6633c22f9f5a4a4f459975965c0c39b0ab439737b702200c4b16d2029383190965b07adeb87e6d634c68c70d2742f25e456874e8dc273a012103930326d6d72f8663340ce4341d0d3bdb1a1c0734d46e5df8a3003ab6bb50073b00000000", "02000000000101b0db431cffebeeeeec19ee8a09a2ae4755722ea73232dbb99b8e754eaad6ac300100000000fdffffff024ad24201000000001600146a7b71a68b261b0b7c79e5bb00f0f3d65d5ae4a285ae542401000000160014e43ff61232ca20061ef1d241e73f322a149a23d902473044022059f4b2fa8b9da34dbb57e491f3d5b8a47a623d7e6ebc1b6adfe6d2be744c9640022073cfc8311c49a8d48d69076466d32be591d3c0092b965828cfbcaca69fd409c90121027aa62d03db46272fa31bc1a6cb095bb66bc5409dd74b25e88e3099d84a17a3e469000000"], "txouts": {}, "anchors": [], "last_seen": {"2d2f7cedc21b4272bf57e3eaaeec241959d15bfa7b710ae984ec1ef2b804c1c0": 0, "b0db431cffebeeeeec19ee8a09a2ae4755722ea73232dbb99b8e754eaad6ac30": 0}, "first_seen": {"2d2f7cedc21b4272bf57e3eaaeec241959d15bfa7b710ae984ec1ef2b804c1c0": 0, "b0db431cffebeeeeec19ee8a09a2ae4755722ea73232dbb99b8e754eaad6ac30": 0}}, "indexer": {"last_revealed": {"d29ab90c8fe23b5f43f94462e9128ae15368e83d628a466108d64a08c4abd41f": 8}}}"""
 
 
 class ChangeSetConverter:
@@ -87,19 +87,36 @@ class ChangeSetConverter:
                 return  txid_obj.serialize().hex()
 
             last_seen_dict: Dict[str, int] = {}
-            for txid_obj, height in sorted(tx_graph.last_seen.items(), key=sort_key):
+            for txid_obj, timestamp in sorted(tx_graph.last_seen.items(), key=sort_key):
                 try:
                     txid_hex = txid_obj.serialize().hex()
                 except AttributeError:
                     txid_hex = str(txid_obj)
-                last_seen_dict[txid_hex] = height
+                last_seen_dict[txid_hex] = timestamp
+            first_seen_dict: Dict[str, int] = {}
+            for txid_obj, height in sorted(tx_graph.first_seen.items(), key=sort_key):
+                try:
+                    txid_hex = txid_obj.serialize().hex()
+                except AttributeError:
+                    txid_hex = str(txid_obj)
+                first_seen_dict[txid_hex] = timestamp
+
+            last_evicted_dict: Dict[str, int] = {}
+            for txid_obj, height in sorted(tx_graph.last_evicted.items(), key=sort_key):
+                try:
+                    txid_hex = txid_obj.serialize().hex()
+                except AttributeError:
+                    txid_hex = str(txid_obj)
+                last_evicted_dict[txid_hex] = timestamp
 
             return {
-                "txs": txs_list,
-                "txouts": txouts_dict,
-                "anchors": anchors_list,
-                "last_seen": last_seen_dict,
-            }
+                    "txs": txs_list,
+                    "txouts": txouts_dict,
+                    "anchors": anchors_list,
+                    "last_seen": last_seen_dict,
+                    "first_seen": first_seen_dict,
+                    "last_evicted": last_evicted_dict,
+                }
 
         def _serialize_indexer(indexer: bdk.IndexerChangeSet) -> Dict[str, Any]:
             lr: Dict[str, int] = {}
@@ -213,16 +230,36 @@ class ChangeSetConverter:
 
             last_seen_data = data.get("last_seen", {})
             last_seen_dict: Dict[bdk.Txid, int] = {}
-            for txid_hex, height in sorted(last_seen_data.items()):
+            for txid_hex, timestamp in sorted(last_seen_data.items()):
                 try:
                     txid_obj = bdk.Txid.from_bytes(binascii.unhexlify(txid_hex))
                 except Exception:
                     txid_obj = bdk.Txid(txid_hex)
-                last_seen_dict[txid_obj] = height
+                last_seen_dict[txid_obj] = timestamp
+
+            # Deserialize first_seen and last_evicted
+            first_seen_data = data.get("first_seen", {})
+            first_seen_dict: Dict[bdk.Txid, int] = {}
+            for txid_hex, timestamp in sorted(first_seen_data.items()):
+                try:
+                    txid_obj = bdk.Txid.from_bytes(binascii.unhexlify(txid_hex))
+                except Exception:
+                    txid_obj = bdk.Txid(txid_hex)
+                first_seen_dict[txid_obj] = timestamp
+
+            last_evicted_data = data.get("last_evicted", {})
+            last_evicted_dict: Dict[bdk.Txid, int] = {}
+            for txid_hex, timestamp in sorted(last_evicted_data.items()):
+                try:
+                    txid_obj = bdk.Txid.from_bytes(binascii.unhexlify(txid_hex))
+                except Exception:
+                    txid_obj = bdk.Txid(txid_hex)
+                last_evicted_dict[txid_obj] = timestamp
+
 
             return bdk.TxGraphChangeSet(
-                txs=tx_objs, txouts=txouts_dict, anchors=anchors_list, last_seen=last_seen_dict
-            )
+                    txs=tx_objs, txouts=txouts_dict, anchors=anchors_list, last_seen=last_seen_dict,first_seen=first_seen_dict,last_evicted=last_evicted_dict
+                )
 
         def _deserialize_indexer(data: Dict[str, Any]) -> bdk.IndexerChangeSet:
             lr_data = data.get("last_revealed", {})
@@ -323,6 +360,8 @@ class PersistenceTest(unittest.TestCase):
         assert wallet.balance().total.to_sat() == 50641167
         d_myp = ChangeSetConverter.to_dict(myp.initialize())
         d_myp2 = ChangeSetConverter.to_dict(myp2.initialize())
+        print(d_myp)
+        print(d_myp2)
         assert json.dumps(d_myp) == json.dumps(d_myp2)
 
 if __name__ == "__main__":
