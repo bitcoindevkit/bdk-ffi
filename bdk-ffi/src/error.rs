@@ -1516,6 +1516,9 @@ impl From<BdkEncodeError> for TransactionError {
 pub enum HashParseError {
     #[error("invalid hash: expected length 32 bytes, got {len} bytes")]
     InvalidHash { len: u32 },
+
+    #[error("invalid hex string: {hex}")]
+    InvalidHexString { hex: String },
 }
 
 impl From<bdk_kyoto::builder::SqlInitializationError> for CbfBuilderError {
