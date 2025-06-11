@@ -3,12 +3,16 @@ on: [workflow_dispatch]
 
 # The default Android NDK on the ubuntu-24.04 image is 25.2.9519653
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
       - name: "Check out PR branch"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Cache"
         uses: actions/cache@v3

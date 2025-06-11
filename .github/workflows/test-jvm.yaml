@@ -10,12 +10,16 @@ on:
       - "bdk-ffi/**"
       - "bdk-jvm/**"
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
       - name: "Check out PR branch"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Cache"
         uses: actions/cache@v3

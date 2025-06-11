@@ -1,6 +1,8 @@
 name: Publish bdkpython to PyPI
 on: [workflow_dispatch]
 
+permissions: {}
+
 jobs:
   build-manylinux_2_28-x86_64-wheels:
     name: "Build Manylinux 2.28 x86_64 wheel"
@@ -26,6 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+          persist-credentials: false
 
       - name: "Install Rust 1.84.1"
         uses: actions-rs/toolchain@v1
@@ -64,6 +67,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+          persist-credentials: false
 
       - name: "Install Python"
         uses: actions/setup-python@v4
@@ -103,6 +107,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+          persist-credentials: false
 
       - name: "Install Python"
         uses: actions/setup-python@v4
@@ -141,6 +146,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+          persist-credentials: false
+
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
@@ -167,6 +174,8 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Download artifacts in dist/ directory"
         uses: actions/download-artifact@v4

@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: '0 0 * * 0' # Once per week
 
+permissions: {}
+
 jobs:
   jvm-tests:
     name: "Build and test JVM library on Linux"
@@ -11,6 +13,8 @@ jobs:
     steps:
       - name: "Checkout publishing branch"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Cache"
         uses: actions/cache@v3
@@ -42,6 +46,8 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: "Build Swift package"
         working-directory: bdk-swift
@@ -71,6 +77,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+          persist-credentials: false
 
       - name: "Install Rust 1.84.1"
         uses: actions-rs/toolchain@v1
