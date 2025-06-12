@@ -27,8 +27,6 @@ jobs:
     strategy:
       matrix:
         python:
-          - cp38-cp38
-          - cp39-cp39
           - cp310-cp310
           - cp311-cp311
           - cp312-cp312
@@ -73,8 +71,6 @@ jobs:
     strategy:
       matrix:
         python:
-          - "3.8"
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
@@ -119,8 +115,6 @@ jobs:
     strategy:
       matrix:
         python:
-          - "3.8"
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
@@ -164,8 +158,6 @@ jobs:
     strategy:
       matrix:
         python:
-          - "3.8"
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
