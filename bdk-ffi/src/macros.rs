@@ -35,6 +35,14 @@ macro_rules! impl_hash_like {
                 Ok(Self(hash_like))
             }
 
+            /// Construct a hash-like type from a hex string.
+            #[uniffi::constructor]
+            pub fn from_string(hex: String) -> Result<Self, HashParseError> {
+                hex.parse::<$core_type>()
+                    .map(Self)
+                    .map_err(|_| HashParseError::InvalidHexString { hex })
+            }
+
             /// Serialize this type into a 32 byte array.
             pub fn serialize(&self) -> Vec<u8> {
                 serialize(&self.0)
