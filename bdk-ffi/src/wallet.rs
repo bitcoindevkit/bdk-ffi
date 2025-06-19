@@ -433,6 +433,15 @@ impl Wallet {
             .tx_details(txid.0)
             .map(|details| details.into())
     }
+
+    /// Returns the descriptor used to create addresses for a particular `keychain`.
+    ///
+    /// It's the "public" version of the wallet's descriptor, meaning a new descriptor that has
+    /// the same structure but with the all secret keys replaced by their corresponding public key.
+    /// This can be used to build a watch-only version of a wallet.
+    pub fn public_descriptor(&self, keychain: KeychainKind) -> String {
+        self.get_wallet().public_descriptor(keychain).to_string()
+    }
 }
 
 impl Wallet {
