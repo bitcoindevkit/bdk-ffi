@@ -1,5 +1,6 @@
 use bdk_kyoto::builder::NodeBuilder as BDKCbfBuilder;
 use bdk_kyoto::builder::NodeBuilderExt;
+use bdk_kyoto::kyoto::lookup_host;
 use bdk_kyoto::kyoto::tokio;
 use bdk_kyoto::kyoto::AddrV2;
 use bdk_kyoto::kyoto::ScriptBuf;
@@ -36,6 +37,7 @@ const DEFAULT_CONNECTIONS: u8 = 2;
 const CWD_PATH: &str = ".";
 const TCP_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(2);
 const MESSAGE_RESPONSE_TIMEOUT: Duration = Duration::from_secs(5);
+const CLOUDFLARE_DNS: IpAddr = IpAddr::V4(Ipv4Addr::new(1, 1, 1, 1));
 
 /// Receive a [`CbfClient`] and [`CbfNode`].
 #[derive(Debug, uniffi::Record)]
@@ -54,6 +56,7 @@ pub struct CbfClient {
     info_rx: Mutex<Receiver<bdk_kyoto::Info>>,
     warning_rx: Mutex<UnboundedReceiver<bdk_kyoto::Warning>>,
     update_rx: Mutex<UpdateSubscriber>,
+    dns_resolver: IpAddr,
 }
 
 /// A [`CbfNode`] gathers transactions for a [`Wallet`].
@@ -187,6 +190,9 @@ impl CbfBuilder {
         })
     }
 
+    /// Configure connections to be established through a `Socks5 proxy. The vast majority of the
+    /// time, the connection is to a local Tor daemon, which is typically exposed at
+    /// `127.0.0.1:9050`.
     pub fn socks5_proxy(&self, proxy: Socks5Proxy) -> Arc<Self> {
         Arc::new(CbfBuilder {
             socks5_proxy: Some(proxy),
@@ -240,6 +246,11 @@ impl CbfBuilder {
             })?;
 
         let node = CbfNode { node };
+        let client_resolver = self
+            .dns_resolver
+            .clone()
+            .map(|ip| ip.inner)
+            .unwrap_or(CLOUDFLARE_DNS);
 
         let client = CbfClient {
             sender: Arc::new(requester),
@@ -247,6 +258,7 @@ impl CbfBuilder {
             info_rx: Mutex::new(info_subscriber),
             warning_rx: Mutex::new(warning_subscriber),
             update_rx: Mutex::new(update_subscriber),
+            dns_resolver: client_resolver,
         };
 
         Ok(CbfComponents {
@@ -328,6 +340,18 @@ impl CbfClient {
             .map(|fee| Arc::new(FeeRate(fee)))
     }
 
+    /// Query a Bitcoin DNS seeder using the configured resolver.
+    ///
+    /// This is **not** a generic DNS implementation. Host names are prefixed with a `x849` to filter
+    /// for compact block filter nodes from the seeder. For example `dns.myseeder.com` will be queried
+    /// as `x849.dns.myseeder.com`. This has no guarantee to return any `IpAddr`.
+    pub async fn lookup_host(&self, hostname: String) -> Vec<Arc<IpAddress>> {
+        let nodes = lookup_host(hostname, self.dns_resolver).await;
+        nodes
+            .into_iter()
+            .map(|ip| Arc::new(IpAddress { inner: ip }))
+            .collect()
+    }
     /// Check if the node is still running in the background.
     pub fn is_running(&self) -> bool {
         self.sender.is_running()
@@ -346,6 +370,10 @@ pub enum Info {
     ConnectionsMet,
     /// The node was able to successfully connect to a remote peer.
     SuccessfulHandshake,
+    /// The block header chain of most work was extended to this height.
+    NewChainHeight { height: u32 },
+    /// A new fork was advertised to the node, but has not been selected yet.
+    NewFork { height: u32 },
     /// A percentage value of filters that have been scanned.
     Progress { progress: f32 },
     /// A state in the node syncing process.
@@ -360,6 +388,8 @@ impl From<bdk_kyoto::Info> for Info {
         match value {
             bdk_kyoto::Info::ConnectionsMet => Info::ConnectionsMet,
             bdk_kyoto::Info::SuccessfulHandshake => Info::SuccessfulHandshake,
+            bdk_kyoto::Info::NewChainHeight(height) => Info::NewChainHeight { height },
+            bdk_kyoto::Info::NewFork { tip } => Info::NewFork { height: tip.height },
             bdk_kyoto::Info::Progress(progress) => Info::Progress {
                 progress: progress.percentage_complete(),
             },
