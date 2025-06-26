@@ -42,7 +42,6 @@ use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 
 use bdk_wallet::bitcoin::Network;
-use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::KeychainKind;
 
 uniffi::include_scaffolding!("bdk");
