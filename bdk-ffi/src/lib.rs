@@ -21,7 +21,6 @@ use crate::error::DescriptorError;
 use crate::error::DescriptorKeyError;
 use crate::error::ElectrumError;
 use crate::error::EsploraError;
-use crate::error::FromScriptError;
 use crate::error::MiniscriptError;
 use crate::error::ParseAmountError;
 use crate::error::PsbtError;
