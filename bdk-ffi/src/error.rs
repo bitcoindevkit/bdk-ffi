@@ -672,7 +672,7 @@ pub enum PsbtError {
     OtherPsbtErr,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PsbtParseError {
     #[error("error in internal psbt data structure: {error_message}")]
     PsbtEncoding { error_message: String },
