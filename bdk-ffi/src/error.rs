@@ -386,9 +386,9 @@ pub enum ExtractTxError {
     )]
     OtherExtractTxErr,
 }
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum FeeRateError {
-    #[error("arithmetic overflow on feerate")]
+    #[error("arithmetic overflow")]
     ArithmeticOverflow,
 }
 
