@@ -478,7 +478,7 @@ impl From<BdkSatisfiableItem> for SatisfiableItem {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, uniffi::Enum)]
 pub enum PkOrF {
     Pubkey { value: String },
     XOnlyPubkey { value: String },
@@ -501,7 +501,7 @@ impl From<BdkPkOrF> for PkOrF {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, uniffi::Enum)]
 pub enum LockTime {
     Blocks { height: u32 },
     Seconds { consensus_time: u32 },
