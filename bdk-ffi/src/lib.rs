@@ -13,7 +13,6 @@ mod wallet;
 
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
-use crate::bitcoin::Script;
 use crate::error::AddressParseError;
 use crate::error::Bip32Error;
 use crate::error::Bip39Error;
@@ -32,17 +31,10 @@ use crate::error::PsbtFinalizeError;
 use crate::error::PsbtParseError;
 use crate::error::RequestBuilderError;
 use crate::error::TransactionError;
-use crate::types::FullScanRequest;
-use crate::types::FullScanRequestBuilder;
-use crate::types::FullScanScriptInspector;
 use crate::types::LockTime;
 use crate::types::PkOrF;
-use crate::types::SyncRequest;
-use crate::types::SyncRequestBuilder;
-use crate::types::SyncScriptInspector;
 
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::bip39::WordCount;
-use bdk_wallet::KeychainKind;
 
 uniffi::include_scaffolding!("bdk");

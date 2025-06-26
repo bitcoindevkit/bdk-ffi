@@ -272,37 +272,8 @@ interface TransactionError {
 
 typedef enum KeychainKind;
 
-/// Builds a [`FullScanRequest`].
-interface FullScanRequestBuilder {
-  [Throws=RequestBuilderError]
-  FullScanRequestBuilder inspect_spks_for_all_keychains(FullScanScriptInspector inspector);
 
-  [Throws=RequestBuilderError]
-  FullScanRequest build();
-};
 
-/// Builds a [`SyncRequest`].
-interface SyncRequestBuilder {
-  [Throws=RequestBuilderError]
-  SyncRequestBuilder inspect_spks(SyncScriptInspector inspector);
-
-  [Throws=RequestBuilderError]
-  SyncRequest build();
-};
-
-interface FullScanRequest {};
-
-interface SyncRequest {};
-
-[Trait, WithForeign]
-interface SyncScriptInspector {
-  void inspect(Script script, u64 total);
-};
-
-[Trait, WithForeign]
-interface FullScanScriptInspector {
-  void inspect(KeychainKind keychain, u32 index, Script script);
-};
 
 // ------------------------------------------------------------------------
 // bdk_wallet crate - wallet module
