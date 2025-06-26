@@ -217,7 +217,7 @@ pub enum CreateWithPersistError {
     Descriptor { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum DescriptorError {
     #[error("invalid hd key path")]
     InvalidHdKeyPath,
