@@ -568,7 +568,7 @@ pub enum PersistenceError {
     Reason { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PsbtError {
     #[error("invalid magic")]
     InvalidMagic,

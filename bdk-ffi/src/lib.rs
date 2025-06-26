@@ -19,7 +19,6 @@ use crate::error::DescriptorError;
 use crate::error::ElectrumError;
 use crate::error::EsploraError;
 use crate::error::MiniscriptError;
-use crate::error::PsbtError;
 use crate::error::PsbtFinalizeError;
 use crate::error::TransactionError;
 
