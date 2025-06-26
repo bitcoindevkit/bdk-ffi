@@ -259,7 +259,7 @@ pub enum DescriptorError {
     ExternalAndInternalAreTheSame,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum DescriptorKeyError {
     #[error("error parsing descriptor key: {error_message}")]
     Parse { error_message: String },

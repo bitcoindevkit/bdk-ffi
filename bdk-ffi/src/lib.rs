@@ -17,7 +17,6 @@ use crate::error::AddressParseError;
 use crate::error::Bip32Error;
 use crate::error::CreateTxError;
 use crate::error::DescriptorError;
-use crate::error::DescriptorKeyError;
 use crate::error::ElectrumError;
 use crate::error::EsploraError;
 use crate::error::MiniscriptError;
