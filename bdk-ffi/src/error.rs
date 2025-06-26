@@ -103,7 +103,7 @@ pub enum Bip32Error {
     UnknownError { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum Bip39Error {
     #[error("the word count {word_count} is not supported")]
     BadWordCount { word_count: u64 },

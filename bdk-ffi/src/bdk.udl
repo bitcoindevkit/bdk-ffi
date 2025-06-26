@@ -33,14 +33,6 @@ interface Bip32Error {
     UnknownError(string error_message);
 };
 
-[Error]
-interface Bip39Error {
-  BadWordCount(u64 word_count);
-  UnknownWord(u64 index);
-  BadEntropyBitCount(u64 bit_count);
-  InvalidChecksum();
-  AmbiguousLanguages(string languages);
-};
 
 [Error]
 interface CreateTxError {

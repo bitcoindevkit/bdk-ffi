@@ -15,7 +15,6 @@ use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
 use crate::error::AddressParseError;
 use crate::error::Bip32Error;
-use crate::error::Bip39Error;
 use crate::error::CreateTxError;
 use crate::error::DescriptorError;
 use crate::error::DescriptorKeyError;
