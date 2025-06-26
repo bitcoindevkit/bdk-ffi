@@ -426,7 +426,7 @@ pub enum LoadWithPersistError {
     CouldNotLoad,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum MiniscriptError {
     #[error("absolute locktime error")]
     AbsoluteLockTime,
