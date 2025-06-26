@@ -191,10 +191,6 @@ interface ParseAmountError {
   OtherParseAmountErr();
 };
 
-[Error]
-interface PersistenceError {
-  Reason(string error_message);
-};
 
 [Error]
 interface PsbtError {

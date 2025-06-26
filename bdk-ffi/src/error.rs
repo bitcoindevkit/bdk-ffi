@@ -562,7 +562,7 @@ pub enum ParseAmountError {
     OtherParseAmountErr,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PersistenceError {
     #[error("persistence error: {error_message}")]
     Reason { error_message: String },
