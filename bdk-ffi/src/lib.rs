@@ -42,7 +42,17 @@ use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
 
 use bdk_wallet::bitcoin::Network;
-use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::KeychainKind;
+
+type WordCount = bdk_wallet::keys::bip39::WordCount;
+
+#[uniffi::remote(Enum)]
+pub enum WordCount {
+    Words12,
+    Words15,
+    Words18,
+    Words21,
+    Words24,
+}
 
 uniffi::include_scaffolding!("bdk");
