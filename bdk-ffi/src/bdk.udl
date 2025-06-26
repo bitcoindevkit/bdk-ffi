@@ -94,46 +94,6 @@ interface EsploraError {
 
 
 
-[Error]
-interface MiniscriptError {
-    AbsoluteLockTime();
-    AddrError(string error_message);
-    AddrP2shError(string error_message);
-    AnalysisError(string error_message);
-    AtOutsideOr();
-    BadDescriptor(string error_message);
-    BareDescriptorAddr();
-    CmsTooManyKeys(u32 keys);
-    ContextError(string error_message);
-    CouldNotSatisfy();
-    ExpectedChar(string char);
-    ImpossibleSatisfaction();
-    InvalidOpcode();
-    InvalidPush();
-    LiftError(string error_message);
-    MaxRecursiveDepthExceeded();
-    MissingSig();
-    MultiATooManyKeys(u64 keys);
-    MultiColon();
-    MultipathDescLenMismatch();
-    NonMinimalVerify(string error_message);
-    NonStandardBareScript();
-    NonTopLevel(string error_message);
-    ParseThreshold();
-    PolicyError(string error_message);
-    PubKeyCtxError();
-    RelativeLockTime();
-    Script(string error_message);
-    Secp(string error_message);
-    Threshold();
-    TrNoScriptCode();
-    Trailing(string error_message);
-    TypeCheck(string error_message);
-    Unexpected(string error_message);
-    UnexpectedStart();
-    UnknownWrapper(string char);
-    Unprintable(u8 byte);
-};
 
 
 
