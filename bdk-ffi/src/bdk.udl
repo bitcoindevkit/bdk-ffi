@@ -5,23 +5,6 @@ namespace bdk {};
 // ------------------------------------------------------------------------
 
 [Error]
-interface Bip32Error {
-    CannotDeriveFromHardenedKey();
-    Secp256k1(string error_message);
-    InvalidChildNumber(u32 child_number);
-    InvalidChildNumberFormat();
-    InvalidDerivationPathFormat();
-    UnknownVersion(string version);
-    WrongExtendedKeyLength(u32 length);
-    Base58(string error_message);
-    Hex(string error_message);
-    InvalidPublicKeyHexLength(u32 length);
-    UnknownError(string error_message);
-};
-
-
-
-[Error]
 interface DescriptorError {
     InvalidHdKeyPath();
     InvalidDescriptorChecksum();
