@@ -271,7 +271,7 @@ pub enum DescriptorKeyError {
     Bip32 { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum ElectrumError {
     #[error("{error_message}")]
     IOError { error_message: String },
