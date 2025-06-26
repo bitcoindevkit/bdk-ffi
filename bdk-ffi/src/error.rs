@@ -325,7 +325,7 @@ pub enum ElectrumError {
     RequestAlreadyConsumed,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum EsploraError {
     #[error("minreq error: {error_message}")]
     Minreq { error_message: String },
