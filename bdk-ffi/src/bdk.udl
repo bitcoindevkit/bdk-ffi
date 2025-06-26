@@ -131,10 +131,6 @@ interface EsploraError {
   InvalidResponse();
 };
 
-[Error]
-interface FeeRateError {
-  ArithmeticOverflow();
-};
 
 [Error]
 interface FromScriptError {
