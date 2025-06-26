@@ -5,20 +5,6 @@ namespace bdk {};
 // ------------------------------------------------------------------------
 
 [Error]
-interface AddressParseError {
-  Base58();
-  Bech32();
-  WitnessVersion(string error_message);
-  WitnessProgram(string error_message);
-  UnknownHrp();
-  LegacyAddressTooLong();
-  InvalidBase58PayloadLength();
-  InvalidLegacyPrefix();
-  NetworkValidation();
-  OtherAddressParseErr();
-};
-
-[Error]
 interface Bip32Error {
     CannotDeriveFromHardenedKey();
     Secp256k1(string error_message);

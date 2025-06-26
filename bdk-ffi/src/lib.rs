@@ -13,7 +13,7 @@ mod wallet;
 
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
-use crate::error::AddressParseError;
+use crate::bitcoin::Script;
 use crate::error::Bip32Error;
 use crate::error::DescriptorError;
 use crate::error::ElectrumError;

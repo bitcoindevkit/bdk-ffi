@@ -33,7 +33,7 @@ use std::convert::TryInto;
 // error definitions
 // ------------------------------------------------------------------------
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum AddressParseError {
     #[error("base58 address encoding error")]
     Base58,
