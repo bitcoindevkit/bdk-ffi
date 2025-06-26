@@ -136,7 +136,7 @@ pub enum CannotConnectError {
     Include { height: u32 },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum CreateTxError {
     #[error("descriptor error: {error_message}")]
     Descriptor { error_message: String },

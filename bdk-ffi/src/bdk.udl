@@ -34,31 +34,6 @@ interface Bip32Error {
 };
 
 
-[Error]
-interface CreateTxError {
-  Descriptor(string error_message);
-  Policy(string error_message);
-  SpendingPolicyRequired(string kind);
-  Version0();
-  Version1Csv();
-  LockTime(string requested, string required);
-  RbfSequenceCsv(string sequence, string csv);
-  FeeTooLow(string required);
-  FeeRateTooLow(string required);
-  NoUtxosSelected();
-  OutputBelowDustLimit(u64 index);
-  ChangePolicyDescriptor();
-  CoinSelection(string error_message);
-  InsufficientFunds(u64 needed, u64 available);
-  NoRecipients();
-  Psbt(string error_message);
-  MissingKeyOrigin(string key);
-  UnknownUtxo(string outpoint);
-  MissingNonWitnessUtxo(string outpoint);
-  MiniscriptPsbt(string error_message);
-  PushBytesError();
-  LockTimeConversionError();
-};
 
 [Error]
 interface DescriptorError {
