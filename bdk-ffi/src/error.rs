@@ -33,7 +33,7 @@ use std::convert::TryInto;
 // error definitions
 // ------------------------------------------------------------------------
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum AddressParseError {
     #[error("base58 address encoding error")]
     Base58,
@@ -67,7 +67,7 @@ pub enum AddressParseError {
     OtherAddressParseErr,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum Bip32Error {
     #[error("cannot derive from a hardened key")]
     CannotDeriveFromHardenedKey,
@@ -103,7 +103,7 @@ pub enum Bip32Error {
     UnknownError { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum Bip39Error {
     #[error("the word count {word_count} is not supported")]
     BadWordCount { word_count: u64 },
@@ -136,7 +136,7 @@ pub enum CannotConnectError {
     Include { height: u32 },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum CreateTxError {
     #[error("descriptor error: {error_message}")]
     Descriptor { error_message: String },
@@ -217,7 +217,7 @@ pub enum CreateWithPersistError {
     Descriptor { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum DescriptorError {
     #[error("invalid hd key path")]
     InvalidHdKeyPath,
@@ -259,7 +259,7 @@ pub enum DescriptorError {
     ExternalAndInternalAreTheSame,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum DescriptorKeyError {
     #[error("error parsing descriptor key: {error_message}")]
     Parse { error_message: String },
@@ -271,7 +271,7 @@ pub enum DescriptorKeyError {
     Bip32 { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum ElectrumError {
     #[error("{error_message}")]
     IOError { error_message: String },
@@ -325,7 +325,7 @@ pub enum ElectrumError {
     RequestAlreadyConsumed,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum EsploraError {
     #[error("minreq error: {error_message}")]
     Minreq { error_message: String },
@@ -386,13 +386,13 @@ pub enum ExtractTxError {
     )]
     OtherExtractTxErr,
 }
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum FeeRateError {
-    #[error("arithmetic overflow on feerate")]
+    #[error("arithmetic overflow")]
     ArithmeticOverflow,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum FromScriptError {
     #[error("script is not a p2pkh, p2sh or witness program")]
     UnrecognizedScript,
@@ -426,7 +426,7 @@ pub enum LoadWithPersistError {
     CouldNotLoad,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum MiniscriptError {
     #[error("absolute locktime error")]
     AbsoluteLockTime,
@@ -540,7 +540,7 @@ pub enum MiniscriptError {
     Unprintable { byte: u8 },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum ParseAmountError {
     #[error("amount out of range")]
     OutOfRange,
@@ -562,13 +562,13 @@ pub enum ParseAmountError {
     OtherParseAmountErr,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PersistenceError {
     #[error("persistence error: {error_message}")]
     Reason { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PsbtError {
     #[error("invalid magic")]
     InvalidMagic,
@@ -672,7 +672,7 @@ pub enum PsbtError {
     OtherPsbtErr,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PsbtParseError {
     #[error("error in internal psbt data structure: {error_message}")]
     PsbtEncoding { error_message: String },
@@ -681,7 +681,7 @@ pub enum PsbtParseError {
     Base64Encoding { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PsbtFinalizeError {
     #[error("an input at index {index} is invalid: {reason}")]
     InputError { reason: String, index: u32 },
@@ -745,7 +745,7 @@ pub enum SignerError {
     Psbt { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum TransactionError {
     #[error("io error")]
     Io,
