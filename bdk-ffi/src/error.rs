@@ -67,7 +67,7 @@ pub enum AddressParseError {
     OtherAddressParseErr,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum Bip32Error {
     #[error("cannot derive from a hardened key")]
     CannotDeriveFromHardenedKey,
