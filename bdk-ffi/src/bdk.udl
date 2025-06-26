@@ -5,31 +5,6 @@ namespace bdk {};
 // ------------------------------------------------------------------------
 
 [Error]
-interface EsploraError {
-  Minreq(string error_message);
-  HttpResponse(u16 status, string error_message);
-  Parsing(string error_message);
-  StatusCode(string error_message);
-  BitcoinEncoding(string error_message);
-  HexToArray(string error_message);
-  HexToBytes(string error_message);
-  TransactionNotFound();
-  HeaderHeightNotFound(u32 height);
-  HeaderHashNotFound();
-  InvalidHttpHeaderName(string name);
-  InvalidHttpHeaderValue(string value);
-  RequestAlreadyConsumed();
-  InvalidResponse();
-};
-
-
-
-
-
-
-
-
-[Error]
 interface PsbtFinalizeError {
   InputError(string reason, u32 index);
   WrongInputCount(u32 in_tx, u32 in_map);
