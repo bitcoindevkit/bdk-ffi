@@ -4,17 +4,6 @@ namespace bdk {};
 // bdk crate - error module
 // ------------------------------------------------------------------------
 
-[Error]
-interface TransactionError {
-  Io();
-  OversizedVectorAllocation();
-  InvalidChecksum(string expected, string actual);
-  NonMinimalVarInt();
-  ParseFailed();
-  UnsupportedSegwitFlag(u8 flag);
-  OtherTransactionErr();
-};
-
 // ------------------------------------------------------------------------
 // bdk_wallet crate - types module
 // ------------------------------------------------------------------------

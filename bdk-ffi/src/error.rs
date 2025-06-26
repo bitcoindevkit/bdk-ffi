@@ -745,7 +745,7 @@ pub enum SignerError {
     Psbt { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum TransactionError {
     #[error("io error")]
     Io,
