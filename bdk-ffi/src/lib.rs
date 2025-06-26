@@ -24,7 +24,6 @@ use crate::error::EsploraError;
 use crate::error::FromScriptError;
 use crate::error::MiniscriptError;
 use crate::error::ParseAmountError;
-use crate::error::PersistenceError;
 use crate::error::PsbtError;
 use crate::error::PsbtFinalizeError;
 use crate::error::PsbtParseError;
