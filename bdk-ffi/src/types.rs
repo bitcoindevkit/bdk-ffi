@@ -261,25 +261,32 @@ impl From<BdkLocalOutput> for LocalOutput {
 }
 
 // Callback for the FullScanRequest
+#[uniffi::export(with_foreign)]
 pub trait FullScanScriptInspector: Sync + Send {
     fn inspect(&self, keychain: KeychainKind, index: u32, script: Arc<Script>);
 }
 
 // Callback for the SyncRequest
+#[uniffi::export(with_foreign)]
 pub trait SyncScriptInspector: Sync + Send {
     fn inspect(&self, script: Arc<Script>, total: u64);
 }
 
+#[derive(uniffi::Object)]
 pub struct FullScanRequestBuilder(
     pub(crate) Mutex<Option<BdkFullScanRequestBuilder<KeychainKind>>>,
 );
 
+#[derive(uniffi::Object)]
 pub struct SyncRequestBuilder(pub(crate) Mutex<Option<BdkSyncRequestBuilder<(KeychainKind, u32)>>>);
 
+#[derive(uniffi::Object)]
 pub struct FullScanRequest(pub(crate) Mutex<Option<BdkFullScanRequest<KeychainKind>>>);
 
+#[derive(uniffi::Object)]
 pub struct SyncRequest(pub(crate) Mutex<Option<BdkSyncRequest<(KeychainKind, u32)>>>);
 
+#[uniffi::export]
 impl SyncRequestBuilder {
     pub fn inspect_spks(
         &self,
@@ -314,6 +321,7 @@ impl SyncRequestBuilder {
     }
 }
 
+#[uniffi::export]
 impl FullScanRequestBuilder {
     pub fn inspect_spks_for_all_keychains(
         &self,
