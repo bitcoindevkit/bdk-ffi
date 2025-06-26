@@ -48,6 +48,17 @@ pub enum KeychainKind {
     Internal = 1,
 }
 
+type WordCount = bdk_wallet::keys::bip39::WordCount;
+
+#[uniffi::remote(Enum)]
+pub enum WordCount {
+    Words12,
+    Words15,
+    Words18,
+    Words21,
+    Words24,
+}
+
 /// Represents the observed position of some chain data.
 #[derive(Debug, uniffi::Enum, Clone)]
 pub enum ChainPosition {

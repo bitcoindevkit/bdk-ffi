@@ -304,14 +304,6 @@ typedef record Condition;
 // bdk_wallet crate - bitcoin re-exports
 // ------------------------------------------------------------------------
 
-[Remote]
-enum WordCount {
-  "Words12",
-  "Words15",
-  "Words18",
-  "Words21",
-  "Words24",
-};
 
 typedef interface Script;
 

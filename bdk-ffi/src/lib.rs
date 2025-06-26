@@ -35,6 +35,5 @@ use crate::types::LockTime;
 use crate::types::PkOrF;
 
 use bdk_wallet::bitcoin::Network;
-use bdk_wallet::keys::bip39::WordCount;
 
 uniffi::include_scaffolding!("bdk");
