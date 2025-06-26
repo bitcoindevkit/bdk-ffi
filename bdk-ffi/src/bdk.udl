@@ -222,11 +222,6 @@ interface PsbtError {
   OtherPsbtErr();
 };
 
-[Error]
-interface PsbtParseError {
-  PsbtEncoding(string error_message);
-  Base64Encoding(string error_message);
-};
 
 [Error]
 interface PsbtFinalizeError {

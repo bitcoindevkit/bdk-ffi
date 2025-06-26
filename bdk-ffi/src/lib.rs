@@ -26,7 +26,6 @@ use crate::error::MiniscriptError;
 use crate::error::ParseAmountError;
 use crate::error::PsbtError;
 use crate::error::PsbtFinalizeError;
-use crate::error::PsbtParseError;
 use crate::error::RequestBuilderError;
 use crate::error::TransactionError;
 use crate::types::FullScanRequest;
