@@ -14,7 +14,6 @@ mod wallet;
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
 use crate::bitcoin::Script;
-use crate::error::PsbtFinalizeError;
 use crate::error::TransactionError;
 
 use bdk_wallet::bitcoin::Network;
