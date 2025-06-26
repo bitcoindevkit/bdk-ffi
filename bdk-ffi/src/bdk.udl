@@ -160,15 +160,6 @@ interface MiniscriptError {
     Unprintable(u8 byte);
 };
 
-[Error]
-interface ParseAmountError {
-  OutOfRange();
-  TooPrecise();
-  MissingDigits();
-  InputTooLarge();
-  InvalidCharacter(string error_message);
-  OtherParseAmountErr();
-};
 
 
 [Error]
