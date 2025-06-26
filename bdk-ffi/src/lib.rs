@@ -15,7 +15,6 @@ use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
 use crate::bitcoin::Script;
 use crate::error::RequestBuilderError;
-use crate::error::TransactionError;
 use crate::types::FullScanRequest;
 use crate::types::FullScanRequestBuilder;
 use crate::types::FullScanScriptInspector;
