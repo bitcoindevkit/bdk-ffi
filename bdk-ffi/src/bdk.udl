@@ -132,13 +132,6 @@ interface EsploraError {
 };
 
 
-[Error]
-interface FromScriptError {
-  UnrecognizedScript();
-  WitnessProgram(string error_message);
-  WitnessVersion(string error_message);
-  OtherFromScriptErr();
-};
 
 [Error]
 interface MiniscriptError {
