@@ -77,12 +77,6 @@ interface DescriptorError {
     ExternalAndInternalAreTheSame();
 };
 
-[Error]
-interface DescriptorKeyError {
-  Parse(string error_message);
-  InvalidKeyType();
-  Bip32(string error_message);
-};
 
 [Error]
 interface ElectrumError {
