@@ -681,7 +681,7 @@ pub enum PsbtParseError {
     Base64Encoding { error_message: String },
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PsbtFinalizeError {
     #[error("an input at index {index} is invalid: {reason}")]
     InputError { reason: String, index: u32 },
