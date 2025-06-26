@@ -35,8 +35,6 @@ use crate::error::TransactionError;
 use crate::types::FullScanRequest;
 use crate::types::FullScanRequestBuilder;
 use crate::types::FullScanScriptInspector;
-use crate::types::LockTime;
-use crate::types::PkOrF;
 use crate::types::SyncRequest;
 use crate::types::SyncRequestBuilder;
 use crate::types::SyncScriptInspector;
