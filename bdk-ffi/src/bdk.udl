@@ -283,18 +283,6 @@ typedef interface Policy;
 
 typedef enum SatisfiableItem;
 
-[Enum]
-interface PkOrF {
-  Pubkey(string value);
-  XOnlyPubkey(string value);
-  Fingerprint(string value);
-};
-
-[Enum]
-interface LockTime {
-  Blocks(u32 height);
-  Seconds(u32 consensus_time);
-};
 
 typedef enum Satisfaction;
 

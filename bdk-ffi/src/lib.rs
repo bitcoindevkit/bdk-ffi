@@ -31,8 +31,6 @@ use crate::error::PsbtFinalizeError;
 use crate::error::PsbtParseError;
 use crate::error::RequestBuilderError;
 use crate::error::TransactionError;
-use crate::types::LockTime;
-use crate::types::PkOrF;
 
 use bdk_wallet::bitcoin::Network;
 
