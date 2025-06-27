@@ -41,3 +41,4 @@ jobs:
           cd bdk-jvm
           bash ./scripts/build-linux-x86_64.sh
           ./gradlew test -P excludeConnectedTests
+          ./gradlew :examples:build
