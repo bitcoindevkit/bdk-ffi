@@ -322,6 +322,18 @@ impl Descriptor {
                     .collect()
             })
     }
+
+    /// Computes an upper bound on the difference between a non-satisfied `TxIn`'s
+    /// `segwit_weight` and a satisfied `TxIn`'s `segwit_weight`.
+    pub fn max_weight_to_satisfy(&self) -> Result<u64, DescriptorError> {
+        let weight = self
+            .extended_descriptor
+            .max_weight_to_satisfy()
+            .map_err(|e| DescriptorError::Miniscript {
+                error_message: e.to_string(),
+            })?;
+        Ok(weight.to_wu())
+    }
 }
 
 impl Display for Descriptor {
@@ -455,5 +467,20 @@ mod test {
         // Creating a Descriptor using an extended key that doesn't match the network provided will throw a DescriptorError::Key with inner InvalidNetwork error
         assert!(descriptor1.is_ok());
         assert_matches!(descriptor2.unwrap_err(), DescriptorError::Key { .. });
+    }
+
+    #[test]
+    fn test_max_weight_to_satisfy() {
+        // Test P2WPKH descriptor using standard test descriptor
+        let descriptor = Descriptor::new(
+            "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)".to_string(),
+            Network::Testnet
+        ).unwrap();
+
+        let weight = descriptor.max_weight_to_satisfy().unwrap();
+        println!("P2WPKH max weight to satisfy: {} wu", weight);
+
+        // Verify the method works and returns a positive weight
+        assert!(weight > 0, "Weight must be positive");
     }
 }
