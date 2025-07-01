@@ -29,7 +29,6 @@ use crate::error::PersistenceError;
 use crate::error::PsbtError;
 use crate::error::PsbtFinalizeError;
 use crate::error::PsbtParseError;
-use crate::error::RequestBuilderError;
 use crate::error::TransactionError;
 
 use bdk_wallet::bitcoin::Network;
