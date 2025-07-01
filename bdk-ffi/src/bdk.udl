@@ -251,11 +251,6 @@ interface PsbtFinalizeError {
 };
 
 [Error]
-interface RequestBuilderError {
-  RequestAlreadyConsumed();
-};
-
-[Error]
 interface TransactionError {
   Io();
   OversizedVectorAllocation();
