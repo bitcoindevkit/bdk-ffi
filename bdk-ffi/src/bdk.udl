@@ -270,8 +270,6 @@ interface TransactionError {
 // bdk_wallet crate - types module
 // ------------------------------------------------------------------------
 
-typedef enum KeychainKind;
-
 
 
 
