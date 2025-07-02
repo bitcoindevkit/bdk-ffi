@@ -291,8 +291,6 @@ typedef record Condition;
 // ------------------------------------------------------------------------
 
 
-typedef interface Script;
-
 [NonExhaustive, Remote]
 enum Network {
   "Bitcoin",
