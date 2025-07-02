@@ -311,8 +311,6 @@ enum WordCount {
   "Words24",
 };
 
-typedef interface Script;
-
 [NonExhaustive, Remote]
 enum Network {
   "Bitcoin",
