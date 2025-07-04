@@ -321,6 +321,7 @@ impl_into_core_type!(Address, BdkAddress);
 /// Bitcoin transaction.
 /// An authenticated movement of coins.
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Object)]
+#[uniffi::export(Eq, Display)]
 pub struct Transaction(BdkTransaction);
 
 #[uniffi::export]
@@ -461,6 +462,12 @@ impl From<&BdkTransaction> for Transaction {
 impl From<&Transaction> for BdkTransaction {
     fn from(tx: &Transaction) -> Self {
         tx.0.clone()
+    }
+}
+
+impl Display for Transaction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.0)
     }
 }
 
