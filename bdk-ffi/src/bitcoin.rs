@@ -32,6 +32,8 @@ use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
 use std::fmt::Display;
+use std::fs::File;
+use std::io::{BufReader, BufWriter};
 use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -495,6 +497,15 @@ impl Psbt {
         Ok(Arc::new(Psbt(Mutex::new(psbt))))
     }
 
+    /// Create a new `Psbt` from a `.psbt` file.
+    #[uniffi::constructor]
+    pub(crate) fn from_file(path: String) -> Result<Self, PsbtError> {
+        let file = File::open(path)?;
+        let mut buf_read = BufReader::new(file);
+        let psbt: BdkPsbt = BdkPsbt::deserialize_from_reader(&mut buf_read)?;
+        Ok(Psbt(Mutex::new(psbt)))
+    }
+
     /// Serialize the PSBT into a base64-encoded string.
     pub(crate) fn serialize(&self) -> String {
         let psbt = self.0.lock().unwrap().clone();
@@ -564,6 +575,15 @@ impl Psbt {
                 }
             }
         }
+    }
+
+    /// Write the `Psbt` to a file. Note that the file must not yet exist.
+    pub(crate) fn write_to_file(&self, path: String) -> Result<(), PsbtError> {
+        let file = File::create_new(path)?;
+        let mut writer = BufWriter::new(file);
+        let psbt = self.0.lock().unwrap();
+        psbt.serialize_to_writer(&mut writer)?;
+        Ok(())
     }
 
     /// Serializes the PSBT into a JSON string representation.
