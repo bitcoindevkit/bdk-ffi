@@ -888,7 +888,7 @@ impl From<BdkBip32Error> for Bip32Error {
                 Bip32Error::InvalidPublicKeyHexLength { length: len as u32 }
             }
             _ => Bip32Error::UnknownError {
-                error_message: format!("Unhandled error: {:?}", error),
+                error_message: format!("Unhandled error: {error:?}"),
             },
         }
     }
@@ -908,7 +908,7 @@ impl From<BdkBip39Error> for Bip39Error {
             },
             BdkBip39Error::InvalidChecksum => Bip39Error::InvalidChecksum,
             BdkBip39Error::AmbiguousLanguages(info) => Bip39Error::AmbiguousLanguages {
-                languages: format!("{:?}", info),
+                languages: format!("{info:?}"),
             },
         }
     }
@@ -947,7 +947,7 @@ impl From<BdkCreateTxError> for CreateTxError {
             },
             BdkCreateTxError::SpendingPolicyRequired(kind) => {
                 CreateTxError::SpendingPolicyRequired {
-                    kind: format!("{:?}", kind),
+                    kind: format!("{kind:?}"),
                 }
             }
             BdkCreateTxError::Version0 => CreateTxError::Version0,
@@ -1099,7 +1099,7 @@ impl From<BdkDescriptorError> for DescriptorError {
 impl From<BdkDescriptorKeyParseError> for DescriptorKeyError {
     fn from(err: BdkDescriptorKeyParseError) -> DescriptorKeyError {
         DescriptorKeyError::Parse {
-            error_message: format!("DescriptorKeyError error: {:?}", err),
+            error_message: format!("DescriptorKeyError error: {err:?}"),
         }
     }
 }
@@ -1107,7 +1107,7 @@ impl From<BdkDescriptorKeyParseError> for DescriptorKeyError {
 impl From<BdkBip32Error> for DescriptorKeyError {
     fn from(error: BdkBip32Error) -> DescriptorKeyError {
         DescriptorKeyError::Bip32 {
-            error_message: format!("BIP32 derivation error: {:?}", error),
+            error_message: format!("BIP32 derivation error: {error:?}"),
         }
     }
 }
