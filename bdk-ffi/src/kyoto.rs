@@ -23,6 +23,7 @@ use std::time::Duration;
 
 use tokio::sync::Mutex;
 
+use crate::bitcoin::BlockHash;
 use crate::bitcoin::Transaction;
 use crate::error::{CbfBuilderError, CbfError};
 use crate::types::Update;
@@ -338,6 +339,27 @@ impl CbfClient {
             .await
             .map_err(|_| CbfError::NodeStopped)
             .map(|fee| Arc::new(FeeRate(fee)))
+    }
+
+    /// Fetch the average fee rate for a block by requesting it from a peer. Not recommend for
+    /// resource-limited devices.
+    pub async fn average_fee_rate(
+        &self,
+        blockhash: Arc<BlockHash>,
+    ) -> Result<Arc<FeeRate>, CbfError> {
+        let fee_rate = self
+            .sender
+            .average_fee_rate(blockhash.0)
+            .await
+            .map_err(|_| CbfError::NodeStopped)?;
+        Ok(Arc::new(fee_rate.into()))
+    }
+
+    /// Add another [`Peer`] to attempt a connection with.
+    pub fn connect(&self, peer: Peer) -> Result<(), CbfError> {
+        self.sender
+            .add_peer(peer)
+            .map_err(|_| CbfError::NodeStopped)
     }
 
     /// Query a Bitcoin DNS seeder using the configured resolver.
