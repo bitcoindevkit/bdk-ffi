@@ -14,6 +14,7 @@ use bdk_wallet::bitcoin::consensus::encode::serialize;
 use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
 use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
+use bdk_wallet::bitcoin::hex::FromHex;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
@@ -331,6 +332,13 @@ impl Transaction {
         let mut decoder = Cursor::new(transaction_bytes);
         let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
         Ok(Transaction(tx))
+    }
+
+    /// Creates a new `Transaction` instance from a hexadecimal string representation.
+    #[uniffi::constructor]
+    pub fn from_string(tx_hex: String) -> Result<Self, TransactionError> {
+        let tx_bytes = Vec::from_hex(&tx_hex)?;
+        Self::new(tx_bytes)
     }
 
     /// Computes the Txid.
@@ -677,6 +685,8 @@ impl_hash_like!(TxMerkleNode, BitcoinDoubleSha256Hash);
 mod tests {
     use crate::bitcoin::Address;
     use crate::bitcoin::Network;
+    use crate::bitcoin::Transaction;
+    use crate::error::TransactionError;
 
     #[test]
     fn test_is_valid_for_network() {
@@ -1031,5 +1041,42 @@ mod tests {
         .unwrap();
         let segwit_data = segwit.to_address_data();
         println!("Segwit data: {:#?}", segwit_data);
+    }
+
+    #[test]
+    fn test_transaction_from_string() {
+        // A simple transaction hex (mainnet coinbase transaction)
+        let tx_hex = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4d04ffff001d0104455468652054696d65732030332f4a616e2f32303039204368616e63656c6c6f72206f6e206272696e6b206f66207365636f6e64206261696c6f757420666f722062616e6b73ffffffff0100f2052a01000000434104678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5fac00000000";
+
+        // Test successful parsing
+        let tx = Transaction::from_string(tx_hex.to_string()).unwrap();
+
+        // Verify the transaction was parsed correctly
+        assert_eq!(tx.version(), 1);
+        assert_eq!(tx.input().len(), 1);
+        assert_eq!(tx.output().len(), 1);
+        assert!(tx.is_coinbase());
+
+        // Test that serializing and re-parsing gives the same result
+        let serialized = tx.serialize();
+        let tx2 = Transaction::new(serialized).unwrap();
+        assert_eq!(
+            tx.compute_txid().to_string(),
+            tx2.compute_txid().to_string()
+        );
+
+        // Test invalid hex string
+        let invalid_hex = "invalid_hex_string";
+        let result = Transaction::from_string(invalid_hex.to_string());
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            TransactionError::InvalidHexString => {}
+            _ => panic!("Expected InvalidHexString error"),
+        }
+
+        // Test hex string with invalid transaction data
+        let invalid_tx_hex = "deadbeef";
+        let result = Transaction::from_string(invalid_tx_hex.to_string());
+        assert!(result.is_err());
     }
 }
