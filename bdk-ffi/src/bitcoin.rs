@@ -484,6 +484,17 @@ impl Psbt {
         Ok(Psbt(Mutex::new(psbt)))
     }
 
+    /// Creates a PSBT from an unsigned transaction.
+    ///
+    /// # Errors
+    ///
+    /// If transactions is not unsigned.
+    #[uniffi::constructor]
+    pub(crate) fn from_unsigned_tx(tx: Arc<Transaction>) -> Result<Arc<Psbt>, PsbtError> {
+        let psbt: BdkPsbt = BdkPsbt::from_unsigned_tx(tx.0.clone())?;
+        Ok(Arc::new(Psbt(Mutex::new(psbt))))
+    }
+
     /// Serialize the PSBT into a base64-encoded string.
     pub(crate) fn serialize(&self) -> String {
         let psbt = self.0.lock().unwrap().clone();
