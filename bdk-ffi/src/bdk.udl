@@ -264,6 +264,7 @@ interface TransactionError {
   ParseFailed();
   UnsupportedSegwitFlag(u8 flag);
   OtherTransactionErr();
+  InvalidHexString();
 };
 
 // ------------------------------------------------------------------------

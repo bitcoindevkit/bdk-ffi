@@ -8,7 +8,7 @@ use bdk_wallet::bitcoin::amount::ParseAmountError as BdkParseAmountError;
 use bdk_wallet::bitcoin::bip32::Error as BdkBip32Error;
 use bdk_wallet::bitcoin::consensus::encode::Error as BdkEncodeError;
 use bdk_wallet::bitcoin::hashes::hex::HexToArrayError as BdkHexToArrayError;
-use bdk_wallet::bitcoin::hex::DisplayHex;
+use bdk_wallet::bitcoin::hex::{DisplayHex, HexToBytesError};
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
@@ -768,6 +768,9 @@ pub enum TransactionError {
     // This is required because the bdk::bitcoin::consensus::encode::Error is non-exhaustive
     #[error("other transaction error")]
     OtherTransactionErr,
+
+    #[error("invalid hex string")]
+    InvalidHexString,
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
@@ -1509,6 +1512,12 @@ impl From<BdkEncodeError> for TransactionError {
             }
             _ => TransactionError::OtherTransactionErr,
         }
+    }
+}
+
+impl From<HexToBytesError> for TransactionError {
+    fn from(_: HexToBytesError) -> Self {
+        TransactionError::InvalidHexString
     }
 }
 
