@@ -1,10 +1,5 @@
 namespace bdk {};
 
-// ------------------------------------------------------------------------
-// bdk_wallet crate - bitcoin re-exports
-// ------------------------------------------------------------------------
-
-
 [NonExhaustive, Remote]
 enum Network {
   "Bitcoin",
