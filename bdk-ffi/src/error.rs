@@ -1438,6 +1438,22 @@ impl From<BdkPsbtParseError> for PsbtParseError {
     }
 }
 
+impl From<std::io::Error> for PsbtError {
+    fn from(error: std::io::Error) -> Self {
+        PsbtError::Io {
+            error_message: error.to_string(),
+        }
+    }
+}
+
+impl From<bdk_wallet::bitcoin::io::Error> for PsbtError {
+    fn from(error: bdk_wallet::bitcoin::io::Error) -> Self {
+        PsbtError::Io {
+            error_message: error.to_string(),
+        }
+    }
+}
+
 impl From<BdkPsbtFinalizeError> for PsbtFinalizeError {
     fn from(value: BdkPsbtFinalizeError) -> Self {
         match value {
