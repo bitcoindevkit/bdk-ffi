@@ -174,6 +174,7 @@ impl_into_core_type!(Amount, BdkAmount);
 
 /// A bitcoin script: https://en.bitcoin.it/wiki/Script
 #[derive(Clone, Debug, uniffi::Object)]
+#[uniffi::export(Display)]
 pub struct Script(pub BdkScriptBuf);
 
 #[uniffi::export]
@@ -193,6 +194,12 @@ impl Script {
 
 impl_from_core_type!(BdkScriptBuf, Script);
 impl_into_core_type!(Script, BdkScriptBuf);
+
+impl Display for Script {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt_asm(f)
+    }
+}
 
 /// Bitcoin block header.
 /// Contains all the block’s information except the actual transactions, but including a root of a merkle tree
