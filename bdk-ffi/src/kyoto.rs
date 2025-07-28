@@ -368,7 +368,11 @@ impl CbfClient {
     /// for compact block filter nodes from the seeder. For example `dns.myseeder.com` will be queried
     /// as `x849.dns.myseeder.com`. This has no guarantee to return any `IpAddr`.
     pub async fn lookup_host(&self, hostname: String) -> Vec<Arc<IpAddress>> {
-        let nodes = lookup_host(hostname, self.dns_resolver).await;
+        let nodes = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(lookup_host(hostname, self.dns_resolver));
         nodes
             .into_iter()
             .map(|ip| Arc::new(IpAddress { inner: ip }))
