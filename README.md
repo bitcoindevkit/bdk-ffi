@@ -23,7 +23,14 @@ The below directories (a separate repository in the case of bdk-swift) include i
 | Kotlin   | JVM                   | [bdk-jvm]         | [Readme bdk-jvm]       | [Kotlin JVM API Docs] |
 | Kotlin   | Android               | [bdk-android]     | [Readme bdk-android]   | [Android API Docs]    |
 | Swift    | iOS, macOS            | [bdk-swift]       | [Readme bdk-swift]     |                       |
-| Python   | linux, macOS, Windows | [bdk-python]      | [Readme bdk-python]    |                       |
+
+## Other supported languages maintained in separate repositories
+
+The `bdk-ffi` codebase in this repository can be used to produce language bindings for more than Swift and Kotlin. Some of these require the use of uniffi 3rd party plugins and some not. Below are some of the libraries that use the bdk-ffi API, but are maintained separately. Refer to their individual READMEs for information on their state of production-readiness.
+
+| Language | Platform              | Published Package | Building Documentation | API Docs              |
+| -------- |-----------------------|-------------------|------------------------|-----------------------|
+| Python   | Linux, macOS, Windows | [bdkpython]       | [Readme bdkpython]     |                       |
 
 ## Building and testing the libraries
 
@@ -152,7 +159,7 @@ This project is made possible thanks to the wonderful work by the [mozilla/uniff
 [bdk-jvm]: https://central.sonatype.com/artifact/org.bitcoindevkit/bdk-jvm/
 [bdk-android]: https://central.sonatype.com/artifact/org.bitcoindevkit/bdk-android/
 [bdk-swift]: https://github.com/bitcoindevkit/bdk-swift
-[bdk-python]: https://pypi.org/project/bdkpython/
+[bdkpython]: https://pypi.org/project/bdkpython/
 [mozilla/uniffi-rs]: https://github.com/mozilla/uniffi-rs
 [bdk]: https://github.com/bitcoindevkit/bdk
 [Bitcoin Dev Kit]: https://github.com/bitcoindevkit
@@ -160,6 +167,6 @@ This project is made possible thanks to the wonderful work by the [mozilla/uniff
 [Readme bdk-jvm]: https://github.com/bitcoindevkit/bdk-ffi/tree/master/bdk-jvm
 [Readme bdk-android]: https://github.com/bitcoindevkit/bdk-ffi/tree/master/bdk-android
 [Readme bdk-swift]: https://github.com/bitcoindevkit/bdk-swift  
-[Readme bdk-python]: https://github.com/bitcoindevkit/bdk-ffi/tree/master/bdk-python
+[Readme bdkpython]: https://github.com/bitcoindevkit/bdkpython
 [Kotlin JVM API Docs]: https://bitcoindevkit.org/jvm/
 [Android API Docs]: https://bitcoindevkit.org/android/
