@@ -1,3 +1,0 @@
-include ./src/bdkpython/libbdkffi.dylib
-include ./src/bdkpython/libbdkffi.so
-include ./src/bdkpython/bdkffi.dll
