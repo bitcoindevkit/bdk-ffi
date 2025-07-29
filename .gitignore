@@ -20,6 +20,7 @@ testdb
 .editorconfig
 bdk.kt
 .kotlin/
+bdk-jvm/examples/data/
 
 # Swift related
 /.build
