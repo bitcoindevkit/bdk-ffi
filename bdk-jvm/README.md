@@ -49,6 +49,19 @@ sdk install java 17.0.2-tem
 bash ./scripts/build-<your-local-architecture>.sh
 ```
 
+## Run example files
+The `examples` module show different samples of how some of the APIs can be used. You can run the examples after building as stated above. The gradle task to run is by convention the file name of the example file.
+
+```shell
+cd bdk-jvm
+./gradlew MultisigTransaction
+```
+
+You can also list the application tasks. (All examples grouped under application)
+```shell
+cd bdk-jvm
+./gradlew tasks --group application
+```
 ## How to publish to your local Maven repo
 
 ```shell
