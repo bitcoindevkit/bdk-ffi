@@ -152,7 +152,16 @@ fun getNewWallet(script: ActiveWalletScriptType, network: Network): Wallet {
 }
 
 fun generateUniquePersistenceFilePath(): String {
-    val randomSuffix = (1..100000).random() // Generate a unique random number for the path
-    val currentDirectory = Paths.get("").toAbsolutePath().toString() + "/bdk-jvm/examples/src/main/kotlin/bdk_persistence_$randomSuffix.sqlite"
-    return currentDirectory
+    // Resolve the absolute path to the fixed `examples/data` directory
+    val projectRoot = Paths.get("").toAbsolutePath().parent.resolve("examples")
+    val persistenceDirectory = projectRoot.resolve("data").toFile()
+
+    persistenceDirectory.apply {
+        if (!exists()) mkdirs()
+    }
+
+    // Generate a file path with a unique random suffix
+    val randomSuffix = (1..100000).random() // Generate a random number
+    val persistenceFilePath = projectRoot.resolve("data/bdk_persistence_$randomSuffix.sqlite").toString()
+    return persistenceFilePath
 }

@@ -64,13 +64,20 @@ fun createScriptAppropriateDescriptor(
         )
     }
 }
-
 fun getPersistenceFilePath(): String {
-    val currentDirectory = Paths.get("").toAbsolutePath().toString() + "/bdk-jvm/examples/src/main/kotlin/bdk_persistence.sqlite"
-    File(currentDirectory).apply {
+    // Resolve absolute path to the fixed `examples/data` directory
+    val projectRoot = Paths.get("").toAbsolutePath().parent.resolve("examples")
+    val persistenceDirectory = projectRoot.resolve("data").toFile()
+    val persistenceFilePath = projectRoot.resolve("data/bdk_persistence.sqlite").toString()
+
+    persistenceDirectory.apply {
+        if (!exists()) mkdirs()
+    }
+
+    File(persistenceFilePath).apply {
         if (exists()) delete()
     }
-    return currentDirectory
+    return persistenceFilePath
 }
 
 enum class ActiveWalletScriptType {
