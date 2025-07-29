@@ -3,6 +3,63 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.0.0]
+
+This release brings bdk-ffi to it's 2.0.0 version!
+
+The release uses the following Rust dependencies:
+    - bdk_wallet 2.0.0
+    - bdk_electrum 0.23.0
+    - bdk_esplora 0.22.0
+    - bdk_kyoto 0.13.1
+    - uniffi 0.29.1
+    - rust-bitcoin 0.32.6
+
+### Added
+    - PSBT file operations: read and write PSBT files [#800]
+    - New `Psbt::from_unsigned_tx` constructor [#802]
+    - New `Psbt::spend_utxo` method [#798]
+    - Arbitrary persistence for wallet [#771]
+    - Wallet changeset primitives [#756]
+    - Display implementation for `Transaction` [#799]
+    - `Descriptor::max_weight_to_satisfy` method [#794]
+    - Expose `Wallet::public_descriptor` [#786]
+    - Expose `Wallet::tx_details` [#778]
+    - Expose `Wallet::latest_checkpoint` [#761]
+    - `TxGraphChangeSet::first_seen` and `last_evicted` fields [#782]
+    - `from_string` constructors for hash types [#784]
+    - `Transaction::wtxid` method [#773]
+    - Kyoto: average feerate and connect functionality [#797]
+
+### Changed
+    - Use `Amount` type in `TxOut` instead of u64 [#781]
+    - Update to latest bdk_kyoto with API changes [#772]
+    - Add `lookahead` as optional argument to wallet methods [#770]
+
+### Fixed
+    - Export public types from `Script` [#763]
+    - Change object to record for struct with fields [#738]
+
+[#738]: https://github.com/bitcoindevkit/bdk-ffi/pull/738
+[#756]: https://github.com/bitcoindevkit/bdk-ffi/pull/756
+[#761]: https://github.com/bitcoindevkit/bdk-ffi/pull/761
+[#763]: https://github.com/bitcoindevkit/bdk-ffi/pull/763
+[#770]: https://github.com/bitcoindevkit/bdk-ffi/pull/770
+[#771]: https://github.com/bitcoindevkit/bdk-ffi/pull/771
+[#772]: https://github.com/bitcoindevkit/bdk-ffi/pull/772
+[#773]: https://github.com/bitcoindevkit/bdk-ffi/pull/773
+[#778]: https://github.com/bitcoindevkit/bdk-ffi/pull/778
+[#781]: https://github.com/bitcoindevkit/bdk-ffi/pull/781
+[#782]: https://github.com/bitcoindevkit/bdk-ffi/pull/782
+[#784]: https://github.com/bitcoindevkit/bdk-ffi/pull/784
+[#786]: https://github.com/bitcoindevkit/bdk-ffi/pull/786
+[#794]: https://github.com/bitcoindevkit/bdk-ffi/pull/794
+[#797]: https://github.com/bitcoindevkit/bdk-ffi/pull/797
+[#798]: https://github.com/bitcoindevkit/bdk-ffi/pull/798
+[#799]: https://github.com/bitcoindevkit/bdk-ffi/pull/799
+[#800]: https://github.com/bitcoindevkit/bdk-ffi/pull/800
+[#802]: https://github.com/bitcoindevkit/bdk-ffi/pull/802
+
 ## [v1.2.0]
 
 This release brings in a new experimental compact block filters client!
@@ -457,6 +514,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v2.0.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.2.0...v2.0.0
 [v1.2.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.7...v1.1.0
 [v1.0.0-beta.7]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.6...v1.0.0-beta.7
