@@ -1,6 +1,6 @@
 use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Txid};
 use crate::error::CreateTxError;
-use crate::types::{LockTime, ScriptAmount};
+use crate::types::{CoinSelectionAlgorithm, LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
@@ -9,7 +9,7 @@ use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence};
-use bdk_wallet::KeychainKind;
+use bdk_wallet::{coin_selection, KeychainKind};
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -40,6 +40,7 @@ pub struct TxBuilder {
     locktime: Option<LockTime>,
     allow_dust: bool,
     version: Option<i32>,
+    coin_selection: Option<CoinSelectionAlgorithm>,
 }
 
 #[uniffi::export]
@@ -65,6 +66,7 @@ impl TxBuilder {
             locktime: None,
             allow_dust: false,
             version: None,
+            coin_selection: None,
         }
     }
 
@@ -333,6 +335,14 @@ impl TxBuilder {
         })
     }
 
+    /// Choose the coin selection algorithm
+    pub fn coin_selection(&self, coin_selection: CoinSelectionAlgorithm) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            coin_selection: Some(coin_selection),
+            ..self.clone()
+        })
+    }
+
     /// Finish building the transaction.
     ///
     /// Uses the thread-local random number generator (rng).
@@ -344,7 +354,54 @@ impl TxBuilder {
     pub fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
-        let mut tx_builder = wallet.build_tx();
+        let psbt = if let Some(coin_selection) = &self.coin_selection {
+            match coin_selection {
+                CoinSelectionAlgorithm::BranchAndBoundCoinSelection => {
+                    let mut tx_builder = wallet.build_tx().coin_selection(
+                        coin_selection::BranchAndBoundCoinSelection::<
+                            coin_selection::SingleRandomDraw,
+                        >::default(),
+                    );
+                    self.apply_config(&mut tx_builder)?;
+                    tx_builder.finish().map_err(CreateTxError::from)?
+                }
+                CoinSelectionAlgorithm::SingleRandomDraw => {
+                    let mut tx_builder = wallet
+                        .build_tx()
+                        .coin_selection(coin_selection::SingleRandomDraw);
+                    self.apply_config(&mut tx_builder)?;
+                    tx_builder.finish().map_err(CreateTxError::from)?
+                }
+                CoinSelectionAlgorithm::OldestFirstCoinSelection => {
+                    let mut tx_builder = wallet
+                        .build_tx()
+                        .coin_selection(coin_selection::OldestFirstCoinSelection);
+                    self.apply_config(&mut tx_builder)?;
+                    tx_builder.finish().map_err(CreateTxError::from)?
+                }
+                CoinSelectionAlgorithm::LargestFirstCoinSelection => {
+                    let mut tx_builder = wallet
+                        .build_tx()
+                        .coin_selection(coin_selection::LargestFirstCoinSelection);
+                    self.apply_config(&mut tx_builder)?;
+                    tx_builder.finish().map_err(CreateTxError::from)?
+                }
+            }
+        } else {
+            let mut tx_builder = wallet.build_tx();
+            self.apply_config(&mut tx_builder)?;
+            tx_builder.finish().map_err(CreateTxError::from)?
+        };
+
+        Ok(Arc::new(psbt.into()))
+    }
+}
+
+impl TxBuilder {
+    fn apply_config<C>(
+        &self,
+        tx_builder: &mut bdk_wallet::TxBuilder<'_, C>,
+    ) -> Result<(), CreateTxError> {
         if self.add_global_xpubs {
             tx_builder.add_global_xpubs();
         }
@@ -401,10 +458,7 @@ impl TxBuilder {
         if let Some(version) = self.version {
             tx_builder.version(version);
         }
-
-        let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
-
-        Ok(Arc::new(psbt.into()))
+        Ok(())
     }
 }
 
