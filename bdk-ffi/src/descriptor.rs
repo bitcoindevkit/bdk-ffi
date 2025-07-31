@@ -1,5 +1,7 @@
 use crate::bitcoin::DescriptorId;
+use crate::bitcoin::DescriptorType;
 use crate::error::DescriptorError;
+use crate::error::MiniscriptError;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 
@@ -16,7 +18,6 @@ use bdk_wallet::template::{
 };
 use bdk_wallet::KeychainKind;
 
-use crate::error::MiniscriptError;
 use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -333,6 +334,10 @@ impl Descriptor {
                 error_message: e.to_string(),
             })?;
         Ok(weight.to_wu())
+    }
+
+    pub fn desc_type(&self) -> DescriptorType {
+        self.extended_descriptor.desc_type()
     }
 }
 

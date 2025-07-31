@@ -38,6 +38,8 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
+pub(crate) type DescriptorType = bdk_wallet::miniscript::descriptor::DescriptorType;
+
 /// A reference to an unspent output by TXID and output index.
 #[derive(Debug, Clone, Eq, PartialEq, std::hash::Hash, uniffi:: Record)]
 pub struct OutPoint {
@@ -724,6 +726,33 @@ impl_hash_like!(DescriptorId, BitcoinSha256Hash);
 pub struct TxMerkleNode(pub(crate) BitcoinDoubleSha256Hash);
 
 impl_hash_like!(TxMerkleNode, BitcoinDoubleSha256Hash);
+
+/// Descriptor Type of the descriptor
+#[uniffi::remote(Enum)]
+pub enum DescriptorType {
+    /// Bare descriptor(Contains the native P2pk)
+    Bare,
+    /// Pure Sh Descriptor. Does not contain nested Wsh/Wpkh
+    Sh,
+    /// Pkh Descriptor
+    Pkh,
+    /// Wpkh Descriptor
+    Wpkh,
+    /// Wsh
+    Wsh,
+    /// Sh Wrapped Wsh
+    ShWsh,
+    /// Sh wrapped Wpkh
+    ShWpkh,
+    /// Sh Sorted Multi
+    ShSortedMulti,
+    /// Wsh Sorted Multi
+    WshSortedMulti,
+    /// Sh Wsh Sorted Multi
+    ShWshSortedMulti,
+    /// Tr Descriptor
+    Tr,
+}
 
 #[cfg(test)]
 mod tests {
