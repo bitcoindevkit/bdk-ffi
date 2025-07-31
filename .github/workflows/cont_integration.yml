@@ -80,7 +80,7 @@ jobs:
           persist-credentials: false
 
       - name: "Set default toolchain"
-        run: rustup default nightly
+        run: rustup default 1.84.1
 
       - name: "Set profile"
         run: rustup set profile minimal
