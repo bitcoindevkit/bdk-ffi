@@ -67,6 +67,48 @@ impl Wallet {
         })
     }
 
+    /// Build a new single descriptor `Wallet`.
+    ///
+    /// If you have previously created a wallet, use `Wallet::load` instead.
+    ///
+    /// # Note
+    ///
+    /// Only use this method when creating a wallet designed to be used with a single
+    /// descriptor and keychain. Otherwise the recommended way to construct a new wallet is
+    /// by using `Wallet::create`. It's worth noting that not all features are available
+    /// with single descriptor wallets, for example setting a `change_policy` on `TxBuilder`
+    /// and related methods such as `do_not_spend_change`. This is because all payments are
+    /// received on the external keychain (including change), and without a change keychain
+    /// BDK lacks enough information to distinguish between change and outside payments.
+    ///
+    /// Additionally because this wallet has no internal (change) keychain, all methods that
+    /// require a `KeychainKind` as input, e.g. `reveal_next_address` should only be called
+    /// using the `External` variant. In most cases passing `Internal` is treated as the
+    /// equivalent of `External` but this behavior must not be relied on.
+    #[uniffi::constructor(default(lookahead = 25))]
+    pub fn create_single(
+        descriptor: Arc<Descriptor>,
+        network: Network,
+        persister: Arc<Persister>,
+        lookahead: u32,
+    ) -> Result<Self, CreateWithPersistError> {
+        let descriptor = descriptor.to_string_with_secret();
+        let mut persist_lock = persister.inner.lock().unwrap();
+        let deref = persist_lock.deref_mut();
+
+        let wallet: PersistedWallet<PersistenceType> = BdkWallet::create_single(descriptor)
+            .network(network)
+            .lookahead(lookahead)
+            .create_wallet(deref)
+            .map_err(|e| CreateWithPersistError::Persist {
+                error_message: e.to_string(),
+            })?;
+
+        Ok(Wallet {
+            inner_mutex: Mutex::new(wallet),
+        })
+    }
+
     /// Build Wallet by loading from persistence.
     //
     // Note that the descriptor secret keys are not persisted to the db.
