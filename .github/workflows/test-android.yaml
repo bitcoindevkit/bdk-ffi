@@ -10,30 +10,16 @@ on:
       - "bdk-ffi/**"
       - "bdk-android/**"
 
-# The default Android NDK on the ubuntu-24.04 image is 25.2.9519653
-
 permissions: {}
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - name: "Show default version of NDK"
-        run: echo $ANDROID_NDK_ROOT
-
       - name: "Check out PR branch"
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-
-      - name: "Cache"
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ./target
-          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
 
       - name: "Set up JDK"
         uses: actions/setup-java@v4
@@ -41,15 +27,44 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: "Setup Android SDK"
+        uses: android-actions/setup-android@v3
+
+      - name: "Setup Android NDK"
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26c
+
+      - name: "Install Rust"
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.84.1
+
+      - name: "Cache Rust"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ./target
+          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+
       - name: "Build Android library"
         run: |
           cd bdk-android
           bash ./scripts/build-linux-x86_64.sh
 
-# There are currently no unit tests for bdk-android (see the tests in bdk-jvm instead) and the 
-# integration tests require the macOS image which is not working with the older NDK version we
-# are using, so for now we just make sure that the library builds and omit the connectedTest
-#      - name: "Run Android connected tests"
-#        run: |
-#          cd bdk-android
-#          ./gradlew connectedAndroidTest --console=plain
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: "Run Android connected tests"
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: Nexus 6
+          script: cd bdk-android && ./gradlew connectedAndroidTest --console=plain
