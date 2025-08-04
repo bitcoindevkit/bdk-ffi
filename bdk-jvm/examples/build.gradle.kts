@@ -15,6 +15,9 @@ repositories {
 dependencies {
     implementation(project(":lib"))
     testImplementation(kotlin("test"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.slf4j:slf4j-api:2.0.16")
+    implementation("ch.qos.logback:logback-classic:1.5.13")
 }
 
 tasks.test {
@@ -45,6 +48,13 @@ tasks.register<JavaExec>("MultisigTransaction") {
     group = "application"
     description = "Runs the main function in the MultisigTransaction example"
     mainClass.set("org.bitcoindevkit.MultisigTransactionKt")
+    classpath = sourceSets["main"].runtimeClasspath
+}
+
+tasks.register<JavaExec>("Kyoto") {
+    group = "application"
+    description = "Runs the main function in the Kyoto example"
+    mainClass.set("org.bitcoindevkit.KyotoKt")
     classpath = sourceSets["main"].runtimeClasspath
 }
 
