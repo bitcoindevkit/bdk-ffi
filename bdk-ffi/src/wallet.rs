@@ -445,7 +445,7 @@ impl Wallet {
 }
 
 impl Wallet {
-    pub(crate) fn get_wallet(&self) -> MutexGuard<PersistedWallet<PersistenceType>> {
+    pub(crate) fn get_wallet(&self) -> MutexGuard<'_, PersistedWallet<PersistenceType>> {
         self.inner_mutex.lock().expect("wallet")
     }
 }
