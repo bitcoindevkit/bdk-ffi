@@ -70,11 +70,12 @@ impl Wallet {
     /// Build Wallet by loading from persistence.
     //
     // Note that the descriptor secret keys are not persisted to the db.
-    #[uniffi::constructor]
+    #[uniffi::constructor(default(lookahead = 25))]
     pub fn load(
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
         persister: Arc<Persister>,
+        lookahead: u32,
     ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
@@ -84,6 +85,7 @@ impl Wallet {
         let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
             .descriptor(KeychainKind::External, Some(descriptor))
             .descriptor(KeychainKind::Internal, Some(change_descriptor))
+            .lookahead(lookahead)
             .extract_keys()
             .load_wallet(deref)
             .map_err(|e| LoadWithPersistError::Persist {
@@ -445,7 +447,7 @@ impl Wallet {
 }
 
 impl Wallet {
-    pub(crate) fn get_wallet(&self) -> MutexGuard<PersistedWallet<PersistenceType>> {
+    pub(crate) fn get_wallet(&self) -> MutexGuard<'_, PersistedWallet<PersistenceType>> {
         self.inner_mutex.lock().expect("wallet")
     }
 }
