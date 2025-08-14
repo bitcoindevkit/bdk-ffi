@@ -6,9 +6,9 @@ use crate::error::{
 };
 use crate::store::{PersistenceType, Persister};
 use crate::types::{
-    AddressInfo, Balance, BlockId, CanonicalTx, FullScanRequestBuilder, KeychainAndIndex,
-    LocalOutput, Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder, UnconfirmedTx,
-    Update,
+    AddressInfo, Balance, BlockId, CanonicalTx, EvictedTx, FullScanRequestBuilder,
+    KeychainAndIndex, LocalOutput, Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder,
+    UnconfirmedTx, Update,
 };
 
 use bdk_wallet::bitcoin::Network;
@@ -221,6 +221,19 @@ impl Wallet {
                 .into_iter()
                 .map(|utx| (Arc::new(utx.tx.as_ref().into()), utx.last_seen)),
         )
+    }
+
+    /// Apply transactions that have been evicted from the mempool.
+    /// Transactions may be evicted for paying too-low fee, or for being malformed.
+    /// Irrelevant transactions are ignored.
+    ///
+    /// For more information: https://docs.rs/bdk_wallet/latest/bdk_wallet/struct.Wallet.html#method.apply_evicted_txs
+    pub fn apply_evicted_txs(&self, evicted_txs: Vec<EvictedTx>) {
+        self.get_wallet().apply_evicted_txs(
+            evicted_txs
+                .into_iter()
+                .map(|etx| (etx.txid.0, etx.evicted_at)),
+        );
     }
 
     /// The derivation index of this wallet. It will return `None` if it has not derived any addresses.

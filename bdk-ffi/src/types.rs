@@ -777,6 +777,15 @@ pub struct UnconfirmedTx {
     pub last_seen: u64,
 }
 
+/// This type replaces the Rust tuple `(txid, evicted_at)` used in the Wallet::apply_evicted_txs` method,
+/// where `evicted_at` is the timestamp of when the transaction `txid` was evicted from the mempool.
+/// Transactions may be evicted for paying a low fee rate or having invalid scripts.
+#[derive(uniffi::Record)]
+pub struct EvictedTx {
+    pub txid: Arc<Txid>,
+    pub evicted_at: u64,
+}
+
 /// Mapping of descriptors to their last revealed index.
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct IndexerChangeSet {
