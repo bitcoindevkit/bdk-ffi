@@ -7,39 +7,6 @@ on:
 permissions: {}
 
 jobs:
-  jvm-tests:
-    name: "Build and test JVM library on Linux"
-    runs-on: ubuntu-24.04
-    steps:
-      - name: "Checkout publishing branch"
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-
-      - name: "Cache"
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ./target
-          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
-
-      - name: "Set up JDK"
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 11
-
-      - name: "Set default Rust version to 1.84.1"
-        run: rustup default 1.84.1
-
-      - name: "Build library and run tests"
-        run: |
-          cd bdk-jvm
-          bash ./scripts/build-linux-x86_64.sh
-          ./gradlew test
-
   swift-tests:
     name: "Build and test iOS library on macOS"
     runs-on: macos-14
