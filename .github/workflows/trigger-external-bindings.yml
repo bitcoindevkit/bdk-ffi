@@ -1,0 +1,27 @@
+name: Trigger External Bindings Workflow
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'bdk-ffi/**'
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:    
+    #Trigger bdk-jvm-test in bdk-jvm repository
+      - name: Trigger bdk-jvm-test in bdk-jvm repository
+        if: ${{ github.ref_name == 'master' }}
+        run: |
+          response=$(curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token ${{ secrets.BDK_JVM_ACCESS_TOKEN }}" \
+            https://api.github.com/repos/bitcoindevkit/bdk-jvm/dispatches \
+            -d '{"event_type":"trigger-bdk-jvm-tests"}')
+          echo "Response: $response"
+          echo "HTTP Status Code: $(echo $response | jq -r '.status')"
+          echo "Response Body: $(echo $response | jq -r '.body')"
