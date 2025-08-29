@@ -1175,3 +1175,11 @@ impl From<bdk_wallet::TxDetails> for TxDetails {
         }
     }
 }
+
+#[derive(uniffi::Enum, Clone)]
+pub enum CoinSelectionAlgorithm {
+    BranchAndBoundCoinSelection,
+    SingleRandomDraw,
+    OldestFirstCoinSelection,
+    LargestFirstCoinSelection,
+}
