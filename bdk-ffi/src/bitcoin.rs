@@ -15,6 +15,7 @@ use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
 use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
 use bdk_wallet::bitcoin::io::Cursor;
+use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::BlockHash as BitcoinBlockHash;
@@ -482,6 +483,94 @@ impl Display for Transaction {
     }
 }
 
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct PartialSig {
+    pub pubkey: String,
+    pub signature: Vec<u8>,
+}
+
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct Bip32Derivation {
+    /// hex-encoded public key (serialized)
+    pub pubkey: String,
+    /// Full information on the used extended public key: fingerprint of the master extended public key and a derivation path from it.
+    pub keysource: String,
+}
+
+/// A key-value map for an input of the corresponding index in the unsigned transaction.
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct Input {
+    /// The non-witness transaction this input spends from. Should only be
+    /// `Option::Some` for inputs which spend non-segwit outputs or
+    /// if it is unknown whether an input spends a segwit output.
+    pub non_witness_utxo: Option<Arc<Transaction>>,
+    /// The transaction output this input spends from. Should only be
+    /// `Option::Some` for inputs which spend segwit outputs,
+    /// including P2SH embedded ones.
+    pub witness_utxo: Option<TxOut>,
+    /// A map from public keys to their corresponding signature as would be
+    // pushed to the stack from a scriptSig or witness for a non-taproot inputs.
+    pub partial_sigs: Option<Vec<PartialSig>>,
+    /// The sighash type to be used for this input. Signatures for this input
+    /// must use the sighash type.
+    pub sighash_type: Option<String>,
+    /// The redeem script for this input.
+    pub redeem_script: Option<Arc<Script>>,
+    /// The witness script for this input.
+    pub witness_script: Option<Arc<Script>>,
+    /// A map from public keys needed to sign this input to their corresponding
+    /// master key fingerprints and derivation paths.
+    pub bip32_derivation: Vec<Bip32Derivation>,
+}
+
+impl From<&BdkInput> for Input {
+    fn from(input: &BdkInput) -> Self {
+        Input {
+            non_witness_utxo: input
+                .non_witness_utxo
+                .as_ref()
+                .map(|tx| Arc::new(Transaction(tx.clone()))),
+            witness_utxo: input.witness_utxo.as_ref().map(TxOut::from),
+
+            partial_sigs: if input.partial_sigs.is_empty() {
+                None
+            } else {
+                Some(
+                    input
+                        .partial_sigs
+                        .iter()
+                        .map(|(k, v)| PartialSig {
+                            pubkey: k.to_string(),
+                            signature: v.to_vec(), // raw bytes
+                        })
+                        .collect::<Vec<PartialSig>>(),
+                )
+            },
+            sighash_type: input.sighash_type.as_ref().map(|s| s.to_string()),
+            redeem_script: input
+                .redeem_script
+                .as_ref()
+                .map(|s| Arc::new(Script(s.clone()))),
+            witness_script: input
+                .witness_script
+                .as_ref()
+                .map(|s| Arc::new(Script(s.clone()))),
+            bip32_derivation: input
+                .bip32_derivation
+                .iter()
+                .map(|(k, v)| {
+                    let fingerprint = v.0.to_string();
+                    let derivation_path = v.1.to_string();
+                    Bip32Derivation {
+                        pubkey: k.to_string(),
+                        keysource: format!("{}:{}", fingerprint, derivation_path),
+                    }
+                })
+                .collect::<Vec<Bip32Derivation>>(),
+        }
+    }
+}
+
 /// A Partially Signed Transaction.
 #[derive(uniffi::Object)]
 pub struct Psbt(pub(crate) Mutex<BdkPsbt>);
@@ -606,6 +695,12 @@ impl Psbt {
         let psbt = self.0.lock().unwrap();
         let utxo = psbt.spend_utxo(input_index as usize).unwrap();
         serde_json::to_string(&utxo).unwrap()
+    }
+
+    /// The corresponding key-value map for each input in the unsigned transaction.
+    pub fn input(&self) -> Vec<Input> {
+        let psbt = self.0.lock().unwrap();
+        psbt.inputs.iter().map(|input| input.into()).collect()
     }
 }
 
@@ -1120,7 +1215,8 @@ mod tests {
         let psbt = Psbt::new("cHNidP8BAH0CAAAAAXHl8cCbj84lm1v42e54IGI6CQru/nBXwrPE3q2fiGO4AAAAAAD9////Ar4DAAAAAAAAIgAgYw/rnGd4Bifj8s7TaMgR2tal/lq+L1jVv2Sqd1mxMbJEEQAAAAAAABYAFNVpt8vHYUPZNSF6Hu07uP1YeHts4QsAAAABALUCAAAAAAEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////BAJ+CwD/////AkAlAAAAAAAAIgAgQyrnn86L9D3vDiH959KJbPudDHc/bp6nI9E5EBLQD1YAAAAAAAAAACZqJKohqe3i9hw/cdHe/T+pmd+jaVN1XGkGiXmZYrSL69g2l06M+QEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQErQCUAAAAAAAAiACBDKuefzov0Pe8OIf3n0ols+50Mdz9unqcj0TkQEtAPViICAy4V+d/Qff71zzPXxK4FWG5x+wL/Ku93y/LG5p+0rI2xSDBFAiEA9b0OdASAs0P2uhQinjN7QGP5jX/b32LcShBmny8U0RUCIBebxvCDbpchCjqLAhOMjydT80DAzokaalGzV7XVTsbiASICA1tMY+46EgxIHU18bgHnUvAAlAkMq5LfwkpOGZ97sDKRRzBEAiBpmlZwJocNEiKLxexEX0Par6UgG8a89AklTG3/z9AHlAIgQH/ybCvfKJzr2dq0+IyueDebm7FamKIJdzBYWMXRr/wBIgID+aCzK9nclwhbbN7KbIVGUQGLWZsjcaqWPxk9gFeG+FxIMEUCIQDRPBzb0i9vaUmxCcs1yz8uq4tq1mdDAYvvYn3isKEhFAIgfmeTLLzMo0mmQ23ooMnyx6iPceE8xV5CvARuJsd88tEBAQVpUiEDW0xj7joSDEgdTXxuAedS8ACUCQyrkt/CSk4Zn3uwMpEhAy4V+d/Qff71zzPXxK4FWG5x+wL/Ku93y/LG5p+0rI2xIQP5oLMr2dyXCFts3spshUZRAYtZmyNxqpY/GT2AV4b4XFOuIgYDLhX539B9/vXPM9fErgVYbnH7Av8q73fL8sbmn7SsjbEYCapBE1QAAIABAACAAAAAgAAAAAAAAAAAIgYDW0xj7joSDEgdTXxuAedS8ACUCQyrkt/CSk4Zn3uwMpEY2bvrelQAAIABAACAAAAAgAAAAAAAAAAAIgYD+aCzK9nclwhbbN7KbIVGUQGLWZsjcaqWPxk9gFeG+FwYAKVFVFQAAIABAACAAAAAgAAAAAAAAAAAAAEBaVIhA7cr8fTHOPtE+t0zM3iWJvpfPvsNaVyQ0Sar6nIe9tQXIQMm7k7OY+q+Lsge3bVACuSa9r19Js+lNuTtEhehWkpe1iECelHmzmhzDsQTDnApIcnWRz3oFR68UX1ag8jfk/SKuopTriICAnpR5s5ocw7EEw5wKSHJ1kc96BUevFF9WoPI35P0irqKGAClRVRUAACAAQAAgAAAAIABAAAAAAAAACICAybuTs5j6r4uyB7dtUAK5Jr2vX0mz6U25O0SF6FaSl7WGAmqQRNUAACAAQAAgAAAAIABAAAAAAAAACICA7cr8fTHOPtE+t0zM3iWJvpfPvsNaVyQ0Sar6nIe9tQXGNm763pUAACAAQAAgAAAAIABAAAAAAAAAAAA".to_string())
         .unwrap();
         let psbt_utxo = psbt.spend_utxo(0);
-
+        let psbt_inputs = psbt.input();
+        println!("Psbt Input: {:?}", psbt_inputs);
         println!("Psbt utxo: {:?}", psbt_utxo);
 
         assert_eq!(
