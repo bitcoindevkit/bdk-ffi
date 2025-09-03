@@ -4,6 +4,7 @@ use crate::error::{
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::{impl_from_core_type, impl_hash_like, impl_into_core_type};
+use std::collections::HashMap;
 
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
@@ -15,6 +16,7 @@ use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
 use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
 use bdk_wallet::bitcoin::io::Cursor;
+use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::BlockHash as BitcoinBlockHash;
@@ -500,6 +502,266 @@ impl Display for Transaction {
     }
 }
 
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct TapScriptEntry {
+    /// script (reuse existing `Script` FFI type)
+    pub script: Arc<Script>,
+    /// leaf version
+    pub leaf_version: u8,
+}
+
+#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+pub struct TapKeyOrigin {
+    /// leaf hashes as hex strings
+    pub leaf_hashes: Vec<String>,
+    /// key source
+    pub key_source: KeySource,
+}
+
+#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+pub struct KeySource {
+    /// A fingerprint
+    pub fingerprint: String,
+    /// A BIP-32 derivation path.
+    pub path: String,
+}
+
+#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+pub struct Key {
+    /// The type of this PSBT key.
+    pub type_value: u8,
+    /// The key itself in raw byte form.
+    /// `<key> := <keylen> <keytype> <keydata>`
+    pub key: Vec<u8>,
+}
+
+#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+pub struct ProprietaryKey {
+    /// Proprietary type prefix used for grouping together keys under some
+    /// application and avoid namespace collision
+    pub prefix: Vec<u8>,
+    /// Custom proprietary subtype
+    pub subtype: u8,
+    /// Additional key bytes (like serialized public key data etc)
+    pub key: Vec<u8>,
+}
+
+#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+pub struct ControlBlock {
+    /// The internal key.
+    pub internal_key: Vec<u8>,
+    /// The merkle proof of a script associated with this leaf.
+    pub merkle_branch: Vec<String>,
+    /// The parity of the output key (NOT THE INTERNAL KEY WHICH IS ALWAYS XONLY).
+    pub output_key_parity: u8,
+    /// The tapleaf version.
+    pub leaf_version: u8,
+}
+
+#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+pub struct TapScriptSigKey {
+    /// An x-only public key, used for verification of Taproot signatures and serialized according to BIP-340.
+    pub xonly_pubkey: String,
+    /// Taproot-tagged hash with tag "TapLeaf".
+    /// This is used for computing tapscript script spend hash.
+    pub leaf_hash: String,
+}
+
+/// A key-value map for an input of the corresponding index in the unsigned transaction.
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct Input {
+    /// The non-witness transaction this input spends from. Should only be
+    /// `Option::Some` for inputs which spend non-segwit outputs or
+    /// if it is unknown whether an input spends a segwit output.
+    pub non_witness_utxo: Option<Arc<Transaction>>,
+    /// The transaction output this input spends from. Should only be
+    /// `Option::Some` for inputs which spend segwit outputs,
+    /// including P2SH embedded ones.
+    pub witness_utxo: Option<TxOut>,
+    /// A map from public keys to their corresponding signature as would be
+    /// pushed to the stack from a scriptSig or witness for a non-taproot inputs.
+    pub partial_sigs: HashMap<String, Vec<u8>>,
+    /// The sighash type to be used for this input. Signatures for this input
+    /// must use the sighash type.
+    pub sighash_type: Option<String>,
+    /// The redeem script for this input.
+    pub redeem_script: Option<Arc<Script>>,
+    /// The witness script for this input.
+    pub witness_script: Option<Arc<Script>>,
+    /// A map from public keys needed to sign this input to their corresponding
+    /// master key fingerprints and derivation paths.
+    pub bip32_derivation: HashMap<String, KeySource>,
+
+    /// The finalized, fully-constructed scriptSig with signatures and any other
+    /// scripts necessary for this input to pass validation.
+    pub final_script_sig: Option<Arc<Script>>,
+
+    /// The finalized, fully-constructed scriptWitness with signatures and any
+    /// other scripts necessary for this input to pass validation.
+    pub final_script_witness: Option<Vec<Vec<u8>>>,
+    /// RIPEMD160 hash to preimage map.
+    pub ripemd160_preimages: HashMap<String, Vec<u8>>,
+    /// SHA256 hash to preimage map.
+    pub sha256_preimages: HashMap<String, Vec<u8>>,
+    /// HASH160 hash to preimage map.
+    pub hash160_preimages: HashMap<String, Vec<u8>>,
+    /// HASH256 hash to preimage map.
+    pub hash256_preimages: HashMap<String, Vec<u8>>,
+    /// Serialized taproot signature with sighash type for key spend.
+    pub tap_key_sig: Option<Vec<u8>>,
+    /// Map of `<xonlypubkey>|<leafhash>` with signature.
+    pub tap_script_sigs: HashMap<TapScriptSigKey, Vec<u8>>,
+    /// Map of Control blocks to Script version pair.
+    pub tap_scripts: HashMap<ControlBlock, TapScriptEntry>,
+    /// Map of tap root x only keys to origin info and leaf hashes contained in it.
+    pub tap_key_origins: HashMap<String, TapKeyOrigin>,
+    /// Taproot Internal key.
+    pub tap_internal_key: Option<String>,
+    /// Taproot Merkle root.
+    pub tap_merkle_root: Option<String>,
+    /// Proprietary key-value pairs for this input.
+    pub proprietary: HashMap<ProprietaryKey, Vec<u8>>,
+    /// Unknown key-value pairs for this input.
+    pub unknown: HashMap<Key, Vec<u8>>,
+}
+
+impl From<&BdkInput> for Input {
+    fn from(input: &BdkInput) -> Self {
+        Input {
+            non_witness_utxo: input
+                .non_witness_utxo
+                .as_ref()
+                .map(|tx| Arc::new(Transaction(tx.clone()))),
+            witness_utxo: input.witness_utxo.as_ref().map(TxOut::from),
+            partial_sigs: input
+                .partial_sigs
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_vec()))
+                .collect(),
+            sighash_type: input.sighash_type.as_ref().map(|s| s.to_string()),
+            redeem_script: input
+                .redeem_script
+                .as_ref()
+                .map(|s| Arc::new(Script(s.clone()))),
+            witness_script: input
+                .witness_script
+                .as_ref()
+                .map(|s| Arc::new(Script(s.clone()))),
+            bip32_derivation: input
+                .bip32_derivation
+                .iter()
+                .map(|(pk, (fingerprint, deriv_path))| {
+                    (
+                        pk.to_string(),
+                        KeySource {
+                            fingerprint: fingerprint.to_string(),
+                            path: deriv_path.to_string(),
+                        },
+                    )
+                })
+                .collect(),
+            final_script_sig: input
+                .final_script_sig
+                .as_ref()
+                .map(|s| Arc::new(Script(s.clone()))),
+            final_script_witness: input.final_script_witness.as_ref().map(|w| w.to_vec()),
+            ripemd160_preimages: input
+                .ripemd160_preimages
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.clone()))
+                .collect(),
+            sha256_preimages: input
+                .sha256_preimages
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.clone()))
+                .collect(),
+            hash160_preimages: input
+                .hash160_preimages
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.clone()))
+                .collect(),
+            hash256_preimages: input
+                .hash256_preimages
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.clone()))
+                .collect(),
+            tap_key_sig: input.tap_key_sig.as_ref().map(|s| s.serialize().to_vec()),
+            tap_script_sigs: input
+                .tap_script_sigs
+                .iter()
+                .map(|(k, v)| {
+                    let key = TapScriptSigKey {
+                        xonly_pubkey: k.0.to_string(),
+                        leaf_hash: k.1.to_string(),
+                    };
+                    (key, v.to_vec())
+                })
+                .collect(),
+            tap_scripts: input
+                .tap_scripts
+                .iter()
+                .map(|(k, v)| {
+                    let key = ControlBlock {
+                        internal_key: k.internal_key.serialize().to_vec(),
+                        merkle_branch: k.merkle_branch.iter().map(|h| h.to_string()).collect(),
+                        output_key_parity: k.output_key_parity.to_u8(),
+                        leaf_version: k.leaf_version.to_consensus(),
+                    };
+                    let entry = TapScriptEntry {
+                        script: Arc::new(v.0.clone().into()),
+                        leaf_version: v.1.to_consensus(),
+                    };
+                    (key, entry)
+                })
+                .collect(),
+            tap_key_origins: input
+                .tap_key_origins
+                .iter()
+                .map(|(k, v)| {
+                    let key = k.to_string();
+                    let value = TapKeyOrigin {
+                        leaf_hashes: v.0.iter().map(|h| h.to_string()).collect(),
+                        key_source: KeySource {
+                            fingerprint: v.1 .0.to_string(),
+                            path: v.1 .1.to_string(),
+                        },
+                    };
+                    (key, value)
+                })
+                .collect(),
+            tap_internal_key: input.tap_internal_key.as_ref().map(|k| k.to_string()),
+            tap_merkle_root: input.tap_merkle_root.as_ref().map(|k| k.to_string()),
+            proprietary: input
+                .proprietary
+                .iter()
+                .map(|(k, v)| {
+                    (
+                        ProprietaryKey {
+                            prefix: k.prefix.clone(),
+                            subtype: k.subtype,
+                            key: k.key.clone(),
+                        },
+                        v.to_vec(),
+                    )
+                })
+                .collect(),
+            unknown: input
+                .unknown
+                .iter()
+                .map(|(k, v)| {
+                    (
+                        Key {
+                            key: k.key.clone(),
+                            type_value: k.type_value,
+                        },
+                        v.to_vec(),
+                    )
+                })
+                .collect(),
+        }
+    }
+}
+
 /// A Partially Signed Transaction.
 #[derive(uniffi::Object)]
 pub struct Psbt(pub(crate) Mutex<BdkPsbt>);
@@ -624,6 +886,12 @@ impl Psbt {
         let psbt = self.0.lock().unwrap();
         let utxo = psbt.spend_utxo(input_index as usize).unwrap();
         serde_json::to_string(&utxo).unwrap()
+    }
+
+    /// The corresponding key-value map for each input in the unsigned transaction.
+    pub fn input(&self) -> Vec<Input> {
+        let psbt = self.0.lock().unwrap();
+        psbt.inputs.iter().map(|input| input.into()).collect()
     }
 }
 
