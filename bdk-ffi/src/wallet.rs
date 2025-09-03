@@ -67,9 +67,43 @@ impl Wallet {
         })
     }
 
+    /// Build a new `Wallet` from a two-path descriptor.
+    ///
+    /// This function parses a multipath descriptor with exactly 2 paths and creates a wallet using the existing receive and change wallet creation logic.
+    ///
+    /// Multipath descriptors follow [BIP-389](https://github.com/bitcoin/bips/blob/master/bip-0389.mediawiki) and allow defining both receive and change derivation paths in a single descriptor using the <0;1> syntax.
+    ///
+    /// If you have previously created a wallet, use load instead.
+    ///
+    /// Returns an error if the descriptor is invalid or not a 2-path multipath descriptor.
+    #[uniffi::constructor(default(lookahead = 25))]
+    pub fn create_from_two_path_descriptor(
+        two_path_descriptor: Arc<Descriptor>,
+        network: Network,
+        persister: Arc<Persister>,
+        lookahead: u32,
+    ) -> Result<Self, CreateWithPersistError> {
+        let descriptor = two_path_descriptor.to_string_with_secret();
+        let mut persist_lock = persister.inner.lock().unwrap();
+        let deref = persist_lock.deref_mut();
+
+        let wallet: PersistedWallet<PersistenceType> =
+            BdkWallet::create_from_two_path_descriptor(descriptor)
+                .network(network)
+                .lookahead(lookahead)
+                .create_wallet(deref)
+                .map_err(|e| CreateWithPersistError::Persist {
+                    error_message: e.to_string(),
+                })?;
+
+        Ok(Wallet {
+            inner_mutex: Mutex::new(wallet),
+        })
+    }
+
     /// Build Wallet by loading from persistence.
-    //
-    // Note that the descriptor secret keys are not persisted to the db.
+    ///
+    /// Note that the descriptor secret keys are not persisted to the db.
     #[uniffi::constructor(default(lookahead = 25))]
     pub fn load(
         descriptor: Arc<Descriptor>,
