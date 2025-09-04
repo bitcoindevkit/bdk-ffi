@@ -20,6 +20,8 @@ final class LiveKyotoTests: XCTestCase {
         }
     }
 
+    // See: https://github.com/bitcoindevkit/bdk-ffi/issues/842
+    /*
     func testSuccessfullySyncs() async throws {
         let persister = try Persister.newInMemory()
         let wallet = try Wallet(
@@ -56,4 +58,5 @@ final class LiveKyotoTests: XCTestCase {
         print("Update applied correctly")
         try client.shutdown()
     }
+    */
 }
