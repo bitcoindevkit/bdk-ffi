@@ -30,7 +30,6 @@ use crate::types::Update;
 use crate::wallet::Wallet;
 use crate::FeeRate;
 
-type LogLevel = bdk_kyoto::kyoto::LogLevel;
 type NodeState = bdk_kyoto::NodeState;
 type ScanType = bdk_kyoto::ScanType;
 
@@ -53,7 +52,6 @@ pub struct CbfComponents {
 #[derive(Debug, uniffi::Object)]
 pub struct CbfClient {
     sender: Arc<Requester>,
-    log_rx: Mutex<Receiver<String>>,
     info_rx: Mutex<Receiver<bdk_kyoto::Info>>,
     warning_rx: Mutex<UnboundedReceiver<bdk_kyoto::Warning>>,
     update_rx: Mutex<UpdateSubscriber>,
@@ -105,7 +103,6 @@ pub struct CbfBuilder {
     response_timeout: Duration,
     data_dir: Option<String>,
     scan_type: ScanType,
-    log_level: LogLevel,
     dns_resolver: Option<Arc<IpAddress>>,
     socks5_proxy: Option<Socks5Proxy>,
     peers: Vec<Peer>,
@@ -122,7 +119,6 @@ impl CbfBuilder {
             response_timeout: MESSAGE_RESPONSE_TIMEOUT,
             data_dir: None,
             scan_type: ScanType::default(),
-            log_level: LogLevel::default(),
             dns_resolver: None,
             socks5_proxy: None,
             peers: Vec::new(),
@@ -150,15 +146,6 @@ impl CbfBuilder {
     pub fn scan_type(&self, scan_type: ScanType) -> Arc<Self> {
         Arc::new(CbfBuilder {
             scan_type,
-            ..self.clone()
-        })
-    }
-
-    /// Set the log level for the node. Production applications may want to omit `Debug` messages
-    /// to avoid heap allocations.
-    pub fn log_level(&self, log_level: LogLevel) -> Arc<Self> {
-        Arc::new(CbfBuilder {
-            log_level,
             ..self.clone()
         })
     }
@@ -220,7 +207,6 @@ impl CbfBuilder {
             .data_dir(path_buf)
             .handshake_timeout(self.handshake_timeout)
             .response_timeout(self.response_timeout)
-            .log_level(self.log_level)
             .add_peers(trusted_peers);
 
         if let Some(ip_addr) = self.dns_resolver.clone().map(|ip| ip.inner) {
@@ -235,7 +221,6 @@ impl CbfBuilder {
 
         let BDKLightClient {
             requester,
-            log_subscriber,
             info_subscriber,
             warning_subscriber,
             update_subscriber,
@@ -255,7 +240,6 @@ impl CbfBuilder {
 
         let client = CbfClient {
             sender: Arc::new(requester),
-            log_rx: Mutex::new(log_subscriber),
             info_rx: Mutex::new(info_subscriber),
             warning_rx: Mutex::new(warning_subscriber),
             update_rx: Mutex::new(update_subscriber),
@@ -271,12 +255,7 @@ impl CbfBuilder {
 
 #[uniffi::export]
 impl CbfClient {
-    /// Return the next available log message from a node. If none is returned, the node has stopped.
-    pub async fn next_log(&self) -> Result<String, CbfError> {
-        let mut log_rx = self.log_rx.lock().await;
-        log_rx.recv().await.ok_or(CbfError::NodeStopped)
-    }
-
+    /// Return the next available info message from a node. If none is returned, the node has stopped.
     pub async fn next_info(&self) -> Result<Info, CbfError> {
         let mut info_rx = self.info_rx.lock().await;
         info_rx
@@ -493,19 +472,6 @@ impl From<Warn> for Warning {
             Warn::ChannelDropped => Warning::RequestFailed,
         }
     }
-}
-
-/// Select the category of messages for the node to emit.
-#[uniffi::remote(Enum)]
-pub enum LogLevel {
-    /// Send string messages. These messages are intended for debugging or troubleshooting
-    /// node operation.
-    Debug,
-    /// Send info and warning messages, but omit debug strings - including their memory allocations.
-    /// Ideal for a production application that uses minimal logging.
-    Info,
-    /// Omit debug strings and info messages, including their memory allocations.
-    Warning,
 }
 
 /// The state of the node with respect to connected peers.
