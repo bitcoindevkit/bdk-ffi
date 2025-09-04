@@ -14,6 +14,4 @@ mod wallet;
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
 
-use bdk_wallet::bitcoin::Network;
-
-uniffi::include_scaffolding!("bdk");
+uniffi::setup_scaffolding!("bdk");

@@ -19,7 +19,6 @@ use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::BlockHash as BitcoinBlockHash;
 use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
-use bdk_wallet::bitcoin::Network;
 use bdk_wallet::bitcoin::OutPoint as BdkOutPoint;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
@@ -39,6 +38,7 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
 pub(crate) type DescriptorType = bdk_wallet::miniscript::descriptor::DescriptorType;
+pub type Network = bdk_wallet::bitcoin::Network;
 
 /// A reference to an unspent output by TXID and output index.
 #[derive(Debug, Clone, Eq, PartialEq, std::hash::Hash, uniffi:: Record)]
@@ -74,6 +74,24 @@ impl From<OutPoint> for BdkOutPoint {
             vout: outpoint.vout,
         }
     }
+}
+
+/// The cryptocurrency network to act on.
+///
+/// This is an exhaustive enum, meaning that we cannot add any future networks without defining a
+/// new, incompatible version of this type. If you are using this type directly and wish to support
+/// the new network, this will be a breaking change to your APIs and likely require changes in your
+/// code.
+///
+/// If you are concerned about forward compatibility, consider using T: Into<Params> instead of this
+/// type as a parameter to functions in your public API, or directly using the Params type.
+#[uniffi::remote(Enum)]
+pub enum Network {
+    Bitcoin,
+    Testnet,
+    Testnet4,
+    Signet,
+    Regtest,
 }
 
 /// An [`OutPoint`] used as a key in a hash map.
