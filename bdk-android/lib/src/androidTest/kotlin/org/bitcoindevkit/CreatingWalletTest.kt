@@ -42,6 +42,16 @@ class CreatingWalletTest {
         )
     }
 
+    // Create a wallet with a single descriptor.
+    @Test
+    fun createWalletWithSingleDescriptor() {
+        Wallet.createSingle(
+            descriptor = BIP86_DESCRIPTOR,
+            network = Network.TESTNET,
+            persister = conn
+        )
+    }
+
     // Create a wallet with a public multipath descriptor.
     @Test
     fun createWalletWithMultipathDescriptor() {

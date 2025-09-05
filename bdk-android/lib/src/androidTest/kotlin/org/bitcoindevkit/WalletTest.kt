@@ -45,4 +45,24 @@ class WalletTest {
             actual = wallet.balance().total.toSat()
         )
     }
+
+    // Single-descriptor wallets return an address on the external keychain even if a change descriptor is not provided
+    // and the wallet.revealNextAddress(KeychainKind.INTERNAL) or wallet.peekAddress(KeychainKind.EXTERNAL, 0u) APIs are
+    // used.
+    @Test
+    fun singleDescriptorWalletCanCreateAddresses() {
+        val wallet: Wallet = Wallet.createSingle(
+            descriptor = BIP84_DESCRIPTOR,
+            network = Network.TESTNET,
+            persister = conn
+        )
+        val address1 = wallet.peekAddress(KeychainKind.EXTERNAL, 0u)
+        val address2 = wallet.peekAddress(KeychainKind.INTERNAL, 0u)
+
+        assertEquals(
+            expected = address1.address,
+            actual = address2.address,
+            "Addresses should be the same"
+        )
+    }
 }
