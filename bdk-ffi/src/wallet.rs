@@ -58,9 +58,7 @@ impl Wallet {
                 .network(network)
                 .lookahead(lookahead)
                 .create_wallet(deref)
-                .map_err(|e| CreateWithPersistError::Persist {
-                    error_message: e.to_string(),
-                })?;
+                .map_err(CreateWithPersistError::from)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -100,9 +98,7 @@ impl Wallet {
             .network(network)
             .lookahead(lookahead)
             .create_wallet(deref)
-            .map_err(|e| CreateWithPersistError::Persist {
-                error_message: e.to_string(),
-            })?;
+            .map_err(CreateWithPersistError::from)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -134,9 +130,7 @@ impl Wallet {
                 .network(network)
                 .lookahead(lookahead)
                 .create_wallet(deref)
-                .map_err(|e| CreateWithPersistError::Persist {
-                    error_message: e.to_string(),
-                })?;
+                .map_err(CreateWithPersistError::from)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -164,9 +158,7 @@ impl Wallet {
             .lookahead(lookahead)
             .extract_keys()
             .load_wallet(deref)
-            .map_err(|e| LoadWithPersistError::Persist {
-                error_message: e.to_string(),
-            })?
+            .map_err(LoadWithPersistError::from)?
             .ok_or(LoadWithPersistError::CouldNotLoad)?;
 
         Ok(Wallet {
