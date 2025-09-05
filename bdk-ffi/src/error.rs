@@ -1019,6 +1019,23 @@ impl From<BdkCreateWithPersistError<chain::rusqlite::Error>> for CreateWithPersi
     }
 }
 
+impl From<BdkCreateWithPersistError<PersistenceError>> for CreateWithPersistError {
+    fn from(error: BdkCreateWithPersistError<PersistenceError>) -> Self {
+        match error {
+            BdkCreateWithPersistError::Persist(e) => CreateWithPersistError::Persist {
+                error_message: e.to_string(),
+            },
+            BdkCreateWithPersistError::Descriptor(e) => CreateWithPersistError::Descriptor {
+                error_message: e.to_string(),
+            },
+            // Objects cannot currently be used in enumerations
+            BdkCreateWithPersistError::DataAlreadyExists(_e) => {
+                CreateWithPersistError::DataAlreadyExists
+            }
+        }
+    }
+}
+
 impl From<AddUtxoError> for CreateTxError {
     fn from(error: AddUtxoError) -> Self {
         match error {
@@ -1235,6 +1252,21 @@ impl From<BdkFromScriptError> for FromScriptError {
 
 impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistError {
     fn from(error: BdkLoadWithPersistError<chain::rusqlite::Error>) -> Self {
+        match error {
+            BdkLoadWithPersistError::Persist(e) => LoadWithPersistError::Persist {
+                error_message: e.to_string(),
+            },
+            BdkLoadWithPersistError::InvalidChangeSet(e) => {
+                LoadWithPersistError::InvalidChangeSet {
+                    error_message: e.to_string(),
+                }
+            }
+        }
+    }
+}
+
+impl From<BdkLoadWithPersistError<PersistenceError>> for LoadWithPersistError {
+    fn from(error: BdkLoadWithPersistError<PersistenceError>) -> Self {
         match error {
             BdkLoadWithPersistError::Persist(e) => LoadWithPersistError::Persist {
                 error_message: e.to_string(),
