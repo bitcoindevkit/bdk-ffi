@@ -12,16 +12,15 @@ NAME="bdkffi"
 STATIC_LIB_NAME="lib${NAME}.a"
 NEW_HEADER_DIR="../bdk-ffi/target/include"
 
-# set required rust version and install component and targets
-rustup default 1.84.1
+cd ../bdk-ffi/ || exit
+
+# install component and targets
 rustup component add rust-src
 rustup target add aarch64-apple-ios      # iOS arm64
 rustup target add x86_64-apple-ios       # iOS x86_64
 rustup target add aarch64-apple-ios-sim  # simulator mac M1
 rustup target add aarch64-apple-darwin   # mac M1
 rustup target add x86_64-apple-darwin    # mac x86_64
-
-cd ../bdk-ffi/ || exit
 
 # build bdk-ffi rust lib for apple targets
 cargo build --package bdk-ffi --profile release-smaller --target x86_64-apple-darwin

@@ -45,7 +45,7 @@ just publishlocal
 
 ## Minimum Supported Rust Version (MSRV)
 
-This library should compile with any combination of features with Rust 1.84.1.
+This library should compile with any combination of features with Rust 1.85.1.
 
 ## Contributing
 

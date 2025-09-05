@@ -16,11 +16,7 @@ jobs:
     defaults:
       run:
         working-directory: bdk-ffi
-    strategy:
-      matrix:
-        rust:
-          - version: 1.84.1
-            clippy: true
+
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4

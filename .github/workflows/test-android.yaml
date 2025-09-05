@@ -35,11 +35,6 @@ jobs:
         with:
           ndk-version: r26c
 
-      - name: "Install Rust"
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: 1.84.1
-
       - name: "Cache Rust"
         uses: actions/cache@v4
         with:
