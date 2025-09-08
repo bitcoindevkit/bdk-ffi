@@ -1,7 +1,7 @@
 import XCTest
 @testable import BitcoinDevKit
 
-private let SIGNET_ESPLORA_URL = "http://signet.bitcoindevkit.net"
+private let SIGNET_ESPLORA_URL = "https://blockstream.info/signet/api/"
 private let TESTNET_ESPLORA_URL = "https://esplora.testnet.kuutamo.cloud"
 
 
