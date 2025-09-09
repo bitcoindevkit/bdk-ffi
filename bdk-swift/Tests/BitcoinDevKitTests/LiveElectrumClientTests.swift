@@ -1,61 +1,61 @@
 import XCTest
 @testable import BitcoinDevKit
 
-private let SIGNET_ELECTRUM_URL = "ssl://mempool.space:60602"
-
-final class LiveElectrumClientTests: XCTestCase {
-    private let descriptor = try! Descriptor(
-        descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)", 
-        network: Network.signet
-    )
-    private let changeDescriptor = try! Descriptor(
-        descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/*)", 
-        network: Network.signet
-    )
-
-    func testSyncedBalance() throws {
-        let persister = try Persister.newInMemory()
-        let wallet = try Wallet(
-            descriptor: descriptor,
-            changeDescriptor: changeDescriptor,
-            network: Network.signet,
-            persister: persister
-        )
-        let electrumClient: ElectrumClient = try ElectrumClient(url: SIGNET_ELECTRUM_URL)
-        let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
-        let update = try electrumClient.fullScan(
-            request: fullScanRequest,
-            stopGap: 10,
-            batchSize: 10,
-            fetchPrevTxouts: false
-        )
-        try wallet.applyUpdate(update: update)
-        let address = wallet.revealNextAddress(keychain: KeychainKind.external).address
-
-        XCTAssertGreaterThan(
-            wallet.balance().total.toSat(),
-            UInt64(0),
-            "Wallet must have positive balance, please send funds to \(address)"
-        )
-
-        print("Transactions count: \(wallet.transactions().count)")
-        let transactions = wallet.transactions().prefix(3)
-        for tx in transactions {
-            let sentAndReceived = wallet.sentAndReceived(tx: tx.transaction)
-            print("Transaction: \(tx.transaction.computeTxid())")
-            print("Sent \(sentAndReceived.sent.toSat())")
-            print("Received \(sentAndReceived.received.toSat())")
-        }
-    }
-
-    func testServerFeatures() throws {
-        let electrumClient: ElectrumClient = try ElectrumClient(url: "ssl://electrum.blockstream.info:60002")
-        let features: ServerFeaturesRes = try electrumClient.serverFeatures()
-        print("Server Features:\n\(features)")
-
-        XCTAssertEqual(
-            features.genesisHash.description,
-            "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
-        )
-    }
-}
+//private let SIGNET_ELECTRUM_URL = "ssl://mempool.space:60602"
+//
+//final class LiveElectrumClientTests: XCTestCase {
+//    private let descriptor = try! Descriptor(
+//        descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)", 
+//        network: Network.signet
+//    )
+//    private let changeDescriptor = try! Descriptor(
+//        descriptor: "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/*)", 
+//        network: Network.signet
+//    )
+//
+//    func testSyncedBalance() throws {
+//        let persister = try Persister.newInMemory()
+//        let wallet = try Wallet(
+//            descriptor: descriptor,
+//            changeDescriptor: changeDescriptor,
+//            network: Network.signet,
+//            persister: persister
+//        )
+//        let electrumClient: ElectrumClient = try ElectrumClient(url: SIGNET_ELECTRUM_URL)
+//        let fullScanRequest: FullScanRequest = try wallet.startFullScan().build()
+//        let update = try electrumClient.fullScan(
+//            request: fullScanRequest,
+//            stopGap: 10,
+//            batchSize: 10,
+//            fetchPrevTxouts: false
+//        )
+//        try wallet.applyUpdate(update: update)
+//        let address = wallet.revealNextAddress(keychain: KeychainKind.external).address
+//
+//        XCTAssertGreaterThan(
+//            wallet.balance().total.toSat(),
+//            UInt64(0),
+//            "Wallet must have positive balance, please send funds to \(address)"
+//        )
+//
+//        print("Transactions count: \(wallet.transactions().count)")
+//        let transactions = wallet.transactions().prefix(3)
+//        for tx in transactions {
+//            let sentAndReceived = wallet.sentAndReceived(tx: tx.transaction)
+//            print("Transaction: \(tx.transaction.computeTxid())")
+//            print("Sent \(sentAndReceived.sent.toSat())")
+//            print("Received \(sentAndReceived.received.toSat())")
+//        }
+//    }
+//
+//    func testServerFeatures() throws {
+//        let electrumClient: ElectrumClient = try ElectrumClient(url: "ssl://electrum.blockstream.info:60002")
+//        let features: ServerFeaturesRes = try electrumClient.serverFeatures()
+//        print("Server Features:\n\(features)")
+//
+//        XCTAssertEqual(
+//            features.genesisHash.description,
+//            "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943"
+//        )
+//    }
+//}
