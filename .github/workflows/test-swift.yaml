@@ -1,4 +1,9 @@
 name: Test Swift
+
+# Tests the Swift bindings for bdk-ffi on macOS.
+# Builds the Swift package and runs unit tests.
+# Triggered by changes to bdk-ffi or bdk-swift directories, or manually via workflow_dispatch.
+
 on:
   workflow_dispatch:
   push:
@@ -13,19 +18,24 @@ on:
 permissions: {}
 
 jobs:
-  build:
-    name: "Build and test"
-    runs-on: macos-13
+  test:
+    name: "Test Swift library"
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: bdk-swift
+
     steps:
       - name: "Checkout"
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
+      - name: "Set up Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
       - name: "Build Swift package"
-        working-directory: bdk-swift
         run: bash ./build-xcframework.sh
 
       - name: "Run Swift tests"
-        working-directory: bdk-swift
         run: swift test --filter Offline
