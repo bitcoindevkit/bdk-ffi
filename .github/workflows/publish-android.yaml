@@ -1,27 +1,30 @@
 name: Publish bdk-android to Maven Central
-on: [workflow_dispatch]
 
-# The default Android NDK on the ubuntu-24.04 image is 25.2.9519653
+# Publishes the bdk-android library to Maven Central repository.
+# Builds the Android library with native components and signs + uploads the artifacts.
+# Manual workflow that requires proper Maven Central credentials and PGP signing keys.
+# Note: The default Android NDK on the ubuntu-24.04 image is 25.2.9519653.
+
+on: [workflow_dispatch]
 
 permissions: {}
 
 jobs:
-  build:
+  publish:
+    name: "Publish library"
     runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: bdk-android
+    
     steps:
       - name: "Check out PR branch"
         uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: "Cache"
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ./target
-          key: ${{ runner.os }}-${{ hashFiles('**/Cargo.toml','**/Cargo.lock') }}
+      - name: "Set up Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: "Set up JDK"
         uses: actions/setup-java@v4
@@ -30,9 +33,7 @@ jobs:
           java-version: 17
 
       - name: "Build bdk-android library"
-        run: |
-          cd bdk-android
-          bash ./scripts/build-linux-x86_64.sh
+        run: bash ./scripts/build-linux-x86_64.sh
 
       - name: "Publish to Maven Central"
         env:
@@ -41,6 +42,4 @@ jobs:
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.PGP_PASSPHRASE }}
           ORG_GRADLE_PROJECT_ossrhUsername: ${{ secrets.NEXUS_USERNAME }}
           ORG_GRADLE_PROJECT_ossrhPassword: ${{ secrets.NEXUS_PASSWORD }}
-        run: |
-          cd bdk-android
-          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
