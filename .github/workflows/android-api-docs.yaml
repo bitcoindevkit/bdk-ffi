@@ -1,11 +1,16 @@
-name: Build JVM and Android API Docs Websites
+name: Build Android API Documentation
+
+# Generates API documentation for Android bindings using Dokka.
+# Creates HTML documentation website that can be deployed.
+# Manual workflow for generating API documentation on specific tags.
 
 on: workflow_dispatch
 
 permissions: {}
 
 jobs:
-  build:
+  build-docs:
+    name: "Build API docs"
     runs-on: ubuntu-24.04
     steps:
       - name: "Checkout"
@@ -25,7 +30,7 @@ jobs:
           bash ./scripts/build-linux-x86_64.sh
           ./gradlew dokkaHtml
 
-      - name: "Upload Android website"
+      - name: "Upload documentation website"
         uses: actions/upload-artifact@v4
         with:
           name: artifact-android-api-docs
