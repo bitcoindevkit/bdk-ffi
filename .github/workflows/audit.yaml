@@ -1,4 +1,8 @@
-name: Audit
+name: Rust Dependency Audit
+
+# Performs a security audit of Rust dependencies using cargo-audit.
+# Runs weekly on schedule and when Cargo.toml/Cargo.lock files are modified.
+# Helps identify known security vulnerabilities in the dependency tree.
 
 on:
   push:
@@ -9,12 +13,13 @@ on:
     - cron: '0 0 * * 0' # Once per week
 
 jobs:
-  security_audit:
-    name: Security audit
+  security-audit:
+    name: "Security audit"
     runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: bdk-ffi
+    
     steps:
       - name: "Check out PR branch"
         uses: actions/checkout@v4
