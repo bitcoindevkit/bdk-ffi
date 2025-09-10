@@ -1,0 +1,62 @@
+name: Rust Continuous Integration
+
+# Continuous integration for the Rust bdk-ffi layer.
+# Builds, tests, and runs clippy linting on the Rust code.
+# Ensures code formatting follows project standards using rustfmt.
+# Runs on changes to bdk-ffi directory on pushes and pull requests.
+
+on:
+  push:
+    paths:
+      - "bdk-ffi/**"
+  pull_request:
+    paths:
+      - "bdk-ffi/**"
+
+permissions: {}
+
+jobs:
+  test:
+    name: "Run tests"
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: bdk-ffi
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: "Set up Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: "Build"
+        run: cargo build
+
+      - name: "Test"
+        run: CLASSPATH=./tests/jna/jna-5.14.0.jar cargo test --features uniffi/bindgen-tests
+
+  check:
+    name: "Run clippy and fmt"
+    needs: test
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: bdk-ffi
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: clippy, rustfmt
+
+      - name: "Check fmt"
+        run: cargo fmt --all -- --config format_code_in_doc_comments=true --check
+
+      - name: "Check clippy"
+        run: cargo clippy --all-targets --features "uniffi/bindgen-tests"
