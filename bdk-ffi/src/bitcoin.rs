@@ -129,6 +129,7 @@ pub struct FeeRate(pub(crate) BdkFeeRate);
 
 #[uniffi::export]
 impl FeeRate {
+    // Constructs `FeeRate` from satoshis per virtual bytes.
     #[uniffi::constructor]
     pub fn from_sat_per_vb(sat_vb: u64) -> Result<Self, FeeRateError> {
         let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_vb);
@@ -138,19 +139,23 @@ impl FeeRate {
         }
     }
 
+    // Constructs `FeeRate` from satoshis per 1000 weight units.
     #[uniffi::constructor]
     pub fn from_sat_per_kwu(sat_kwu: u64) -> Self {
         FeeRate(BdkFeeRate::from_sat_per_kwu(sat_kwu))
     }
 
+    /// Converts to sat/vB rounding up.
     pub fn to_sat_per_vb_ceil(&self) -> u64 {
         self.0.to_sat_per_vb_ceil()
     }
 
+    /// Converts to sat/vB rounding down.
     pub fn to_sat_per_vb_floor(&self) -> u64 {
         self.0.to_sat_per_vb_floor()
     }
 
+    /// Returns raw fee rate.
     pub fn to_sat_per_kwu(&self) -> u64 {
         self.0.to_sat_per_kwu()
     }
