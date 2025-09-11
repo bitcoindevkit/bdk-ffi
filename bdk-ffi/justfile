@@ -9,4 +9,4 @@ check:
    cargo clippy
 
 test:
-  cargo test --lib
+  cargo test
