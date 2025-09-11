@@ -1,0 +1,42 @@
+name: Zizmor Actions Analysis
+
+# Analyzes GitHub Actions workflows for security vulnerabilities using zizmor.
+# Runs on pushes to master and all pull requests to detect potential security issues
+# in workflow configurations. Results are uploaded to GitHub's security dashboard.
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  actions-audit:
+    name: "Run audit on workflows"
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+    steps:
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: "Set up Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: "Install zizmor"
+        run: cargo install zizmor --locked --version 1.6.0
+
+      - name: "Run zizmor"
+        run: zizmor --format sarif . > results.sarif
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Upload SARIF file"
+        # Always upload SARIF file, even on failure
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: zizmor
