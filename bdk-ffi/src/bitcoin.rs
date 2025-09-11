@@ -121,6 +121,7 @@ impl HashableOutPoint {
 /// This is an integer type representing fee rate in sat/kwu. It provides protection against mixing
 /// up the types as well as basic formatting features.
 #[derive(Clone, Debug, uniffi::Object)]
+#[uniffi::export(Display)]
 pub struct FeeRate(pub BdkFeeRate);
 
 #[uniffi::export]
@@ -154,6 +155,12 @@ impl FeeRate {
     /// Returns raw fee rate.
     pub fn to_sat_per_kwu(&self) -> u64 {
         self.0.to_sat_per_kwu()
+    }
+}
+
+impl Display for FeeRate {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{} sat/kwu", self.0)
     }
 }
 
