@@ -3,6 +3,7 @@ name: Zizmor Actions Analysis
 # Analyzes GitHub Actions workflows for security vulnerabilities using zizmor.
 # Runs on pushes to master and all pull requests to detect potential security issues
 # in workflow configurations. Results are uploaded to GitHub's security dashboard.
+# The .github/zizmor.yaml file configures the rules this action will check against.
 
 on:
   push:
