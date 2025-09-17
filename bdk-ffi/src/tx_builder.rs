@@ -42,6 +42,7 @@ pub struct TxBuilder {
     version: Option<i32>,
 }
 
+#[allow(clippy::new_without_default)]
 #[uniffi::export]
 impl TxBuilder {
     #[uniffi::constructor]
