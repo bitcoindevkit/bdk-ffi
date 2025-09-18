@@ -21,10 +21,12 @@ bdk_electrum = { version = "0.23.1", default-features = false, features = ["use-
 bdk_kyoto = { version = "0.14.0" }
 
 uniffi = { version = "=0.29.4", features = ["cli"]}
+uniffi-dart = { git = "https://github.com/chavic/uniffi-dart.git", branch = "chavic/map-types-fix" }
 thiserror = "1.0.58"
 
 [build-dependencies]
 uniffi = { version = "=0.29.4", features = ["build"] }
+uniffi-dart = { git = "https://github.com/chavic/uniffi-dart.git", branch = "chavic/map-types-fix", features = ["build"] }
 
 [dev-dependencies]
 uniffi = { version = "=0.29.4", features = ["bindgen-tests"] }
