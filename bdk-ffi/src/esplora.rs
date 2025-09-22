@@ -60,8 +60,20 @@ impl EsploraClient {
             .ok_or(EsploraError::RequestAlreadyConsumed)?;
 
         let result: BdkFullScanResponse<KeychainKind> =
-            self.0
-                .full_scan(request, stop_gap as usize, parallel_requests as usize)?;
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                self.0
+                    .full_scan(request, stop_gap as usize, parallel_requests as usize)
+            }))
+            .map_err(|payload| {
+                let error_message = payload
+                    .downcast_ref::<String>()
+                    .map(String::as_str)
+                    .or_else(|| payload.downcast_ref::<&str>().copied())
+                    .unwrap_or("panic in esplora client")
+                    .to_string();
+
+                EsploraError::Parsing { error_message }
+            })??;
 
         let update = BdkUpdate {
             last_active_indices: result.last_active_indices,
@@ -90,7 +102,20 @@ impl EsploraClient {
             .take()
             .ok_or(EsploraError::RequestAlreadyConsumed)?;
 
-        let result: BdkSyncResponse = self.0.sync(request, parallel_requests as usize)?;
+        let result: BdkSyncResponse =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                self.0.sync(request, parallel_requests as usize)
+            }))
+            .map_err(|payload| {
+                let error_message = payload
+                    .downcast_ref::<String>()
+                    .map(String::as_str)
+                    .or_else(|| payload.downcast_ref::<&str>().copied())
+                    .unwrap_or("panic in esplora client")
+                    .to_string();
+
+                EsploraError::Parsing { error_message }
+            })??;
 
         let update = BdkUpdate {
             last_active_indices: BTreeMap::default(),
