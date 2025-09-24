@@ -777,12 +777,6 @@ pub enum TxidParseError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
-pub enum CbfBuilderError {
-    #[error("the database could not be opened or created: {reason}")]
-    DatabaseError { reason: String },
-}
-
-#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum CbfError {
     #[error("the node is no longer running")]
     NodeStopped,
@@ -1569,16 +1563,8 @@ pub enum HashParseError {
     InvalidHexString { hex: String },
 }
 
-impl From<bdk_kyoto::builder::SqlInitializationError> for CbfBuilderError {
-    fn from(value: bdk_kyoto::builder::SqlInitializationError) -> Self {
-        CbfBuilderError::DatabaseError {
-            reason: value.to_string(),
-        }
-    }
-}
-
-impl From<bdk_kyoto::kyoto::ClientError> for CbfError {
-    fn from(_value: bdk_kyoto::kyoto::ClientError) -> Self {
+impl From<bdk_kyoto::bip157::ClientError> for CbfError {
+    fn from(_value: bdk_kyoto::bip157::ClientError) -> Self {
         CbfError::NodeStopped
     }
 }

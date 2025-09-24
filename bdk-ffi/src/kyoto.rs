@@ -1,19 +1,19 @@
-use bdk_kyoto::builder::NodeBuilder as BDKCbfBuilder;
-use bdk_kyoto::builder::NodeBuilderExt;
-use bdk_kyoto::kyoto::lookup_host;
-use bdk_kyoto::kyoto::tokio;
-use bdk_kyoto::kyoto::AddrV2;
-use bdk_kyoto::kyoto::ScriptBuf;
-use bdk_kyoto::kyoto::ServiceFlags;
+use bdk_kyoto::bip157::lookup_host;
+use bdk_kyoto::bip157::tokio;
+use bdk_kyoto::bip157::AddrV2;
+use bdk_kyoto::bip157::Network;
+use bdk_kyoto::bip157::Node;
+use bdk_kyoto::bip157::ServiceFlags;
+use bdk_kyoto::builder::Builder as BDKCbfBuilder;
+use bdk_kyoto::builder::BuilderExt;
+use bdk_kyoto::HeaderCheckpoint;
 use bdk_kyoto::LightClient as BDKLightClient;
-use bdk_kyoto::NodeDefault;
 use bdk_kyoto::Receiver;
 use bdk_kyoto::RejectReason;
 use bdk_kyoto::Requester;
 use bdk_kyoto::TrustedPeer;
 use bdk_kyoto::UnboundedReceiver;
 use bdk_kyoto::UpdateSubscriber;
-use bdk_kyoto::WalletExt;
 use bdk_kyoto::Warning as Warn;
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
@@ -25,19 +25,16 @@ use tokio::sync::Mutex;
 
 use crate::bitcoin::BlockHash;
 use crate::bitcoin::Transaction;
-use crate::error::{CbfBuilderError, CbfError};
+use crate::bitcoin::Wtxid;
+use crate::error::CbfError;
 use crate::types::Update;
 use crate::wallet::Wallet;
 use crate::FeeRate;
-
-type NodeState = bdk_kyoto::NodeState;
-type ScanType = bdk_kyoto::ScanType;
 
 const DEFAULT_CONNECTIONS: u8 = 2;
 const CWD_PATH: &str = ".";
 const TCP_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(2);
 const MESSAGE_RESPONSE_TIMEOUT: Duration = Duration::from_secs(5);
-const CLOUDFLARE_DNS: IpAddr = IpAddr::V4(Ipv4Addr::new(1, 1, 1, 1));
 
 /// Receive a [`CbfClient`] and [`CbfNode`].
 #[derive(Debug, uniffi::Record)]
@@ -55,7 +52,6 @@ pub struct CbfClient {
     info_rx: Mutex<Receiver<bdk_kyoto::Info>>,
     warning_rx: Mutex<UnboundedReceiver<bdk_kyoto::Warning>>,
     update_rx: Mutex<UpdateSubscriber>,
-    dns_resolver: IpAddr,
 }
 
 /// A [`CbfNode`] gathers transactions for a [`Wallet`].
@@ -64,20 +60,22 @@ pub struct CbfClient {
 /// to stop.
 #[derive(Debug, uniffi::Object)]
 pub struct CbfNode {
-    node: NodeDefault,
+    node: std::sync::Mutex<Option<Node>>,
 }
 
 #[uniffi::export]
 impl CbfNode {
     /// Start the node on a detached OS thread and immediately return.
     pub fn run(self: Arc<Self>) {
+        let mut lock = self.node.lock().unwrap();
+        let node = lock.take().expect("cannot call run more than once");
         std::thread::spawn(|| {
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
                 .unwrap()
                 .block_on(async move {
-                    let _ = self.node.run().await;
+                    let _ = node.run().await;
                 })
         });
     }
@@ -103,7 +101,6 @@ pub struct CbfBuilder {
     response_timeout: Duration,
     data_dir: Option<String>,
     scan_type: ScanType,
-    dns_resolver: Option<Arc<IpAddress>>,
     socks5_proxy: Option<Socks5Proxy>,
     peers: Vec<Peer>,
 }
@@ -120,7 +117,6 @@ impl CbfBuilder {
             response_timeout: MESSAGE_RESPONSE_TIMEOUT,
             data_dir: None,
             scan_type: ScanType::default(),
-            dns_resolver: None,
             socks5_proxy: None,
             peers: Vec::new(),
         }
@@ -170,15 +166,6 @@ impl CbfBuilder {
         })
     }
 
-    /// Configure a custom DNS resolver when querying DNS seeds. Default is `1.1.1.1` managed by
-    /// CloudFlare.
-    pub fn dns_resolver(&self, dns_resolver: Arc<IpAddress>) -> Arc<Self> {
-        Arc::new(CbfBuilder {
-            dns_resolver: Some(dns_resolver),
-            ..self.clone()
-        })
-    }
-
     /// Configure connections to be established through a `Socks5 proxy. The vast majority of the
     /// time, the connection is to a local Tor daemon, which is typically exposed at
     /// `127.0.0.1:9050`.
@@ -190,13 +177,46 @@ impl CbfBuilder {
     }
 
     /// Construct a [`CbfComponents`] for a [`Wallet`].
-    pub fn build(&self, wallet: &Wallet) -> Result<CbfComponents, CbfBuilderError> {
+    pub fn build(&self, wallet: &Wallet) -> CbfComponents {
         let wallet = wallet.get_wallet();
 
         let mut trusted_peers = Vec::new();
         for peer in self.peers.iter() {
             trusted_peers.push(peer.clone().into());
         }
+
+        let scan_type = match self.scan_type {
+            ScanType::Sync => bdk_kyoto::ScanType::Sync,
+            ScanType::Recovery {
+                used_script_index,
+                checkpoint,
+            } => {
+                let network = wallet.network();
+                // Any other network has taproot and segwit baked in since the genesis block.
+                if !matches!(network, Network::Bitcoin) {
+                    bdk_kyoto::ScanType::Recovery {
+                        used_script_index,
+                        checkpoint: HeaderCheckpoint::from_genesis(network),
+                    }
+                } else {
+                    match checkpoint {
+                        RecoveryPoint::GenesisBlock => bdk_kyoto::ScanType::Recovery {
+                            used_script_index,
+                            checkpoint: HeaderCheckpoint::from_genesis(wallet.network()),
+                        },
+                        RecoveryPoint::SegwitActivation => bdk_kyoto::ScanType::Recovery {
+                            used_script_index,
+                            checkpoint: HeaderCheckpoint::segwit_activation(),
+                        },
+                        RecoveryPoint::TaprootActivation => bdk_kyoto::ScanType::Recovery {
+                            used_script_index,
+                            checkpoint: HeaderCheckpoint::taproot_activation(),
+                        },
+                    }
+                }
+            }
+        };
+
         let path_buf = self
             .data_dir
             .clone()
@@ -209,10 +229,6 @@ impl CbfBuilder {
             .handshake_timeout(self.handshake_timeout)
             .response_timeout(self.response_timeout)
             .add_peers(trusted_peers);
-
-        if let Some(ip_addr) = self.dns_resolver.clone().map(|ip| ip.inner) {
-            builder = builder.dns_resolver(ip_addr);
-        }
 
         if let Some(proxy) = &self.socks5_proxy {
             let port = proxy.port;
@@ -227,30 +243,24 @@ impl CbfBuilder {
             update_subscriber,
             node,
         } = builder
-            .build_with_wallet(&wallet, self.scan_type)
-            .map_err(|e| CbfBuilderError::DatabaseError {
-                reason: e.to_string(),
-            })?;
+            .build_with_wallet(&wallet, scan_type)
+            .expect("networks match by definition");
 
-        let node = CbfNode { node };
-        let client_resolver = self
-            .dns_resolver
-            .clone()
-            .map(|ip| ip.inner)
-            .unwrap_or(CLOUDFLARE_DNS);
+        let node = CbfNode {
+            node: std::sync::Mutex::new(Some(node)),
+        };
 
         let client = CbfClient {
             sender: Arc::new(requester),
             info_rx: Mutex::new(info_subscriber),
             warning_rx: Mutex::new(warning_subscriber),
             update_rx: Mutex::new(update_subscriber),
-            dns_resolver: client_resolver,
         };
 
-        Ok(CbfComponents {
+        CbfComponents {
             client: Arc::new(client),
             node: Arc::new(node),
-        })
+        }
     }
 }
 
@@ -289,27 +299,14 @@ impl CbfClient {
         Ok(Update(update))
     }
 
-    /// Add scripts for the node to watch for as they are revealed. Typically used after creating
-    /// a transaction or revealing a receive address.
-    ///
-    /// Note that only future blocks will be checked for these scripts, not past blocks.
-    pub fn add_revealed_scripts(&self, wallet: &Wallet) -> Result<(), CbfError> {
-        let script_iter: Vec<ScriptBuf> = {
-            let wallet_lock = wallet.get_wallet();
-            wallet_lock.peek_revealed_plus_lookahead().collect()
-        };
-        for script in script_iter.into_iter() {
-            self.sender
-                .add_script(script)
-                .map_err(|_| CbfError::NodeStopped)?
-        }
-        Ok(())
-    }
-
     /// Broadcast a transaction to the network, erroring if the node has stopped running.
-    pub fn broadcast(&self, transaction: &Transaction) -> Result<(), CbfError> {
+    pub async fn broadcast(&self, transaction: &Transaction) -> Result<Arc<Wtxid>, CbfError> {
         let tx = transaction.into();
-        self.sender.broadcast_random(tx).map_err(From::from)
+        self.sender
+            .broadcast_random(tx)
+            .await
+            .map_err(From::from)
+            .map(|wtxid| Arc::new(Wtxid(wtxid)))
     }
 
     /// The minimum fee rate required to broadcast a transcation to all connected peers.
@@ -347,12 +344,12 @@ impl CbfClient {
     /// This is **not** a generic DNS implementation. Host names are prefixed with a `x849` to filter
     /// for compact block filter nodes from the seeder. For example `dns.myseeder.com` will be queried
     /// as `x849.dns.myseeder.com`. This has no guarantee to return any `IpAddr`.
-    pub async fn lookup_host(&self, hostname: String) -> Vec<Arc<IpAddress>> {
+    pub fn lookup_host(&self, hostname: String) -> Vec<Arc<IpAddress>> {
         let nodes = tokio::runtime::Builder::new_current_thread()
             .enable_all()
             .build()
             .unwrap()
-            .block_on(lookup_host(hostname, self.dns_resolver));
+            .block_on(lookup_host(hostname));
         nodes
             .into_iter()
             .map(|ip| Arc::new(IpAddress { inner: ip }))
@@ -376,17 +373,15 @@ pub enum Info {
     ConnectionsMet,
     /// The node was able to successfully connect to a remote peer.
     SuccessfulHandshake,
-    /// The block header chain of most work was extended to this height.
-    NewChainHeight { height: u32 },
-    /// A new fork was advertised to the node, but has not been selected yet.
-    NewFork { height: u32 },
     /// A percentage value of filters that have been scanned.
-    Progress { progress: f32 },
-    /// A state in the node syncing process.
-    StateUpdate { node_state: NodeState },
-    /// A transaction was broadcast over the wire to a peer that requested it from our inventory.
-    /// The transaction may or may not be rejected by recipient nodes.
-    TxGossiped { wtxid: String },
+    Progress {
+        /// The height of the local block chain.
+        chain_height: u32,
+        /// The percent of filters downloaded.
+        filters_downloaded_percent: f32,
+    },
+    /// A relevant block was downloaded from a peer.
+    BlockReceived(String),
 }
 
 impl From<bdk_kyoto::Info> for Info {
@@ -394,15 +389,11 @@ impl From<bdk_kyoto::Info> for Info {
         match value {
             bdk_kyoto::Info::ConnectionsMet => Info::ConnectionsMet,
             bdk_kyoto::Info::SuccessfulHandshake => Info::SuccessfulHandshake,
-            bdk_kyoto::Info::NewChainHeight(height) => Info::NewChainHeight { height },
-            bdk_kyoto::Info::NewFork { tip } => Info::NewFork { height: tip.height },
             bdk_kyoto::Info::Progress(progress) => Info::Progress {
-                progress: progress.percentage_complete(),
+                filters_downloaded_percent: progress.percentage_complete(),
+                chain_height: progress.chain_height(),
             },
-            bdk_kyoto::Info::TxGossiped(wtxid) => Info::TxGossiped {
-                wtxid: wtxid.to_string(),
-            },
-            bdk_kyoto::Info::StateChange(state) => Info::StateUpdate { node_state: state },
+            bdk_kyoto::Info::BlockReceived(block) => Info::BlockReceived(block.to_string()),
         }
     }
 }
@@ -422,23 +413,13 @@ pub enum Warning {
     PotentialStaleTip,
     /// A peer sent us a peer-to-peer message the node did not request.
     UnsolicitedMessage,
-    /// The provided starting height is deeper than the database history.
-    /// This should not occur under normal use.
-    InvalidStartHeight,
-    /// The headers in the database do not link together.
-    /// Recoverable by deleting the database.
-    CorruptedHeaders,
     /// A transaction got rejected, likely for being an insufficient fee or non-standard transaction.
     TransactionRejected {
         wtxid: String,
         reason: Option<String>,
     },
-    /// A database failed to persist some data and may retry again
-    FailedPersistence { warning: String },
     /// The peer sent us a potential fork.
     EvaluatingFork,
-    /// The peer database has no values.
-    EmptyPeerDatabase,
     /// An unexpected error occurred processing a peer-to-peer message.
     UnexpectedSyncError { warning: String },
     /// The node failed to respond to a message sent from the client.
@@ -457,8 +438,6 @@ impl From<Warn> for Warning {
             Warn::NoCompactFilters => Warning::NoCompactFilters,
             Warn::PotentialStaleTip => Warning::PotentialStaleTip,
             Warn::UnsolicitedMessage => Warning::UnsolicitedMessage,
-            Warn::InvalidStartHeight => Warning::InvalidStartHeight,
-            Warn::CorruptedHeaders => Warning::CorruptedHeaders,
             Warn::TransactionRejected { payload } => {
                 let reason = payload.reason.map(|r| r.into_string());
                 Warning::TransactionRejected {
@@ -466,43 +445,36 @@ impl From<Warn> for Warning {
                     reason,
                 }
             }
-            Warn::FailedPersistence { warning } => Warning::FailedPersistence { warning },
             Warn::EvaluatingFork => Warning::EvaluatingFork,
-            Warn::EmptyPeerDatabase => Warning::EmptyPeerDatabase,
             Warn::UnexpectedSyncError { warning } => Warning::UnexpectedSyncError { warning },
             Warn::ChannelDropped => Warning::RequestFailed,
         }
     }
 }
 
-/// The state of the node with respect to connected peers.
-#[uniffi::remote(Enum)]
-pub enum NodeState {
-    /// We are behind on block headers according to our peers.
-    Behind,
-    /// We may start downloading compact block filter headers.
-    HeadersSynced,
-    /// We may start scanning compact block filters.
-    FilterHeadersSynced,
-    /// We may start asking for blocks with matches.
-    FiltersSynced,
-    /// We found all known transactions to the wallet.
-    TransactionsSynced,
-}
-
-/// Sync a wallet from the last known block hash, recover a wallet from a specified height,
-/// or perform an expedited block header download for a new wallet.
-#[uniffi::remote(Enum)]
+/// Sync a wallet from the last known block hash or recover a wallet from a specified recovery
+/// point.
+#[derive(Debug, Clone, Copy, Default, uniffi::Enum)]
 pub enum ScanType {
-    /// Perform an expedited header and filter download for a new wallet.
-    /// If this option is not set, and the wallet has no history, the
-    /// entire chain will be scanned for script inclusions.
-    New,
     /// Sync an existing wallet from the last stored chain checkpoint.
     #[default]
     Sync,
     /// Recover an existing wallet by scanning from the specified height.
-    Recovery { from_height: u32 },
+    Recovery {
+        /// The estimated number of scripts the user has revealed for the wallet being recovered.
+        /// If unknown, a conservative estimate, say 1,000, could be used.
+        used_script_index: u32,
+        /// A relevant starting point or soft fork to start the sync.
+        checkpoint: RecoveryPoint,
+    },
+}
+
+#[derive(Debug, Clone, Copy, Default, uniffi::Enum)]
+pub enum RecoveryPoint {
+    GenesisBlock,
+    #[default]
+    SegwitActivation,
+    TaprootActivation,
 }
 
 /// A peer to connect to over the Bitcoin peer-to-peer network.

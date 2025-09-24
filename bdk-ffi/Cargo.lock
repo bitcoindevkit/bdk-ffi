@@ -206,12 +206,12 @@ dependencies = [
 
 [[package]]
 name = "bdk_kyoto"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2219652e0fd9e630e1b1e6eb281289324132bc2c4251aa233b794cbd440a65b0"
+checksum = "a46b32f4f92e368fb5fd446f30c8c81126a63a78f90f63011bc7a6b787511a81"
 dependencies = [
  "bdk_wallet",
- "kyoto-cbf",
+ "bip157",
 ]
 
 [[package]]
@@ -234,6 +234,18 @@ name = "bech32"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d"
+
+[[package]]
+name = "bip157"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9af64ec611227ba3ea73bc8b09a97a8af835804d0202071e2465e9b1055e6cd1"
+dependencies = [
+ "bip324",
+ "bitcoin",
+ "bitcoin-address-book",
+ "tokio",
+]
 
 [[package]]
 name = "bip324"
@@ -276,6 +288,15 @@ dependencies = [
  "hex_lit",
  "secp256k1",
  "serde",
+]
+
+[[package]]
+name = "bitcoin-address-book"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16d55a2ccdaa0271ea60355a01fc82e37f33a340df80599d344f9d6e97d46e48"
+dependencies = [
+ "bitcoin",
 ]
 
 [[package]]
@@ -678,18 +699,6 @@ name = "itoa"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
-
-[[package]]
-name = "kyoto-cbf"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10b8c311ef2ad072ddbdc4ad3e08e4f25c09a70f433da6819e2feb42b3a92209"
-dependencies = [
- "bip324",
- "bitcoin",
- "rusqlite",
- "tokio",
-]
 
 [[package]]
 name = "libc"
