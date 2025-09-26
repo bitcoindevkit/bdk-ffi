@@ -26,6 +26,7 @@ use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::TxIn as BdkTxIn;
 use bdk_wallet::bitcoin::TxOut as BdkTxOut;
 use bdk_wallet::bitcoin::Txid as BitcoinTxid;
+use bdk_wallet::bitcoin::Weight;
 use bdk_wallet::bitcoin::Wtxid as BitcoinWtxid;
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
@@ -121,10 +122,12 @@ impl HashableOutPoint {
 /// This is an integer type representing fee rate in sat/kwu. It provides protection against mixing
 /// up the types as well as basic formatting features.
 #[derive(Clone, Debug, uniffi::Object)]
+#[uniffi::export(Display)]
 pub struct FeeRate(pub BdkFeeRate);
 
 #[uniffi::export]
 impl FeeRate {
+    // Constructs `FeeRate` from satoshis per virtual bytes.
     #[uniffi::constructor]
     pub fn from_sat_per_vb(sat_vb: u64) -> Result<Self, FeeRateError> {
         let fee_rate: Option<BdkFeeRate> = BdkFeeRate::from_sat_per_vb(sat_vb);
@@ -134,21 +137,55 @@ impl FeeRate {
         }
     }
 
+    // Constructs `FeeRate` from satoshis per 1000 weight units.
     #[uniffi::constructor]
     pub fn from_sat_per_kwu(sat_kwu: u64) -> Self {
         FeeRate(BdkFeeRate::from_sat_per_kwu(sat_kwu))
     }
 
+    /// Converts to sat/vB rounding up.
     pub fn to_sat_per_vb_ceil(&self) -> u64 {
         self.0.to_sat_per_vb_ceil()
     }
 
+    /// Converts to sat/vB rounding down.
     pub fn to_sat_per_vb_floor(&self) -> u64 {
         self.0.to_sat_per_vb_floor()
     }
 
+    /// Returns raw fee rate.
     pub fn to_sat_per_kwu(&self) -> u64 {
         self.0.to_sat_per_kwu()
+    }
+
+    /// Calculates fee in satoshis by multiplying this fee rate by weight, in virtual bytes, returning `None` if overflow occurred.
+    ///
+    /// This is equivalent to converting vb to weight using Weight::from_vb and then calling Self::fee_wu(weight).
+    pub fn fee_vb(&self, vb: u64) -> Option<Arc<Amount>> {
+        let rust_amount: BdkAmount = self.0.fee_vb(vb)?;
+        let amount: Amount = rust_amount.into();
+        Some(Arc::new(amount))
+
+        // The whole code above should be replaceable by the following line:
+        // self.0.fee_vb(vb).map(Arc::new(Amount::from))
+        // But in practice you get uniffi compilation errors on it. Not sure what is going on with it,
+        // but the code we use works just as well.
+    }
+
+    /// Calculates fee by multiplying this fee rate by weight, in weight units, returning `None` if overflow occurred.
+    //
+    // This is equivalent to Self::checked_mul_by_weight().
+    pub fn fee_wu(&self, wu: u64) -> Option<Arc<Amount>> {
+        let weight: Weight = Weight::from_wu(wu);
+        let rust_amount: BdkAmount = self.0.fee_wu(weight)?;
+        let amount: Amount = rust_amount.into();
+        Some(Arc::new(amount))
+    }
+}
+
+impl Display for FeeRate {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{} sat/kwu", self.0)
     }
 }
 
