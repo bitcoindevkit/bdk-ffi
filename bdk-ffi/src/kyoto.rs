@@ -108,6 +108,7 @@ pub struct CbfBuilder {
     peers: Vec<Peer>,
 }
 
+#[allow(clippy::new_without_default)]
 #[uniffi::export]
 impl CbfBuilder {
     /// Start a new [`CbfBuilder`]

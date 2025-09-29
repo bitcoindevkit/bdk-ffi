@@ -11,6 +11,9 @@ mod tx_builder;
 mod types;
 mod wallet;
 
+#[cfg(test)]
+mod tests;
+
 use crate::bitcoin::FeeRate;
 use crate::bitcoin::OutPoint;
 
