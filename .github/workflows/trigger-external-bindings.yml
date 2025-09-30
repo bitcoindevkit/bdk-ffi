@@ -39,3 +39,24 @@ jobs:
           else
             echo "(empty)"
           fi
+          
+      # Trigger trigger-bdk-python-test workflow in bdk-python repository
+      - name: Trigger tests in bdk-python repository
+        env:
+          BDK_PYTHON_ACCESS_TOKEN: ${{ secrets.BDK_PYTHON_ACCESS_TOKEN }}
+        run: |
+          curl --silent --show-error \
+            --output /tmp/resp_bdk-python.txt \
+            --write-out "HTTP Status: %{http_code}\n" \
+            --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer $BDK_PYTHON_ACCESS_TOKEN" \
+            --data '{"event_type":"trigger-bdk-python-test"}' \
+            https://api.github.com/repos/bitcoindevkit/bdk-python/dispatches
+          echo "Response body:"
+          if [ -s /tmp/resp_bdk-python.txt ]; then
+            jq . /tmp/resp_bdk-python.txt || cat /tmp/resp_bdk-python.txt
+          else
+            echo "(empty)"
+          fi
