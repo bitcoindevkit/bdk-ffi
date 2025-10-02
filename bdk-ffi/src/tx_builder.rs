@@ -40,6 +40,8 @@ pub struct TxBuilder {
     locktime: Option<LockTime>,
     allow_dust: bool,
     version: Option<i32>,
+    exclude_unconfirmed: bool,
+    exclude_below_confirmations: Option<u32>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -66,6 +68,8 @@ impl TxBuilder {
             locktime: None,
             allow_dust: false,
             version: None,
+            exclude_unconfirmed: false,
+            exclude_below_confirmations: None,
         }
     }
 
@@ -77,6 +81,34 @@ impl TxBuilder {
     pub fn add_global_xpubs(&self) -> Arc<Self> {
         Arc::new(TxBuilder {
             add_global_xpubs: true,
+            ..self.clone()
+        })
+    }
+
+    /// Exclude outpoints whose enclosing transaction is unconfirmed.
+    /// This is a shorthand for exclude_below_confirmations(1).
+    pub fn exclude_unconfirmed(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            exclude_unconfirmed: true,
+            ..self.clone()
+        })
+    }
+
+    /// Excludes any outpoints whose enclosing transaction has fewer than `min_confirms`
+    /// confirmations.
+    ///
+    /// `min_confirms` is the minimum number of confirmations a transaction must have in order for
+    /// its outpoints to remain spendable.
+    /// - Passing `0` will include all transactions (no filtering).
+    /// - Passing `1` will exclude all unconfirmed transactions (equivalent to
+    ///   `exclude_unconfirmed`).
+    /// - Passing `6` will only allow outpoints from transactions with at least 6 confirmations.
+    ///
+    /// If you chain this with other filtering methods, the final set of unspendable outpoints will
+    /// be the union of all filters.
+    pub fn exclude_below_confirmations(&self, min_confirms: u32) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            exclude_below_confirmations: Some(min_confirms),
             ..self.clone()
         })
     }
@@ -402,7 +434,12 @@ impl TxBuilder {
         if let Some(version) = self.version {
             tx_builder.version(version);
         }
-
+        if self.exclude_unconfirmed {
+            tx_builder.exclude_unconfirmed();
+        }
+        if let Some(min_confirms) = self.exclude_below_confirmations {
+            tx_builder.exclude_below_confirmations(min_confirms);
+        }
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
 
         Ok(Arc::new(psbt.into()))
