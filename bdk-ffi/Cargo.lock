@@ -149,7 +149,7 @@ dependencies = [
 
 [[package]]
 name = "bdk-ffi"
-version = "2.1.0-alpha.0"
+version = "2.2.0-alpha.0"
 dependencies = [
  "assert_matches",
  "bdk_electrum",
