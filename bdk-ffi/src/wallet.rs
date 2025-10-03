@@ -12,6 +12,7 @@ use crate::types::{
 };
 
 use bdk_wallet::bitcoin::Network;
+#[allow(deprecated)]
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{KeychainKind, PersistedWallet, Wallet as BdkWallet};
 
@@ -351,6 +352,7 @@ impl Wallet {
     /// signers will follow the options, but the "software signers" (WIF keys and `xprv`) defined
     /// in this library will.
     #[uniffi::method(default(sign_options = None))]
+    #[allow(deprecated)]
     pub fn sign(
         &self,
         psbt: Arc<Psbt>,
@@ -377,6 +379,7 @@ impl Wallet {
     ///
     /// The [`SignOptions`] can be used to tweak the behavior of the finalizer.
     #[uniffi::method(default(sign_options = None))]
+    #[allow(deprecated)]
     pub fn finalize_psbt(
         &self,
         psbt: Arc<Psbt>,

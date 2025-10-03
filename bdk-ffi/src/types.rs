@@ -23,6 +23,7 @@ use bdk_wallet::descriptor::policy::{
     Condition as BdkCondition, PkOrF as BdkPkOrF, Policy as BdkPolicy,
     Satisfaction as BdkSatisfaction, SatisfiableItem as BdkSatisfiableItem,
 };
+#[allow(deprecated)]
 use bdk_wallet::signer::{SignOptions as BdkSignOptions, TapLeavesOptions};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
@@ -656,6 +657,7 @@ impl From<BdkCondition> for Condition {
 /// Options for a software signer.
 ///
 /// Adjust the behavior of our software signers and the way a transaction is finalized.
+#[allow(deprecated)]
 #[derive(uniffi::Record)]
 pub struct SignOptions {
     /// Whether the signer should trust the `witness_utxo`, if the `non_witness_utxo` hasn't been
@@ -698,6 +700,7 @@ pub struct SignOptions {
     pub allow_grinding: bool,
 }
 
+#[allow(deprecated)]
 impl From<SignOptions> for BdkSignOptions {
     fn from(options: SignOptions) -> BdkSignOptions {
         BdkSignOptions {

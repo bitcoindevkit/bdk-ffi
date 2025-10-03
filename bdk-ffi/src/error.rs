@@ -22,6 +22,7 @@ use bdk_wallet::error::CreateTxError as BdkCreateTxError;
 use bdk_wallet::keys::bip39::Error as BdkBip39Error;
 use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
 use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
+#[allow(deprecated)]
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddUtxoError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
@@ -1503,6 +1504,7 @@ impl From<BdkPsbtFinalizeError> for PsbtFinalizeError {
     }
 }
 
+#[allow(deprecated)]
 impl From<BdkSignerError> for SignerError {
     fn from(error: BdkSignerError) -> Self {
         match error {
