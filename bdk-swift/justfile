@@ -14,9 +14,13 @@ build:
   bash ./build-xcframework.sh
 
 [group("Build")]
-[doc("Remove all caches and previous builds to start from scratch.")]
+[doc("Remove all caches and previous build artifacts to start from scratch.")]
 clean:
   rm -rf ../bdk-ffi/target/
+  rm -rf ./.build/
+  rm -rf ./.swiftpm/
+  rm -rf ./bdkffi.xcframework/
+  rm -rf ./Sources/
 
 [group("Test")]
 [doc("Run all tests, unless a filter is provided.")]
