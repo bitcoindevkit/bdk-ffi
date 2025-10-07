@@ -1,26 +1,20 @@
-# Language bindings for BDK
+# Language Bindings for BDK
 
 <p>
-    <a href="https://github.com/bitcoindevkit/bdk-ffi/blob/master/LICENSE"><img alt="MIT or Apache-2.0 Licensed" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg"/></a>
-    <a href="https://github.com/bitcoindevkit/bdk-ffi/actions?query=workflow%3ACI"><img alt="CI Status" src="https://github.com/bitcoindevkit/bdk-ffi/workflows/CI/badge.svg"></a>
-    <a href="https://blog.rust-lang.org/2022/05/19/Rust-1.61.0.html"><img alt="Rustc Version 1.61.0+" src="https://img.shields.io/badge/rustc-1.61.0%2B-lightgrey.svg"/></a>
-    <a href="https://discord.gg/d7NkDKm"><img alt="Chat on Discord" src="https://img.shields.io/discord/753336465005608961?logo=discord"></a>
+  <a href="https://github.com/bitcoindevkit/bdk-ffi/blob/master/LICENSE"><img alt="MIT or Apache-2.0 Licensed" src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg"/></a>
+  <a href="https://discord.gg/d7NkDKm"><img alt="Chat on Discord" src="https://img.shields.io/discord/753336465005608961?logo=discord"></a>
 </p>
 
-## Readme
+The code in this repository creates a library ready for export to other languages using [uniffi-rs] for the Rust-based [bdk_wallet] library from the [Bitcoin Dev Kit] project.
 
-The workspace in this repository creates the `libbdkffi` multi-language library for the Rust-based 
-[bdk] library from the [Bitcoin Dev Kit] project.
-
-Each supported language and the platform(s) it's packaged for has its own directory. The Rust code in this project is in the bdk-ffi directory and is a wrapper around the [bdk] library to expose its APIs in a uniform way using the [mozilla/uniffi-rs] bindings generator for each supported target language.
+Each supported language (Kotlin for Android and Swift for iOS) and the platforms it's packaged for has its own directory. The Rust code in this project is in the bdk-ffi directory and is a wrapper around the [bdk_wallet] library to expose its APIs in a uniform way using the [mozilla/uniffi-rs] bindings generator for each supported target language.
 
 ## Supported target languages and platforms
 
-The below directories (a separate repository in the case of bdk-swift) include instructions for using, building, and publishing the native language binding for [bdk] supported by this project.
+The below directories include instructions for building and using the language binding for [bdk_wallet] supported by this project.
 
 | Language | Platform              | Published Package | Building Documentation | API Docs              |
 | -------- |-----------------------|-------------------|------------------------|-----------------------|
-| Kotlin   | JVM                   | [bdk-jvm]         | [Readme bdk-jvm]       | [Kotlin JVM API Docs] |
 | Kotlin   | Android               | [bdk-android]     | [Readme bdk-android]   | [Android API Docs]    |
 | Swift    | iOS, macOS            | [bdk-swift]       | [Readme bdk-swift]     |                       |
 
@@ -28,24 +22,21 @@ The below directories (a separate repository in the case of bdk-swift) include i
 
 The `bdk-ffi` codebase in this repository can be used to produce language bindings for more than Swift and Kotlin. Some of these require the use of uniffi 3rd party plugins and some not. Below are some of the libraries that use the bdk-ffi API, but are maintained separately. Refer to their individual READMEs for information on their state of production-readiness.
 
-| Language | Platform              | Published Package | Building Documentation | API Docs              |
-| -------- |-----------------------|-------------------|------------------------|-----------------------|
-| Python   | Linux, macOS, Windows | [bdkpython]       | [Readme bdkpython]     |                       |
+| Language | Platform              | Published Package         | Repository   | API Docs              |
+| -------- |-----------------------|---------------------------|--------------|-----------------------|
+| Kotlin   | JVM                   | [bdk-jvm (Maven Central)] | [bdk-jvm]    |                       |
+| Python   | Linux, macOS, Windows | [bdk-python (PyPI)]       | [bdk-python] |                       |
 
 ## Building and testing the libraries
 
-If you are familiar with the build tools for the specific languages you wish to build the libraries for, you can use their normal build/test workflows. We also include some [just](https://just.systems/) files to simplify the work across different languages. If you have the just tool installed on your system, you can simply call the commands defined in the `justfile`s, for example:
+If you are familiar with the build tools for the specific languages you wish to build the libraries for, you can use their normal build/test workflows. We also include some [just](https://just.systems/) files to simplify the work across different languages. If you have the `just` tool installed on your system, you can simply call the commands defined in the justfiles, for example:
+
 ```sh
 cd bdk-android
-
 just build
-just offlinetests
-just publishlocal
+just test
+just publish-local
 ```
-
-## Minimum Supported Rust Version (MSRV)
-
-This library should compile with any combination of features with Rust 1.85.1.
 
 ## Contributing
 
@@ -58,48 +49,6 @@ To add new structs and functions, see the [UniFFI User Guide](https://mozilla.gi
 3. Getting up and running should be easy 
 4. Contributing should be easy 
 5. Get it right, then automate
-
-## Using the libraries
-
-### bdk-android
-
-```kotlin
-// build.gradle.kts
-repositories {
-    mavenCentral()
-}
-dependencies { 
-    implementation("org.bitcoindevkit:bdk-android:<version>")
-}
-```
-
-### bdk-jvm
-
-```kotlin
-// build.gradle.kts
-repositories {
-    mavenCentral()
-}
-dependencies { 
-    implementation("org.bitcoindevkit:bdk-jvm:<version>")
-}
-```
-
-_Note:_ We also publish snapshot versions of bdk-jvm and bdk-android. See the specific readmes for instructions on how to use those.
-
-### bdkpython
-
-```shell
-pip3 install bdkpython
-```
-
-### BitcoinDevKit (Swift)
-
-Add `BitcoinDevKit` to your dependencies in XCode.
-
-## Developing language bindings using uniffi-rs
-
-If you are interested in better understanding the base structure we use here in order to build your own Rust-to-Kotlin/Swift/Python language bindings, check out the [uniffi-bindings-template](https://github.com/thunderbiscuit/uniffi-bindings-template) repository. We maintain it as an example and starting point for other projects that wish to leverage the tech stack used in producing the BDK language bindings.
 
 ## Verifying Signatures
 
@@ -151,22 +100,16 @@ Email: `bindings@bitcoindevkit.org`
 
 This project is made possible thanks to the wonderful work by the [mozilla/uniffi-rs] team.
 
-[Kotlin]: https://kotlinlang.org/
-[Android Studio]: https://developer.android.com/studio/
-[`bdk`]: https://github.com/bitcoindevkit/bdk
-[`bdk-ffi`]: https://github.com/bitcoindevkit/bdk-ffi
-["Getting Started (Developer)"]: https://github.com/bitcoindevkit/bdk-ffi#getting-started-developer
-[bdk-jvm]: https://central.sonatype.com/artifact/org.bitcoindevkit/bdk-jvm/
+[bdk-jvm]: https://github.com/bitcoindevkit/bdk-jvm
+[bdk-jvm (Maven Central)]: https://central.sonatype.com/artifact/org.bitcoindevkit/bdk-jvm/
 [bdk-android]: https://central.sonatype.com/artifact/org.bitcoindevkit/bdk-android/
 [bdk-swift]: https://github.com/bitcoindevkit/bdk-swift
-[bdkpython]: https://pypi.org/project/bdkpython/
+[bdk-python]: https://github.com/bitcoindevkit/bdk-python
+[bdk-python (PyPI)]: https://pypi.org/project/bdk-python
 [mozilla/uniffi-rs]: https://github.com/mozilla/uniffi-rs
-[bdk]: https://github.com/bitcoindevkit/bdk
+[bdk_wallet]: https://github.com/bitcoindevkit/bdk_wallet
 [Bitcoin Dev Kit]: https://github.com/bitcoindevkit
 [uniffi-rs]: https://github.com/mozilla/uniffi-rs
-[Readme bdk-jvm]: https://github.com/bitcoindevkit/bdk-ffi/tree/master/bdk-jvm
 [Readme bdk-android]: https://github.com/bitcoindevkit/bdk-ffi/tree/master/bdk-android
-[Readme bdk-swift]: https://github.com/bitcoindevkit/bdk-swift  
-[Readme bdkpython]: https://github.com/bitcoindevkit/bdkpython
-[Kotlin JVM API Docs]: https://bitcoindevkit.org/jvm/
-[Android API Docs]: https://bitcoindevkit.org/android/
+[Readme bdk-swift]: https://github.com/bitcoindevkit/bdk-swift
+[Android API Docs]: https://bitcoindevkit.org/android
