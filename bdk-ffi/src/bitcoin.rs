@@ -39,7 +39,7 @@ use std::ops::Deref;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
-pub(crate) type DescriptorType = bdk_wallet::miniscript::descriptor::DescriptorType;
+pub type DescriptorType = bdk_wallet::miniscript::descriptor::DescriptorType;
 pub type Network = bdk_wallet::bitcoin::Network;
 
 /// A reference to an unspent output by TXID and output index.
@@ -770,7 +770,7 @@ pub struct Psbt(pub(crate) Mutex<BdkPsbt>);
 impl Psbt {
     /// Creates a new `Psbt` instance from a base64-encoded string.
     #[uniffi::constructor]
-    pub(crate) fn new(psbt_base64: String) -> Result<Self, PsbtParseError> {
+    pub fn new(psbt_base64: String) -> Result<Self, PsbtParseError> {
         let psbt: BdkPsbt = BdkPsbt::from_str(&psbt_base64)?;
         Ok(Psbt(Mutex::new(psbt)))
     }
@@ -781,14 +781,14 @@ impl Psbt {
     ///
     /// If transactions is not unsigned.
     #[uniffi::constructor]
-    pub(crate) fn from_unsigned_tx(tx: Arc<Transaction>) -> Result<Arc<Psbt>, PsbtError> {
+    pub fn from_unsigned_tx(tx: Arc<Transaction>) -> Result<Arc<Psbt>, PsbtError> {
         let psbt: BdkPsbt = BdkPsbt::from_unsigned_tx(tx.0.clone())?;
         Ok(Arc::new(Psbt(Mutex::new(psbt))))
     }
 
     /// Create a new `Psbt` from a `.psbt` file.
     #[uniffi::constructor]
-    pub(crate) fn from_file(path: String) -> Result<Self, PsbtError> {
+    pub fn from_file(path: String) -> Result<Self, PsbtError> {
         let file = File::open(path)?;
         let mut buf_read = BufReader::new(file);
         let psbt: BdkPsbt = BdkPsbt::deserialize_from_reader(&mut buf_read)?;
@@ -796,7 +796,7 @@ impl Psbt {
     }
 
     /// Serialize the PSBT into a base64-encoded string.
-    pub(crate) fn serialize(&self) -> String {
+    pub fn serialize(&self) -> String {
         let psbt = self.0.lock().unwrap().clone();
         psbt.to_string()
     }
@@ -808,7 +808,7 @@ impl Psbt {
     /// `ExtractTxError` variants will contain either the `Psbt` itself or the `Transaction`
     /// that was extracted. These can be extracted from the Errors in order to recover.
     /// See the error documentation for info on the variants. In general, it covers large fees.
-    pub(crate) fn extract_tx(&self) -> Result<Arc<Transaction>, ExtractTxError> {
+    pub fn extract_tx(&self) -> Result<Arc<Transaction>, ExtractTxError> {
         let tx: BdkTransaction = self.0.lock().unwrap().clone().extract_tx()?;
         let transaction: Transaction = tx.into();
         Ok(Arc::new(transaction))
@@ -824,7 +824,7 @@ impl Psbt {
     /// - `MissingUtxo` when UTXO information for any input is not present or is invalid.
     /// - `NegativeFee` if calculated value is negative.
     /// - `FeeOverflow` if an integer overflow occurs.
-    pub(crate) fn fee(&self) -> Result<u64, PsbtError> {
+    pub fn fee(&self) -> Result<u64, PsbtError> {
         self.0
             .lock()
             .unwrap()
@@ -836,7 +836,7 @@ impl Psbt {
     /// Combines this `Psbt` with `other` PSBT as described by BIP 174.
     ///
     /// In accordance with BIP 174 this function is commutative i.e., `A.combine(B) == B.combine(A)`
-    pub(crate) fn combine(&self, other: Arc<Psbt>) -> Result<Arc<Psbt>, PsbtError> {
+    pub fn combine(&self, other: Arc<Psbt>) -> Result<Arc<Psbt>, PsbtError> {
         let mut original_psbt = self.0.lock().unwrap().clone();
         let other_psbt = other.0.lock().unwrap().clone();
         original_psbt.combine(other_psbt)?;
@@ -846,7 +846,7 @@ impl Psbt {
     /// Finalizes the current PSBT and produces a result indicating
     ///
     /// whether the finalization was successful or not.
-    pub(crate) fn finalize(&self) -> FinalizedPsbtResult {
+    pub fn finalize(&self) -> FinalizedPsbtResult {
         let curve = Secp256k1::verification_only();
         let finalized = self.0.lock().unwrap().clone().finalize(&curve);
         match finalized {
@@ -867,7 +867,7 @@ impl Psbt {
     }
 
     /// Write the `Psbt` to a file. Note that the file must not yet exist.
-    pub(crate) fn write_to_file(&self, path: String) -> Result<(), PsbtError> {
+    pub fn write_to_file(&self, path: String) -> Result<(), PsbtError> {
         let file = File::create_new(path)?;
         let mut writer = BufWriter::new(file);
         let psbt = self.0.lock().unwrap();
@@ -876,13 +876,13 @@ impl Psbt {
     }
 
     /// Serializes the PSBT into a JSON string representation.
-    pub(crate) fn json_serialize(&self) -> String {
+    pub fn json_serialize(&self) -> String {
         let psbt = self.0.lock().unwrap();
         serde_json::to_string(psbt.deref()).unwrap()
     }
 
     /// Returns the spending utxo for this PSBT's input at `input_index`.
-    pub(crate) fn spend_utxo(&self, input_index: u64) -> String {
+    pub fn spend_utxo(&self, input_index: u64) -> String {
         let psbt = self.0.lock().unwrap();
         let utxo = psbt.spend_utxo(input_index as usize).unwrap();
         serde_json::to_string(&utxo).unwrap()
