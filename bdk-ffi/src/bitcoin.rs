@@ -123,7 +123,7 @@ impl HashableOutPoint {
 /// This is an integer type representing fee rate in sat/kwu. It provides protection against mixing
 /// up the types as well as basic formatting features.
 #[derive(Clone, Debug, uniffi::Object)]
-pub struct FeeRate(pub BdkFeeRate);
+pub struct FeeRate(pub(crate) BdkFeeRate);
 
 #[uniffi::export]
 impl FeeRate {
@@ -162,7 +162,7 @@ impl_into_core_type!(FeeRate, BdkFeeRate);
 /// underflow occurs. Also note that since the internal representation of amounts is unsigned,
 /// subtracting below zero is considered an underflow and will cause a panic.
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Object)]
-pub struct Amount(pub BdkAmount);
+pub struct Amount(pub(crate) BdkAmount);
 
 #[uniffi::export]
 impl Amount {
@@ -197,7 +197,7 @@ impl_into_core_type!(Amount, BdkAmount);
 /// A bitcoin script: https://en.bitcoin.it/wiki/Script
 #[derive(Clone, Debug, uniffi::Object)]
 #[uniffi::export(Display)]
-pub struct Script(pub BdkScriptBuf);
+pub struct Script(pub(crate) BdkScriptBuf);
 
 #[uniffi::export]
 impl Script {
