@@ -57,25 +57,29 @@ fn test_descriptor_templates() {
         "d1d04177".to_string(),
         KeychainKind::External,
         Network::Testnet,
-    );
+    )
+    .unwrap();
     let template_public_49 = Descriptor::new_bip49_public(
         &handmade_public_49,
         "d1d04177".to_string(),
         KeychainKind::External,
         Network::Testnet,
-    );
+    )
+    .unwrap();
     let template_public_84 = Descriptor::new_bip84_public(
         &handmade_public_84,
         "d1d04177".to_string(),
         KeychainKind::External,
         Network::Testnet,
-    );
+    )
+    .unwrap();
     let template_public_86 = Descriptor::new_bip86_public(
         &handmade_public_86,
         "d1d04177".to_string(),
         KeychainKind::External,
         Network::Testnet,
-    );
+    )
+    .unwrap();
     println!("Template public 49: {}", template_public_49);
     println!("Template public 44: {}", template_public_44);
     println!("Template public 84: {}", template_public_84);
@@ -122,6 +126,25 @@ fn test_descriptor_from_string() {
     // Creating a Descriptor using an extended key that doesn't match the network provided will throw a DescriptorError::Key with inner InvalidNetwork error
     assert!(descriptor1.is_ok());
     assert_matches!(descriptor2.unwrap_err(), DescriptorError::Key { .. });
+}
+
+#[test]
+fn test_new_bip84_public_invalid_fingerprint() {
+    let master: DescriptorSecretKey = get_descriptor_secret_key();
+    let public_84 = master
+        .derive(&DerivationPath::new("m/84h/1h/0h".to_string()).unwrap())
+        .unwrap()
+        .as_public();
+
+    let error = Descriptor::new_bip84_public(
+        &public_84,
+        "not-a-fingerprint".to_string(),
+        KeychainKind::External,
+        Network::Testnet,
+    )
+    .unwrap_err();
+
+    assert_matches!(error, DescriptorError::Bip32 { .. });
 }
 
 #[test]

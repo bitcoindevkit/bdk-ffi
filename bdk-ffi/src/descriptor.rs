@@ -78,8 +78,12 @@ impl Descriptor {
         fingerprint: String,
         keychain_kind: KeychainKind,
         network: Network,
-    ) -> Self {
-        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
+    ) -> Result<Self, DescriptorError> {
+        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).map_err(|error| {
+            DescriptorError::Bip32 {
+                error_message: error.to_string(),
+            }
+        })?;
         let derivable_key = &public_key.0;
 
         match derivable_key {
@@ -91,12 +95,12 @@ impl Descriptor {
                 let (extended_descriptor, key_map, _) =
                     Bip44Public(derivable_key, fingerprint, keychain_kind)
                         .build(network)
-                        .unwrap();
+                        .map_err(DescriptorError::from)?;
 
-                Self {
+                Ok(Self {
                     extended_descriptor,
                     key_map,
-                }
+                })
             }
             BdkDescriptorPublicKey::MultiXPub(_) => {
                 unreachable!()
@@ -139,8 +143,12 @@ impl Descriptor {
         fingerprint: String,
         keychain_kind: KeychainKind,
         network: Network,
-    ) -> Self {
-        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
+    ) -> Result<Self, DescriptorError> {
+        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).map_err(|error| {
+            DescriptorError::Bip32 {
+                error_message: error.to_string(),
+            }
+        })?;
         let derivable_key = &public_key.0;
 
         match derivable_key {
@@ -152,12 +160,12 @@ impl Descriptor {
                 let (extended_descriptor, key_map, _) =
                     Bip49Public(derivable_key, fingerprint, keychain_kind)
                         .build(network)
-                        .unwrap();
+                        .map_err(DescriptorError::from)?;
 
-                Self {
+                Ok(Self {
                     extended_descriptor,
                     key_map,
-                }
+                })
             }
             BdkDescriptorPublicKey::MultiXPub(_) => {
                 unreachable!()
@@ -200,8 +208,12 @@ impl Descriptor {
         fingerprint: String,
         keychain_kind: KeychainKind,
         network: Network,
-    ) -> Self {
-        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
+    ) -> Result<Self, DescriptorError> {
+        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).map_err(|error| {
+            DescriptorError::Bip32 {
+                error_message: error.to_string(),
+            }
+        })?;
         let derivable_key = &public_key.0;
 
         match derivable_key {
@@ -213,12 +225,12 @@ impl Descriptor {
                 let (extended_descriptor, key_map, _) =
                     Bip84Public(derivable_key, fingerprint, keychain_kind)
                         .build(network)
-                        .unwrap();
+                        .map_err(DescriptorError::from)?;
 
-                Self {
+                Ok(Self {
                     extended_descriptor,
                     key_map,
-                }
+                })
             }
             BdkDescriptorPublicKey::MultiXPub(_) => {
                 unreachable!()
@@ -261,8 +273,12 @@ impl Descriptor {
         fingerprint: String,
         keychain_kind: KeychainKind,
         network: Network,
-    ) -> Self {
-        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).unwrap();
+    ) -> Result<Self, DescriptorError> {
+        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).map_err(|error| {
+            DescriptorError::Bip32 {
+                error_message: error.to_string(),
+            }
+        })?;
         let derivable_key = &public_key.0;
 
         match derivable_key {
@@ -274,12 +290,12 @@ impl Descriptor {
                 let (extended_descriptor, key_map, _) =
                     Bip86Public(derivable_key, fingerprint, keychain_kind)
                         .build(network)
-                        .unwrap();
+                        .map_err(DescriptorError::from)?;
 
-                Self {
+                Ok(Self {
                     extended_descriptor,
                     key_map,
-                }
+                })
             }
             BdkDescriptorPublicKey::MultiXPub(_) => {
                 unreachable!()
