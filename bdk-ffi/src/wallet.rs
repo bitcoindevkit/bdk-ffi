@@ -241,6 +241,18 @@ impl Wallet {
         self.get_wallet().mark_used(keychain, index)
     }
 
+    /// Undoes the effect of [`mark_used`] and returns whether the `index` was inserted
+    /// back into the unused set.
+    ///
+    /// Since this is only a superficial marker, it will have no effect if the address at the given
+    /// `index` was actually used, i.e. the wallet has previously indexed a tx output for the
+    /// derived spk.
+    ///
+    /// [`mark_used`]: Self::mark_used
+    pub fn unmark_used(&self, keychain: KeychainKind, index: u32) -> bool {
+        self.get_wallet().unmark_used(keychain, index)
+    }
+
     /// Reveal addresses up to and including the target `index` and return an iterator
     /// of newly revealed addresses.
     ///
