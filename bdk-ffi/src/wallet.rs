@@ -1,4 +1,4 @@
-use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction, Txid};
+use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction, TxOut, Txid};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
@@ -441,6 +441,28 @@ impl Wallet {
     ///   the transaction was last seen in the mempool is provided.
     pub fn get_tx(&self, txid: Arc<Txid>) -> Result<Option<CanonicalTx>, TxidParseError> {
         Ok(self.get_wallet().get_tx(txid.0).map(|tx| tx.into()))
+    }
+
+    /// Inserts a [`TxOut`] at [`OutPoint`] into the wallet's transaction graph.
+    ///
+    /// This is used for providing a previous output's value so that we can use [`calculate_fee`]
+    /// or [`calculate_fee_rate`] on a given transaction. Outputs inserted with this method will
+    /// not be returned in [`list_unspent`] or [`list_output`].
+    ///
+    /// **WARNINGS:** This should only be used to add `TxOut`s that the wallet does not own. Only
+    /// insert `TxOut`s that you trust the values for!
+    ///
+    /// You must persist the changes resulting from one or more calls to this method if you need
+    /// the inserted `TxOut` data to be reloaded after closing the wallet.
+    /// See [`Wallet::reveal_next_address`].
+    ///
+    /// [`calculate_fee`]: Self::calculate_fee
+    /// [`calculate_fee_rate`]: Self::calculate_fee_rate
+    /// [`list_unspent`]: Self::list_unspent
+    /// [`list_output`]: Self::list_output
+    pub fn insert_txout(&self, outpoint: OutPoint, txout: TxOut) {
+        self.get_wallet()
+            .insert_txout(outpoint.into(), txout.into());
     }
 
     /// Calculates the fee of a given transaction. Returns [`Amount::ZERO`] if `tx` is a coinbase transaction.
