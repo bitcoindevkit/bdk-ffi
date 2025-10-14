@@ -6,7 +6,7 @@ use crate::error::{
 };
 use crate::store::{PersistenceType, Persister};
 use crate::types::{
-    AddressInfo, Balance, BlockId, CanonicalTx, EvictedTx, FullScanRequestBuilder,
+    AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FullScanRequestBuilder,
     KeychainAndIndex, LocalOutput, Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder,
     UnconfirmedTx, Update,
 };
@@ -540,6 +540,20 @@ impl Wallet {
             .map_err(|e| PersistenceError::Reason {
                 error_message: e.to_string(),
             })
+    }
+
+    /// Get a reference of the staged [`ChangeSet`] that is yet to be committed (if any).
+    pub fn staged(&self) -> Option<Arc<ChangeSet>> {
+        self.get_wallet()
+            .staged()
+            .map(|changeset| Arc::new(changeset.clone().into()))
+    }
+
+    /// Take the staged [`ChangeSet`] to be persisted now (if any).
+    pub fn take_staged(&self) -> Option<Arc<ChangeSet>> {
+        self.get_wallet()
+            .take_staged()
+            .map(|changeset| Arc::new(changeset.into()))
     }
 
     /// Returns the latest checkpoint.
