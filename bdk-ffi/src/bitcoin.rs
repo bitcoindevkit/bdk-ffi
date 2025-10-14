@@ -983,37 +983,37 @@ impl From<TxOut> for BdkTxOut {
 }
 
 /// A bitcoin Block hash
-#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
-#[uniffi::export(Display, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash, Ord)]
 pub struct BlockHash(pub(crate) BitcoinBlockHash);
 
 impl_hash_like!(BlockHash, BitcoinBlockHash);
 
 /// A bitcoin transaction identifier
-#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
-#[uniffi::export(Display, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash, Ord)]
 pub struct Txid(pub(crate) BitcoinTxid);
 
 impl_hash_like!(Txid, BitcoinTxid);
 
 /// A bitcoin transaction identifier, including witness data.
 /// For transactions with no SegWit inputs, the `txid` will be equivalent to `wtxid`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
-#[uniffi::export(Display, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash, Ord)]
 pub struct Wtxid(pub(crate) BitcoinWtxid);
 
 impl_hash_like!(Wtxid, BitcoinWtxid);
 
 /// A collision-proof unique identifier for a descriptor.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
-#[uniffi::export(Display, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash, Ord)]
 pub struct DescriptorId(pub(crate) BitcoinSha256Hash);
 
 impl_hash_like!(DescriptorId, BitcoinSha256Hash);
 
 /// The merkle root of the merkle tree corresponding to a block's transactions.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
-#[uniffi::export(Display, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, std::hash::Hash, uniffi::Object)]
+#[uniffi::export(Display, Eq, Hash, Ord)]
 pub struct TxMerkleNode(pub(crate) BitcoinDoubleSha256Hash);
 
 impl_hash_like!(TxMerkleNode, BitcoinDoubleSha256Hash);
