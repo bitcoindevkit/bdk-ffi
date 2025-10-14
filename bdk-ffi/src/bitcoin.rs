@@ -98,21 +98,23 @@ pub enum Network {
 ///
 /// Due to limitations in generating the foreign language bindings, we cannot use [`OutPoint`] as a
 /// key for hash maps.
-#[derive(Debug, PartialEq, Eq, std::hash::Hash, uniffi::Object)]
-#[uniffi::export(Debug, Eq, Hash)]
-pub struct HashableOutPoint(pub(crate) OutPoint);
+#[derive(Debug, Clone, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
+pub struct HashableOutPoint {
+    /// The wrapped [`OutPoint`] that acts as a hashmap key.
+    pub outpoint: OutPoint,
+}
 
 #[uniffi::export]
 impl HashableOutPoint {
     /// Create a key for a key-value store from an [`OutPoint`]
     #[uniffi::constructor]
     pub fn new(outpoint: OutPoint) -> Self {
-        Self(outpoint)
+        Self { outpoint }
     }
 
     /// Get the internal [`OutPoint`]
     pub fn outpoint(&self) -> OutPoint {
-        self.0.clone()
+        self.outpoint.clone()
     }
 }
 
