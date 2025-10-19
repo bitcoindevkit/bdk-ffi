@@ -513,7 +513,7 @@ pub struct TapScriptEntry {
 #[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
 pub struct TapKeyOrigin {
     /// leaf hashes as hex strings
-    pub leaf_hashes: Vec<String>,
+    pub tap_leaf_hashes: Vec<String>,
     /// key source
     pub key_source: KeySource,
 }
@@ -564,7 +564,7 @@ pub struct TapScriptSigKey {
     pub xonly_pubkey: String,
     /// Taproot-tagged hash with tag "TapLeaf".
     /// This is used for computing tapscript script spend hash.
-    pub leaf_hash: String,
+    pub tap_leaf_hash: String,
 }
 
 /// A key-value map for an input of the corresponding index in the unsigned transaction.
@@ -692,7 +692,7 @@ impl From<&BdkInput> for Input {
                 .map(|(k, v)| {
                     let key = TapScriptSigKey {
                         xonly_pubkey: k.0.to_string(),
-                        leaf_hash: k.1.to_string(),
+                        tap_leaf_hash: k.1.to_string(),
                     };
                     (key, v.to_vec())
                 })
@@ -720,7 +720,7 @@ impl From<&BdkInput> for Input {
                 .map(|(k, v)| {
                     let key = k.to_string();
                     let value = TapKeyOrigin {
-                        leaf_hashes: v.0.iter().map(|h| h.to_string()).collect(),
+                        tap_leaf_hashes: v.0.iter().map(|h| h.to_string()).collect(),
                         key_source: KeySource {
                             fingerprint: v.1 .0.to_string(),
                             path: v.1 .1.to_string(),
