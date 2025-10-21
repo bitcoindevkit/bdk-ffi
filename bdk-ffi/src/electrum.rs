@@ -17,6 +17,7 @@ use bdk_wallet::Update as BdkUpdate;
 use bdk_electrum::electrum_client::ElectrumApi;
 use bdk_wallet::bitcoin::hex::{Case, DisplayHex};
 use std::collections::BTreeMap;
+use std::convert::TryFrom;
 use std::sync::Arc;
 
 /// Wrapper around an electrum_client::ElectrumApi which includes an internal in-memory transaction
@@ -141,11 +142,13 @@ impl ElectrumClient {
 
     /// Returns the capabilities of the server.
     pub fn server_features(&self) -> Result<ServerFeaturesRes, ElectrumError> {
-        self.0
+        let res = self
+            .0
             .inner
             .server_features()
-            .map_err(ElectrumError::from)
-            .map(ServerFeaturesRes::from)
+            .map_err(ElectrumError::from)?;
+
+        ServerFeaturesRes::try_from(res)
     }
 
     /// Estimates the fee required in bitcoin per kilobyte to confirm a transaction in `number` blocks.
@@ -188,18 +191,27 @@ pub struct ServerFeaturesRes {
     pub pruning: Option<i64>,
 }
 
-impl From<BdkServerFeaturesRes> for ServerFeaturesRes {
-    fn from(value: BdkServerFeaturesRes) -> ServerFeaturesRes {
+impl TryFrom<BdkServerFeaturesRes> for ServerFeaturesRes {
+    type Error = ElectrumError;
+
+    fn try_from(value: BdkServerFeaturesRes) -> Result<ServerFeaturesRes, ElectrumError> {
         let hash_str = value.genesis_hash.to_hex_string(Case::Lower);
-        let blockhash = hash_str.parse::<bdk_wallet::bitcoin::BlockHash>().unwrap();
-        ServerFeaturesRes {
+        let blockhash = hash_str
+            .parse::<bdk_wallet::bitcoin::BlockHash>()
+            .map_err(|err| ElectrumError::InvalidResponse {
+                error_message: format!(
+                    "invalid genesis hash returned by server: {hash_str} ({err})"
+                ),
+            })?;
+
+        Ok(ServerFeaturesRes {
             server_version: value.server_version,
             genesis_hash: Arc::new(BlockHash(blockhash)),
             protocol_min: value.protocol_min,
             protocol_max: value.protocol_max,
             hash_function: value.hash_function,
             pruning: value.pruning,
-        }
+        })
     }
 }
 
