@@ -1,4 +1,5 @@
 use crate::error::{Bip32Error, Bip39Error, DescriptorKeyError};
+use crate::{impl_from_core_type, impl_into_core_type};
 
 use bdk_wallet::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk_wallet::bitcoin::key::Secp256k1;
@@ -64,7 +65,7 @@ impl Display for Mnemonic {
 }
 
 /// A BIP-32 derivation path.
-#[derive(uniffi::Object)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq, uniffi::Object)]
 pub struct DerivationPath(pub(crate) BdkDerivationPath);
 
 #[uniffi::export]
@@ -76,7 +77,38 @@ impl DerivationPath {
             .map(DerivationPath)
             .map_err(Bip32Error::from)
     }
+
+    /// Returns derivation path for a master key (i.e. empty derivation path)
+    #[uniffi::constructor]
+    pub fn master() -> Arc<Self> {
+        Arc::new(BdkDerivationPath::master().into())
+    }
+
+    /// Returns whether derivation path represents master key (i.e. it's length
+    /// is empty). True for `m` path.
+    pub fn is_master(&self) -> bool {
+        self.0.is_master()
+    }
+
+    /// Returns length of the derivation path
+    pub fn len(&self) -> u64 {
+        self.0.len() as u64
+    }
+
+    /// Returns `true` if the derivation path is empty
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 }
+
+impl Display for DerivationPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl_from_core_type!(BdkDerivationPath, DerivationPath);
+impl_into_core_type!(DerivationPath, BdkDerivationPath);
 
 /// A descriptor containing secret data.
 #[derive(Debug, uniffi::Object)]
