@@ -65,7 +65,8 @@ impl Display for Mnemonic {
 }
 
 /// A BIP-32 derivation path.
-#[derive(Clone, Debug, Hash, Eq, PartialEq, uniffi::Object)]
+#[derive(Clone, Debug, uniffi::Object)]
+#[uniffi::export(Display)]
 pub struct DerivationPath(pub(crate) BdkDerivationPath);
 
 #[uniffi::export]

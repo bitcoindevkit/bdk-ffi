@@ -442,7 +442,7 @@ fn test_psbt_input_bip32_derivation() {
         "Fingerprint does not match the expected value"
     );
 
-    let derivation_path = &derivation.unwrap().path;
+    let derivation_path = &derivation.unwrap().path.to_string();
     let expected_derivation_path = "84'/1'/0'/0/0";
     assert_eq!(
         derivation_path, &expected_derivation_path,

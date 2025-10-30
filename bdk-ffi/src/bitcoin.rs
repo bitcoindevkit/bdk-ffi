@@ -3,6 +3,8 @@ use crate::error::{
     PsbtParseError, TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
+use crate::keys::DerivationPath;
+
 use crate::{impl_from_core_type, impl_hash_like, impl_into_core_type};
 use std::collections::HashMap;
 
@@ -510,7 +512,7 @@ pub struct TapScriptEntry {
     pub leaf_version: u8,
 }
 
-#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, uniffi::Record)]
 pub struct TapKeyOrigin {
     /// leaf hashes as hex strings
     pub tap_leaf_hashes: Vec<String>,
@@ -518,15 +520,15 @@ pub struct TapKeyOrigin {
     pub key_source: KeySource,
 }
 
-#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, uniffi::Record)]
 pub struct KeySource {
     /// A fingerprint
     pub fingerprint: String,
     /// A BIP-32 derivation path.
-    pub path: String,
+    pub path: Arc<DerivationPath>,
 }
 
-#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq, uniffi::Record)]
 pub struct Key {
     /// The type of this PSBT key.
     pub type_value: u8,
@@ -535,7 +537,7 @@ pub struct Key {
     pub key: Vec<u8>,
 }
 
-#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq, uniffi::Record)]
 pub struct ProprietaryKey {
     /// Proprietary type prefix used for grouping together keys under some
     /// application and avoid namespace collision
@@ -546,7 +548,7 @@ pub struct ProprietaryKey {
     pub key: Vec<u8>,
 }
 
-#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq, uniffi::Record)]
 pub struct ControlBlock {
     /// The internal key.
     pub internal_key: Vec<u8>,
@@ -558,7 +560,7 @@ pub struct ControlBlock {
     pub leaf_version: u8,
 }
 
-#[derive(Clone, Debug, uniffi::Record, Hash, Eq, PartialEq)]
+#[derive(Clone, Debug, Hash, Eq, PartialEq, uniffi::Record)]
 pub struct TapScriptSigKey {
     /// An x-only public key, used for verification of Taproot signatures and serialized according to BIP-340.
     pub xonly_pubkey: String,
@@ -655,7 +657,7 @@ impl From<&BdkInput> for Input {
                         pk.to_string(),
                         KeySource {
                             fingerprint: fingerprint.to_string(),
-                            path: deriv_path.to_string(),
+                            path: Arc::new(deriv_path.clone().into()),
                         },
                     )
                 })
@@ -722,8 +724,11 @@ impl From<&BdkInput> for Input {
                     let value = TapKeyOrigin {
                         tap_leaf_hashes: v.0.iter().map(|h| h.to_string()).collect(),
                         key_source: KeySource {
-                            fingerprint: v.1 .0.to_string(),
-                            path: v.1 .1.to_string(),
+                            // Unnecessary spaces being added by fmt. We use #[rustfmt::skip] to avoid them for now.
+                            #[rustfmt::skip]
+                            fingerprint: v.1.0.to_string(),
+                            #[rustfmt::skip]
+                            path: Arc::new(v.1.1.clone().into()),
                         },
                     };
                     (key, value)
