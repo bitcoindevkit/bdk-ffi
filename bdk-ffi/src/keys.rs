@@ -15,9 +15,8 @@ use bdk_wallet::miniscript::descriptor::{DescriptorXKey, Wildcard};
 use bdk_wallet::miniscript::BareCtx;
 
 use std::fmt::Display;
-use std::ops::Deref;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 /// A mnemonic seed phrase to recover a BIP-32 wallet.
 #[derive(uniffi::Object)]
@@ -66,9 +65,7 @@ impl Display for Mnemonic {
 
 /// A BIP-32 derivation path.
 #[derive(uniffi::Object)]
-pub struct DerivationPath {
-    inner_mutex: Mutex<BdkDerivationPath>,
-}
+pub struct DerivationPath(pub(crate) BdkDerivationPath);
 
 #[uniffi::export]
 impl DerivationPath {
@@ -76,9 +73,7 @@ impl DerivationPath {
     #[uniffi::constructor]
     pub fn new(path: String) -> Result<Self, Bip32Error> {
         BdkDerivationPath::from_str(&path)
-            .map(|x| DerivationPath {
-                inner_mutex: Mutex::new(x),
-            })
+            .map(DerivationPath)
             .map_err(Bip32Error::from)
     }
 }
@@ -116,17 +111,16 @@ impl DescriptorSecretKey {
     pub fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let secp = Secp256k1::new();
         let descriptor_secret_key = &self.0;
-        let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_secret_key {
             BdkDescriptorSecretKey::Single(_) => Err(DescriptorKeyError::InvalidKeyType),
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derived_xprv = descriptor_x_key
                     .xkey
-                    .derive_priv(&secp, &path)
+                    .derive_priv(&secp, &path.0)
                     .map_err(DescriptorKeyError::from)?;
                 let key_source = match descriptor_x_key.origin.clone() {
-                    Some((fingerprint, origin_path)) => (fingerprint, origin_path.extend(path)),
-                    None => (descriptor_x_key.xkey.fingerprint(&secp), path),
+                    Some((fingerprint, origin_path)) => (fingerprint, origin_path.extend(&path.0)),
+                    None => (descriptor_x_key.xkey.fingerprint(&secp), path.0.clone()),
                 };
                 let derived_descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
                     origin: Some(key_source),
@@ -143,11 +137,10 @@ impl DescriptorSecretKey {
     /// Extend the descriptor secret key by the derivation path.
     pub fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let descriptor_secret_key = &self.0;
-        let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_secret_key {
             BdkDescriptorSecretKey::Single(_) => Err(DescriptorKeyError::InvalidKeyType),
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
-                let extended_path = descriptor_x_key.derivation_path.extend(path);
+                let extended_path = descriptor_x_key.derivation_path.extend(&path.0);
                 let extended_descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
                     origin: descriptor_x_key.origin.clone(),
                     xkey: descriptor_x_key.xkey,
@@ -211,18 +204,16 @@ impl DescriptorPublicKey {
     pub fn derive(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let secp = Secp256k1::new();
         let descriptor_public_key = &self.0;
-        let path = path.inner_mutex.lock().unwrap().deref().clone();
-
         match descriptor_public_key {
             BdkDescriptorPublicKey::Single(_) => Err(DescriptorKeyError::InvalidKeyType),
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derived_xpub = descriptor_x_key
                     .xkey
-                    .derive_pub(&secp, &path)
+                    .derive_pub(&secp, &path.0)
                     .map_err(DescriptorKeyError::from)?;
                 let key_source = match descriptor_x_key.origin.clone() {
-                    Some((fingerprint, origin_path)) => (fingerprint, origin_path.extend(path)),
-                    None => (descriptor_x_key.xkey.fingerprint(), path),
+                    Some((fingerprint, origin_path)) => (fingerprint, origin_path.extend(&path.0)),
+                    None => (descriptor_x_key.xkey.fingerprint(), path.0.clone()),
                 };
                 let derived_descriptor_public_key = BdkDescriptorPublicKey::XPub(DescriptorXKey {
                     origin: Some(key_source),
@@ -239,11 +230,10 @@ impl DescriptorPublicKey {
     /// Extend the descriptor public key by the given derivation path.
     pub fn extend(&self, path: &DerivationPath) -> Result<Arc<Self>, DescriptorKeyError> {
         let descriptor_public_key = &self.0;
-        let path = path.inner_mutex.lock().unwrap().deref().clone();
         match descriptor_public_key {
             BdkDescriptorPublicKey::Single(_) => Err(DescriptorKeyError::InvalidKeyType),
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
-                let extended_path = descriptor_x_key.derivation_path.extend(path);
+                let extended_path = descriptor_x_key.derivation_path.extend(&path.0);
                 let extended_descriptor_public_key = BdkDescriptorPublicKey::XPub(DescriptorXKey {
                     origin: descriptor_x_key.origin.clone(),
                     xkey: descriptor_x_key.xkey,
