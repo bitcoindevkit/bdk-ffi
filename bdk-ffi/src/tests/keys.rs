@@ -112,3 +112,28 @@ fn test_derive_hardened_path_using_public() {
     let derived_dpk = &derive_dpk(&master_dpk, "m/84h/1h/0h");
     assert!(derived_dpk.is_err());
 }
+
+#[test]
+fn test_derivation_path_parsing() {
+    let path_str = "m/44h/0h/0h/0/0";
+    let expected_path = "44'/0'/0'/0/0";
+    let path_str_2 = "m";
+
+    let derivation_path = DerivationPath::new(path_str.to_string()).unwrap();
+    assert_eq!(derivation_path.to_string(), expected_path);
+
+    let derivation_path2 = DerivationPath::new(path_str_2.to_string()).unwrap();
+    assert!(derivation_path2.is_master());
+
+    let derivation_path3 = DerivationPath::master();
+    assert!(derivation_path3.is_master());
+
+    assert!(!derivation_path.is_master());
+}
+
+#[test]
+fn test_invalid_derivation_path() {
+    let invalid_path_str = "m/44x/0h/0h/0/0";
+    let result = DerivationPath::new(invalid_path_str.to_string());
+    assert!(result.is_err());
+}
