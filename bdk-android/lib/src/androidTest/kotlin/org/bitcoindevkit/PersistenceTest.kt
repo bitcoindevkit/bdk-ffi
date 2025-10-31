@@ -20,6 +20,22 @@ class PersistenceTest {
         destFile.absolutePath
     }
 
+    private val singleDescriptorPersistenceFilePath: String by lazy {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val dbFileName = "single_descriptor_wallet.sqlite3"
+
+        // Copy the file from assets to a writable location (databases dir)
+        val destFile = File(context.getDatabasePath(dbFileName).path)
+        context.assets.open(dbFileName).use { input ->
+            destFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        destFile.absolutePath
+    }
+
+
+
     private val descriptor: Descriptor = Descriptor(
         "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/0h/0/*)",
         Network.SIGNET
@@ -47,6 +63,26 @@ class PersistenceTest {
         )
         assertEquals(
             expected = "tb1qan3lldunh37ma6c0afeywgjyjgnyc8uz975zl2",
+            actual = addressInfo.address.toString(),
+        )
+    }
+
+    @Test
+    fun loadSingleDescriptorWalletFromPersistence() {
+        val db = Persister.newSqlite(singleDescriptorPersistenceFilePath)
+
+        val wallet: Wallet = Wallet.loadSingle(
+            descriptor = TEST_BIP84_DESCRIPTOR_0,
+            persister = db
+        )
+        val addressInfo: AddressInfo = wallet.revealNextAddress(KeychainKind.EXTERNAL)
+
+        assertEquals(
+            expected = 1u,
+            actual = addressInfo.index,
+        )
+        assertEquals(
+            expected = "bcrt1q8nv72uahwegcg00n626dayvvcekjncehv3668f",
             actual = addressInfo.address.toString(),
         )
     }
