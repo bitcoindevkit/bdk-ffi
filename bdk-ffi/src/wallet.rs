@@ -167,6 +167,32 @@ impl Wallet {
         })
     }
 
+    /// Build a single-descriptor Wallet by loading from persistence.
+    ///
+    /// Note that the descriptor secret keys are not persisted to the db.
+    #[uniffi::constructor(default(lookahead = 25))]
+    pub fn load_single(
+        descriptor: Arc<Descriptor>,
+        persister: Arc<Persister>,
+        lookahead: u32,
+    ) -> Result<Wallet, LoadWithPersistError> {
+        let descriptor = descriptor.to_string_with_secret();
+        let mut persist_lock = persister.inner.lock().unwrap();
+        let deref = persist_lock.deref_mut();
+
+        let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
+            .descriptor(KeychainKind::External, Some(descriptor))
+            .lookahead(lookahead)
+            .extract_keys()
+            .load_wallet(deref)
+            .map_err(LoadWithPersistError::from)?
+            .ok_or(LoadWithPersistError::CouldNotLoad)?;
+
+        Ok(Wallet {
+            inner_mutex: Mutex::new(wallet),
+        })
+    }
+
     /// Finds how the wallet derived the script pubkey `spk`.
     ///
     /// Will only return `Some(_)` if the wallet has given out the spk.
