@@ -881,7 +881,7 @@ pub struct Anchor {
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct TxGraphChangeSet {
     pub txs: Vec<Arc<Transaction>>,
-    pub txouts: HashMap<Arc<HashableOutPoint>, TxOut>,
+    pub txouts: HashMap<HashableOutPoint, TxOut>,
     pub anchors: Vec<Anchor>,
     pub last_seen: HashMap<Arc<Txid>, u64>,
     pub first_seen: HashMap<Arc<Txid>, u64>,
@@ -897,7 +897,7 @@ impl From<bdk_wallet::chain::tx_graph::ChangeSet<BdkConfirmationBlockTime>> for 
             .collect::<Vec<Arc<Transaction>>>();
         let mut txouts = HashMap::new();
         for (outpoint, txout) in core::mem::take(&mut value.txouts) {
-            txouts.insert(Arc::new(HashableOutPoint(outpoint.into())), txout.into());
+            txouts.insert(HashableOutPoint::new(outpoint.into()), txout.into());
         }
         let mut anchors = Vec::new();
         for anchor in core::mem::take(&mut value.anchors) {
@@ -949,8 +949,8 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
             txs.insert(tx);
         }
         let mut txouts = BTreeMap::new();
-        for txout in core::mem::take(&mut value.txouts) {
-            txouts.insert(txout.0.outpoint().into(), txout.1.into());
+        for (outpoint, txout) in core::mem::take(&mut value.txouts) {
+            txouts.insert(outpoint.outpoint().into(), txout.into());
         }
         let mut anchors = BTreeSet::new();
         for anchor in core::mem::take(&mut value.anchors) {
