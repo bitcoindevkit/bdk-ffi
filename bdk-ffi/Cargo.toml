@@ -1,6 +1,6 @@
 [package]
 name = "bdk-ffi"
-version = "2.2.0-alpha.0"
+version = "2.3.0-alpha.0"
 homepage = "https://bitcoindevkit.org"
 repository = "https://github.com/bitcoindevkit/bdk"
 edition = "2018"
