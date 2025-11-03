@@ -5,6 +5,7 @@ name: Rust Dependency Audit
 # Helps identify known security vulnerabilities in the dependency tree.
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - '**/Cargo.toml'
@@ -28,5 +29,5 @@ jobs:
 
       - name: "Run audit"
         run: |
-          cargo install cargo-audit
+          cargo install cargo-audit --locked
           cargo-audit audit
