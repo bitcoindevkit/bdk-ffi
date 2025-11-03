@@ -1,7 +1,53 @@
 # Changelog
+
 Changelog information can also be found in each release's git tag (which can be viewed with `git tag -ln100 "v*"`), as well as on the [GitHub releases](https://github.com/bitcoindevkit/bdk-ffi/releases) page. See [DEVELOPMENT_CYCLE.md](DEVELOPMENT_CYCLE.md) for more details.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [v2.2.0]
+
+This is version 2.2.0 of the BDK language bindings! This release uses the following Rust dependencies:
+
+    - bdk_wallet 2.2.0
+    - bdk_electrum 0.23.2
+    - bdk_esplora 0.22.1
+    - bdk_kyoto 0.15.2
+    - rust-bitcoin 0.32.7
+    - uniffi 0.29.4
+
+### Added
+
+    - Implement `Display` for `Script` [#813]
+    - Expose `Wallet::create_single` constructor on Wallet type [#825]
+    - Set `lookahead` on `Wallet::load` [#829]
+    - Expose `Wallet::apply_evicted_txs` method [#832]
+    - Add `Wallet::create_from_two_path_descriptor` constructor [#847]
+    - `next_log` and `LogLevel` are removed from `kyoto` [#849]
+    - Updates Android native libraries to use 16KB page sizes [#865]
+    - Expose `TxBuilder::exclude_unconfirmed` method [#870]
+    - Expose `TxBuilder::exclude_below_confirmations` method [#870]
+    - Expose `Wallet::insert_txout` [#884]
+    - Expose `Wallet::nmark_used` [#882]
+    - Add `Wallet::load_single` [#897]
+    - Expose `DerivationPath::master` , `DerivationPath::is_master` , `DerivationPath::len` , `DerivationPath::is_empty` [#893]
+
+### Changed
+
+    - Throw errors rather than panics on faulty Esplora sync/full_scan operations [#863]
+
+[#813]: https://github.com/bitcoindevkit/bdk-ffi/pull/813
+[#825]: https://github.com/bitcoindevkit/bdk-ffi/pull/825
+[#829]: https://github.com/bitcoindevkit/bdk-ffi/pull/829
+[#832]: https://github.com/bitcoindevkit/bdk-ffi/pull/832
+[#847]: https://github.com/bitcoindevkit/bdk-ffi/pull/847
+[#849]: https://github.com/bitcoindevkit/bdk-ffi/pull/849
+[#863]: https://github.com/bitcoindevkit/bdk-ffi/pull/863
+[#865]: https://github.com/bitcoindevkit/bdk-ffi/pull/865
+[#870]: https://github.com/bitcoindevkit/bdk-ffi/pull/870
+[#884]: https://github.com/bitcoindevkit/bdk-ffi/pull/884
+[#882]: https://github.com/bitcoindevkit/bdk-ffi/pull/882
+[#893]: https://github.com/bitcoindevkit/bdk-ffi/pull/893
+[#897]: https://github.com/bitcoindevkit/bdk-ffi/pull/897
 
 ## [v2.0.0]
 
@@ -514,6 +560,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v2.0.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.0.0...v2.2.0
 [v2.0.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.2.0...v2.0.0
 [v1.2.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.1.0...v1.2.0
 [v1.1.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.0.0-beta.7...v1.1.0
