@@ -33,7 +33,7 @@ jobs:
           java-version: 17
 
       - name: "Build bdk-android library"
-        run: bash ./scripts/build-linux-x86_64.sh
+        run: bash ./scripts/release/build-release-linux-x86_64.sh
 
       - name: "Publish to Maven Central"
         env:

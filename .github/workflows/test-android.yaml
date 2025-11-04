@@ -46,7 +46,7 @@ jobs:
       - name: "Build Android library"
         run: |
           cd bdk-android
-          bash ./scripts/build-linux-x86_64.sh
+          bash ./scripts/release/build-release-linux-x86_64.sh
 
       - name: "Enable KVM"
         run: |
