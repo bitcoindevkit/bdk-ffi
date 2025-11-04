@@ -345,11 +345,14 @@ impl CbfClient {
     /// for compact block filter nodes from the seeder. For example `dns.myseeder.com` will be queried
     /// as `x849.dns.myseeder.com`. This has no guarantee to return any `IpAddr`.
     pub fn lookup_host(&self, hostname: String) -> Vec<Arc<IpAddress>> {
-        let nodes = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap()
-            .block_on(lookup_host(hostname));
+        let node_handle = std::thread::spawn(move || {
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(lookup_host(hostname))
+        });
+        let nodes = node_handle.join().unwrap_or_default();
         nodes
             .into_iter()
             .map(|ip| Arc::new(IpAddress { inner: ip }))
