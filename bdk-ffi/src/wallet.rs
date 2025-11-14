@@ -8,7 +8,7 @@ use crate::store::{PersistenceType, Persister};
 use crate::types::{
     AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FullScanRequestBuilder,
     KeychainAndIndex, LocalOutput, Policy, SentAndReceivedValues, SignOptions, SyncRequestBuilder,
-    UnconfirmedTx, Update,
+    UnconfirmedTx, Update, WalletEvent,
 };
 
 use bdk_wallet::bitcoin::Network;
@@ -318,6 +318,24 @@ impl Wallet {
         self.get_wallet()
             .apply_update(update.0.clone())
             .map_err(CannotConnectError::from)
+    }
+
+    /// Applies an update to the wallet, stages the changes, and returns events.
+    ///
+    /// Usually you create an `update` by interacting with some blockchain data source and inserting
+    /// transactions related to your wallet into it. Staged changes are NOT persisted.
+    ///
+    /// After applying updates you should process the events in your app before persisting the
+    /// staged wallet changes. For an example of how to persist staged wallet changes see
+    /// [`Wallet::reveal_next_address`].
+    pub fn apply_update_events(
+        &self,
+        update: Arc<Update>,
+    ) -> Result<Vec<WalletEvent>, CannotConnectError> {
+        match self.get_wallet().apply_update_events(update.0.clone()) {
+            Ok(events) => Ok(events.into_iter().map(|e| e.into()).collect()),
+            Err(e) => Err(CannotConnectError::from(e)),
+        }
     }
 
     /// Apply relevant unconfirmed transactions to the wallet.
