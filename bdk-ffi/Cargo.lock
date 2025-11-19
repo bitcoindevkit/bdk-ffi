@@ -176,9 +176,9 @@ dependencies = [
 
 [[package]]
 name = "bdk_kyoto"
-version = "0.15.2"
+version = "0.15.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d1148f84df0d8ad287677457f15b554f7cc300a05101b15e31d20af1710a996"
+checksum = "8da8010d2587aba368afd0be83ad87563f465744eb124cda431905cf06f8bd1c"
 dependencies = [
  "bdk_wallet",
  "bip157",
