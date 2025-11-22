@@ -6,6 +6,9 @@ repository = "https://github.com/bitcoindevkit/bdk"
 edition = "2018"
 license = "MIT OR Apache-2.0"
 
+[features]
+dart = ["dep:uniffi-dart"]
+
 [lib]
 crate-type = ["cdylib", "staticlib"]
 name = "bdkffi"
@@ -15,16 +18,31 @@ name = "uniffi-bindgen"
 path = "uniffi-bindgen.rs"
 
 [dependencies]
-bdk_wallet = { version = "2.2.0", features = ["all-keys", "keys-bip39", "rusqlite"] }
-bdk_esplora = { version = "0.22.1", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
-bdk_electrum = { version = "0.23.2", default-features = false, features = ["use-rustls-ring"] }
+bdk_wallet = { version = "2.2.0", features = [
+    "all-keys",
+    "keys-bip39",
+    "rusqlite",
+] }
+bdk_esplora = { version = "0.22.1", default-features = false, features = [
+    "std",
+    "blocking",
+    "blocking-https-rustls",
+] }
+bdk_electrum = { version = "0.23.2", default-features = false, features = [
+    "use-rustls-ring",
+] }
 bdk_kyoto = { version = "0.15.2" }
 
-uniffi = { version = "=0.30.0", features = ["cli"]}
+uniffi = { version = "=0.30.0", features = ["cli"] }
+uniffi-dart = { git = "https://github.com/kumulynja/uniffi-dart.git", optional = true }
+camino = "1.2"
 thiserror = "2.0.17"
 
 [build-dependencies]
 uniffi = { version = "=0.30.0", features = ["build"] }
+uniffi-dart = { git = "https://github.com/kumulynja/uniffi-dart.git", features = [
+    "build",
+], optional = true }
 
 [dev-dependencies]
 uniffi = { version = "=0.30.0", features = ["bindgen-tests"] }
@@ -32,8 +50,8 @@ assert_matches = "1.5.0"
 
 [profile.release-smaller]
 inherits = "release"
-opt-level = 'z'     # Optimize for size.
-lto = true          # Enable Link Time Optimization
-codegen-units = 1   # Reduce number of codegen units to increase optimizations.
-panic = "abort"     # Abort on panic
-strip = "debuginfo" # Partially strip symbols from binary
+opt-level = 'z'      # Optimize for size.
+lto = true           # Enable Link Time Optimization
+codegen-units = 1    # Reduce number of codegen units to increase optimizations.
+panic = "abort"      # Abort on panic
+strip = "debuginfo"  # Partially strip symbols from binary
