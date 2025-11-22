@@ -49,4 +49,4 @@ __pycache__
 .localenvironment/
 
 # Dart related
-.dart_tool/
+bdk-dart/.dart_tool/
