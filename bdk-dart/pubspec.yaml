@@ -1,0 +1,12 @@
+name: bdk_dart
+description: Dart bindings for bdk
+version: 2.3.0-alpha.0
+
+environment:
+  sdk: "^3.2.0"
+
+dependencies:
+  ffi: ^2.1.4
+dev_dependencies:
+  test: ^1.26.2
+  http: ^1.4.0
