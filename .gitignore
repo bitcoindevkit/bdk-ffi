@@ -47,3 +47,6 @@ xcuserdata
 # Python related
 __pycache__
 .localenvironment/
+
+# Dart related
+.dart_tool/
