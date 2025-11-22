@@ -4,6 +4,9 @@ default:
 build:
   cargo build --profile release-smaller
 
+build-dev:
+  cargo build
+
 check:
    cargo fmt
    cargo clippy

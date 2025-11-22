@@ -21,7 +21,12 @@ publish-local:
 [group("Build")]
 [doc("Build the library for given ARCH.")]
 build ARCH="macos-aarch64":
-  bash ./scripts/build-{{ARCH}}.sh
+  bash ./scripts/release/build-release-{{ARCH}}.sh
+
+[group("Build")]
+[doc("Build the library for a single architecture in development mode.")]
+build-dev:
+  bash ./scripts/dev/build-dev-macos-aarch64.sh
 
 [group("Build")]
 [doc("List available architectures for the build command.")]

@@ -19,7 +19,12 @@ use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
 use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
 use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
+use bdk_wallet::bitcoin::psbt::Output as BdkOutput;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
+
+use bdk_wallet::bitcoin::taproot::LeafNode as BdkLeafNode;
+use bdk_wallet::bitcoin::taproot::NodeInfo as BdkNodeInfo;
+use bdk_wallet::bitcoin::taproot::TapTree as BdkTapTree;
 use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::BlockHash as BitcoinBlockHash;
 use bdk_wallet::bitcoin::FeeRate as BdkFeeRate;
@@ -804,6 +809,218 @@ impl From<&BdkInput> for Input {
     }
 }
 
+/// Store information about taproot leaf node.
+#[derive(Debug, uniffi::Object)]
+#[uniffi::export(Display)]
+pub struct LeafNode(BdkLeafNode);
+
+#[uniffi::export]
+impl LeafNode {
+    /// Returns the depth of this script leaf in the tap tree.
+    pub fn depth(&self) -> u8 {
+        self.0.depth()
+    }
+
+    /// Computes a leaf hash for this ScriptLeaf if the leaf is known.
+    /// This TapLeafHash is useful while signing taproot script spends.
+    /// See LeafNode::node_hash for computing the TapNodeHash which returns the hidden node hash if the node is hidden.
+    pub fn leaf_hash(&self) -> Option<String> {
+        self.0.leaf_hash().map(|h| h.to_string())
+    }
+
+    /// Computes the [`TapNodeHash`] for this [`ScriptLeaf`]. This returns the
+    /// leaf hash if the leaf is known and the hidden node hash if the leaf is
+    /// hidden.
+    /// See also, [`bdk_electrum::bdk_core::bitcoin::taproot::LeafNode::leaf_hash`].
+    pub fn node_hash(&self) -> String {
+        self.0.node_hash().to_string()
+    }
+
+    /// Returns reference to the leaf script if the leaf is known.
+    pub fn script(&self) -> Option<Arc<Script>> {
+        self.0.script().map(|s| Arc::new(Script(s.to_owned())))
+    }
+
+    /// Returns leaf version of the script if the leaf is known.
+    pub fn leaf_version(&self) -> Option<u8> {
+        self.0.leaf_version().map(|n| n.to_consensus())
+    }
+
+    /// Returns reference to the merkle proof (hashing partners) to get this
+    /// node in form of [`TaprootMerkleBranch`].
+    pub fn merkle_branch(&self) -> Vec<String> {
+        self.0
+            .merkle_branch()
+            .to_vec()
+            .iter()
+            .map(|h| h.to_string())
+            .collect()
+    }
+}
+
+impl Display for LeafNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+/// Taproot Tree representing a complete binary tree without any hidden nodes.
+///
+/// This is in contrast to NodeInfo, which allows hidden nodes. The implementations for Eq, PartialEq and Hash compare the merkle root of the tree
+#[derive(Debug, uniffi::Object)]
+#[uniffi::export(Display)]
+pub struct TapTree(BdkTapTree);
+
+#[uniffi::export]
+impl TapTree {
+    /// Returns the root TapNodeHash of this tree.
+    pub fn root_hash(&self) -> String {
+        self.0.root_hash().to_string()
+    }
+
+    /// Gets the reference to inner NodeInfo of this tree root.
+    pub fn node_info(&self) -> Arc<NodeInfo> {
+        Arc::new(NodeInfo(self.0.node_info().clone()))
+    }
+}
+
+impl Display for TapTree {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+/// Represents the node information in taproot tree. In contrast to TapTree, this is allowed to have hidden leaves as children.
+///
+/// Helper type used in merkle tree construction allowing one to build sparse merkle trees. The node represents part of the tree that has information about all of its descendants. See how TaprootBuilder works for more details.
+/// You can use TaprootSpendInfo::from_node_info to a get a TaprootSpendInfo from the merkle root NodeInfo.
+#[derive(Debug, uniffi::Object)]
+#[uniffi::export(Display)]
+pub struct NodeInfo(BdkNodeInfo);
+
+#[uniffi::export]
+impl NodeInfo {
+    /// Creates an iterator over all leaves (including hidden leaves) in the tree.
+    pub fn leaf_nodes(&self) -> Vec<Arc<LeafNode>> {
+        self.0
+            .leaf_nodes()
+            .map(|ln| Arc::new(LeafNode(ln.clone())))
+            .collect()
+    }
+
+    /// Returns the root TapNodeHash of this node info.
+    pub fn node_hash(&self) -> String {
+        self.0.node_hash().to_string()
+    }
+}
+
+impl Display for NodeInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+/// A key-value map for an output of the corresponding index in the unsigned
+/// transaction.
+#[derive(Debug, uniffi::Record)]
+pub struct Output {
+    /// The redeem script for this output.
+    pub redeem_script: Option<Arc<Script>>,
+    /// The witness script for this output.
+    pub witness_script: Option<Arc<Script>>,
+    /// Map of public keys needed to spend this output to their corresponding
+    /// master key fingerprints and derivation paths.
+    pub bip32_derivation: HashMap<String, KeySource>,
+    /// Taproot Internal key.
+    pub tap_internal_key: Option<String>,
+    /// Taproot Output tree (structured record).
+    pub tap_tree: Option<Arc<TapTree>>,
+    /// Map of tap root x only keys to origin info and leaf hashes contained in it.
+    pub tap_key_origins: HashMap<String, TapKeyOrigin>,
+    /// Proprietary key-value pairs for this output.
+    pub proprietary: HashMap<ProprietaryKey, Vec<u8>>,
+    /// Unknown key-value pairs for this output.
+    pub unknown: HashMap<Key, Vec<u8>>,
+}
+
+impl From<&BdkOutput> for Output {
+    fn from(output: &BdkOutput) -> Self {
+        Output {
+            redeem_script: output
+                .redeem_script
+                .as_ref()
+                .map(|s| Arc::new(Script(s.clone()))),
+            witness_script: output
+                .witness_script
+                .as_ref()
+                .map(|s| Arc::new(Script(s.clone()))),
+            bip32_derivation: output
+                .bip32_derivation
+                .iter()
+                .map(|(pk, (fingerprint, deriv_path))| {
+                    (
+                        pk.to_string(),
+                        KeySource {
+                            fingerprint: fingerprint.to_string(),
+                            path: Arc::new(deriv_path.clone().into()),
+                        },
+                    )
+                })
+                .collect(),
+            tap_internal_key: output.tap_internal_key.as_ref().map(|k| k.to_string()),
+            tap_tree: output
+                .tap_tree
+                .as_ref()
+                .map(|t| Arc::new(TapTree(t.clone()))),
+            tap_key_origins: output
+                .tap_key_origins
+                .iter()
+                .map(|(k, v)| {
+                    let key = k.to_string();
+                    let value = TapKeyOrigin {
+                        tap_leaf_hashes: v.0.iter().map(|h| h.to_string()).collect(),
+                        key_source: KeySource {
+                            // Unnecessary spaces being added by fmt. We use #[rustfmt::skip] to avoid them for now.
+                            #[rustfmt::skip]
+                            fingerprint: v.1.0.to_string(),
+                            #[rustfmt::skip]
+                            path: Arc::new(v.1.1.clone().into()),
+                        },
+                    };
+                    (key, value)
+                })
+                .collect(),
+            proprietary: output
+                .proprietary
+                .iter()
+                .map(|(k, v)| {
+                    (
+                        ProprietaryKey {
+                            prefix: k.prefix.clone(),
+                            subtype: k.subtype,
+                            key: k.key.clone(),
+                        },
+                        v.to_vec(),
+                    )
+                })
+                .collect(),
+            unknown: output
+                .unknown
+                .iter()
+                .map(|(k, v)| {
+                    (
+                        Key {
+                            key: k.key.clone(),
+                            type_value: k.type_value,
+                        },
+                        v.to_vec(),
+                    )
+                })
+                .collect(),
+        }
+    }
+}
+
 /// A Partially Signed Transaction.
 #[derive(uniffi::Object)]
 pub struct Psbt(pub(crate) Mutex<BdkPsbt>);
@@ -934,6 +1151,12 @@ impl Psbt {
     pub fn input(&self) -> Vec<Input> {
         let psbt = self.0.lock().unwrap();
         psbt.inputs.iter().map(|input| input.into()).collect()
+    }
+
+    /// The corresponding key-value map for each output in the unsigned transaction.
+    pub fn output(&self) -> Vec<Output> {
+        let psbt = self.0.lock().unwrap();
+        psbt.outputs.iter().map(|o| o.into()).collect()
     }
 }
 

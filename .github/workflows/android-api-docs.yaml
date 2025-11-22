@@ -27,7 +27,7 @@ jobs:
       - name: "Build Android API documentation"
         run: |
           cd ./bdk-android/
-          bash ./scripts/build-linux-x86_64.sh
+          bash ./scripts/release/build-release-linux-x86_64.sh
           ./gradlew dokkaHtml
 
       - name: "Upload documentation website"

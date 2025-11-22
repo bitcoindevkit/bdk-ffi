@@ -524,6 +524,84 @@ fn test_psbt_input_proprietary() {
     );
 }
 
+#[test]
+fn test_psbt_output_length() {
+    let psbt = sample_psbt();
+    let psbt_outputs = psbt.output();
+    println!("Psbt Output: {:?}", psbt_outputs);
+
+    assert_eq!(psbt_outputs.len(), 2);
+}
+
+#[test]
+fn test_psbt_output_witness_script() {
+    let psbt = sample_psbt();
+    println!("Psbt: {:?}", psbt.json_serialize());
+    let psbt_outputs = psbt.output();
+    assert!(!psbt_outputs.is_empty(), "Output should not be empty");
+    println!("Psbt Output: {:?}", psbt_outputs);
+    let output = &psbt_outputs[0];
+    let witness_script = output
+        .witness_script
+        .as_ref()
+        .expect("Witness script should be present");
+    let byte_witness = witness_script.to_bytes();
+    let witness_hex = DisplayHex::to_lower_hex_string(&byte_witness);
+    let expected_witness_hex = "522103b72bf1f4c738fb44fadd3333789626fa5f3efb0d695c90d126abea721ef6d417210326ee4ece63eabe2ec81eddb5400ae49af6bd7d26cfa536e4ed1217a15a4a5ed621027a51e6ce68730ec4130e702921c9d6473de8151ebc517d5a83c8df93f48aba8a53ae";
+    assert_eq!(
+        witness_hex, expected_witness_hex,
+        "Witness script hex does not match the expected value"
+    );
+}
+
+#[test]
+fn test_psbt_output_tap_tree() {
+    let psbt = sample_psbt_taproot();
+    println!("Psbt: {:?}", psbt.json_serialize());
+    let psbt_outputs = psbt.output();
+    assert!(!psbt_outputs.is_empty(), "Output should not be empty");
+    println!("Psbt Output: {:?}", psbt_outputs);
+    let output = &psbt_outputs[1];
+    let tap_tree = output
+        .tap_tree
+        .as_ref()
+        .expect("Tap tree should be present");
+    let tap_tree_root_hash = tap_tree.root_hash();
+
+    let expected_tap_tree_root_hash =
+        "a5cc5e9312d2a08787c6597d71ba00733d0b13357aac952ce4b9519c72ffc2c5";
+    assert_eq!(
+        tap_tree_root_hash, expected_tap_tree_root_hash,
+        "Tap tree root hash does not match the expected value"
+    );
+
+    //Check script and version
+    let expected_script_hex = "200f7e1b4af070857b37c203c8759915b7cb97ef99f7d3d9c51eb516791cdb7145ac20a2574e343ae4bcee78c2b061e508e5e817bfa7d8ac5a07f20ac9b39e9933df20ba20400d4657d75ff6b396b59c496f61e25d4d2fe489c792a777682f32655387cbcaba529c";
+    let expected_leaf_version = Some(192u8); // 0xc0 which is default for Taproot scripts. 192 in decimal
+
+    // Get script and version from the first leaf node
+    let node_info = tap_tree.node_info();
+    println!("Tap tree node infos: {:?}", node_info);
+
+    let leaf_nodes = node_info.leaf_nodes();
+    let leaf_node = &leaf_nodes[0];
+    let script = leaf_node.script();
+
+    let script_byte = script.unwrap().to_bytes();
+    let script_hex = DisplayHex::to_lower_hex_string(&script_byte);
+
+    let leaf_version = leaf_node.leaf_version();
+
+    assert_eq!(
+        script_hex, expected_script_hex,
+        "Tap tree script hex does not match the expected value"
+    );
+    assert_eq!(
+        leaf_version, expected_leaf_version,
+        "Tap tree leaf version does not match the expected value"
+    );
+}
+
 fn sample_psbt() -> Psbt {
     Psbt::new("cHNidP8BAH0CAAAAAXHl8cCbj84lm1v42e54IGI6CQru/nBXwrPE3q2fiGO4AAAAAAD9////Ar4DAAAAAAAAIgAgYw/rnGd4Bifj8s7TaMgR2tal/lq+L1jVv2Sqd1mxMbJEEQAAAAAAABYAFNVpt8vHYUPZNSF6Hu07uP1YeHts4QsAAAABALUCAAAAAAEBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////BAJ+CwD/////AkAlAAAAAAAAIgAgQyrnn86L9D3vDiH959KJbPudDHc/bp6nI9E5EBLQD1YAAAAAAAAAACZqJKohqe3i9hw/cdHe/T+pmd+jaVN1XGkGiXmZYrSL69g2l06M+QEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQErQCUAAAAAAAAiACBDKuefzov0Pe8OIf3n0ols+50Mdz9unqcj0TkQEtAPViICAy4V+d/Qff71zzPXxK4FWG5x+wL/Ku93y/LG5p+0rI2xSDBFAiEA9b0OdASAs0P2uhQinjN7QGP5jX/b32LcShBmny8U0RUCIBebxvCDbpchCjqLAhOMjydT80DAzokaalGzV7XVTsbiASICA1tMY+46EgxIHU18bgHnUvAAlAkMq5LfwkpOGZ97sDKRRzBEAiBpmlZwJocNEiKLxexEX0Par6UgG8a89AklTG3/z9AHlAIgQH/ybCvfKJzr2dq0+IyueDebm7FamKIJdzBYWMXRr/wBIgID+aCzK9nclwhbbN7KbIVGUQGLWZsjcaqWPxk9gFeG+FxIMEUCIQDRPBzb0i9vaUmxCcs1yz8uq4tq1mdDAYvvYn3isKEhFAIgfmeTLLzMo0mmQ23ooMnyx6iPceE8xV5CvARuJsd88tEBAQVpUiEDW0xj7joSDEgdTXxuAedS8ACUCQyrkt/CSk4Zn3uwMpEhAy4V+d/Qff71zzPXxK4FWG5x+wL/Ku93y/LG5p+0rI2xIQP5oLMr2dyXCFts3spshUZRAYtZmyNxqpY/GT2AV4b4XFOuIgYDLhX539B9/vXPM9fErgVYbnH7Av8q73fL8sbmn7SsjbEYCapBE1QAAIABAACAAAAAgAAAAAAAAAAAIgYDW0xj7joSDEgdTXxuAedS8ACUCQyrkt/CSk4Zn3uwMpEY2bvrelQAAIABAACAAAAAgAAAAAAAAAAAIgYD+aCzK9nclwhbbN7KbIVGUQGLWZsjcaqWPxk9gFeG+FwYAKVFVFQAAIABAACAAAAAgAAAAAAAAAAAAAEBaVIhA7cr8fTHOPtE+t0zM3iWJvpfPvsNaVyQ0Sar6nIe9tQXIQMm7k7OY+q+Lsge3bVACuSa9r19Js+lNuTtEhehWkpe1iECelHmzmhzDsQTDnApIcnWRz3oFR68UX1ag8jfk/SKuopTriICAnpR5s5ocw7EEw5wKSHJ1kc96BUevFF9WoPI35P0irqKGAClRVRUAACAAQAAgAAAAIABAAAAAAAAACICAybuTs5j6r4uyB7dtUAK5Jr2vX0mz6U25O0SF6FaSl7WGAmqQRNUAACAAQAAgAAAAIABAAAAAAAAACICA7cr8fTHOPtE+t0zM3iWJvpfPvsNaVyQ0Sar6nIe9tQXGNm763pUAACAAQAAgAAAAIABAAAAAAAAAAAA".to_string())
         .unwrap()
@@ -531,5 +609,10 @@ fn sample_psbt() -> Psbt {
 
 fn sample_psbt2() -> Psbt {
     Psbt::new("cHNidP8BAFMBAAAAATkUkZZWjQ4TAMqaOkez2dl2+5yBsfd38qS6x8fkjesmAQAAAAD/////AXL++E4sAAAAF6kUM5cluiHv1irHU6m80GfWx6ajnQWHAAAAAE8BBIiyHgAAAAAAAAAAAIc9/4HAL1JWI/0f5RZ+rDpVoEnePTFLtC7iJ//tN9UIAzmjYBMwFZfa70H75ZOgLMUT0LVVJ+wt8QUOLo/0nIXCDN6tvu8AAACAAQAAABD8BXByZWZ4KnRlc3Rfa2V5AwUGBwMJAAEDAwQFAAEAjwEAAAAAAQGJo8ceq00g4Dcbu6TMaY+ilclGOvouOX+FM8y2L5Vn5QEAAAAXFgAUvhjRUqmwEgOdrz2n3k9TNJ7suYX/////AXL++E4sAAAAF6kUM5cluiHv1irHU6m80GfWx6ajnQWHASED0uFWdJQbrUqZY3LLh+GFbTZSYG2YVi/jnF6efkE/IQUAAAAAAQEgcv74TiwAAAAXqRQzlyW6Ie/WKsdTqbzQZ9bHpqOdBYciAgM5iA3JI5S3NV49BDn6KDwx3nWQgS6gEcQkXAZ0poXog0cwRAIgT2fir7dhQtRPrliiSV0zo0GdqibNDbjQTzRStjKJrA8CIBB2Kp+2fpTMXK2QJvbcmf9/Bw9CeNMPvH0Mhp3TjH/nAQEDBIMAAAABBAFRIgYDOYgNySOUtzVePQQ5+ig8Md51kIEuoBHEJFwGdKaF6IMM3q2+7wAAAIABAAAAAQgGAgIBAwEFFQoYn3yLGjhv/o7tkbODDHp7zR53jAIBAiELoShx/uIQ+4YZKR6uoZRYHL0lMeSyN1nSJfaAaSP2MiICAQIVDBXMSeGRy8Ug2RlEYApct3r2qjKRAgECIQ12pWrO2RXSUT3NhMLDeLLoqlzWMrW3HKLyrFsOOmSb2wIBAhD8BXByZWZ4KnRlc3Rfa2V5AwUGBwMJAAEDAwQFACICAzmIDckjlLc1Xj0EOfooPDHedZCBLqARxCRcBnSmheiDDN6tvu8AAACAAQAAABD8BXByZWZ4KnRlc3Rfa2V5AwUGBwMJAAEDAwQFAA==".to_string())
+        .unwrap()
+}
+
+fn sample_psbt_taproot() -> Psbt {
+    Psbt::new("cHNidP8BAH0CAAAAARblbcPN67JMY1pAsqbkYuqfh+OffiMD1PXBKuohxHUhAAAAAAD9////AkQRAAAAAAAAFgAU1Wm3y8dhQ9k1IXoe7Tu4/Vh4e2wVv/UFAAAAACJRILJL6QjSVc9B74yO2wV9qJ1D2HkxpgKV/LRX3dOOV+uMOAMAAAABASsA4fUFAAAAACJRIMSkYUKwqnaNBsaJxcZ1MKFYDd+ZEmqOaLTAGheYLSWeQRQZmDg8WRPva5p6l4cMrRyqdLSCYC74Gk1Mn1aimc9eDHAZu3+0gymYN/cLd5pvviwpc9YiW6HwxS7yCJ5umnS6QFa6MEJrll8dUVdGve8T2Q7nNfN27yTe0dWHAMEL4AvvpJddyZugvr1WuK5CfNdNvHUfuHsWalE8dXsM2XYvy4UiFcEZmDg8WRPva5p6l4cMrRyqdLSCYC74Gk1Mn1aimc9eDGkgGZg4PFkT72uaepeHDK0cqnS0gmAu+BpNTJ9WopnPXgysIGzdf1E91bpWIz3gwC+dFe5OS1a+SUQsP12wvvnaryY4uiCU7qCfqcnKJ7j6aL4hZr1iSn3Rrt04wcmnQwovyqPzWbpSnMAhFhmYODxZE+9rmnqXhwytHKp0tIJgLvgaTUyfVqKZz14MOQFwGbt/tIMpmDf3C3eab74sKXPWIluh8MUu8giebpp0ur6IapxWAACAAQAAgAAAAIAAAAAAAAAAACEWbN1/UT3VulYjPeDAL50V7k5LVr5JRCw/XbC++dqvJjg5AXAZu3+0gymYN/cLd5pvviwpc9YiW6HwxS7yCJ5umnS6WyNan1YAAIABAACAAAAAgAAAAAAAAAAAIRaU7qCfqcnKJ7j6aL4hZr1iSn3Rrt04wcmnQwovyqPzWTkBcBm7f7SDKZg39wt3mm++LClz1iJbofDFLvIInm6adLqsWpreVgAAgAEAAIAAAACAAAAAAAAAAAABFyAZmDg8WRPva5p6l4cMrRyqdLSCYC74Gk1Mn1aimc9eDAEYIHAZu3+0gymYN/cLd5pvviwpc9YiW6HwxS7yCJ5umnS6AAABBSAPfhtK8HCFezfCA8h1mRW3y5fvmffT2cUetRZ5HNtxRQEGawDAaCAPfhtK8HCFezfCA8h1mRW3y5fvmffT2cUetRZ5HNtxRawgoldONDrkvO54wrBh5Qjl6Be/p9isWgfyCsmznpkz3yC6IEANRlfXX/azlrWcSW9h4l1NL+SJx5Knd2gvMmVTh8vKulKcIQcPfhtK8HCFezfCA8h1mRW3y5fvmffT2cUetRZ5HNtxRTkBpcxekxLSoIeHxll9cboAcz0LEzV6rJUs5LlRnHL/wsW+iGqcVgAAgAEAAIAAAACAAQAAAAAAAAAhB0ANRlfXX/azlrWcSW9h4l1NL+SJx5Knd2gvMmVTh8vKOQGlzF6TEtKgh4fGWX1xugBzPQsTNXqslSzkuVGccv/Cxaxamt5WAACAAQAAgAAAAIABAAAAAAAAACEHoldONDrkvO54wrBh5Qjl6Be/p9isWgfyCsmznpkz3yA5AaXMXpMS0qCHh8ZZfXG6AHM9CxM1eqyVLOS5UZxy/8LFWyNan1YAAIABAACAAAAAgAEAAAAAAAAAAA==".to_string())
         .unwrap()
 }
