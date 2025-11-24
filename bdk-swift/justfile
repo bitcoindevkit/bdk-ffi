@@ -14,6 +14,11 @@ build:
   bash ./build-xcframework.sh
 
 [group("Build")]
+[doc("Build the library in debug mode for faster local testing.")]
+build-dev:
+  bash ./build-xcframework-dev.sh
+
+[group("Build")]
 [doc("Remove all caches and previous build artifacts to start from scratch.")]
 clean:
   rm -rf ../bdk-ffi/target/
