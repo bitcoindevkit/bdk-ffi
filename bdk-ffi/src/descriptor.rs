@@ -1,3 +1,4 @@
+use crate::bitcoin::Address;
 use crate::bitcoin::DescriptorId;
 use crate::bitcoin::DescriptorType;
 use crate::error::DescriptorError;
@@ -12,6 +13,7 @@ use bdk_wallet::chain::DescriptorExt;
 use bdk_wallet::descriptor::{ExtendedDescriptor, IntoWalletDescriptor};
 use bdk_wallet::keys::DescriptorPublicKey as BdkDescriptorPublicKey;
 use bdk_wallet::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, KeyMap};
+use bdk_wallet::miniscript::descriptor::ConversionError;
 use bdk_wallet::template::{
     Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, Bip86, Bip86Public,
     DescriptorTemplate,
@@ -354,6 +356,33 @@ impl Descriptor {
 
     pub fn desc_type(&self) -> DescriptorType {
         self.extended_descriptor.desc_type()
+    }
+
+    pub fn derive_address(
+        &self,
+        index: u32,
+        network: Network,
+    ) -> Result<Arc<Address>, DescriptorError> {
+        if self.extended_descriptor.is_multipath() {
+            return Err(DescriptorError::MultiPath);
+        }
+
+        let derived_descriptor = self
+            .extended_descriptor
+            .at_derivation_index(index)
+            .map_err(|error| match error {
+                ConversionError::HardenedChild => DescriptorError::HardenedDerivationXpub,
+                ConversionError::MultiKey => DescriptorError::MultiPath,
+            })?;
+
+        let address = derived_descriptor
+            .address(network)
+            .map_err(|error| DescriptorError::Miniscript {
+                error_message: error.to_string(),
+            })?
+            .into();
+
+        Ok(Arc::new(address))
     }
 }
 

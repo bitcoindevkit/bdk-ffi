@@ -161,3 +161,39 @@ fn test_max_weight_to_satisfy() {
     // Verify the method works and returns a positive weight
     assert!(weight > 0, "Weight must be positive");
 }
+
+#[test]
+fn test_descriptor_derive_address() {
+    let descriptor = Descriptor::new_bip84(
+        &get_descriptor_secret_key(),
+        KeychainKind::External,
+        Network::Testnet,
+    );
+
+    let derived = descriptor
+        .derive_address(0, Network::Testnet)
+        .expect("derive address");
+
+    let expected_descriptor = descriptor
+        .extended_descriptor
+        .at_derivation_index(0)
+        .expect("derive descriptor");
+    let expected_address = expected_descriptor
+        .address(Network::Testnet)
+        .expect("address from descriptor");
+
+    assert_eq!(derived.to_string(), expected_address.to_string());
+}
+
+#[test]
+fn test_descriptor_derive_address_multipath_error() {
+    let descriptor = Descriptor::new(
+        "wpkh([9a6a2580/84'/1'/0']tpubDDnGNapGEY6AZAdQbfRJgMg9fvz8pUBrLwvyvUqEgcUfgzM6zc2eVK4vY9x9L5FJWdX8WumXuLEDV5zDZnTfbn87vLe9XceCFwTu9so9Kks/<0;1>/*)".to_string(),
+        Network::Testnet,
+    )
+    .expect("multipath descriptor parses");
+
+    let error = descriptor.derive_address(0, Network::Testnet).unwrap_err();
+
+    assert_matches!(error, DescriptorError::MultiPath);
+}
