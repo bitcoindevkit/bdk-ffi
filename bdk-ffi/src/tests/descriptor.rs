@@ -3,6 +3,7 @@ use crate::descriptor::Descriptor;
 use crate::error::DescriptorError;
 use crate::keys::{DerivationPath, DescriptorSecretKey, Mnemonic};
 use assert_matches::assert_matches;
+use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::KeychainKind;
 
 fn get_descriptor_secret_key() -> DescriptorSecretKey {
@@ -160,4 +161,43 @@ fn test_max_weight_to_satisfy() {
 
     // Verify the method works and returns a positive weight
     assert!(weight > 0, "Weight must be positive");
+}
+
+#[test]
+fn test_descriptor_derived_address() {
+    let descriptor = Descriptor::new_bip84(
+        &get_descriptor_secret_key(),
+        KeychainKind::External,
+        Network::Testnet,
+    );
+
+    let derived = descriptor
+        .derived_address(0, Network::Testnet)
+        .expect("derive address");
+
+    let secp = Secp256k1::verification_only();
+    let expected_descriptor = descriptor
+        .extended_descriptor
+        .derived_descriptor(&secp, 0)
+        .expect("derive descriptor");
+    let expected_address = bdk_wallet::bitcoin::Address::from_script(
+        &expected_descriptor.script_pubkey(),
+        Network::Testnet,
+    )
+    .expect("address from script");
+
+    assert_eq!(derived.to_string(), expected_address.to_string());
+}
+
+#[test]
+fn test_descriptor_derived_address_multipath_error() {
+    let descriptor = Descriptor::new(
+        "wpkh([9a6a2580/84'/1'/0']tpubDDnGNapGEY6AZAdQbfRJgMg9fvz8pUBrLwvyvUqEgcUfgzM6zc2eVK4vY9x9L5FJWdX8WumXuLEDV5zDZnTfbn87vLe9XceCFwTu9so9Kks/<0;1>/*)".to_string(),
+        Network::Testnet,
+    )
+    .expect("multipath descriptor parses");
+
+    let error = descriptor.derived_address(0, Network::Testnet).unwrap_err();
+
+    assert_matches!(error, DescriptorError::MultiPath);
 }
