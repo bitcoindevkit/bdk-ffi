@@ -48,6 +48,15 @@ jobs:
           cd bdk-android
           bash ./scripts/release/build-release-linux-x86_64.sh
 
+      - name: "Free Disk Space (Ubuntu)"
+        uses: AdityaGarg8/remove-unwanted-software@v5
+        with:
+          remove-dotnet: true
+          remove-haskell: true
+          remove-codeql: true
+          remove-docker-images: true
+          remove-large-packages: true
+
       - name: "Enable KVM"
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
