@@ -27,6 +27,7 @@ use crate::bitcoin::BlockHash;
 use crate::bitcoin::Transaction;
 use crate::bitcoin::Wtxid;
 use crate::error::CbfError;
+use crate::types::BlockId;
 use crate::types::Update;
 use crate::wallet::Wallet;
 use crate::FeeRate;
@@ -185,7 +186,7 @@ impl CbfBuilder {
             trusted_peers.push(peer.clone().into());
         }
 
-        let scan_type = match self.scan_type {
+        let scan_type = match self.scan_type.clone() {
             ScanType::Sync => bdk_kyoto::ScanType::Sync,
             ScanType::Recovery {
                 used_script_index,
@@ -211,6 +212,10 @@ impl CbfBuilder {
                         RecoveryPoint::TaprootActivation => bdk_kyoto::ScanType::Recovery {
                             used_script_index,
                             checkpoint: HeaderCheckpoint::taproot_activation(),
+                        },
+                        RecoveryPoint::Other { birthday } => bdk_kyoto::ScanType::Recovery {
+                            used_script_index,
+                            checkpoint: HeaderCheckpoint::new(birthday.height, birthday.hash.0),
                         },
                     }
                 }
@@ -457,7 +462,7 @@ impl From<Warn> for Warning {
 
 /// Sync a wallet from the last known block hash or recover a wallet from a specified recovery
 /// point.
-#[derive(Debug, Clone, Copy, Default, uniffi::Enum)]
+#[derive(Debug, Clone, Default, uniffi::Enum)]
 pub enum ScanType {
     /// Sync an existing wallet from the last stored chain checkpoint.
     #[default]
@@ -472,12 +477,15 @@ pub enum ScanType {
     },
 }
 
-#[derive(Debug, Clone, Copy, Default, uniffi::Enum)]
+#[derive(Debug, Clone, Default, uniffi::Enum)]
 pub enum RecoveryPoint {
     GenesisBlock,
     #[default]
     SegwitActivation,
     TaprootActivation,
+    Other {
+        birthday: BlockId,
+    },
 }
 
 /// A peer to connect to over the Bitcoin peer-to-peer network.
