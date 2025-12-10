@@ -55,7 +55,7 @@ jobs:
           remove-haskell: true
           remove-codeql: true
           remove-docker-images: true
-          remove-large-packages: true
+          remove-large-packages: false
 
       - name: "Enable KVM"
         run: |
@@ -70,4 +70,5 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: Nexus 6
+          emulator-options: "-no-window -gpu swiftshader_indirect -no-snapshot"
           script: cd bdk-android && ./gradlew connectedAndroidTest --console=plain
