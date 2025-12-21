@@ -2,14 +2,15 @@
 
 set -euo pipefail
 
-HEADERPATH="Sources/BitcoinDevKit/BitcoinDevKitFFI.h"
-MODMAPPATH="Sources/BitcoinDevKit/BitcoinDevKitFFI.modulemap"
+HEADER_BASENAME="BitcoinDevKitFFI"
 TARGETDIR="../bdk-ffi/target"
 OUTDIR="."
 NAME="bdkffi"
 STATIC_LIB_NAME="lib${NAME}.a"
 NEW_HEADER_DIR="../bdk-ffi/target/include"
 PROFILE_DIR="debug"
+SWIFT_OUT_DIR="../bdk-swift/Sources/BitcoinDevKit"
+HEADER_OUT_DIR="${NEW_HEADER_DIR}/${HEADER_BASENAME}"
 
 HOST_ARCH=$(uname -m)
 if [ "$HOST_ARCH" = "arm64" ]; then
@@ -30,35 +31,37 @@ cargo build --package bdk-ffi --target "$MAC_TARGET"
 cargo build --package bdk-ffi --target "$IOS_SIM_TARGET"
 cargo build --package bdk-ffi --target "$IOS_DEVICE_TARGET"
 
+UNIFFI_LIBRARY_PATH="./target/$IOS_DEVICE_TARGET/$PROFILE_DIR/lib${NAME}.dylib"
 cargo run --bin uniffi-bindgen generate \
-    --library "./target/$IOS_DEVICE_TARGET/$PROFILE_DIR/lib${NAME}.dylib" \
+    --library "${UNIFFI_LIBRARY_PATH}" \
     --language swift \
-    --out-dir ../bdk-swift/Sources/BitcoinDevKit \
+    --out-dir "${SWIFT_OUT_DIR}" \
     --no-format
 
-cd ../bdk-swift/ || exit
-
-# move bdk-ffi static lib header files to temporary directory
 # Final xcframework structure (per-arch):
 #   Headers/
-#     BitcoinDevKitFFI/
-#       BitcoinDevKitFFI.h
+#     <ModuleName>/
+#       <ModuleName>.h
 #       module.modulemap
+rm -rf "${HEADER_OUT_DIR:?}"
+mkdir -p "${HEADER_OUT_DIR}"
+cargo run --bin uniffi-bindgen generate \
+    --library "${UNIFFI_LIBRARY_PATH}" \
+    --language swift \
+    --out-dir "${HEADER_OUT_DIR}" \
+    --no-format
 
-# Start from a clean header include dir so we don't get duplicates
-rm -f "${NEW_HEADER_DIR}/BitcoinDevKitFFI.h" "${NEW_HEADER_DIR}/module.modulemap"
-rm -rf "${NEW_HEADER_DIR}/BitcoinDevKitFFI"
-mkdir -p "${NEW_HEADER_DIR}/BitcoinDevKitFFI"
+# Keep the header output directory clean: xcframework headers should only contain .h + module.modulemap
+find "${HEADER_OUT_DIR}" -maxdepth 1 -name '*.swift' -delete
 
-# Move generated header and modulemap into BitcoinDevKitFFI subfolder only
-mv "${HEADERPATH}" "${NEW_HEADER_DIR}/BitcoinDevKitFFI/BitcoinDevKitFFI.h"
-mv "${MODMAPPATH}" "${NEW_HEADER_DIR}/BitcoinDevKitFFI/module.modulemap"
+# Uniffi emits <basename>.modulemap; rename it to module.modulemap (expected by Apple toolchains)
+if [ -f "${HEADER_OUT_DIR}/${HEADER_BASENAME}.modulemap" ]; then
+    mv "${HEADER_OUT_DIR}/${HEADER_BASENAME}.modulemap" "${HEADER_OUT_DIR}/module.modulemap"
+fi
 
-# Ensure the modulemap points at the header using the BitcoinDevKitFFI/ prefix,
-# matching the desired structure inside bdkffi.xcframework.
-sed -i '' 's#header \"BitcoinDevKitFFI/BitcoinDevKitFFI.h\"#header \"BitcoinDevKitFFI.h\"#' "${NEW_HEADER_DIR}/BitcoinDevKitFFI/module.modulemap" || true
+echo -e "\n" >> "${HEADER_OUT_DIR}/module.modulemap"
 
-echo -e "\n" >> "${NEW_HEADER_DIR}/BitcoinDevKitFFI/module.modulemap"
+cd ../bdk-swift/ || exit
 
 rm -rf "${OUTDIR}/${NAME}.xcframework"
 
