@@ -39,6 +39,7 @@ cargo run --bin uniffi-bindgen generate --library "${UNIFFI_LIBRARY_PATH}" --lan
 #     <ModuleName>/
 #       <ModuleName>.h
 #       module.modulemap
+rm -rf "${NEW_HEADER_DIR:?}"/*
 rm -rf "${HEADER_OUT_DIR:?}"
 mkdir -p "${HEADER_OUT_DIR}"
 cargo run --bin uniffi-bindgen generate --library "${UNIFFI_LIBRARY_PATH}" --language swift --out-dir "${HEADER_OUT_DIR}" --no-format

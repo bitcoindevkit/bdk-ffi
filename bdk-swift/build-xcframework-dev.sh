@@ -43,6 +43,7 @@ cargo run --bin uniffi-bindgen generate \
 #     <ModuleName>/
 #       <ModuleName>.h
 #       module.modulemap
+rm -rf "${NEW_HEADER_DIR:?}"/*
 rm -rf "${HEADER_OUT_DIR:?}"
 mkdir -p "${HEADER_OUT_DIR}"
 cargo run --bin uniffi-bindgen generate \
