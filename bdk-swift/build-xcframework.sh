@@ -54,6 +54,10 @@ fi
 
 echo -e "\n" >> "${HEADER_OUT_DIR}/module.modulemap"
 
+# Keep Swift sources clean: only .swift files should stay in the package Sources dir
+rm -f "${SWIFT_OUT_DIR}/${HEADER_BASENAME}.h"
+rm -f "${SWIFT_OUT_DIR}/${HEADER_BASENAME}.modulemap"
+
 # combine bdk-ffi static libs for aarch64 and x86_64 targets via lipo tool
 mkdir -p target/lipo-ios-sim/release-smaller
 lipo target/aarch64-apple-ios-sim/release-smaller/libbdkffi.a target/x86_64-apple-ios/release-smaller/libbdkffi.a -create -output target/lipo-ios-sim/release-smaller/libbdkffi.a

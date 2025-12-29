@@ -62,6 +62,10 @@ fi
 
 echo -e "\n" >> "${HEADER_OUT_DIR}/module.modulemap"
 
+# Keep Swift sources clean: only .swift files should stay in the package Sources dir
+rm -f "${SWIFT_OUT_DIR}/${HEADER_BASENAME}.h"
+rm -f "${SWIFT_OUT_DIR}/${HEADER_BASENAME}.modulemap"
+
 cd ../bdk-swift/ || exit
 
 rm -rf "${OUTDIR}/${NAME}.xcframework"
