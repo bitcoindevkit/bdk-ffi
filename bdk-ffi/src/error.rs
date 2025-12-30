@@ -24,6 +24,7 @@ use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptor
 use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
 #[allow(deprecated)]
 use bdk_wallet::signer::SignerError as BdkSignerError;
+use bdk_wallet::tx_builder::AddForeignUtxoError as BdkAddForeignUtxoError;
 use bdk_wallet::tx_builder::AddUtxoError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
 use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
@@ -33,6 +34,21 @@ use std::convert::TryInto;
 // ------------------------------------------------------------------------
 // error definitions
 // ------------------------------------------------------------------------
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum AddForeignUtxoError {
+    #[error("foreign utxo outpoint txid does not match PSBT input txid")]
+    InvalidTxid,
+
+    #[error("requested outpoint doesn't exist in the tx: {outpoint}")]
+    InvalidOutpoint { outpoint: String },
+
+    #[error("foreign utxo missing witness_utxo or non_witness_utxo")]
+    MissingUtxo,
+
+    #[error("failed to convert Input to BdkInput: {error_message}")]
+    InputConversionError { error_message: String },
+}
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum AddressParseError {
@@ -786,6 +802,40 @@ pub enum CbfError {
 // ------------------------------------------------------------------------
 // error conversions
 // ------------------------------------------------------------------------
+
+impl From<AddForeignUtxoError> for CreateTxError {
+    fn from(error: AddForeignUtxoError) -> Self {
+        match error {
+            AddForeignUtxoError::InvalidTxid => CreateTxError::Descriptor {
+                error_message: "foreign utxo outpoint txid does not match PSBT input txid"
+                    .to_string(),
+            },
+            AddForeignUtxoError::InvalidOutpoint { outpoint } => {
+                CreateTxError::UnknownUtxo { outpoint }
+            }
+            AddForeignUtxoError::MissingUtxo => CreateTxError::Descriptor {
+                error_message: "foreign utxo missing witness_utxo or non_witness_utxo".to_string(),
+            },
+            AddForeignUtxoError::InputConversionError { error_message } => {
+                CreateTxError::Descriptor { error_message }
+            }
+        }
+    }
+}
+
+impl From<BdkAddForeignUtxoError> for AddForeignUtxoError {
+    fn from(error: BdkAddForeignUtxoError) -> Self {
+        match error {
+            BdkAddForeignUtxoError::InvalidTxid { .. } => AddForeignUtxoError::InvalidTxid,
+            BdkAddForeignUtxoError::InvalidOutpoint(outpoint) => {
+                AddForeignUtxoError::InvalidOutpoint {
+                    outpoint: outpoint.to_string(),
+                }
+            }
+            BdkAddForeignUtxoError::MissingUtxo => AddForeignUtxoError::MissingUtxo,
+        }
+    }
+}
 
 impl From<BdkElectrumError> for ElectrumError {
     fn from(error: BdkElectrumError) -> Self {

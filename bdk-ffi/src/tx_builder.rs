@@ -1,14 +1,15 @@
-use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Txid};
-use crate::error::CreateTxError;
+use crate::bitcoin::{Amount, FeeRate, Input, OutPoint, Psbt, Script, Txid};
+use crate::error::{AddForeignUtxoError, CreateTxError};
 use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
+use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
-use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence};
+use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Weight as BdkWeight};
 use bdk_wallet::KeychainKind;
 
 use std::collections::BTreeMap;
@@ -42,6 +43,8 @@ pub struct TxBuilder {
     version: Option<i32>,
     exclude_unconfirmed: bool,
     exclude_below_confirmations: Option<u32>,
+    only_witness_utxo: bool,
+    foreign_utxos: Vec<(BdkOutPoint, BdkInput, BdkWeight)>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -70,6 +73,8 @@ impl TxBuilder {
             version: None,
             exclude_unconfirmed: false,
             exclude_below_confirmations: None,
+            only_witness_utxo: false,
+            foreign_utxos: Vec::new(),
         }
     }
 
@@ -357,13 +362,102 @@ impl TxBuilder {
 
     /// Build a transaction with a specific version.
     ///
-    /// The version should always be greater than 0 and greater than 1 if the wallet’s descriptors contain an "older"
+    /// The version should always be greater than 0 and greater than 1 if the wallet's descriptors contain an "older"
     /// (`OP_CSV`) operator.
     pub fn version(&self, version: i32) -> Arc<Self> {
         Arc::new(TxBuilder {
             version: Some(version),
             ..self.clone()
         })
+    }
+
+    /// Only Fill-in the [`psbt::Input::witness_utxo`](bitcoin::psbt::Input::witness_utxo) field
+    /// when spending from SegWit descriptors.
+    ///
+    /// This reduces the size of the PSBT, but some signers might reject them due to the lack of
+    /// the `non_witness_utxo`.
+    pub fn only_witness_utxo(&self) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            only_witness_utxo: true,
+            ..self.clone()
+        })
+    }
+
+    /// Add a foreign UTXO i.e. a UTXO not known by this wallet.
+    ///
+    /// Foreign UTXOs are not prioritized over local UTXOs. If a local UTXO is added to the
+    /// manually selected list, it will replace any conflicting foreign UTXOs. However, a foreign
+    /// UTXO cannot replace a conflicting local UTXO.
+    ///
+    /// There might be cases where the UTXO belongs to the wallet but it doesn't have knowledge of
+    /// it. This is possible if the wallet is not synced or its not being use to track
+    /// transactions. In those cases is the responsibility of the user to add any possible local
+    /// UTXOs through the [`TxBuilder::add_utxo`] method.
+    /// A manually added local UTXO will always have greater precedence than a foreign UTXO. No
+    /// matter if it was added before or after the foreign UTXO.
+    ///
+    /// At a minimum to add a foreign UTXO we need:
+    ///
+    /// 1. `outpoint`: To add it to the raw transaction.
+    /// 2. `psbt_input`: To know the value.
+    /// 3. `satisfaction_weight`: To know how much weight/vbytes the input will add to the
+    ///    transaction for fee calculation.
+    ///
+    /// There are several security concerns about adding foreign UTXOs that application
+    /// developers should consider. First, how do you know the value of the input is correct? If a
+    /// `non_witness_utxo` is provided in the `psbt_input` then this method implicitly verifies the
+    /// value by checking it against the transaction. If only a `witness_utxo` is provided then this
+    /// method doesn't verify the value but just takes it as a given -- it is up to you to check
+    /// that whoever sent you the `input_psbt` was not lying!
+    ///
+    /// Secondly, you must somehow provide `satisfaction_weight` of the input. Depending on your
+    /// application it may be important that this be known precisely. If not, a malicious
+    /// counterparty may fool you into putting in a value that is too low, giving the transaction a
+    /// lower than expected feerate. They could also fool you into putting a value that is too high
+    /// causing you to pay a fee that is too high. The party who is broadcasting the transaction can
+    /// of course check the real input weight matches the expected weight prior to broadcasting.
+    ///
+    /// To guarantee the `max_weight_to_satisfy` is correct, you can require the party providing the
+    /// `psbt_input` provide a miniscript descriptor for the input so you can check it against the
+    /// `script_pubkey` and then ask it for the [`max_weight_to_satisfy`].
+    ///
+    /// This is an **EXPERIMENTAL** feature, API and other major changes are expected.
+    ///
+    /// In order to use [`Wallet::calculate_fee`] or [`Wallet::calculate_fee_rate`] for a
+    /// transaction created with foreign UTXO(s) you must manually insert the corresponding
+    /// TxOut(s) into the tx graph using the [`Wallet::insert_txout`] function.
+    ///
+    /// # Errors
+    ///
+    /// This method returns errors in the following circumstances:
+    ///
+    /// 1. The `psbt_input` does not contain a `witness_utxo` or `non_witness_utxo`.
+    /// 2. The data in `non_witness_utxo` does not match what is in `outpoint`.
+    ///
+    /// Note unless you set [`only_witness_utxo`] any non-taproot `psbt_input` you pass to this
+    /// method must have `non_witness_utxo` set otherwise you will get an error when [`finish`]
+    /// is called.
+    ///
+    /// [`only_witness_utxo`]: Self::only_witness_utxo
+    /// [`finish`]: Self::finish
+    /// [`max_weight_to_satisfy`]: miniscript::Descriptor::max_weight_to_satisfy
+    pub fn add_foreign_utxo(
+        &self,
+        outpoint: OutPoint,
+        psbt_input: Input,
+        satisfaction_weight: u64,
+    ) -> Result<Arc<Self>, AddForeignUtxoError> {
+        let bdk_outpoint: BdkOutPoint = outpoint.into();
+        let bdk_input: BdkInput = psbt_input.try_into()?;
+        let bdk_weight = BdkWeight::from_wu(satisfaction_weight);
+
+        let mut foreign_utxos = self.foreign_utxos.clone();
+        foreign_utxos.push((bdk_outpoint, bdk_input, bdk_weight));
+
+        Ok(Arc::new(TxBuilder {
+            foreign_utxos,
+            ..self.clone()
+        }))
     }
 
     /// Finish building the transaction.
@@ -439,6 +533,14 @@ impl TxBuilder {
         }
         if let Some(min_confirms) = self.exclude_below_confirmations {
             tx_builder.exclude_below_confirmations(min_confirms);
+        }
+        if self.only_witness_utxo {
+            tx_builder.only_witness_utxo();
+        }
+        for (outpoint, input, weight) in &self.foreign_utxos {
+            tx_builder
+                .add_foreign_utxo(*outpoint, input.clone(), *weight)
+                .map_err(AddForeignUtxoError::from)?;
         }
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
 

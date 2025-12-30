@@ -20,8 +20,6 @@ use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::psbt::Output as BdkOutput;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
-use std::collections::HashMap;
-use std::convert::TryFrom;
 
 use bdk_wallet::bitcoin::bip32::ChildNumber as BdkChildNumber;
 use bdk_wallet::bitcoin::taproot::LeafNode as BdkLeafNode;
@@ -42,6 +40,8 @@ use bdk_wallet::bitcoin::Wtxid as BitcoinWtxid;
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
+use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::fmt::Display;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
@@ -692,6 +692,8 @@ pub struct Input {
     pub unknown: HashMap<Key, Vec<u8>>,
 }
 
+use crate::error::AddForeignUtxoError;
+
 impl From<&BdkInput> for Input {
     fn from(input: &BdkInput) -> Self {
         Input {
@@ -829,6 +831,338 @@ impl From<&BdkInput> for Input {
                 })
                 .collect(),
         }
+    }
+}
+
+impl TryFrom<Input> for BdkInput {
+    type Error = AddForeignUtxoError;
+
+    fn try_from(input: Input) -> Result<Self, Self::Error> {
+        use bdk_wallet::bitcoin::ecdsa;
+        use bdk_wallet::bitcoin::hashes::Hash as HashTrait;
+        use bdk_wallet::bitcoin::key::PublicKey as Secp256k1PublicKey;
+        use bdk_wallet::bitcoin::psbt::PsbtSighashType;
+        use bdk_wallet::bitcoin::secp256k1::XOnlyPublicKey;
+        use bdk_wallet::bitcoin::taproot::{
+            ControlBlock as BdkControlBlock, LeafVersion, TapLeafHash, TapNodeHash,
+        };
+        use std::str::FromStr;
+
+        let non_witness_utxo = input.non_witness_utxo.map(|tx| tx.0.clone());
+
+        let witness_utxo = input.witness_utxo.map(|txout| txout.into());
+
+        let partial_sigs = input
+            .partial_sigs
+            .into_iter()
+            .map(|(k, v)| {
+                let pubkey = Secp256k1PublicKey::from_str(&k).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid public key in partial_sigs: {}", e),
+                    }
+                })?;
+                let sig = ecdsa::Signature::from_slice(&v).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid signature in partial_sigs: {}", e),
+                    }
+                })?;
+                Ok((pubkey, sig))
+            })
+            .collect::<Result<std::collections::BTreeMap<_, _>, AddForeignUtxoError>>()?;
+
+        let sighash_type = input
+            .sighash_type
+            .map(|s| {
+                PsbtSighashType::from_str(&s).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid sighash type: {}", e),
+                    }
+                })
+            })
+            .transpose()?;
+
+        let redeem_script = input.redeem_script.map(|s| s.0.clone());
+        let witness_script = input.witness_script.map(|s| s.0.clone());
+
+        let bip32_derivation = input
+            .bip32_derivation
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::bip32::{DerivationPath, Fingerprint};
+                use bdk_wallet::bitcoin::secp256k1::PublicKey as Secp256k1RawPublicKey;
+                let pubkey = Secp256k1RawPublicKey::from_str(&k).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid public key in bip32_derivation: {}", e),
+                    }
+                })?;
+                let fingerprint = Fingerprint::from_str(&v.fingerprint).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid fingerprint: {}", e),
+                    }
+                })?;
+                let path: DerivationPath = v.path.0.clone();
+                Ok((pubkey, (fingerprint, path)))
+            })
+            .collect::<Result<std::collections::BTreeMap<_, _>, AddForeignUtxoError>>()?;
+
+        let final_script_sig = input.final_script_sig.map(|s| s.0.clone());
+
+        let final_script_witness = input.final_script_witness.map(|w| {
+            use bdk_wallet::bitcoin::Witness;
+            Witness::from_slice(&w)
+        });
+
+        let ripemd160_preimages = input
+            .ripemd160_preimages
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::hashes::ripemd160;
+                let hash = ripemd160::Hash::from_str(&k).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid ripemd160 hash: {}", e),
+                    }
+                })?;
+                Ok((hash, v))
+            })
+            .collect::<Result<_, AddForeignUtxoError>>()?;
+
+        let sha256_preimages = input
+            .sha256_preimages
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::hashes::sha256;
+                let hash = sha256::Hash::from_str(&k).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid sha256 hash: {}", e),
+                    }
+                })?;
+                Ok((hash, v))
+            })
+            .collect::<Result<_, AddForeignUtxoError>>()?;
+
+        let hash160_preimages = input
+            .hash160_preimages
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::hashes::hash160;
+                let hash = hash160::Hash::from_str(&k).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid hash160: {}", e),
+                    }
+                })?;
+                Ok((hash, v))
+            })
+            .collect::<Result<_, AddForeignUtxoError>>()?;
+
+        let hash256_preimages = input
+            .hash256_preimages
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::hashes::sha256d;
+                let hash = sha256d::Hash::from_str(&k).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid hash256: {}", e),
+                    }
+                })?;
+                Ok((hash, v))
+            })
+            .collect::<Result<_, AddForeignUtxoError>>()?;
+
+        let tap_key_sig = input
+            .tap_key_sig
+            .map(|s| {
+                use bdk_wallet::bitcoin::taproot::Signature;
+                Signature::from_slice(&s).map_err(|e| AddForeignUtxoError::InputConversionError {
+                    error_message: format!("invalid taproot signature: {}", e),
+                })
+            })
+            .transpose()?;
+
+        let tap_script_sigs = input
+            .tap_script_sigs
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::taproot::Signature;
+                let xonly = XOnlyPublicKey::from_str(&k.xonly_pubkey).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid xonly pubkey: {}", e),
+                    }
+                })?;
+                let leaf_hash = TapLeafHash::from_str(&k.tap_leaf_hash).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid tap leaf hash: {}", e),
+                    }
+                })?;
+                let sig = Signature::from_slice(&v).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid taproot script signature: {}", e),
+                    }
+                })?;
+                Ok(((xonly, leaf_hash), sig))
+            })
+            .collect::<Result<_, AddForeignUtxoError>>()?;
+
+        let tap_scripts = input
+            .tap_scripts
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::key::XOnlyPublicKey as BdkXOnlyPublicKey;
+                use bdk_wallet::bitcoin::taproot::TapNodeHash;
+
+                let internal_key = BdkXOnlyPublicKey::from_slice(&k.internal_key).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid internal key: {}", e),
+                    }
+                })?;
+
+                let output_key_parity = k.output_key_parity;
+                let leaf_version_u8 = k.leaf_version;
+
+                let merkle_branch: Vec<TapNodeHash> = k
+                    .merkle_branch
+                    .into_iter()
+                    .map(|h| {
+                        TapNodeHash::from_str(&h).map_err(|e| {
+                            AddForeignUtxoError::InputConversionError {
+                                error_message: format!("invalid merkle branch hash: {}", e),
+                            }
+                        })
+                    })
+                    .collect::<Result<_, AddForeignUtxoError>>()?;
+
+                let mut control_block_bytes = vec![output_key_parity | leaf_version_u8];
+                control_block_bytes.extend_from_slice(&internal_key.serialize());
+                for hash in &merkle_branch {
+                    control_block_bytes.extend_from_slice(&hash.to_byte_array());
+                }
+
+                let control_block = BdkControlBlock::decode(&control_block_bytes).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid control block: {}", e),
+                    }
+                })?;
+
+                let leaf_version = LeafVersion::from_consensus(leaf_version_u8).map_err(|_| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid leaf version: {}", leaf_version_u8),
+                    }
+                })?;
+
+                Ok((control_block, (v.script.0.clone(), leaf_version)))
+            })
+            .collect::<Result<_, AddForeignUtxoError>>()?;
+
+        let tap_key_origins = input
+            .tap_key_origins
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::bip32::{DerivationPath, Fingerprint};
+
+                let xonly = XOnlyPublicKey::from_str(&k).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid xonly pubkey in tap_key_origins: {}", e),
+                    }
+                })?;
+
+                let leaf_hashes: Vec<TapLeafHash> = v
+                    .tap_leaf_hashes
+                    .into_iter()
+                    .map(|h| {
+                        TapLeafHash::from_str(&h).map_err(|e| {
+                            AddForeignUtxoError::InputConversionError {
+                                error_message: format!("invalid tap leaf hash: {}", e),
+                            }
+                        })
+                    })
+                    .collect::<Result<_, AddForeignUtxoError>>()?;
+
+                let fingerprint =
+                    Fingerprint::from_str(&v.key_source.fingerprint).map_err(|e| {
+                        AddForeignUtxoError::InputConversionError {
+                            error_message: format!("invalid fingerprint in tap_key_origins: {}", e),
+                        }
+                    })?;
+
+                let path: DerivationPath = v.key_source.path.0.clone();
+
+                Ok((xonly, (leaf_hashes, (fingerprint, path))))
+            })
+            .collect::<Result<_, AddForeignUtxoError>>()?;
+
+        let tap_internal_key = input
+            .tap_internal_key
+            .map(|k| {
+                XOnlyPublicKey::from_str(&k).map_err(|e| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid tap internal key: {}", e),
+                    }
+                })
+            })
+            .transpose()?;
+
+        let tap_merkle_root = input
+            .tap_merkle_root
+            .map(|k| {
+                TapNodeHash::from_str(&k).map_err(|e| AddForeignUtxoError::InputConversionError {
+                    error_message: format!("invalid tap merkle root: {}", e),
+                })
+            })
+            .transpose()?;
+
+        let proprietary = input
+            .proprietary
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::psbt::raw::ProprietaryKey as BdkProprietaryKey;
+                (
+                    BdkProprietaryKey {
+                        prefix: k.prefix,
+                        subtype: k.subtype,
+                        key: k.key,
+                    },
+                    v,
+                )
+            })
+            .collect();
+
+        let unknown = input
+            .unknown
+            .into_iter()
+            .map(|(k, v)| {
+                use bdk_wallet::bitcoin::psbt::raw::Key as BdkKey;
+                (
+                    BdkKey {
+                        type_value: k.type_value,
+                        key: k.key,
+                    },
+                    v,
+                )
+            })
+            .collect();
+
+        Ok(BdkInput {
+            non_witness_utxo,
+            witness_utxo,
+            partial_sigs,
+            sighash_type,
+            redeem_script,
+            witness_script,
+            bip32_derivation,
+            final_script_sig,
+            final_script_witness,
+            ripemd160_preimages,
+            sha256_preimages,
+            hash160_preimages,
+            hash256_preimages,
+            tap_key_sig,
+            tap_script_sigs,
+            tap_scripts,
+            tap_key_origins,
+            tap_internal_key,
+            tap_merkle_root,
+            proprietary,
+            unknown,
+        })
     }
 }
 
