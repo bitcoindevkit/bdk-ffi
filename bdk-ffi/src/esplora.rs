@@ -178,6 +178,18 @@ impl EsploraClient {
             .map_err(EsploraError::from)
     }
 
+    /// Get a `Txid` of a transaction given its index in a block with a given hash.
+    pub fn get_txid_at_block_index(
+        &self,
+        block_hash: Arc<BlockHash>,
+        index: u64,
+    ) -> Result<Option<Arc<Txid>>, EsploraError> {
+        self.0
+            .get_txid_at_block_index(&block_hash.0, index as usize)
+            .map(|txid| txid.map(Txid).map(Arc::new))
+            .map_err(EsploraError::from)
+    }
+
     /// Get a `Header` given a particular block hash.
     pub fn get_header_by_hash(&self, block_hash: Arc<BlockHash>) -> Result<Header, EsploraError> {
         self.0
