@@ -145,6 +145,14 @@ impl EsploraClient {
         self.0.get_height().map_err(EsploraError::from)
     }
 
+    /// Get the `BlockHash` of the current blockchain tip.
+    pub fn get_tip_hash(&self) -> Result<Arc<BlockHash>, EsploraError> {
+        self.0
+            .get_tip_hash()
+            .map(|hash| Arc::new(BlockHash(hash)))
+            .map_err(EsploraError::from)
+    }
+
     /// Get a map where the key is the confirmation target (in number of
     /// blocks) and the value is the estimated feerate (in sat/vB).
     pub fn get_fee_estimates(&self) -> Result<HashMap<u16, f64>, EsploraError> {
