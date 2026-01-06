@@ -322,7 +322,7 @@ pub struct WitnessProgram {
 /// A bitcoin address
 #[derive(Debug, PartialEq, Eq, uniffi::Object)]
 #[uniffi::export(Eq, Display)]
-pub struct Address(BdkAddress<NetworkChecked>);
+pub struct Address(pub(crate) BdkAddress<NetworkChecked>);
 
 #[uniffi::export]
 impl Address {

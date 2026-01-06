@@ -1,3 +1,4 @@
+use crate::bitcoin::Address;
 use crate::bitcoin::BlockHash;
 use crate::bitcoin::Header;
 use crate::bitcoin::Transaction;
@@ -190,5 +191,20 @@ impl EsploraClient {
             .get_tx_info(&txid.0)
             .map(|tx| tx.map(Tx::from))
             .map_err(EsploraError::from)
+    }
+
+    /// Get transaction history for the specified address, sorted with newest first.
+    ///
+    /// Returns up to 50 mempool transactions plus the first 25 confirmed transactions.
+    /// More can be requested by specifying the last txid seen by the previous query.
+    pub fn get_address_txs(
+        &self,
+        address: Arc<Address>,
+        last_seen: Option<Arc<Txid>>,
+    ) -> Result<Vec<Tx>, EsploraError> {
+        let last_seen = last_seen.as_ref().map(|txid| txid.0);
+        let txs = self.0.get_address_txs(&address.as_ref().0, last_seen)?;
+
+        Ok(txs.into_iter().map(Tx::from).collect())
     }
 }
