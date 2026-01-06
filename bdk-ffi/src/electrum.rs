@@ -140,6 +140,14 @@ impl ElectrumClient {
             .map(|txid| Arc::new(Txid(txid)))
     }
 
+    /// Fetch transaction of given `Txid`.
+    ///
+    /// If it hits the cache it will return the cached version and avoid making the request.
+    pub fn fetch_tx(&self, txid: Arc<Txid>) -> Result<Arc<Transaction>, ElectrumError> {
+        let tx = self.0.fetch_tx(txid.0).map_err(ElectrumError::from)?;
+        Ok(Arc::new(Transaction::from(tx.as_ref().clone())))
+    }
+
     /// Returns the capabilities of the server.
     pub fn server_features(&self) -> Result<ServerFeaturesRes, ElectrumError> {
         let res = self
