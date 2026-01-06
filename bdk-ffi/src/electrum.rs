@@ -185,6 +185,16 @@ impl ElectrumClient {
             .map(HeaderNotification::from)
     }
 
+    /// Tries to pop one queued notification for a new block header that we might have received.
+    /// Returns `None` if there are no items in the queue.
+    pub fn block_headers_pop(&self) -> Result<Option<HeaderNotification>, ElectrumError> {
+        self.0
+            .inner
+            .block_headers_pop()
+            .map_err(ElectrumError::from)
+            .map(|notification| notification.map(HeaderNotification::from))
+    }
+
     /// Pings the server.
     pub fn ping(&self) -> Result<(), ElectrumError> {
         self.0.inner.ping().map_err(ElectrumError::from)
