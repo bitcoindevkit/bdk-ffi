@@ -142,6 +142,15 @@ impl EsploraClient {
         Ok(tx_opt.map(|inner| Arc::new(Transaction::from(inner))))
     }
 
+    /// Get a `Transaction` given its `Txid`.
+    pub fn get_tx_no_opt(&self, txid: Arc<Txid>) -> Result<Arc<Transaction>, EsploraError> {
+        self.0
+            .get_tx_no_opt(&txid.0)
+            .map(Transaction::from)
+            .map(Arc::new)
+            .map_err(EsploraError::from)
+    }
+
     /// Get the height of the current blockchain tip.
     pub fn get_height(&self) -> Result<u32, EsploraError> {
         self.0.get_height().map_err(EsploraError::from)
