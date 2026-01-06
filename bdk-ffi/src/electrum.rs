@@ -167,6 +167,15 @@ impl ElectrumClient {
             .map_err(ElectrumError::from)
     }
 
+    /// Gets the block header for height `height`.
+    pub fn block_header(&self, height: u64) -> Result<Header, ElectrumError> {
+        self.0
+            .inner
+            .block_header(height as usize)
+            .map_err(ElectrumError::from)
+            .map(Header::from)
+    }
+
     /// Subscribes to notifications for new block headers, by sending a blockchain.headers.subscribe call.
     pub fn block_headers_subscribe(&self) -> Result<HeaderNotification, ElectrumError> {
         self.0
