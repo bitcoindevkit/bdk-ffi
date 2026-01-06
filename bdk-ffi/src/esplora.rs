@@ -1,4 +1,5 @@
 use crate::bitcoin::BlockHash;
+use crate::bitcoin::Header;
 use crate::bitcoin::Transaction;
 use crate::bitcoin::Txid;
 use crate::error::EsploraError;
@@ -164,6 +165,14 @@ impl EsploraClient {
         self.0
             .get_block_hash(block_height)
             .map(|hash| Arc::new(BlockHash(hash)))
+            .map_err(EsploraError::from)
+    }
+
+    /// Get a `Header` given a particular block hash.
+    pub fn get_header_by_hash(&self, block_hash: Arc<BlockHash>) -> Result<Header, EsploraError> {
+        self.0
+            .get_header_by_hash(&block_hash.0)
+            .map(Header::from)
             .map_err(EsploraError::from)
     }
 
