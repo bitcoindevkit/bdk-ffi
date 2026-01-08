@@ -1,6 +1,6 @@
 use crate::bitcoin::{
-    Address, Amount, BlockHash, DescriptorId, HashableOutPoint, OutPoint, Script, Transaction,
-    TxOut, Txid, FeeRate
+    Address, Amount, BlockHash, DescriptorId, FeeRate, HashableOutPoint, OutPoint, Script,
+    Transaction, TxOut, Txid,
 };
 use crate::descriptor::Descriptor;
 use crate::error::{CreateTxError, RequestBuilderError};
@@ -1305,15 +1305,30 @@ impl From<bdk_wallet::ChangeSet> for ChangeSet {
     }
 }
 
+/// Details about a transaction affecting the wallet (relevant and canonical).
 #[derive(uniffi::Record, Debug, Clone)]
 pub struct TxDetails {
+    /// The transaction id.
     pub txid: Arc<Txid>,
+    /// The sum of the transaction input amounts that spend from previous outputs tracked by this
+    /// wallet.
     pub sent: Arc<Amount>,
+    /// The sum of the transaction outputs that send to script pubkeys tracked by this wallet.
     pub received: Arc<Amount>,
+    /// The fee paid for the transaction. Note that to calculate the fee for a transaction with
+    /// inputs not owned by this wallet you must manually insert the TxOut(s) into the tx graph
+    /// using the insert_txout function. If those are not available, the field will be `None`.
     pub fee: Option<Arc<Amount>>,
+    /// The fee rate paid for the transaction. Note that to calculate the fee rate for a
+    /// transaction with inputs not owned by this wallet you must manually insert the TxOut(s) into
+    /// the tx graph using the insert_txout function. If those are not available, the field will be
+    /// `None`.
     pub fee_rate: Option<Arc<FeeRate>>,
+    /// The net effect of the transaction on the balance of the wallet.
     pub balance_delta: i64,
+    /// The position of the transaction in the chain.
     pub chain_position: ChainPosition,
+    /// The complete `Transaction`.
     pub tx: Arc<Transaction>,
 }
 
