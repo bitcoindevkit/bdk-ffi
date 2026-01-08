@@ -1,6 +1,6 @@
 use crate::bitcoin::{
     Address, Amount, BlockHash, DescriptorId, HashableOutPoint, OutPoint, Script, Transaction,
-    TxOut, Txid,
+    TxOut, Txid, FeeRate
 };
 use crate::descriptor::Descriptor;
 use crate::error::{CreateTxError, RequestBuilderError};
@@ -1311,7 +1311,7 @@ pub struct TxDetails {
     pub sent: Arc<Amount>,
     pub received: Arc<Amount>,
     pub fee: Option<Arc<Amount>>,
-    pub fee_rate: Option<f32>,
+    pub fee_rate: Option<Arc<FeeRate>>,
     pub balance_delta: i64,
     pub chain_position: ChainPosition,
     pub tx: Arc<Transaction>,
@@ -1324,7 +1324,7 @@ impl From<bdk_wallet::TxDetails> for TxDetails {
             sent: Arc::new(details.sent.into()),
             received: Arc::new(details.received.into()),
             fee: details.fee.map(|f| Arc::new(f.into())),
-            fee_rate: details.fee_rate.map(|fr| fr.to_sat_per_vb_ceil() as f32),
+            fee_rate: details.fee_rate.map(|fr| Arc::new(fr.into())),
             balance_delta: details.balance_delta.to_sat(),
             chain_position: details.chain_position.into(),
             tx: Arc::new(Transaction::from(details.tx.as_ref().clone())),
