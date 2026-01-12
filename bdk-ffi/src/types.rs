@@ -3,13 +3,14 @@ use crate::bitcoin::{
     TxOut, Txid,
 };
 use crate::descriptor::Descriptor;
-use crate::error::{CreateTxError, RequestBuilderError};
+use crate::error::{Bip32Error, CreateTxError, RequestBuilderError};
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::chain::spk_client::SyncItem;
 use bdk_wallet::chain::BlockId as BdkBlockId;
 use bdk_wallet::chain::Merge;
 
+use bdk_wallet::bitcoin::bip32::ChildNumber as BdkChildNumber;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanRequestBuilder as BdkFullScanRequestBuilder;
@@ -1328,6 +1329,45 @@ impl From<bdk_wallet::TxDetails> for TxDetails {
             balance_delta: details.balance_delta.to_sat(),
             chain_position: details.chain_position.into(),
             tx: Arc::new(Transaction::from(details.tx.as_ref().clone())),
+        }
+    }
+}
+
+/// A child number in a derivation path
+#[derive(Copy, Clone, uniffi::Enum)]
+pub enum ChildNumber {
+    /// Non-hardened key
+    Normal {
+        /// Key index, within [0, 2^31 - 1]
+        index: u32,
+    },
+    /// Hardened key
+    Hardened {
+        /// Key index, within [0, 2^31 - 1]
+        index: u32,
+    },
+}
+
+impl From<BdkChildNumber> for ChildNumber {
+    fn from(value: BdkChildNumber) -> Self {
+        match value {
+            BdkChildNumber::Normal { index } => ChildNumber::Normal { index },
+            BdkChildNumber::Hardened { index } => ChildNumber::Hardened { index },
+        }
+    }
+}
+
+impl TryFrom<ChildNumber> for BdkChildNumber {
+    type Error = Bip32Error;
+
+    fn try_from(value: ChildNumber) -> Result<Self, Self::Error> {
+        match value {
+            ChildNumber::Normal { index } => {
+                BdkChildNumber::from_normal_idx(index).map_err(Bip32Error::from)
+            }
+            ChildNumber::Hardened { index } => {
+                BdkChildNumber::from_hardened_idx(index).map_err(Bip32Error::from)
+            }
         }
     }
 }
