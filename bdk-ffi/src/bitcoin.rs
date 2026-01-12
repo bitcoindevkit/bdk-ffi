@@ -1,13 +1,11 @@
 use crate::error::{
-    AddressParseError, ExtractTxError, FeeRateError, FromScriptError, HashParseError, PsbtError,
-    PsbtParseError, TransactionError,
+    AddressParseError, Bip32Error, ExtractTxError, FeeRateError, FromScriptError, HashParseError,
+    PsbtError, PsbtParseError, TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::keys::DerivationPath;
 
 use crate::{impl_from_core_type, impl_hash_like, impl_into_core_type};
-use std::collections::HashMap;
-
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
 use bdk_wallet::bitcoin::address::{Address as BdkAddress, AddressData as BdkAddressData};
@@ -22,7 +20,10 @@ use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::psbt::Output as BdkOutput;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
+use std::collections::HashMap;
+use std::convert::TryFrom;
 
+use bdk_wallet::bitcoin::bip32::ChildNumber as BdkChildNumber;
 use bdk_wallet::bitcoin::taproot::LeafNode as BdkLeafNode;
 use bdk_wallet::bitcoin::taproot::NodeInfo as BdkNodeInfo;
 use bdk_wallet::bitcoin::taproot::TapTree as BdkTapTree;
@@ -1260,6 +1261,45 @@ impl From<TxOut> for BdkTxOut {
         Self {
             value: tx_out.value.0,
             script_pubkey: tx_out.script_pubkey.0.clone(),
+        }
+    }
+}
+
+/// A child number in a derivation path
+#[derive(Copy, Clone, uniffi::Enum)]
+pub enum ChildNumber {
+    /// Non-hardened key
+    Normal {
+        /// Key index, within [0, 2^31 - 1]
+        index: u32,
+    },
+    /// Hardened key
+    Hardened {
+        /// Key index, within [0, 2^31 - 1]
+        index: u32,
+    },
+}
+
+impl From<BdkChildNumber> for ChildNumber {
+    fn from(value: BdkChildNumber) -> Self {
+        match value {
+            BdkChildNumber::Normal { index } => ChildNumber::Normal { index },
+            BdkChildNumber::Hardened { index } => ChildNumber::Hardened { index },
+        }
+    }
+}
+
+impl TryFrom<ChildNumber> for BdkChildNumber {
+    type Error = Bip32Error;
+
+    fn try_from(value: ChildNumber) -> Result<Self, Self::Error> {
+        match value {
+            ChildNumber::Normal { index } => {
+                BdkChildNumber::from_normal_idx(index).map_err(Bip32Error::from)
+            }
+            ChildNumber::Hardened { index } => {
+                BdkChildNumber::from_hardened_idx(index).map_err(Bip32Error::from)
+            }
         }
     }
 }

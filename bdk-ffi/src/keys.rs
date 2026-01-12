@@ -1,6 +1,8 @@
+use crate::bitcoin::ChildNumber;
 use crate::error::{Bip32Error, Bip39Error, DescriptorKeyError};
 use crate::{impl_from_core_type, impl_into_core_type};
 
+use bdk_wallet::bitcoin::bip32::ChildNumber as BdkChildNumber;
 use bdk_wallet::bitcoin::bip32::DerivationPath as BdkDerivationPath;
 use bdk_wallet::bitcoin::key::Secp256k1;
 use bdk_wallet::bitcoin::secp256k1::rand;
@@ -15,6 +17,7 @@ use bdk_wallet::keys::{
 use bdk_wallet::miniscript::descriptor::{DescriptorXKey, Wildcard};
 use bdk_wallet::miniscript::BareCtx;
 
+use std::convert::TryFrom;
 use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -99,6 +102,25 @@ impl DerivationPath {
     /// Returns `true` if the derivation path is empty
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+
+    /// Create a new DerivationPath that is a child of this one.
+    pub fn child(&self, child_number: ChildNumber) -> Result<Arc<Self>, Bip32Error> {
+        let validated_child_number = BdkChildNumber::try_from(child_number)?;
+        Ok(Arc::new(self.0.child(validated_child_number).into()))
+    }
+
+    /// Concatenate `self` with `path` and return the resulting new path.
+    pub fn extend(&self, other: &DerivationPath) -> Arc<Self> {
+        let extended_path = self.0.extend(&other.0);
+        Arc::new(DerivationPath(extended_path))
+    }
+
+    /// Returns the derivation path as a vector of u32 integers.
+    /// Unhardened elements are copied as is.
+    /// 0x80000000 is added to the hardened elements.
+    pub fn to_u32_vec(&self) -> Vec<u32> {
+        self.0.to_u32_vec()
     }
 }
 
