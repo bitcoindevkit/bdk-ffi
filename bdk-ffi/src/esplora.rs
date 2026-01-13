@@ -1,4 +1,5 @@
 use crate::bitcoin::Address;
+use crate::bitcoin::Block;
 use crate::bitcoin::BlockHash;
 use crate::bitcoin::Header;
 use crate::bitcoin::Transaction;
@@ -175,6 +176,17 @@ impl EsploraClient {
         self.0
             .get_block_hash(block_height)
             .map(|hash| Arc::new(BlockHash(hash)))
+            .map_err(EsploraError::from)
+    }
+
+    /// Get a Block given a particular BlockHash.
+    pub fn get_block_by_hash(
+        &self,
+        block_hash: Arc<BlockHash>,
+    ) -> Result<Option<Block>, EsploraError> {
+        self.0
+            .get_block_by_hash(&block_hash.0)
+            .map(|block| block.map(|block| block.into()))
             .map_err(EsploraError::from)
     }
 

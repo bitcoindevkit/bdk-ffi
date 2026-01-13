@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use bdk_wallet::bitcoin::address::NetworkChecked;
 use bdk_wallet::bitcoin::address::NetworkUnchecked;
 use bdk_wallet::bitcoin::address::{Address as BdkAddress, AddressData as BdkAddressData};
+use bdk_wallet::bitcoin::blockdata::block::Block as BdkBlock;
 use bdk_wallet::bitcoin::blockdata::block::Header as BdkHeader;
 use bdk_wallet::bitcoin::consensus::encode::deserialize;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
@@ -295,6 +296,27 @@ impl From<BdkHeader> for Header {
             time: bdk_header.time,
             bits: bdk_header.bits.to_consensus(),
             nonce: bdk_header.nonce,
+        }
+    }
+}
+
+/// Bitcoin block.
+/// A collection of transactions with an attached proof of work.
+#[derive(uniffi::Record)]
+pub struct Block {
+    pub header: Header,
+    pub txdata: Vec<Arc<Transaction>>,
+}
+
+impl From<BdkBlock> for Block {
+    fn from(bdk_block: BdkBlock) -> Self {
+        Block {
+            header: bdk_block.header.into(),
+            txdata: bdk_block
+                .txdata
+                .into_iter()
+                .map(|tx| Arc::new(tx.into()))
+                .collect(),
         }
     }
 }
