@@ -199,6 +199,19 @@ impl ElectrumClient {
     pub fn ping(&self) -> Result<(), ElectrumError> {
         self.0.inner.ping().map_err(ElectrumError::from)
     }
+
+    /// Returns the minimum accepted fee by the server’s node in Bitcoin, not Satoshi.
+    pub fn relay_fee(&self) -> Result<f64, ElectrumError> {
+        self.0.inner.relay_fee().map_err(ElectrumError::from)
+    }
+
+    /// Gets the raw bytes of a transaction with txid. Returns an error if not found.
+    pub fn transaction_get_raw(&self, txid: Arc<Txid>) -> Result<Vec<u8>, ElectrumError> {
+        self.0
+            .inner
+            .transaction_get_raw(&txid.0)
+            .map_err(ElectrumError::from)
+    }
 }
 
 /// Response to an ElectrumClient.server_features request.
