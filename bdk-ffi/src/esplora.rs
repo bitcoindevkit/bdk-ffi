@@ -8,7 +8,7 @@ use crate::error::EsploraError;
 use crate::types::Tx;
 use crate::types::TxStatus;
 use crate::types::Update;
-use crate::types::{FullScanRequest, SyncRequest};
+use crate::types::{FullScanRequest, MerkleProof, OutputStatus, SyncRequest};
 
 use bdk_esplora::esplora_client::{BlockingClient, Builder};
 use bdk_esplora::EsploraExt;
@@ -239,5 +239,27 @@ impl EsploraClient {
         let txs = self.0.get_address_txs(&address.as_ref().0, last_seen)?;
 
         Ok(txs.into_iter().map(Tx::from).collect())
+    }
+
+    /// Get a merkle inclusion proof for a [`Transaction`] with the given
+    /// [`Txid`].
+    pub fn get_merkle_proof(&self, txid: &Txid) -> Result<Option<MerkleProof>, EsploraError> {
+        self.0
+            .get_merkle_proof(&txid.0)
+            .map(|proof| proof.map(MerkleProof::from))
+            .map_err(EsploraError::from)
+    }
+
+    /// Get the spending status of an output given a `Txid` and the output
+    /// index.
+    pub fn get_output_status(
+        &self,
+        txid: Arc<Txid>,
+        vout: u64,
+    ) -> Result<Option<OutputStatus>, EsploraError> {
+        self.0
+            .get_output_status(&txid.0, vout)
+            .map(|status| status.map(OutputStatus::from))
+            .map_err(EsploraError::from)
     }
 }
