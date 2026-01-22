@@ -37,6 +37,8 @@ use std::fmt::Display;
 use std::sync::{Arc, Mutex};
 
 use crate::{impl_from_core_type, impl_into_core_type};
+use bdk_esplora::esplora_client::api::MerkleProof as BdkMerkleProof;
+use bdk_esplora::esplora_client::api::OutputStatus as BdkOutputStatus;
 use bdk_esplora::esplora_client::api::Tx as BdkTx;
 use bdk_esplora::esplora_client::api::TxStatus as BdkTxStatus;
 
@@ -888,6 +890,46 @@ impl From<BdkTxStatus> for TxStatus {
             block_height: status.block_height,
             block_hash: status.block_hash.map(|h| Arc::new(BlockHash(h))),
             block_time: status.block_time,
+        }
+    }
+}
+
+#[derive(uniffi::Record, Debug)]
+pub struct MerkleProof {
+    pub block_height: u32,
+    pub merkle: Vec<Arc<Txid>>,
+    pub pos: u64,
+}
+
+impl From<BdkMerkleProof> for MerkleProof {
+    fn from(proof: BdkMerkleProof) -> Self {
+        MerkleProof {
+            block_height: proof.block_height,
+            merkle: proof
+                .merkle
+                .into_iter()
+                .map(|h| Arc::new(Txid(h)))
+                .collect(),
+            pos: proof.pos as u64,
+        }
+    }
+}
+
+#[derive(uniffi::Record, Debug)]
+pub struct OutputStatus {
+    pub spent: bool,
+    pub txid: Option<Arc<Txid>>,
+    pub vin: Option<u64>,
+    pub status: Option<TxStatus>,
+}
+
+impl From<BdkOutputStatus> for OutputStatus {
+    fn from(status: BdkOutputStatus) -> Self {
+        OutputStatus {
+            spent: status.spent,
+            txid: status.txid.map(|h| Arc::new(Txid(h))),
+            vin: status.vin,
+            status: status.status.map(|s| s.into()),
         }
     }
 }
