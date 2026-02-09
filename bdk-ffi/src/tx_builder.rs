@@ -449,6 +449,23 @@ impl TxBuilder {
     ) -> Result<Arc<Self>, AddForeignUtxoError> {
         let bdk_outpoint: BdkOutPoint = outpoint.into();
         let bdk_input: BdkInput = psbt_input.try_into()?;
+
+        if bdk_input.witness_utxo.is_none() {
+            match bdk_input.non_witness_utxo.as_ref() {
+                Some(tx) => {
+                    if tx.compute_txid() != bdk_outpoint.txid {
+                        return Err(AddForeignUtxoError::InvalidTxid);
+                    }
+                    if tx.output.len() <= bdk_outpoint.vout as usize {
+                        return Err(AddForeignUtxoError::InvalidOutpoint {
+                            outpoint: bdk_outpoint.to_string(),
+                        });
+                    }
+                }
+                None => return Err(AddForeignUtxoError::MissingUtxo),
+            }
+        }
+
         let bdk_weight = BdkWeight::from_wu(satisfaction_weight);
 
         let mut foreign_utxos = self.foreign_utxos.clone();
