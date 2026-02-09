@@ -198,11 +198,6 @@ fn test_only_witness_utxo_with_finish() {
 
 #[test]
 fn test_add_foreign_utxo_missing_witness_data() {
-    let wallet = create_and_sync_wallet();
-    let address = wallet
-        .next_unused_address(bdk_wallet::KeychainKind::External)
-        .address;
-
     // Create a foreign UTXO without witness_utxo or non_witness_utxo
     let outpoint = OutPoint {
         txid: Arc::new(
@@ -238,10 +233,7 @@ fn test_add_foreign_utxo_missing_witness_data() {
         unknown: HashMap::new(),
     };
 
-    let tx_builder = TxBuilder::new().add_recipient(
-        &(*address.script_pubkey()).to_owned(),
-        Arc::new(Amount::from_sat(1000)),
-    );
+    let tx_builder = TxBuilder::new();
 
     let result = tx_builder.add_foreign_utxo(outpoint, psbt_input, 68);
     assert!(
