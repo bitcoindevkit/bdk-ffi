@@ -244,29 +244,10 @@ fn test_add_foreign_utxo_missing_witness_data() {
     );
 
     let result = tx_builder.add_foreign_utxo(outpoint, psbt_input, 68);
-    assert!(result.is_ok(), "add_foreign_utxo should accept the input");
-
-    // Now try to finish - this should fail due to missing witness data
-    let finish_result = result.unwrap().finish(&Arc::new(wallet));
-
-    // This should fail with MissingUtxo error
     assert!(
-        finish_result.is_err(),
-        "Expected finish() to fail with missing witness_utxo/non_witness_utxo"
+        result.is_err(),
+        "Expected add_foreign_utxo() to fail with missing witness_utxo/non_witness_utxo"
     );
-
-    if let Err(e) = finish_result {
-        let error_msg = format!("{:?}", e);
-        println!("Got expected error: {}", error_msg);
-        // The error should mention missing utxo data
-        assert!(
-            error_msg.contains("missing")
-                || error_msg.contains("Utxo")
-                || error_msg.contains("utxo"),
-            "Error should mention missing UTXO data, got: {}",
-            error_msg
-        );
-    }
 }
 
 #[test]
