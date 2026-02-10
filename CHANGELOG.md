@@ -4,6 +4,11 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v2.3.0...HEAD)
+
+### Added
+- Expose miniscript `has_wildcard` and `sanity_check` methods on `Descriptor` type #945
+
 ## [v2.3.0]
 
 This is version `2.3.0` of the BDK language bindings! This release uses the following Rust dependencies:

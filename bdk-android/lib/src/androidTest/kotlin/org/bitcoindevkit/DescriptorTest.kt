@@ -2,8 +2,11 @@ package org.bitcoindevkit
 
 import kotlin.test.Test
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
 import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 
 @RunWith(AndroidJUnit4::class)
 class DescriptorTest {
@@ -47,4 +50,30 @@ class DescriptorTest {
             )
         }
     }
+
+    @Test
+    fun sanityCheck() {
+        val safeDescriptor = Descriptor("multi(1,L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1,5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss)", Network.BITCOIN)
+
+        safeDescriptor.sanityCheck()
+
+        //multi(2, key1, key1)) is structurally valid but unsafe
+        val unsafeDescriptor = Descriptor("multi(2,L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1,L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1)", Network.BITCOIN)
+
+        // descriptor failed as expected because it uses the same public key twice in a 2 of 2 multisig
+        assertFailsWith<DescriptorException.Miniscript> {
+            unsafeDescriptor.sanityCheck()
+        }
+    }
+
+    @Test
+    fun checkDescriptorWildcard(){
+        val wildcardDescriptor = Descriptor("wpkh($TEST_EXTENDED_PRIVKEY/$BIP84_TEST_RECEIVE_PATH/*)", Network.REGTEST)
+        val nonWildcardDescriptor = Descriptor("wpkh($TEST_EXTENDED_PRIVKEY/$BIP84_TEST_RECEIVE_PATH/0)", Network.REGTEST)
+
+        assertTrue(wildcardDescriptor.hasWildcard())
+
+        assertFalse(nonWildcardDescriptor.hasWildcard())
+    }
+
 }
