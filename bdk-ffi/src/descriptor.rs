@@ -384,6 +384,28 @@ impl Descriptor {
 
         Ok(Arc::new(address))
     }
+
+    /// Whether or not the descriptor has any wildcards.
+    pub fn has_wildcard(&self) -> bool {
+        self.extended_descriptor.has_wildcard()
+    }
+
+    /// Checks whether the descriptor is safe.
+    ///
+    /// Checks whether all the spend paths in the descriptor are possible on the
+    /// bitcoin network under the current standardness and consensus rules. Also
+    /// checks whether the descriptor requires signatures on all spend paths and
+    /// whether the script is malleable.
+    ///
+    /// In general, all the guarantees of miniscript hold only for safe scripts.
+    /// The signer may not be able to find satisfactions even if one exists.
+    pub fn sanity_check(&self) -> Result<(), DescriptorError> {
+        self.extended_descriptor
+            .sanity_check()
+            .map_err(|e| DescriptorError::Miniscript {
+                error_message: e.to_string(),
+            })
+    }
 }
 
 impl Display for Descriptor {
