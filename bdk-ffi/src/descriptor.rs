@@ -312,7 +312,7 @@ impl Descriptor {
         let bdk_pks: Vec<BdkDescriptorPublicKey> = pks
             .iter()
             .map(|pk| {
-                BdkDescriptorPublicKey::from_str(pk).map_err(|e| DescriptorError::Miniscript {
+                BdkDescriptorPublicKey::from_str(pk).map_err(|e| DescriptorError::Key {
                     error_message: e.to_string(),
                 })
             })
@@ -337,10 +337,9 @@ impl Descriptor {
     /// Create a new pay-to-pubkey descriptor from a public key string.
     #[uniffi::constructor]
     pub fn new_pk(pk: String) -> Result<Self, DescriptorError> {
-        let key =
-            BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Miniscript {
-                error_message: e.to_string(),
-            })?;
+        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Key {
+            error_message: e.to_string(),
+        })?;
 
         let miniscript_descriptor = bdk_wallet::miniscript::Descriptor::new_pk(key);
         let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
