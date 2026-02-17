@@ -43,6 +43,8 @@ clean:
   rm -rf ./build/
   rm -rf ./lib/build/
   rm -rf ./plugins/build/
+  rm -rf ./lib/src/main/kotlin/org/bitcoindevkit/*
+  rm -rf ./lib/src/main/jniLibs/*
 
 [group("Test")]
 [doc("Run all tests.")]
