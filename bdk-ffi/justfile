@@ -13,3 +13,10 @@ check:
 
 test:
   cargo test
+
+# Build API documentation for gh-pages
+docs:
+  cargo doc --no-deps
+  echo '<meta http-equiv="refresh" content="0; url=bdkffi/index.html">' > target/doc/index.html
+  @echo "Documentation built at target/doc/"
+  @echo "Push the contents of target/doc/ to gh-pages"
