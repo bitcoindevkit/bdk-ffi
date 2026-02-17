@@ -1,7 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
-// library version is defined in gradle.properties
-val libraryVersion: String by project
 
 plugins {
     id("com.android.library")
@@ -12,8 +10,11 @@ plugins {
     id("org.jetbrains.dokka-javadoc")
 }
 
+group = "org.bitcoindevkit"
+version = "2.4.0-SNAPSHOT"
+
 android {
-    namespace = "org.bitcoindevkit"
+    namespace = group.toString()
     compileSdk = 34
 
     defaultConfig {
@@ -37,11 +38,9 @@ android {
     }
 }
 
-kotlin {
-    tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
-            jvmTarget = "17"
-        }
+tasks.withType<KotlinCompile> {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -69,9 +68,9 @@ afterEvaluate {
     publishing {
         publications {
             create<MavenPublication>("maven") {
-                groupId = "org.bitcoindevkit"
+                groupId = group.toString()
                 artifactId = "bdk-android"
-                version = libraryVersion
+                version = version.toString()
 
                 from(components["release"])
                 pom {
@@ -115,7 +114,7 @@ signing {
 
 dokka {
     moduleName.set("bdk-android")
-    moduleVersion.set(libraryVersion)
+    moduleVersion.set(version.toString())
     dokkaSourceSets.main {
         includes.from("README.md")
         sourceLink {
