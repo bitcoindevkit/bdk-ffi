@@ -1,13 +1,14 @@
+import com.vanniktech.maven.publish.AndroidSingleVariantLibrary
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.SourcesJar
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
-    id("org.gradle.maven-publish")
-    id("org.gradle.signing")
     id("org.jetbrains.dokka")
-    id("org.jetbrains.dokka-javadoc")
+    id("com.vanniktech.maven.publish")
 }
 
 group = "org.bitcoindevkit"
@@ -27,13 +28,6 @@ android {
         getByName("release") {
             isMinifyEnabled = false
             proguardFiles(file("proguard-android-optimize.txt"), file("proguard-rules.pro"))
-        }
-    }
-
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-            withJavadocJar()
         }
     }
 }
@@ -64,59 +58,59 @@ dependencies {
     androidTestImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.6.10")
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            create<MavenPublication>("maven") {
-                groupId = group.toString()
-                artifactId = "bdk-android"
-                version = version.toString()
+mavenPublishing {
+    coordinates(
+        groupId = group.toString(),
+        artifactId = "bdk-android",
+        version = version.toString()
+    )
 
-                from(components["release"])
-                pom {
-                    name.set("bdk-android")
-                    description.set("Bitcoin Dev Kit Kotlin language bindings.")
-                    url.set("https://bitcoindevkit.org")
-                    licenses {
-                        license {
-                            name.set("APACHE 2.0")
-                            url.set("https://github.com/bitcoindevkit/bdk/blob/master/LICENSE-APACHE")
-                        }
-                        license {
-                            name.set("MIT")
-                            url.set("https://github.com/bitcoindevkit/bdk/blob/master/LICENSE-MIT")
-                        }
-                    }
-                    developers {
-                        developer {
-                            id.set("bdkdevelopers")
-                            name.set("Bitcoin Dev Kit Developers")
-                            email.set("dev@bitcoindevkit.org")
-                        }
-                    }
-                    scm {
-                        connection.set("scm:git:github.com/bitcoindevkit/bdk-ffi.git")
-                        developerConnection.set("scm:git:ssh://github.com/bitcoindevkit/bdk-ffi.git")
-                        url.set("https://github.com/bitcoindevkit/bdk-ffi/tree/master")
-                    }
-                }
+    pom {
+        name.set("bdk-android")
+        description.set("Bitcoin Dev Kit language bindings for Android.")
+        url.set("https://bitcoindevkit.org")
+        inceptionYear.set("2021")
+        licenses {
+            license {
+                name.set("APACHE 2.0")
+                url.set("https://github.com/bitcoindevkit/bdk/blob/master/LICENSE-APACHE")
+            }
+            license {
+                name.set("MIT")
+                url.set("https://github.com/bitcoindevkit/bdk/blob/master/LICENSE-MIT")
             }
         }
+        developers {
+            developer {
+                id.set("bdkdevelopers")
+                name.set("Bitcoin Dev Kit Developers")
+                email.set("dev@bitcoindevkit.org")
+            }
+        }
+        scm {
+            url.set("https://github.com/bitcoindevkit/bdk-ffi/")
+            connection.set("scm:git:github.com/bitcoindevkit/bdk-ffi.git")
+            developerConnection.set("scm:git:ssh://github.com/bitcoindevkit/bdk-ffi.git")
+        }
     }
-}
 
-signing {
-    if (project.hasProperty("localBuild")) {
-        isRequired = false
-    }
-    sign(publishing.publications)
+    configure(
+        AndroidSingleVariantLibrary(
+            javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
+            sourcesJar = SourcesJar.Sources(),
+            variant = "release",
+        )
+    )
+
+    publishToMavenCentral()
+    signAllPublications()
 }
 
 dokka {
     moduleName.set("bdk-android")
     moduleVersion.set(version.toString())
     dokkaSourceSets.main {
-        includes.from("README.md")
+        includes.from("../docs/DOKKA_LANDING.md")
         sourceLink {
             localDirectory.set(file("src/main/kotlin"))
             remoteUrl("https://bitcoindevkit.org/")
