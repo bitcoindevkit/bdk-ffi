@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 - Expose miniscript `has_wildcard` and `sanity_check` methods on `Descriptor` type #945
+- Expose `new_wsh_sortedmulti` and `new_pk` methods on `Descriptor` type #949
 
 ## [v2.3.0]
 

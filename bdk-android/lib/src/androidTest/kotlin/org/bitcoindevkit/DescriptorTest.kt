@@ -40,6 +40,32 @@ class DescriptorTest {
         Descriptor("tr($MAINNET_EXTENDED_PRIVKEY/$BIP86_MAINNET_RECEIVE_PATH/0)", Network.BITCOIN)
     }
 
+    // Create a multisig descriptor.
+    @Test
+    fun createMultisigDescriptor() {
+        val pkList = listOf(
+            "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB",
+            "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB",
+            "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB"
+        )
+
+        Descriptor.newWshSortedmulti(2u, pkList);
+
+        val invalidPkList = listOf(
+            "invalid_xpub",
+            "1111111111111",
+            "***"
+        )
+        assertFails {
+            Descriptor.newWshSortedmulti(2u, invalidPkList);
+        }
+    }
+
+    @Test
+    fun createSingleKeyDescriptor() {
+        Descriptor.newPk("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
+    }
+
     // Cannot create addr() descriptor.
     @Test
     fun cannotCreateAddrDescriptor() {
