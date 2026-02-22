@@ -170,9 +170,30 @@ pub struct CanonicalTx {
 
 impl From<BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>> for CanonicalTx {
     fn from(tx: BdkCanonicalTx<'_, Arc<BdkTransaction>, BdkConfirmationBlockTime>) -> Self {
+        let chain_position = match tx.chain_position {
+            BdkChainPosition::Confirmed {
+                anchor,
+                transitively,
+            } => {
+                let block_id = BlockId {
+                    height: anchor.block_id.height,
+                    hash: Arc::new(BlockHash(anchor.block_id.hash)),
+                };
+                ChainPosition::Confirmed {
+                    confirmation_block_time: ConfirmationBlockTime {
+                        block_id,
+                        confirmation_time: anchor.confirmation_time,
+                    },
+                    transitively: transitively.map(|t| Arc::new(Txid(t))),
+                }
+            }
+            BdkChainPosition::Unconfirmed { last_seen, .. } => ChainPosition::Unconfirmed {
+                timestamp: last_seen,
+            },
+        };
         CanonicalTx {
             transaction: Arc::new(Transaction::from(tx.tx_node.tx.as_ref().clone())),
-            chain_position: tx.chain_position.into(),
+            chain_position,
         }
     }
 }
