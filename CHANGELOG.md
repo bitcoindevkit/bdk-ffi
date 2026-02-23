@@ -4,6 +4,43 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v2.3.0...HEAD)
+
+### Added
+- Expose miniscript `has_wildcard` and `sanity_check` methods on `Descriptor` type #945
+
+## [v2.3.0]
+
+This is version `2.3.0` of the BDK language bindings! This release uses the following Rust dependencies:
+
+- bdk_wallet `2.3.0`
+- bdk_electrum `0.23.2`
+- bdk_esplora `0.22.1`
+- bdk_kyoto `0.15.3`
+- bitcoin `0.32.7`
+- uniffi `0.30.0`
+
+### Added
+
+- Expose `Wallet::apply_update_events` which returns a `WalletEvent` type #908
+- Expose `Psbt::output` which returns a list of psbt `Output` #903
+- `Other` variant added to CBF `RecoveryPoint` to enable wallet birthdays #920
+- Implement `Display` trait for `FeeRate` #859
+- Expose `FeeRate::fee_vb` and `FeeRate::fee_wu` methods #859
+- Wallet API: expose `TxBuilder::only_witness_utxo` and `TxBuilder::add_foreign_utxo` #928
+- Esplora API: expose `get_block_by_hash` which returns a `Block` #936
+- Esplora API: expose `get_tip_hash` #930
+- Esplora API: expose `get_header_by_hash` #930
+- Esplora API: expose `get_address_txs` #930
+- Esplora API: expose `get_tx_no_opt` #930
+- Esplora API: expose `get_txid_at_block_index` #930
+- Esplora API: expose `get_merkle_proof` and `get_output_status` #942
+- Electrum API: expose `fetch_tx` #931
+- Electrum API: expose `block_header` #931
+- Electrum API: expose `block_headers_pop` #931
+- Electrum API: expose `relay_fee` and `transaction_get_raw` #938
+- DerivationPath: expose `child`, `extend`, and `to_u32_vec` #935
+
 ## [v2.2.0]
 
 This is version `2.2.0` of the BDK language bindings! This release uses the following Rust dependencies:
@@ -620,6 +657,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v2.3.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.2.0...v2.3.0
 [v2.2.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.0.0...v2.2.0
 [v2.0.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.2.0...v2.0.0
 [v1.2.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.1.0...v1.2.0
