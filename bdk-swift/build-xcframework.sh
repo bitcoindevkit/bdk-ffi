@@ -12,6 +12,9 @@ STATIC_LIB_NAME="lib${NAME}.a"
 NEW_HEADER_DIR="../bdk-ffi/target/include"
 SWIFT_OUT_DIR="../bdk-swift/Sources/BitcoinDevKit"
 HEADER_OUT_DIR="${NEW_HEADER_DIR}/${HEADER_BASENAME}"
+MIN_IOS_VERSION="15.0"
+
+export IPHONEOS_DEPLOYMENT_TARGET="${MIN_IOS_VERSION}"
 
 cd ../bdk-ffi/ || exit
 

@@ -11,6 +11,7 @@ NEW_HEADER_DIR="../bdk-ffi/target/include"
 PROFILE_DIR="debug"
 SWIFT_OUT_DIR="../bdk-swift/Sources/BitcoinDevKit"
 HEADER_OUT_DIR="${NEW_HEADER_DIR}/${HEADER_BASENAME}"
+MIN_IOS_VERSION="15.0"
 
 HOST_ARCH=$(uname -m)
 if [ "$HOST_ARCH" = "arm64" ]; then
@@ -21,6 +22,8 @@ else
     IOS_SIM_TARGET="x86_64-apple-ios"
 fi
 IOS_DEVICE_TARGET="aarch64-apple-ios"
+
+export IPHONEOS_DEPLOYMENT_TARGET="${MIN_IOS_VERSION}"
 
 cd ../bdk-ffi/ || exit
 
