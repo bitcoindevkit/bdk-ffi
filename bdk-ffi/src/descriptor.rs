@@ -305,6 +305,52 @@ impl Descriptor {
         }
     }
 
+    /// Create a new wsh sorted multi descriptor
+    /// Errors when miniscript exceeds resource limits under p2sh context
+    #[uniffi::constructor]
+    pub fn new_wsh_sortedmulti(k: u32, pks: Vec<String>) -> Result<Self, DescriptorError> {
+        let bdk_pks: Vec<BdkDescriptorPublicKey> = pks
+            .iter()
+            .map(|pk| {
+                BdkDescriptorPublicKey::from_str(pk).map_err(|e| DescriptorError::Miniscript {
+                    error_message: e.to_string(),
+                })
+            })
+            .collect::<Result<Vec<BdkDescriptorPublicKey>, DescriptorError>>()?;
+        let miniscript_descriptor =
+            match bdk_wallet::miniscript::Descriptor::new_wsh_sortedmulti(k as usize, bdk_pks) {
+                Ok(descriptor) => descriptor,
+                Err(e) => {
+                    return Err(DescriptorError::Miniscript {
+                        error_message: e.to_string(),
+                    })
+                }
+            };
+        let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
+
+        Ok(Self {
+            extended_descriptor,
+            key_map: KeyMap::new(),
+        })
+    }
+
+    /// Create a new pay-to-pubkey descriptor from a public key string.
+    #[uniffi::constructor]
+    pub fn new_pk(pk: String) -> Result<Self, DescriptorError> {
+        let key =
+            BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Miniscript {
+                error_message: e.to_string(),
+            })?;
+
+        let miniscript_descriptor = bdk_wallet::miniscript::Descriptor::new_pk(key);
+        let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
+
+        Ok(Self {
+            extended_descriptor,
+            key_map: KeyMap::new(),
+        })
+    }
+
     /// Dangerously convert the descriptor to a string.
     pub fn to_string_with_secret(&self) -> String {
         let descriptor = &self.extended_descriptor;
