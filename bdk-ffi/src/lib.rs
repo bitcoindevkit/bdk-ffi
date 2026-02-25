@@ -1,15 +1,15 @@
-mod bitcoin;
-mod descriptor;
-mod electrum;
-mod error;
-mod esplora;
-mod keys;
-mod kyoto;
-mod macros;
-mod store;
-mod tx_builder;
-mod types;
-mod wallet;
+pub mod bitcoin;
+pub mod descriptor;
+pub mod electrum;
+pub mod error;
+pub mod esplora;
+pub mod keys;
+pub mod kyoto;
+pub mod macros;
+pub mod store;
+pub mod tx_builder;
+pub mod types;
+pub mod wallet;
 
 #[cfg(test)]
 mod tests;
