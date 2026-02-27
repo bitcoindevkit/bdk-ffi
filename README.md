@@ -112,4 +112,4 @@ This project is made possible thanks to the wonderful work by the [mozilla/uniff
 [uniffi-rs]: https://github.com/mozilla/uniffi-rs
 [Readme bdk-android]: https://github.com/bitcoindevkit/bdk-ffi/tree/master/bdk-android
 [Readme bdk-swift]: https://github.com/bitcoindevkit/bdk-swift
-[Android API Docs]: https://bitcoindevkit.org/android
+[Android API Docs]: https://javadoc.io/doc/org.bitcoindevkit/bdk-android/latest/index.html
