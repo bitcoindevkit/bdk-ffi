@@ -797,6 +797,8 @@ pub enum TxidParseError {
 pub enum CbfError {
     #[error("the node is no longer running")]
     NodeStopped,
+    #[error("the node has already been started")]
+    AlreadyStarted,
 }
 
 // ------------------------------------------------------------------------
