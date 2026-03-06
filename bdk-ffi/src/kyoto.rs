@@ -2,12 +2,9 @@ use bdk_kyoto::bip157::lookup_host;
 use bdk_kyoto::bip157::tokio;
 use bdk_kyoto::bip157::AddrV2;
 use bdk_kyoto::bip157::Network;
-use bdk_kyoto::bip157::Node;
 use bdk_kyoto::bip157::ServiceFlags;
 use bdk_kyoto::builder::Builder as BDKCbfBuilder;
 use bdk_kyoto::builder::BuilderExt;
-use bdk_kyoto::HeaderCheckpoint;
-use bdk_kyoto::LightClient as BDKLightClient;
 use bdk_kyoto::Receiver;
 use bdk_kyoto::RejectReason;
 use bdk_kyoto::Requester;
@@ -15,6 +12,7 @@ use bdk_kyoto::TrustedPeer;
 use bdk_kyoto::UnboundedReceiver;
 use bdk_kyoto::UpdateSubscriber;
 use bdk_kyoto::Warning as Warn;
+use bdk_kyoto::{HeaderCheckpoint, Idle, LightClient};
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::path::PathBuf;
@@ -37,49 +35,35 @@ const CWD_PATH: &str = ".";
 const TCP_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(2);
 const MESSAGE_RESPONSE_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// Receive a [`CbfClient`] and [`CbfNode`].
-#[derive(Debug, uniffi::Record)]
-pub struct CbfComponents {
-    /// Publish events to the node, like broadcasting transactions or adding scripts.
-    pub client: Arc<CbfClient>,
-    /// The node to run and fetch transactions for a [`Wallet`].
-    pub node: Arc<CbfNode>,
+/// A compact block filters node that has been configured but not yet started.
+///
+/// Built via [`CbfBuilder`]. Call [`CbfNode::start`] to prepare and spawn the node, receiving a
+/// [`CbfClient`] to interact with the running node.
+///
+/// `CbfNode::start` may only be called once. Calling it a second time returns
+/// [`CbfError::AlreadyStarted`].
+#[derive(uniffi::Object)]
+pub struct CbfNode {
+    client: std::sync::Mutex<Option<LightClient<Idle>>>,
 }
 
-/// A [`CbfClient`] handles wallet updates from a [`CbfNode`].
-#[derive(Debug, uniffi::Object)]
+/// Interact with a running compact block filters node.
+///
+/// Obtained by calling [`CbfNode::start`]. Provides access to three independent
+/// channels — each message is consumed by exactly one caller, so dedicate a single
+/// task or thread to draining each channel:
+///
+/// * [`CbfClient::next_info`] — progress and connection events.
+/// * [`CbfClient::next_warning`] — non-fatal issues the node encountered.
+/// * [`CbfClient::update`] — wallet updates ready to be applied to a [`Wallet`].
+///
+/// Transactions can be broadcast and peers added at any time via the remaining methods.
+#[derive(uniffi::Object)]
 pub struct CbfClient {
-    sender: Arc<Requester>,
+    sender: Requester,
     info_rx: Mutex<Receiver<bdk_kyoto::Info>>,
     warning_rx: Mutex<UnboundedReceiver<bdk_kyoto::Warning>>,
     update_rx: Mutex<UpdateSubscriber>,
-}
-
-/// A [`CbfNode`] gathers transactions for a [`Wallet`].
-/// To receive [`Update`] for [`Wallet`], refer to the
-/// [`CbfClient`]. The [`CbfNode`] will run until instructed
-/// to stop.
-#[derive(Debug, uniffi::Object)]
-pub struct CbfNode {
-    node: std::sync::Mutex<Option<Node>>,
-}
-
-#[uniffi::export]
-impl CbfNode {
-    /// Start the node on a detached OS thread and immediately return.
-    pub fn run(self: Arc<Self>) {
-        let mut lock = self.node.lock().unwrap();
-        let node = lock.take().expect("cannot call run more than once");
-        std::thread::spawn(|| {
-            tokio::runtime::Builder::new_multi_thread()
-                .enable_all()
-                .build()
-                .unwrap()
-                .block_on(async move {
-                    let _ = node.run().await;
-                })
-        });
-    }
 }
 
 /// Build a BIP 157/158 light client to fetch transactions for a `Wallet`.
@@ -178,7 +162,7 @@ impl CbfBuilder {
     }
 
     /// Construct a [`CbfComponents`] for a [`Wallet`].
-    pub fn build(&self, wallet: &Wallet) -> CbfComponents {
+    pub fn build(&self, wallet: &Wallet) -> CbfNode {
         let wallet = wallet.get_wallet();
 
         let mut trusted_peers = Vec::new();
@@ -241,31 +225,51 @@ impl CbfBuilder {
             builder = builder.socks5_proxy((addr, port));
         }
 
-        let BDKLightClient {
-            requester,
-            info_subscriber,
-            warning_subscriber,
-            update_subscriber,
-            node,
-        } = builder
+        let light_client_idle = builder
             .build_with_wallet(&wallet, scan_type)
             .expect("networks match by definition");
 
-        let node = CbfNode {
-            node: std::sync::Mutex::new(Some(node)),
-        };
-
-        let client = CbfClient {
-            sender: Arc::new(requester),
-            info_rx: Mutex::new(info_subscriber),
-            warning_rx: Mutex::new(warning_subscriber),
-            update_rx: Mutex::new(update_subscriber),
-        };
-
-        CbfComponents {
-            client: Arc::new(client),
-            node: Arc::new(node),
+        CbfNode {
+            client: std::sync::Mutex::new(Some(light_client_idle)),
         }
+    }
+}
+
+#[uniffi::export]
+impl CbfNode {
+    /// Subscribe to log and update channels, then spawn the node on a background thread.
+    ///
+    /// Returns a [`CbfClient`] that can be used to receive wallet updates, info and warning
+    /// messages, and to broadcast transactions.
+    ///
+    /// This method may only be called once. A second call returns [`CbfError::AlreadyStarted`].
+    pub fn start(&self) -> Result<Arc<CbfClient>, CbfError> {
+        let light_client = self
+            .client
+            .lock()
+            .unwrap()
+            .take()
+            .ok_or(CbfError::AlreadyStarted)?;
+
+        let (subscribed, logging, updates) = light_client.subscribe();
+        let (active, node) = subscribed.managed_start();
+
+        std::thread::spawn(|| {
+            tokio::runtime::Builder::new_multi_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(async move {
+                    let _ = node.run().await;
+                })
+        });
+
+        Ok(Arc::new(CbfClient {
+            sender: active.requester(),
+            info_rx: Mutex::new(logging.info_subscriber),
+            warning_rx: Mutex::new(logging.warning_subscriber),
+            update_rx: Mutex::new(updates),
+        }))
     }
 }
 
@@ -340,7 +344,7 @@ impl CbfClient {
     /// Add another [`Peer`] to attempt a connection with.
     pub fn connect(&self, peer: Peer) -> Result<(), CbfError> {
         self.sender
-            .add_peer(peer)
+            .add_peer(TrustedPeer::from(peer))
             .map_err(|_| CbfError::NodeStopped)
     }
 
