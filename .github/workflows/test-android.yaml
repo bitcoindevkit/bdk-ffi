@@ -20,6 +20,23 @@ jobs:
   test:
     name: "Test Android library"
     runs-on: ubuntu-24.04
+
+    services:
+      bitcoin-regtest:
+        image: ghcr.io/thunderbiscuit/podman-regtest-infinity-pro:0.3.2
+        ports:
+          - 18443:18443
+          - 18444:18444
+          - 3002:3002
+          - 3003:3003
+          - 60401:60401
+        # The container initialization step will wait until everything is ready before allowing other steps to run
+        options: >-
+          --health-cmd "test $(bitcoin-cli -regtest -rpcuser=regtest -rpcpassword=password getblockcount) -gt 0"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 6
+
     steps:
       - name: "Checkout PR branch"
         uses: actions/checkout@v4
