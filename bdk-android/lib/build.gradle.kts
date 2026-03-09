@@ -56,6 +56,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     androidTestImplementation("org.jetbrains.kotlin:kotlin-test:1.6.10")
     androidTestImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.6.10")
+    androidTestImplementation("org.kotlinbitcointools:regtest-toolbox:0.2.0")
 }
 
 mavenPublishing {
