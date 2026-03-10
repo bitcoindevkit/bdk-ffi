@@ -13,3 +13,7 @@ check:
 
 test:
   cargo test
+
+# Build API documentation for gh-pages or local browsing
+docs:
+  bash scripts/build-docs.sh && bash scripts/deploy-docs.sh

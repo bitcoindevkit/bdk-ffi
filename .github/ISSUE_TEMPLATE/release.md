@@ -51,10 +51,15 @@ git push upstream v0.6.0
 ```
 14. - [ ] Trigger manual releases for both libraries (for Swift, go to the [bdk-swift](https://github.com/bitcoindevkit/bdk-swift) repository and trigger the workflow using `master`. Simply add the version number and tag name in the text fields when running the workflow manually. Note that the version number must not contain the `v`, i.e. `0.26.0`, but the tag will have it, i.e. `v0.26.0`). For Android, trigger the release workflow using the tag (not a branch).
 15. - [ ] Make sure the released libraries work and contain the artifacts you would expect.
-16. - [ ] Aggregate all the changelog notices from the PRs and add them to the changelog file. PR that.
-17. - [ ] Bump the version on master from `1.1.0-SNAPSHOT` to `1.2.0-SNAPSHOT` (Android) and `1.1.0-alpha.0` to `1.2.0-alpha.0` (Rust).
-18. - [ ] Apply changes to the release issue template if needed.
-19. - [ ] Make release on GitHub (generate auto release notes between the previous tag and the new one).
-20. - [ ] Build API docs for Android locally and PR the website to the bitcoindevkit.org repo.
-21. - [ ] Post in the announcement channel.
-22. - [ ] Tweet about the new release!
+16. - [ ] Build the Rust API docs and publish them to the repo's GitHub Pages.
+```shell
+cd bdk-ffi/
+just docs
+```
+17. - [ ] Aggregate all the changelog notices from the PRs and add them to the changelog file. PR that.
+18. - [ ] Bump the version on master from `1.1.0-SNAPSHOT` to `1.2.0-SNAPSHOT` (Android) and `1.1.0-alpha.0` to `1.2.0-alpha.0` (Rust).
+19. - [ ] Apply changes to the release issue template if needed.
+20. - [ ] Make release on GitHub (generate auto release notes between the previous tag and the new one).
+21. - [ ] Build API docs for Android locally and PR the website to the bitcoindevkit.org repo.
+22. - [ ] Post in the announcement channel.
+23. - [ ] Tweet about the new release!
