@@ -1561,7 +1561,7 @@ impl From<BdkSignerError> for SignerError {
             BdkSignerError::MissingKey => SignerError::MissingKey,
             BdkSignerError::InvalidKey => SignerError::InvalidKey,
             BdkSignerError::UserCanceled => SignerError::UserCanceled,
-            BdkSignerError::InputIndexOutOfRange => SignerError::InputIndexOutOfRange,
+            BdkSignerError::InputIndexOutOfRange(_) => SignerError::InputIndexOutOfRange,
             BdkSignerError::MissingNonWitnessUtxo => SignerError::MissingNonWitnessUtxo,
             BdkSignerError::InvalidNonWitnessUtxo => SignerError::InvalidNonWitnessUtxo,
             BdkSignerError::MissingWitnessUtxo => SignerError::MissingWitnessUtxo,

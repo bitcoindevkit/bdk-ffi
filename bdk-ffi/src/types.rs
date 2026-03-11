@@ -23,13 +23,13 @@ use bdk_wallet::descriptor::policy::{
     Condition as BdkCondition, PkOrF as BdkPkOrF, Policy as BdkPolicy,
     Satisfaction as BdkSatisfaction, SatisfiableItem as BdkSatisfiableItem,
 };
-use bdk_wallet::event::WalletEvent as BdkWalletEvent;
 #[allow(deprecated)]
 use bdk_wallet::signer::{SignOptions as BdkSignOptions, TapLeavesOptions};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
+use bdk_wallet::WalletEvent as BdkWalletEvent;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::convert::TryFrom;
@@ -1314,6 +1314,7 @@ impl From<ChangeSet> for bdk_wallet::ChangeSet {
             local_chain,
             tx_graph,
             indexer,
+            locked_outpoints: Default::default(),
         }
     }
 }
