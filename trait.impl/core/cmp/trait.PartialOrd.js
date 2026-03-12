@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["bdkffi",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a> for <a class=\"struct\" href=\"bdkffi/bitcoin/struct.BlockHash.html\" title=\"struct bdkffi::bitcoin::BlockHash\">BlockHash</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a> for <a class=\"struct\" href=\"bdkffi/bitcoin/struct.DescriptorId.html\" title=\"struct bdkffi::bitcoin::DescriptorId\">DescriptorId</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a> for <a class=\"struct\" href=\"bdkffi/bitcoin/struct.TxMerkleNode.html\" title=\"struct bdkffi::bitcoin::TxMerkleNode\">TxMerkleNode</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a> for <a class=\"struct\" href=\"bdkffi/bitcoin/struct.Txid.html\" title=\"struct bdkffi::bitcoin::Txid\">Txid</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/cmp/trait.PartialOrd.html\" title=\"trait core::cmp::PartialOrd\">PartialOrd</a> for <a class=\"struct\" href=\"bdkffi/bitcoin/struct.Wtxid.html\" title=\"struct bdkffi::bitcoin::Wtxid\">Wtxid</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1413]}

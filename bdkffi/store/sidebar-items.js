@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["uniffi_bdkffi_fn_init_callback_vtable_persistence"],"struct":["Persister","UniFfiTraitVtablePersistence"],"trait":["Persistence"]};

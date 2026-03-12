@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["bdkffi",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"enum\" href=\"bdkffi/kyoto/enum.RecoveryPoint.html\" title=\"enum bdkffi::kyoto::RecoveryPoint\">RecoveryPoint</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"enum\" href=\"bdkffi/kyoto/enum.ScanType.html\" title=\"enum bdkffi::kyoto::ScanType\">ScanType</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"bdkffi/types/struct.IndexerChangeSet.html\" title=\"struct bdkffi::types::IndexerChangeSet\">IndexerChangeSet</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"bdkffi/types/struct.LocalChainChangeSet.html\" title=\"struct bdkffi::types::LocalChainChangeSet\">LocalChainChangeSet</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.85.1/core/default/trait.Default.html\" title=\"trait core::default::Default\">Default</a> for <a class=\"struct\" href=\"bdkffi/types/struct.TxGraphChangeSet.html\" title=\"struct bdkffi::types::TxGraphChangeSet\">TxGraphChangeSet</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1466]}
