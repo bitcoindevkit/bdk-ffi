@@ -1,6 +1,6 @@
 [package]
 name = "bdk-ffi"
-version = "2.4.0-alpha.0"
+version = "3.0.0-rc.1"
 homepage = "https://bitcoindevkit.org"
 repository = "https://github.com/bitcoindevkit/bdk"
 edition = "2018"
@@ -15,10 +15,10 @@ name = "uniffi-bindgen"
 path = "uniffi-bindgen.rs"
 
 [dependencies]
-bdk_wallet = { version = "2.3.0", features = ["all-keys", "keys-bip39", "rusqlite"] }
+bdk_wallet = { version = "=3.0.0-rc.1", features = ["all-keys", "keys-bip39", "rusqlite"] }
 bdk_esplora = { version = "0.22.1", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
 bdk_electrum = { version = "0.23.2", default-features = false, features = ["use-rustls-ring"] }
-bdk_kyoto = { version = "0.15.4" }
+bdk_kyoto = { git = "https://github.com/reez/bdk-kyoto", branch = "rc1" }
 
 uniffi = { version = "=0.30.0", features = ["cli"]}
 thiserror = "2.0.17"

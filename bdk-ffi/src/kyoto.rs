@@ -7,7 +7,6 @@ use bdk_kyoto::bip157::ServiceFlags;
 use bdk_kyoto::builder::Builder as BDKCbfBuilder;
 use bdk_kyoto::builder::BuilderExt;
 use bdk_kyoto::HeaderCheckpoint;
-use bdk_kyoto::LightClient as BDKLightClient;
 use bdk_kyoto::Receiver;
 use bdk_kyoto::RejectReason;
 use bdk_kyoto::Requester;
@@ -16,7 +15,7 @@ use bdk_kyoto::UnboundedReceiver;
 use bdk_kyoto::UpdateSubscriber;
 use bdk_kyoto::Warning as Warn;
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -238,18 +237,15 @@ impl CbfBuilder {
         if let Some(proxy) = &self.socks5_proxy {
             let port = proxy.port;
             let addr = proxy.address.inner;
-            builder = builder.socks5_proxy((addr, port));
+            builder = builder.socks5_proxy(SocketAddr::new(addr, port));
         }
 
-        let BDKLightClient {
-            requester,
-            info_subscriber,
-            warning_subscriber,
-            update_subscriber,
-            node,
-        } = builder
+        let (client, logging, update_subscriber) = builder
             .build_with_wallet(&wallet, scan_type)
-            .expect("networks match by definition");
+            .expect("networks match by definition")
+            .subscribe();
+        let (client, node) = client.managed_start();
+        let requester = client.requester();
 
         let node = CbfNode {
             node: std::sync::Mutex::new(Some(node)),
@@ -257,8 +253,8 @@ impl CbfBuilder {
 
         let client = CbfClient {
             sender: Arc::new(requester),
-            info_rx: Mutex::new(info_subscriber),
-            warning_rx: Mutex::new(warning_subscriber),
+            info_rx: Mutex::new(logging.info_subscriber),
+            warning_rx: Mutex::new(logging.warning_subscriber),
             update_rx: Mutex::new(update_subscriber),
         };
 
@@ -308,7 +304,7 @@ impl CbfClient {
     pub async fn broadcast(&self, transaction: &Transaction) -> Result<Arc<Wtxid>, CbfError> {
         let tx = transaction.into();
         self.sender
-            .broadcast_random(tx)
+            .broadcast_tx(tx)
             .await
             .map_err(From::from)
             .map(|wtxid| Arc::new(Wtxid(wtxid)))
