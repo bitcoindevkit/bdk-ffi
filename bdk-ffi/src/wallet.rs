@@ -377,6 +377,27 @@ impl Wallet {
         );
     }
 
+    /// Apply evictions of the given transaction IDs with their associated timestamps and returns
+    /// events.
+    ///
+    /// See [`apply_evicted_txs`] for more information.
+    ///
+    /// See [`apply_update_events`] for more information on the returned [`WalletEvent`]s.
+    ///
+    /// [`apply_evicted_txs`]: Self::apply_evicted_txs
+    /// [`apply_update_events`]: Self::apply_update_events
+    pub fn apply_evicted_txs_events(&self, evicted_txs: Vec<EvictedTx>) -> Vec<WalletEvent> {
+        self.get_wallet()
+            .apply_evicted_txs_events(
+                evicted_txs
+                    .into_iter()
+                    .map(|etx| (etx.txid.0, etx.evicted_at)),
+            )
+            .into_iter()
+            .map(|event| event.into())
+            .collect()
+    }
+
     /// The derivation index of this wallet. It will return `None` if it has not derived any addresses.
     /// Otherwise, it will return the index of the highest address it has derived.
     pub fn derivation_index(&self, keychain: KeychainKind) -> Option<u32> {
