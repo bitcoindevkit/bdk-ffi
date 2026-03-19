@@ -341,6 +341,29 @@ impl Wallet {
         )
     }
 
+    /// Apply relevant unconfirmed transactions to the wallet and returns events.
+    ///
+    /// See [`apply_unconfirmed_txs`] for more information.
+    ///
+    /// See [`apply_update_events`] for more information on the returned [`WalletEvent`]s.
+    ///
+    /// [`apply_unconfirmed_txs`]: Self::apply_unconfirmed_txs
+    /// [`apply_update_events`]: Self::apply_update_events
+    pub fn apply_unconfirmed_txs_events(
+        &self,
+        unconfirmed_txs: Vec<UnconfirmedTx>,
+    ) -> Vec<WalletEvent> {
+        self.get_wallet()
+            .apply_unconfirmed_txs_events(
+                unconfirmed_txs
+                    .into_iter()
+                    .map(|utx| (Arc::new(utx.tx.as_ref().into()), utx.last_seen)),
+            )
+            .into_iter()
+            .map(|event| event.into())
+            .collect()
+    }
+
     /// Apply transactions that have been evicted from the mempool.
     /// Transactions may be evicted for paying too-low fee, or for being malformed.
     /// Irrelevant transactions are ignored.
