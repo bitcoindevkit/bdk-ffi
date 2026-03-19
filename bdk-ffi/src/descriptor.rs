@@ -334,6 +334,64 @@ impl Descriptor {
         })
     }
 
+    /// Create a new sh sortedmulti descriptor with threshold k and Vec of pks.
+    /// Errors when miniscript exceeds resource limits under p2sh context
+    #[uniffi::constructor]
+    pub fn new_sh_sortedmulti(k: u32, pks: Vec<String>) -> Result<Self, DescriptorError> {
+        let bdk_pks: Vec<BdkDescriptorPublicKey> = pks
+            .iter()
+            .map(|pk| {
+                BdkDescriptorPublicKey::from_str(pk).map_err(|e| DescriptorError::Key {
+                    error_message: e.to_string(),
+                })
+            })
+            .collect::<Result<Vec<BdkDescriptorPublicKey>, DescriptorError>>()?;
+        let miniscript_descriptor =
+            match bdk_wallet::miniscript::Descriptor::new_sh_sortedmulti(k as usize, bdk_pks) {
+                Ok(descriptor) => descriptor,
+                Err(e) => {
+                    return Err(DescriptorError::Miniscript {
+                        error_message: e.to_string(),
+                    })
+                }
+            };
+        let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
+
+        Ok(Self {
+            extended_descriptor,
+            key_map: KeyMap::new(),
+        })
+    }
+
+    /// Create a new sh wrapped wsh sortedmulti descriptor from threshold k and Vec of pks
+    /// Errors when miniscript exceeds resource limits under segwit context
+    #[uniffi::constructor]
+    pub fn new_sh_wsh_sortedmulti(k: u32, pks: Vec<String>) -> Result<Self, DescriptorError> {
+        let bdk_pks: Vec<BdkDescriptorPublicKey> = pks
+            .iter()
+            .map(|pk| {
+                BdkDescriptorPublicKey::from_str(pk).map_err(|e| DescriptorError::Key {
+                    error_message: e.to_string(),
+                })
+            })
+            .collect::<Result<Vec<BdkDescriptorPublicKey>, DescriptorError>>()?;
+        let miniscript_descriptor =
+            match bdk_wallet::miniscript::Descriptor::new_sh_wsh_sortedmulti(k as usize, bdk_pks) {
+                Ok(descriptor) => descriptor,
+                Err(e) => {
+                    return Err(DescriptorError::Miniscript {
+                        error_message: e.to_string(),
+                    })
+                }
+            };
+        let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
+
+        Ok(Self {
+            extended_descriptor,
+            key_map: KeyMap::new(),
+        })
+    }
+
     /// Create a new pay-to-pubkey descriptor from a public key string.
     #[uniffi::constructor]
     pub fn new_pk(pk: String) -> Result<Self, DescriptorError> {
@@ -342,6 +400,75 @@ impl Descriptor {
         })?;
 
         let miniscript_descriptor = bdk_wallet::miniscript::Descriptor::new_pk(key);
+        let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
+
+        Ok(Self {
+            extended_descriptor,
+            key_map: KeyMap::new(),
+        })
+    }
+
+    /// Create a new PkH descriptor
+    #[uniffi::constructor]
+    pub fn new_pkh(pk: String) -> Result<Self, DescriptorError> {
+        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Key {
+            error_message: e.to_string(),
+        })?;
+
+        let miniscript_descriptor = match bdk_wallet::miniscript::Descriptor::new_pkh(key) {
+            Ok(descriptor) => descriptor,
+            Err(e) => {
+                return Err(DescriptorError::Miniscript {
+                    error_message: e.to_string(),
+                })
+            }
+        };
+        let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
+
+        Ok(Self {
+            extended_descriptor,
+            key_map: KeyMap::new(),
+        })
+    }
+
+    /// Create a new Wpkh descriptor Will return Err if uncompressed key is used
+    #[uniffi::constructor]
+    pub fn new_wpkh(pk: String) -> Result<Self, DescriptorError> {
+        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Key {
+            error_message: e.to_string(),
+        })?;
+
+        let miniscript_descriptor = match bdk_wallet::miniscript::Descriptor::new_wpkh(key) {
+            Ok(descriptor) => descriptor,
+            Err(e) => {
+                return Err(DescriptorError::Miniscript {
+                    error_message: e.to_string(),
+                })
+            }
+        };
+        let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
+
+        Ok(Self {
+            extended_descriptor,
+            key_map: KeyMap::new(),
+        })
+    }
+
+    /// Create a new sh wrapped wpkh from Pk. Errors when uncompressed keys are supplied
+    #[uniffi::constructor]
+    pub fn new_sh_wpkh(pk: String) -> Result<Self, DescriptorError> {
+        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Key {
+            error_message: e.to_string(),
+        })?;
+
+        let miniscript_descriptor = match bdk_wallet::miniscript::Descriptor::new_sh_wpkh(key) {
+            Ok(descriptor) => descriptor,
+            Err(e) => {
+                return Err(DescriptorError::Miniscript {
+                    error_message: e.to_string(),
+                })
+            }
+        };
         let extended_descriptor = ExtendedDescriptor::from(miniscript_descriptor);
 
         Ok(Self {
