@@ -642,6 +642,14 @@ impl Wallet {
         self.get_wallet().latest_checkpoint().block_id().into()
     }
 
+    /// Get all the checkpoints the wallet is currently storing indexed by height.
+    pub fn checkpoints(&self) -> Vec<BlockId> {
+        self.get_wallet()
+            .checkpoints()
+            .map(|checkpoint| checkpoint.block_id().into())
+            .collect()
+    }
+
     /// Get the [`TxDetails`] of a wallet transaction.
     pub fn tx_details(&self, txid: Arc<Txid>) -> Option<crate::types::TxDetails> {
         self.get_wallet()
