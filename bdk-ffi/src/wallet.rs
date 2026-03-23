@@ -598,6 +598,12 @@ impl Wallet {
         Arc::new(FullScanRequestBuilder(Mutex::new(Some(builder))))
     }
 
+    /// Create a [`FullScanRequest`] builder at `start_time`.
+    pub fn start_full_scan_at(&self, start_time: u64) -> Arc<FullScanRequestBuilder> {
+        let builder = self.get_wallet().start_full_scan_at(start_time);
+        Arc::new(FullScanRequestBuilder(Mutex::new(Some(builder))))
+    }
+
     /// Create a partial [`SyncRequest`] for all revealed spks at `start_time`.
     ///
     /// The `start_time` is used to record the time that a mempool transaction was last seen
