@@ -1,11 +1,12 @@
 use crate::bitcoin::{Amount, FeeRate, Input, OutPoint, Psbt, Script, Txid};
-use crate::error::{AddForeignUtxoError, CreateTxError};
+use crate::error::{AddForeignUtxoError, CreateTxError, SighashParseError};
 use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
+use bdk_wallet::bitcoin::psbt::PsbtSighashType as BdkPsbtSighashType;
 use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
@@ -15,6 +16,7 @@ use bdk_wallet::KeychainKind;
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
+use std::str::FromStr;
 use std::sync::Arc;
 
 type ChangeSpendPolicy = bdk_wallet::ChangeSpendPolicy;
@@ -41,6 +43,7 @@ pub struct TxBuilder {
     locktime: Option<LockTime>,
     allow_dust: bool,
     version: Option<i32>,
+    sighash: Option<BdkPsbtSighashType>,
     exclude_unconfirmed: bool,
     exclude_below_confirmations: Option<u32>,
     only_witness_utxo: bool,
@@ -71,6 +74,7 @@ impl TxBuilder {
             locktime: None,
             allow_dust: false,
             version: None,
+            sighash: None,
             exclude_unconfirmed: false,
             exclude_below_confirmations: None,
             only_witness_utxo: false,
@@ -371,6 +375,17 @@ impl TxBuilder {
         })
     }
 
+    /// Sign with a specific sig hash
+    ///
+    /// **Use this option very carefully**
+    pub fn sighash(&self, sighash: String) -> Result<Arc<Self>, SighashParseError> {
+        let sighash = parse_sighash_type(&sighash)?;
+        Ok(Arc::new(TxBuilder {
+            sighash: Some(sighash),
+            ..self.clone()
+        }))
+    }
+
     /// Only Fill-in the [`psbt::Input::witness_utxo`](bitcoin::psbt::Input::witness_utxo) field
     /// when spending from SegWit descriptors.
     ///
@@ -545,6 +560,9 @@ impl TxBuilder {
         if let Some(version) = self.version {
             tx_builder.version(version);
         }
+        if let Some(sighash) = self.sighash {
+            tx_builder.sighash(sighash);
+        }
         if self.exclude_unconfirmed {
             tx_builder.exclude_unconfirmed();
         }
@@ -576,6 +594,7 @@ pub struct BumpFeeTxBuilder {
     locktime: Option<LockTime>,
     allow_dust: bool,
     version: Option<i32>,
+    sighash: Option<BdkPsbtSighashType>,
 }
 
 #[uniffi::export]
@@ -590,6 +609,7 @@ impl BumpFeeTxBuilder {
             locktime: None,
             allow_dust: false,
             version: None,
+            sighash: None,
         }
     }
 
@@ -653,6 +673,17 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Sign with a specific sig hash
+    ///
+    /// **Use this option very carefully**
+    pub fn sighash(&self, sighash: String) -> Result<Arc<Self>, SighashParseError> {
+        let sighash = parse_sighash_type(&sighash)?;
+        Ok(Arc::new(BumpFeeTxBuilder {
+            sighash: Some(sighash),
+            ..self.clone()
+        }))
+    }
+
     /// Finish building the transaction.
     ///
     /// Uses the thread-local random number generator (rng).
@@ -683,6 +714,9 @@ impl BumpFeeTxBuilder {
         if let Some(version) = self.version {
             tx_builder.version(version);
         }
+        if let Some(sighash) = self.sighash {
+            tx_builder.sighash(sighash);
+        }
 
         let psbt: BdkPsbt = tx_builder.finish()?;
 
@@ -700,4 +734,10 @@ pub enum ChangeSpendPolicy {
     OnlyChange,
     /// Only use non-change outputs (see [`bdk_wallet::TxBuilder::do_not_spend_change`]).
     ChangeForbidden,
+}
+
+fn parse_sighash_type(sighash: &str) -> Result<BdkPsbtSighashType, SighashParseError> {
+    BdkPsbtSighashType::from_str(sighash).map_err(|error| SighashParseError::Invalid {
+        error_message: error.to_string(),
+    })
 }

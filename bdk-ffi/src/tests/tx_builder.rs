@@ -1,5 +1,6 @@
 use crate::bitcoin::{Amount, Input, Network, OutPoint, Script, TxOut};
 use crate::descriptor::Descriptor;
+use crate::error::SighashParseError;
 use crate::esplora::EsploraClient;
 use crate::store::Persister;
 use crate::tx_builder::TxBuilder;
@@ -193,6 +194,61 @@ fn test_only_witness_utxo_with_finish() {
         }
     } else {
         println!("Failed to retrieve policies, skipping transaction test");
+    }
+}
+
+#[test]
+fn test_sighash_invalid_string_returns_error() {
+    let result = TxBuilder::new().sighash("not-a-sighash".to_string());
+
+    assert!(matches!(result, Err(SighashParseError::Invalid { .. })));
+}
+
+#[test]
+fn test_sighash_sets_psbt_input_sighash_type() {
+    let wallet = create_and_sync_wallet();
+    let utxos = wallet.list_unspent();
+
+    if utxos.is_empty() {
+        println!("No UTXOs available, skipping sighash PSBT assertion");
+        return;
+    }
+
+    let address = wallet
+        .next_unused_address(bdk_wallet::KeychainKind::External)
+        .address;
+    let ext_policy = wallet.policies(bdk_wallet::KeychainKind::External);
+    let int_policy = wallet.policies(bdk_wallet::KeychainKind::Internal);
+
+    if let (Ok(Some(ext_policy)), Ok(Some(int_policy))) = (ext_policy, int_policy) {
+        let ext_path: HashMap<_, _> = vec![(ext_policy.id().clone(), vec![0, 1])]
+            .into_iter()
+            .collect();
+        let int_path: HashMap<_, _> = vec![(int_policy.id().clone(), vec![0, 1])]
+            .into_iter()
+            .collect();
+        let wallet_arc = Arc::new(wallet);
+
+        let psbt = TxBuilder::new()
+            .add_recipient(
+                &(*address.script_pubkey()).to_owned(),
+                Arc::new(Amount::from_sat(1000)),
+            )
+            .policy_path(ext_path, bdk_wallet::KeychainKind::External)
+            .policy_path(int_path, bdk_wallet::KeychainKind::Internal)
+            .do_not_spend_change()
+            .sighash("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".to_string())
+            .expect("valid sighash type")
+            .finish(&wallet_arc)
+            .expect("build transaction with sighash");
+
+        let inputs = psbt.input();
+        assert!(!inputs.is_empty());
+        assert!(inputs.iter().all(|input| {
+            input.sighash_type.as_deref() == Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY")
+        }));
+    } else {
+        panic!("Failed to retrieve valid policies for keychains");
     }
 }
 

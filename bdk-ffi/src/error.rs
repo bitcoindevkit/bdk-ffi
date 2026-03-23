@@ -699,6 +699,12 @@ pub enum PsbtParseError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum SighashParseError {
+    #[error("invalid sighash type: {error_message}")]
+    Invalid { error_message: String },
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PsbtFinalizeError {
     #[error("an input at index {index} is invalid: {reason}")]
     InputError { reason: String, index: u32 },
