@@ -598,6 +598,17 @@ impl Wallet {
         Arc::new(FullScanRequestBuilder(Mutex::new(Some(builder))))
     }
 
+    /// Create a partial [`SyncRequest`] for all revealed spks at `start_time`.
+    ///
+    /// The `start_time` is used to record the time that a mempool transaction was last seen
+    /// (or evicted). See [`Wallet::start_sync_with_revealed_spks`] for more.
+    pub fn start_sync_with_revealed_spks_at(&self, start_time: u64) -> Arc<SyncRequestBuilder> {
+        let builder = self
+            .get_wallet()
+            .start_sync_with_revealed_spks_at(start_time);
+        Arc::new(SyncRequestBuilder(Mutex::new(Some(builder))))
+    }
+
     /// Create a partial [`SyncRequest`] for this wallet for all revealed spks.
     ///
     /// This is the first step when performing a spk-based wallet partial sync, the returned
