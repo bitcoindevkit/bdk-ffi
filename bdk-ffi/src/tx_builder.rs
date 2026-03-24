@@ -47,7 +47,7 @@ pub struct TxBuilder {
     exclude_unconfirmed: bool,
     exclude_below_confirmations: Option<u32>,
     only_witness_utxo: bool,
-    foreign_utxos: Vec<(BdkOutPoint, BdkInput, BdkWeight)>,
+    foreign_utxos: Vec<(BdkOutPoint, BdkInput, BdkWeight, Option<u32>)>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -484,7 +484,46 @@ impl TxBuilder {
         let bdk_weight = BdkWeight::from_wu(satisfaction_weight);
 
         let mut foreign_utxos = self.foreign_utxos.clone();
-        foreign_utxos.push((bdk_outpoint, bdk_input, bdk_weight));
+        foreign_utxos.push((bdk_outpoint, bdk_input, bdk_weight, None));
+
+        Ok(Arc::new(TxBuilder {
+            foreign_utxos,
+            ..self.clone()
+        }))
+    }
+
+    /// Same as [add_foreign_utxo](TxBuilder::add_foreign_utxo) but allows to set the nSequence
+    /// value.
+    pub fn add_foreign_utxo_with_sequence(
+        &self,
+        outpoint: OutPoint,
+        psbt_input: Input,
+        satisfaction_weight: u64,
+        sequence: u32,
+    ) -> Result<Arc<Self>, AddForeignUtxoError> {
+        let bdk_outpoint: BdkOutPoint = outpoint.into();
+        let bdk_input: BdkInput = psbt_input.try_into()?;
+
+        if bdk_input.witness_utxo.is_none() {
+            match bdk_input.non_witness_utxo.as_ref() {
+                Some(tx) => {
+                    if tx.compute_txid() != bdk_outpoint.txid {
+                        return Err(AddForeignUtxoError::InvalidTxid);
+                    }
+                    if tx.output.len() <= bdk_outpoint.vout as usize {
+                        return Err(AddForeignUtxoError::InvalidOutpoint {
+                            outpoint: bdk_outpoint.to_string(),
+                        });
+                    }
+                }
+                None => return Err(AddForeignUtxoError::MissingUtxo),
+            }
+        }
+
+        let bdk_weight = BdkWeight::from_wu(satisfaction_weight);
+
+        let mut foreign_utxos = self.foreign_utxos.clone();
+        foreign_utxos.push((bdk_outpoint, bdk_input, bdk_weight, Some(sequence)));
 
         Ok(Arc::new(TxBuilder {
             foreign_utxos,
@@ -572,10 +611,20 @@ impl TxBuilder {
         if self.only_witness_utxo {
             tx_builder.only_witness_utxo();
         }
-        for (outpoint, input, weight) in &self.foreign_utxos {
-            tx_builder
-                .add_foreign_utxo(*outpoint, input.clone(), *weight)
-                .map_err(AddForeignUtxoError::from)?;
+        for (outpoint, input, weight, sequence) in &self.foreign_utxos {
+            match sequence {
+                Some(sequence) => tx_builder
+                    .add_foreign_utxo_with_sequence(
+                        *outpoint,
+                        input.clone(),
+                        *weight,
+                        Sequence(*sequence),
+                    )
+                    .map_err(AddForeignUtxoError::from)?,
+                None => tx_builder
+                    .add_foreign_utxo(*outpoint, input.clone(), *weight)
+                    .map_err(AddForeignUtxoError::from)?,
+            };
         }
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
 
