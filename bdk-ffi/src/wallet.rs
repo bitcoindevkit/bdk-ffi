@@ -578,6 +578,45 @@ impl Wallet {
         self.get_wallet().list_unspent().map(|o| o.into()).collect()
     }
 
+    /// List the locked outpoints.
+    pub fn list_locked_outpoints(&self) -> Vec<OutPoint> {
+        self.get_wallet()
+            .list_locked_outpoints()
+            .map(Into::into)
+            .collect()
+    }
+
+    /// List unspent outpoints that are currently locked.
+    pub fn list_locked_unspent(&self) -> Vec<OutPoint> {
+        self.get_wallet()
+            .list_locked_unspent()
+            .map(Into::into)
+            .collect()
+    }
+
+    /// Whether the `outpoint` is locked. See `Wallet::lock_outpoint` for more.
+    pub fn is_outpoint_locked(&self, outpoint: OutPoint) -> bool {
+        self.get_wallet().is_outpoint_locked(outpoint.into())
+    }
+
+    /// Lock a wallet output identified by the given `outpoint`.
+    ///
+    /// A locked UTXO will not be selected as an input to fund a transaction. This is useful
+    /// for excluding or reserving candidate inputs during transaction creation.
+    ///
+    /// **You must persist the staged change for the lock status to be persistent**. To unlock a
+    /// previously locked outpoint, see `Wallet::unlock_outpoint`.
+    pub fn lock_outpoint(&self, outpoint: OutPoint) {
+        self.get_wallet().lock_outpoint(outpoint.into());
+    }
+
+    /// Unlock the wallet output of the specified `outpoint`.
+    ///
+    /// **You must persist the staged change for the lock status to be persistent**.
+    pub fn unlock_outpoint(&self, outpoint: OutPoint) {
+        self.get_wallet().unlock_outpoint(outpoint.into());
+    }
+
     /// List all relevant outputs (includes both spent and unspent, confirmed and unconfirmed).
     ///
     /// To list only unspent outputs (UTXOs), use [`Wallet::list_unspent`] instead.
