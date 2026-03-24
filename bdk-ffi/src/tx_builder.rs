@@ -11,7 +11,7 @@ use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Weight as BdkWeight};
-use bdk_wallet::KeychainKind;
+use bdk_wallet::{KeychainKind, TxOrdering as BdkTxOrdering};
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
@@ -44,6 +44,7 @@ pub struct TxBuilder {
     allow_dust: bool,
     version: Option<i32>,
     sighash: Option<BdkPsbtSighashType>,
+    ordering: TxOrdering,
     exclude_unconfirmed: bool,
     exclude_below_confirmations: Option<u32>,
     only_witness_utxo: bool,
@@ -75,6 +76,7 @@ impl TxBuilder {
             allow_dust: false,
             version: None,
             sighash: None,
+            ordering: TxOrdering::Shuffle,
             exclude_unconfirmed: false,
             exclude_below_confirmations: None,
             only_witness_utxo: false,
@@ -386,6 +388,19 @@ impl TxBuilder {
         }))
     }
 
+    /// Choose the ordering for inputs and outputs of the transaction
+    ///
+    /// When [TxBuilder::ordering] is set to [TxOrdering::Untouched], the insertion order of
+    /// recipients and manually selected UTXOs is preserved and reflected exactly in transaction's
+    /// output and input vectors respectively. If algorithmically selected UTXOs are included, they
+    /// will be placed after all the manually selected ones in the transaction's input vector.
+    pub fn ordering(&self, ordering: TxOrdering) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            ordering,
+            ..self.clone()
+        })
+    }
+
     /// Only Fill-in the [`psbt::Input::witness_utxo`](bitcoin::psbt::Input::witness_utxo) field
     /// when spending from SegWit descriptors.
     ///
@@ -602,6 +617,7 @@ impl TxBuilder {
         if let Some(sighash) = self.sighash {
             tx_builder.sighash(sighash);
         }
+        tx_builder.ordering(self.ordering.into());
         if self.exclude_unconfirmed {
             tx_builder.exclude_unconfirmed();
         }
@@ -644,6 +660,7 @@ pub struct BumpFeeTxBuilder {
     allow_dust: bool,
     version: Option<i32>,
     sighash: Option<BdkPsbtSighashType>,
+    ordering: TxOrdering,
 }
 
 #[uniffi::export]
@@ -659,6 +676,7 @@ impl BumpFeeTxBuilder {
             allow_dust: false,
             version: None,
             sighash: None,
+            ordering: TxOrdering::Shuffle,
         }
     }
 
@@ -733,6 +751,19 @@ impl BumpFeeTxBuilder {
         }))
     }
 
+    /// Choose the ordering for inputs and outputs of the transaction
+    ///
+    /// When [TxBuilder::ordering] is set to [TxOrdering::Untouched], the insertion order of
+    /// recipients and manually selected UTXOs is preserved and reflected exactly in transaction's
+    /// output and input vectors respectively. If algorithmically selected UTXOs are included, they
+    /// will be placed after all the manually selected ones in the transaction's input vector.
+    pub fn ordering(&self, ordering: TxOrdering) -> Arc<Self> {
+        Arc::new(BumpFeeTxBuilder {
+            ordering,
+            ..self.clone()
+        })
+    }
+
     /// Finish building the transaction.
     ///
     /// Uses the thread-local random number generator (rng).
@@ -766,6 +797,7 @@ impl BumpFeeTxBuilder {
         if let Some(sighash) = self.sighash {
             tx_builder.sighash(sighash);
         }
+        tx_builder.ordering(self.ordering.into());
 
         let psbt: BdkPsbt = tx_builder.finish()?;
 
@@ -783,6 +815,31 @@ pub enum ChangeSpendPolicy {
     OnlyChange,
     /// Only use non-change outputs (see [`bdk_wallet::TxBuilder::do_not_spend_change`]).
     ChangeForbidden,
+}
+
+/// Ordering of the transaction's inputs and outputs.
+#[derive(Clone, Copy, Debug, Default, uniffi::Enum)]
+pub enum TxOrdering {
+    /// Randomized (default)
+    #[default]
+    Shuffle,
+    /// Untouched
+    ///
+    /// Untouched insertion order for recipients and for manually added UTXOs. This guarantees all
+    /// recipients preserve insertion order in the transaction's output vector and manually added
+    /// UTXOs preserve insertion order in the transaction's input vector, but does not make any
+    /// guarantees about algorithmically selected UTXOs. However, by design they will always be
+    /// placed after the manually selected ones.
+    Untouched,
+}
+
+impl From<TxOrdering> for BdkTxOrdering {
+    fn from(value: TxOrdering) -> Self {
+        match value {
+            TxOrdering::Shuffle => BdkTxOrdering::Shuffle,
+            TxOrdering::Untouched => BdkTxOrdering::Untouched,
+        }
+    }
 }
 
 fn parse_sighash_type(sighash: &str) -> Result<BdkPsbtSighashType, SighashParseError> {
