@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "bdk-ffi"
-version = "3.0.0-rc.1"
+version = "3.0.0-rc.2"
 dependencies = [
  "assert_matches",
  "bdk_electrum",
@@ -185,9 +185,9 @@ dependencies = [
 
 [[package]]
 name = "bdk_wallet"
-version = "3.0.0-rc.1"
+version = "3.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70031c96c223c780525f4b9c52813e4f5bd8000a5712aac3248d00838af1e436"
+checksum = "9b989a12f0398a844bf22b14a197e2676aea2775aabca52057627f596ad3a0ef"
 dependencies = [
  "bdk_chain",
  "bip39",
