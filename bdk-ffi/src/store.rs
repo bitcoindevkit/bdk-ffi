@@ -1,6 +1,10 @@
-use crate::error::PersistenceError;
+use crate::error::{PersistenceError, PreV1MigrationError};
 use crate::types::ChangeSet;
 
+use bdk_wallet::migration::{
+    get_pre_v1_wallet_keychains as bdk_get_pre_v1_wallet_keychains,
+    PreV1WalletKeychain as BdkPreV1WalletKeychain,
+};
 use bdk_wallet::{rusqlite::Connection as BdkConnection, WalletPersister};
 
 use std::ops::DerefMut;
@@ -19,6 +23,17 @@ pub trait Persistence: Send + Sync {
 pub(crate) enum PersistenceType {
     Custom(Arc<dyn Persistence>),
     Sql(Mutex<BdkConnection>),
+}
+
+/// Metadata describing a keychain in a pre-v1 BDK SQLite wallet database.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct PreV1WalletKeychain {
+    /// The wallet keychain.
+    pub keychain: bdk_wallet::KeychainKind,
+    /// The last derivation index stored for the keychain.
+    pub last_derivation_index: u32,
+    /// The descriptor checksum associated with the keychain.
+    pub checksum: String,
 }
 
 /// Wallet backend implementations.
@@ -52,6 +67,32 @@ impl Persister {
     pub fn custom(persistence: Arc<dyn Persistence>) -> Self {
         Self {
             inner: PersistenceType::Custom(persistence).into(),
+        }
+    }
+
+    /// Retrieve keychain metadata from a pre-v1 BDK SQLite wallet database.
+    pub fn get_pre_v1_wallet_keychains(
+        &self,
+    ) -> Result<Vec<PreV1WalletKeychain>, PreV1MigrationError> {
+        let mut lock = self.inner.lock().unwrap();
+        match lock.deref_mut() {
+            PersistenceType::Sql(ref conn) => {
+                let mut conn_lock = conn.lock().unwrap();
+                bdk_get_pre_v1_wallet_keychains(conn_lock.deref_mut())
+                    .map(|keychains| keychains.into_iter().map(Into::into).collect())
+                    .map_err(Into::into)
+            }
+            PersistenceType::Custom(_) => Err(PreV1MigrationError::SqliteOnly),
+        }
+    }
+}
+
+impl From<BdkPreV1WalletKeychain> for PreV1WalletKeychain {
+    fn from(value: BdkPreV1WalletKeychain) -> Self {
+        Self {
+            keychain: value.keychain,
+            last_derivation_index: value.last_derivation_index,
+            checksum: value.checksum,
         }
     }
 }

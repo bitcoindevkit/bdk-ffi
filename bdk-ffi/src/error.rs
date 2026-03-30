@@ -20,6 +20,7 @@ use bdk_wallet::descriptor::DescriptorError as BdkDescriptorError;
 use bdk_wallet::error::BuildFeeBumpError;
 use bdk_wallet::error::CreateTxError as BdkCreateTxError;
 use bdk_wallet::keys::bip39::Error as BdkBip39Error;
+use bdk_wallet::migration::PreV1MigrationError as BdkPreV1MigrationError;
 use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
 use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
 #[allow(deprecated)]
@@ -583,6 +584,21 @@ pub enum ParseAmountError {
 pub enum PersistenceError {
     #[error("persistence error: {error_message}")]
     Reason { error_message: String },
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum PreV1MigrationError {
+    #[error("migration helper is only available for sqlite-backed persisters")]
+    SqliteOnly,
+
+    #[error("sqlite migration error: {error_message}")]
+    Sqlite { error_message: String },
+
+    #[error("invalid keychain: {keychain}")]
+    InvalidKeychain { keychain: String },
+
+    #[error("invalid checksum: {error_message}")]
+    InvalidChecksum { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
@@ -1335,6 +1351,24 @@ impl From<BdkSqliteError> for PersistenceError {
     fn from(error: BdkSqliteError) -> Self {
         PersistenceError::Reason {
             error_message: error.to_string(),
+        }
+    }
+}
+
+impl From<BdkPreV1MigrationError> for PreV1MigrationError {
+    fn from(error: BdkPreV1MigrationError) -> Self {
+        match error {
+            BdkPreV1MigrationError::RusqliteError(error) => PreV1MigrationError::Sqlite {
+                error_message: error.to_string(),
+            },
+            BdkPreV1MigrationError::InvalidKeychain(keychain) => {
+                PreV1MigrationError::InvalidKeychain { keychain }
+            }
+            BdkPreV1MigrationError::InvalidChecksum(error) => {
+                PreV1MigrationError::InvalidChecksum {
+                    error_message: error.to_string(),
+                }
+            }
         }
     }
 }
