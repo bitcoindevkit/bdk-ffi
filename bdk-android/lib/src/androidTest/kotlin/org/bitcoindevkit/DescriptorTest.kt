@@ -49,13 +49,17 @@ class DescriptorTest {
             "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB",
             "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB"
         )
-        val wshDescriptor = Descriptor.newWshSortedmulti(2u, pkList);
+        val wshSortedMultiDescriptor = Descriptor.newWshSortedmulti(2u, pkList);
+        val shWshSortedMultiDescriptor = Descriptor.newShWshSortedmulti(2u, pkList);
+        val shSortedMultiDescriptor = Descriptor.newShSortedmulti(2u, pkList);
 
-        assertEquals(wshDescriptor.descType(), DescriptorType.WSH_SORTED_MULTI)
+        assertEquals(wshSortedMultiDescriptor.descType(), DescriptorType.WSH_SORTED_MULTI)
+        assertEquals(shWshSortedMultiDescriptor.descType(), DescriptorType.SH_WSH_SORTED_MULTI)
+        assertEquals(shSortedMultiDescriptor.descType(), DescriptorType.SH_SORTED_MULTI)
     }
 
     @Test
-    fun createInvalidMutlisigDescriptor() {
+    fun createInvalidMultisigDescriptor() {
         val invalidPkList = listOf(
             "invalid_xpub",
             "1111111111111",
@@ -69,7 +73,14 @@ class DescriptorTest {
     @Test
     fun createSingleKeyDescriptor() {
         val newPkDescriptor = Descriptor.newPk("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
+        val newPkhDescriptor = Descriptor.newPkh("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
+        val newWpkhDescriptor = Descriptor.newWpkh("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
+        val newShWpkhDescriptor = Descriptor.newShWpkh("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
+
         assertEquals(newPkDescriptor.descType(), DescriptorType.BARE)
+        assertEquals(newPkhDescriptor.descType(), DescriptorType.PKH)
+        assertEquals(newWpkhDescriptor.descType(), DescriptorType.WPKH)
+        assertEquals(newShWpkhDescriptor.descType(), DescriptorType.SH_WPKH)
     }
 
     // Cannot create addr() descriptor.
