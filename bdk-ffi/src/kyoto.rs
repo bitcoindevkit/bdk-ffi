@@ -51,7 +51,7 @@ pub struct CbfClient {
     sender: Arc<Requester>,
     info_rx: Mutex<Receiver<bdk_kyoto::Info>>,
     warning_rx: Mutex<UnboundedReceiver<bdk_kyoto::Warning>>,
-    update_rx: Mutex<UpdateSubscriber>,
+    update_rx: Mutex<UpdateSubscriber<bdk_kyoto::wallets::Single>>,
 }
 
 /// A [`CbfNode`] gathers transactions for a [`Wallet`].
