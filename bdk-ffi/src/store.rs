@@ -25,14 +25,16 @@ pub(crate) enum PersistenceType {
     Sql(Mutex<BdkConnection>),
 }
 
-/// Metadata describing a keychain in a pre-v1 BDK SQLite wallet database.
+/// `PreV1WalletKeychain` represents a structure that holds the keychain details
+/// and metadata required for managing a wallet's keys.
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct PreV1WalletKeychain {
-    /// The wallet keychain.
+    /// The name of the wallet keychains, "External" or "Internal".
     pub keychain: bdk_wallet::KeychainKind,
-    /// The last derivation index stored for the keychain.
+    /// The index of the last derived key in the wallet keychain.
     pub last_derivation_index: u32,
-    /// The descriptor checksum associated with the keychain.
+    /// Checksum of the keychain descriptor, it must match the corresponding
+    /// post-1.0 bdk wallet descriptor checksum.
     pub checksum: String,
 }
 
