@@ -23,13 +23,14 @@ use bdk_wallet::descriptor::policy::{
     Condition as BdkCondition, PkOrF as BdkPkOrF, Policy as BdkPolicy,
     Satisfaction as BdkSatisfaction, SatisfiableItem as BdkSatisfiableItem,
 };
-use bdk_wallet::event::WalletEvent as BdkWalletEvent;
+use bdk_wallet::locked_outpoints::ChangeSet as BdkLockedOutpointsChangeSet;
 #[allow(deprecated)]
 use bdk_wallet::signer::{SignOptions as BdkSignOptions, TapLeavesOptions};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
+use bdk_wallet::WalletEvent as BdkWalletEvent;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::convert::TryFrom;
@@ -1178,6 +1179,35 @@ impl From<TxGraphChangeSet> for bdk_wallet::chain::tx_graph::ChangeSet<BdkConfir
     }
 }
 
+#[derive(Debug, Clone, Default)]
+struct LockedOutpointsChangeSet(HashMap<Arc<HashableOutPoint>, bool>);
+
+impl From<LockedOutpointsChangeSet> for BdkLockedOutpointsChangeSet {
+    fn from(value: LockedOutpointsChangeSet) -> Self {
+        let outpoints = value
+            .0
+            .into_iter()
+            .map(|(outpoint, is_locked)| (outpoint.outpoint().into(), is_locked))
+            .collect();
+
+        Self { outpoints }
+    }
+}
+
+impl From<BdkLockedOutpointsChangeSet> for LockedOutpointsChangeSet {
+    fn from(value: BdkLockedOutpointsChangeSet) -> Self {
+        Self(
+            value
+                .outpoints
+                .into_iter()
+                .map(|(outpoint, is_locked)| {
+                    (Arc::new(HashableOutPoint(outpoint.into())), is_locked)
+                })
+                .collect(),
+        )
+    }
+}
+
 #[derive(Debug, Clone, uniffi::Object)]
 pub struct ChangeSet {
     descriptor: Option<Arc<Descriptor>>,
@@ -1186,6 +1216,7 @@ pub struct ChangeSet {
     local_chain: LocalChainChangeSet,
     tx_graph: TxGraphChangeSet,
     indexer: IndexerChangeSet,
+    locked_outpoints: LockedOutpointsChangeSet,
 }
 
 #[uniffi::export]
@@ -1213,6 +1244,7 @@ impl ChangeSet {
             local_chain,
             tx_graph,
             indexer,
+            locked_outpoints: LockedOutpointsChangeSet::default(),
         }
     }
 
@@ -1229,6 +1261,7 @@ impl ChangeSet {
             local_chain: LocalChainChangeSet::default(),
             tx_graph: TxGraphChangeSet::default(),
             indexer: IndexerChangeSet::default(),
+            locked_outpoints: LockedOutpointsChangeSet::default(),
         }
     }
 
@@ -1307,6 +1340,7 @@ impl From<ChangeSet> for bdk_wallet::ChangeSet {
         let local_chain = value.local_chain.into();
         let tx_graph = value.tx_graph.into();
         let indexer = value.indexer.into();
+        let locked_outpoints = value.locked_outpoints.into();
         Self {
             descriptor,
             change_descriptor,
@@ -1314,6 +1348,7 @@ impl From<ChangeSet> for bdk_wallet::ChangeSet {
             local_chain,
             tx_graph,
             indexer,
+            locked_outpoints,
         }
     }
 }
@@ -1336,6 +1371,7 @@ impl From<bdk_wallet::ChangeSet> for ChangeSet {
         let local_chain = value.local_chain.into();
         let tx_graph = value.tx_graph.into();
         let indexer = value.indexer.into();
+        let locked_outpoints = value.locked_outpoints.into();
         Self {
             descriptor,
             change_descriptor,
@@ -1343,6 +1379,7 @@ impl From<bdk_wallet::ChangeSet> for ChangeSet {
             local_chain,
             tx_graph,
             indexer,
+            locked_outpoints,
         }
     }
 }

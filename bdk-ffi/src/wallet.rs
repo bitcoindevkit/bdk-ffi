@@ -205,13 +205,6 @@ impl Wallet {
             })
     }
 
-    /// Informs the wallet that you no longer intend to broadcast a tx that was built from it.
-    ///
-    /// This frees up the change address used when creating the tx for use in future transactions.
-    pub fn cancel_tx(&self, tx: &Transaction) {
-        self.get_wallet().cancel_tx(&tx.into())
-    }
-
     /// Returns the utxo owned by this wallet corresponding to `outpoint` if it exists in the
     /// wallet's database.
     pub fn get_utxo(&self, op: OutPoint) -> Option<LocalOutput> {
