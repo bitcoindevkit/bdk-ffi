@@ -42,7 +42,7 @@ just test
 
 9. - [ ] Update the Android and Swift libraries as per the _Part 2_ section above. Open a single PR on `master` for all of these changes called `Prepare language bindings libraries for 0.X release`. See [example PR here](https://github.com/bitcoindevkit/bdk-ffi/pull/315).
 10. - [ ] Create a new branch off of `master` called `release/<feature version>`, e.g. `release/1.2`
-11. - [ ] Update bdk-android version from `SNAPSHOT` version to release version and open a PR to the release branch that updates the Android version. See [example PR here](https://github.com/bitcoindevkit/bdk-ffi/pull/316).
+11. - [ ] Update the bdk-android version from a `SNAPSHOT` version to a release version (`2.4.0-SNAPSHOT` -> `2.4.0` and the Rust library version in `Cargo.toml` from an alpha a release version (`2.4.0-alpha.0` -> `2.4.0`), and open a PR to the release branch that updates these versions.
 12. - [ ] Get a review and ACK and merge this PR on the release branch.
 13. - [ ] Create the tag for the release and make sure to add the changelog info to the tag (works better if you prepare the tag message on the side in a text editor). Push the tag to GitHub.
 ```shell
