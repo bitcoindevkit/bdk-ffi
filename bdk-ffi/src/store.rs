@@ -1,6 +1,10 @@
-use crate::error::PersistenceError;
+use crate::error::{PersistenceError, PreV1MigrationError};
 use crate::types::ChangeSet;
 
+use bdk_wallet::migration::{
+    get_pre_v1_wallet_keychains as bdk_get_pre_v1_wallet_keychains,
+    PreV1WalletKeychain as BdkPreV1WalletKeychain,
+};
 use bdk_wallet::{rusqlite::Connection as BdkConnection, WalletPersister};
 
 use std::ops::DerefMut;
@@ -19,6 +23,19 @@ pub trait Persistence: Send + Sync {
 pub(crate) enum PersistenceType {
     Custom(Arc<dyn Persistence>),
     Sql(Mutex<BdkConnection>),
+}
+
+/// `PreV1WalletKeychain` represents a structure that holds the keychain details
+/// and metadata required for managing a wallet's keys.
+#[derive(Debug, Clone, uniffi::Record)]
+pub struct PreV1WalletKeychain {
+    /// The name of the wallet keychains, "External" or "Internal".
+    pub keychain: bdk_wallet::KeychainKind,
+    /// The index of the last derived key in the wallet keychain.
+    pub last_derivation_index: u32,
+    /// Checksum of the keychain descriptor, it must match the corresponding
+    /// post-1.0 bdk wallet descriptor checksum.
+    pub checksum: String,
 }
 
 /// Wallet backend implementations.
@@ -52,6 +69,32 @@ impl Persister {
     pub fn custom(persistence: Arc<dyn Persistence>) -> Self {
         Self {
             inner: PersistenceType::Custom(persistence).into(),
+        }
+    }
+
+    /// Retrieve keychain metadata from a pre-v1 BDK SQLite wallet database.
+    pub fn get_pre_v1_wallet_keychains(
+        &self,
+    ) -> Result<Vec<PreV1WalletKeychain>, PreV1MigrationError> {
+        let mut lock = self.inner.lock().unwrap();
+        match lock.deref_mut() {
+            PersistenceType::Sql(ref conn) => {
+                let mut conn_lock = conn.lock().unwrap();
+                bdk_get_pre_v1_wallet_keychains(conn_lock.deref_mut())
+                    .map(|keychains| keychains.into_iter().map(Into::into).collect())
+                    .map_err(Into::into)
+            }
+            PersistenceType::Custom(_) => Err(PreV1MigrationError::SqliteOnly),
+        }
+    }
+}
+
+impl From<BdkPreV1WalletKeychain> for PreV1WalletKeychain {
+    fn from(value: BdkPreV1WalletKeychain) -> Self {
+        Self {
+            keychain: value.keychain,
+            last_derivation_index: value.last_derivation_index,
+            checksum: value.checksum,
         }
     }
 }

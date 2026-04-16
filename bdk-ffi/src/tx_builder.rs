@@ -1,20 +1,22 @@
 use crate::bitcoin::{Amount, FeeRate, Input, OutPoint, Psbt, Script, Txid};
-use crate::error::{AddForeignUtxoError, CreateTxError};
+use crate::error::{AddForeignUtxoError, CreateTxError, SighashParseError};
 use crate::types::{LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
+use bdk_wallet::bitcoin::psbt::PsbtSighashType as BdkPsbtSighashType;
 use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Weight as BdkWeight};
-use bdk_wallet::KeychainKind;
+use bdk_wallet::{KeychainKind, TxOrdering as BdkTxOrdering};
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::convert::{TryFrom, TryInto};
+use std::str::FromStr;
 use std::sync::Arc;
 
 type ChangeSpendPolicy = bdk_wallet::ChangeSpendPolicy;
@@ -41,10 +43,12 @@ pub struct TxBuilder {
     locktime: Option<LockTime>,
     allow_dust: bool,
     version: Option<i32>,
+    sighash: Option<BdkPsbtSighashType>,
+    ordering: TxOrdering,
     exclude_unconfirmed: bool,
     exclude_below_confirmations: Option<u32>,
     only_witness_utxo: bool,
-    foreign_utxos: Vec<(BdkOutPoint, BdkInput, BdkWeight)>,
+    foreign_utxos: Vec<(BdkOutPoint, BdkInput, BdkWeight, Option<u32>)>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -71,6 +75,8 @@ impl TxBuilder {
             locktime: None,
             allow_dust: false,
             version: None,
+            sighash: None,
+            ordering: TxOrdering::Shuffle,
             exclude_unconfirmed: false,
             exclude_below_confirmations: None,
             only_witness_utxo: false,
@@ -371,6 +377,30 @@ impl TxBuilder {
         })
     }
 
+    /// Sign with a specific sig hash
+    ///
+    /// **Use this option very carefully**
+    pub fn sighash(&self, sighash: String) -> Result<Arc<Self>, SighashParseError> {
+        let sighash = parse_sighash_type(&sighash)?;
+        Ok(Arc::new(TxBuilder {
+            sighash: Some(sighash),
+            ..self.clone()
+        }))
+    }
+
+    /// Choose the ordering for inputs and outputs of the transaction
+    ///
+    /// When [TxBuilder::ordering] is set to [TxOrdering::Untouched], the insertion order of
+    /// recipients and manually selected UTXOs is preserved and reflected exactly in transaction's
+    /// output and input vectors respectively. If algorithmically selected UTXOs are included, they
+    /// will be placed after all the manually selected ones in the transaction's input vector.
+    pub fn ordering(&self, ordering: TxOrdering) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            ordering,
+            ..self.clone()
+        })
+    }
+
     /// Only Fill-in the [`psbt::Input::witness_utxo`](bitcoin::psbt::Input::witness_utxo) field
     /// when spending from SegWit descriptors.
     ///
@@ -469,7 +499,46 @@ impl TxBuilder {
         let bdk_weight = BdkWeight::from_wu(satisfaction_weight);
 
         let mut foreign_utxos = self.foreign_utxos.clone();
-        foreign_utxos.push((bdk_outpoint, bdk_input, bdk_weight));
+        foreign_utxos.push((bdk_outpoint, bdk_input, bdk_weight, None));
+
+        Ok(Arc::new(TxBuilder {
+            foreign_utxos,
+            ..self.clone()
+        }))
+    }
+
+    /// Same as [add_foreign_utxo](TxBuilder::add_foreign_utxo) but allows to set the nSequence
+    /// value.
+    pub fn add_foreign_utxo_with_sequence(
+        &self,
+        outpoint: OutPoint,
+        psbt_input: Input,
+        satisfaction_weight: u64,
+        sequence: u32,
+    ) -> Result<Arc<Self>, AddForeignUtxoError> {
+        let bdk_outpoint: BdkOutPoint = outpoint.into();
+        let bdk_input: BdkInput = psbt_input.try_into()?;
+
+        if bdk_input.witness_utxo.is_none() {
+            match bdk_input.non_witness_utxo.as_ref() {
+                Some(tx) => {
+                    if tx.compute_txid() != bdk_outpoint.txid {
+                        return Err(AddForeignUtxoError::InvalidTxid);
+                    }
+                    if tx.output.len() <= bdk_outpoint.vout as usize {
+                        return Err(AddForeignUtxoError::InvalidOutpoint {
+                            outpoint: bdk_outpoint.to_string(),
+                        });
+                    }
+                }
+                None => return Err(AddForeignUtxoError::MissingUtxo),
+            }
+        }
+
+        let bdk_weight = BdkWeight::from_wu(satisfaction_weight);
+
+        let mut foreign_utxos = self.foreign_utxos.clone();
+        foreign_utxos.push((bdk_outpoint, bdk_input, bdk_weight, Some(sequence)));
 
         Ok(Arc::new(TxBuilder {
             foreign_utxos,
@@ -545,6 +614,10 @@ impl TxBuilder {
         if let Some(version) = self.version {
             tx_builder.version(version);
         }
+        if let Some(sighash) = self.sighash {
+            tx_builder.sighash(sighash);
+        }
+        tx_builder.ordering(self.ordering.into());
         if self.exclude_unconfirmed {
             tx_builder.exclude_unconfirmed();
         }
@@ -554,10 +627,20 @@ impl TxBuilder {
         if self.only_witness_utxo {
             tx_builder.only_witness_utxo();
         }
-        for (outpoint, input, weight) in &self.foreign_utxos {
-            tx_builder
-                .add_foreign_utxo(*outpoint, input.clone(), *weight)
-                .map_err(AddForeignUtxoError::from)?;
+        for (outpoint, input, weight, sequence) in &self.foreign_utxos {
+            match sequence {
+                Some(sequence) => tx_builder
+                    .add_foreign_utxo_with_sequence(
+                        *outpoint,
+                        input.clone(),
+                        *weight,
+                        Sequence(*sequence),
+                    )
+                    .map_err(AddForeignUtxoError::from)?,
+                None => tx_builder
+                    .add_foreign_utxo(*outpoint, input.clone(), *weight)
+                    .map_err(AddForeignUtxoError::from)?,
+            };
         }
         let psbt = tx_builder.finish().map_err(CreateTxError::from)?;
 
@@ -576,6 +659,8 @@ pub struct BumpFeeTxBuilder {
     locktime: Option<LockTime>,
     allow_dust: bool,
     version: Option<i32>,
+    sighash: Option<BdkPsbtSighashType>,
+    ordering: TxOrdering,
 }
 
 #[uniffi::export]
@@ -590,6 +675,8 @@ impl BumpFeeTxBuilder {
             locktime: None,
             allow_dust: false,
             version: None,
+            sighash: None,
+            ordering: TxOrdering::Shuffle,
         }
     }
 
@@ -653,6 +740,30 @@ impl BumpFeeTxBuilder {
         })
     }
 
+    /// Sign with a specific sig hash
+    ///
+    /// **Use this option very carefully**
+    pub fn sighash(&self, sighash: String) -> Result<Arc<Self>, SighashParseError> {
+        let sighash = parse_sighash_type(&sighash)?;
+        Ok(Arc::new(BumpFeeTxBuilder {
+            sighash: Some(sighash),
+            ..self.clone()
+        }))
+    }
+
+    /// Choose the ordering for inputs and outputs of the transaction
+    ///
+    /// When [TxBuilder::ordering] is set to [TxOrdering::Untouched], the insertion order of
+    /// recipients and manually selected UTXOs is preserved and reflected exactly in transaction's
+    /// output and input vectors respectively. If algorithmically selected UTXOs are included, they
+    /// will be placed after all the manually selected ones in the transaction's input vector.
+    pub fn ordering(&self, ordering: TxOrdering) -> Arc<Self> {
+        Arc::new(BumpFeeTxBuilder {
+            ordering,
+            ..self.clone()
+        })
+    }
+
     /// Finish building the transaction.
     ///
     /// Uses the thread-local random number generator (rng).
@@ -683,6 +794,10 @@ impl BumpFeeTxBuilder {
         if let Some(version) = self.version {
             tx_builder.version(version);
         }
+        if let Some(sighash) = self.sighash {
+            tx_builder.sighash(sighash);
+        }
+        tx_builder.ordering(self.ordering.into());
 
         let psbt: BdkPsbt = tx_builder.finish()?;
 
@@ -700,4 +815,35 @@ pub enum ChangeSpendPolicy {
     OnlyChange,
     /// Only use non-change outputs (see [`bdk_wallet::TxBuilder::do_not_spend_change`]).
     ChangeForbidden,
+}
+
+/// Ordering of the transaction's inputs and outputs.
+#[derive(Clone, Copy, Debug, Default, uniffi::Enum)]
+pub enum TxOrdering {
+    /// Randomized (default)
+    #[default]
+    Shuffle,
+    /// Untouched
+    ///
+    /// Untouched insertion order for recipients and for manually added UTXOs. This guarantees all
+    /// recipients preserve insertion order in the transaction's output vector and manually added
+    /// UTXOs preserve insertion order in the transaction's input vector, but does not make any
+    /// guarantees about algorithmically selected UTXOs. However, by design they will always be
+    /// placed after the manually selected ones.
+    Untouched,
+}
+
+impl From<TxOrdering> for BdkTxOrdering {
+    fn from(value: TxOrdering) -> Self {
+        match value {
+            TxOrdering::Shuffle => BdkTxOrdering::Shuffle,
+            TxOrdering::Untouched => BdkTxOrdering::Untouched,
+        }
+    }
+}
+
+fn parse_sighash_type(sighash: &str) -> Result<BdkPsbtSighashType, SighashParseError> {
+    BdkPsbtSighashType::from_str(sighash).map_err(|error| SighashParseError::Invalid {
+        error_message: error.to_string(),
+    })
 }

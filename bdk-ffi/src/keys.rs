@@ -147,7 +147,7 @@ impl DescriptorSecretKey {
         let xkey: ExtendedKey = (mnemonic, password).into_extended_key().unwrap();
         let descriptor_secret_key = BdkDescriptorSecretKey::XPrv(DescriptorXKey {
             origin: None,
-            xkey: xkey.into_xprv(network).unwrap(),
+            xkey: xkey.into_xprv(network.into()).unwrap(),
             derivation_path: BdkDerivationPath::master(),
             wildcard: Wildcard::Unhardened,
         });

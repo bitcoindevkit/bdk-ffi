@@ -205,13 +205,6 @@ impl Wallet {
             })
     }
 
-    /// Informs the wallet that you no longer intend to broadcast a tx that was built from it.
-    ///
-    /// This frees up the change address used when creating the tx for use in future transactions.
-    pub fn cancel_tx(&self, tx: &Transaction) {
-        self.get_wallet().cancel_tx(&tx.into())
-    }
-
     /// Returns the utxo owned by this wallet corresponding to `outpoint` if it exists in the
     /// wallet's database.
     pub fn get_utxo(&self, op: OutPoint) -> Option<LocalOutput> {
@@ -348,6 +341,29 @@ impl Wallet {
         )
     }
 
+    /// Apply relevant unconfirmed transactions to the wallet and returns events.
+    ///
+    /// See [`apply_unconfirmed_txs`] for more information.
+    ///
+    /// See [`apply_update_events`] for more information on the returned [`WalletEvent`]s.
+    ///
+    /// [`apply_unconfirmed_txs`]: Self::apply_unconfirmed_txs
+    /// [`apply_update_events`]: Self::apply_update_events
+    pub fn apply_unconfirmed_txs_events(
+        &self,
+        unconfirmed_txs: Vec<UnconfirmedTx>,
+    ) -> Vec<WalletEvent> {
+        self.get_wallet()
+            .apply_unconfirmed_txs_events(
+                unconfirmed_txs
+                    .into_iter()
+                    .map(|utx| (Arc::new(utx.tx.as_ref().into()), utx.last_seen)),
+            )
+            .into_iter()
+            .map(|event| event.into())
+            .collect()
+    }
+
     /// Apply transactions that have been evicted from the mempool.
     /// Transactions may be evicted for paying too-low fee, or for being malformed.
     /// Irrelevant transactions are ignored.
@@ -359,6 +375,27 @@ impl Wallet {
                 .into_iter()
                 .map(|etx| (etx.txid.0, etx.evicted_at)),
         );
+    }
+
+    /// Apply evictions of the given transaction IDs with their associated timestamps and returns
+    /// events.
+    ///
+    /// See [`apply_evicted_txs`] for more information.
+    ///
+    /// See [`apply_update_events`] for more information on the returned [`WalletEvent`]s.
+    ///
+    /// [`apply_evicted_txs`]: Self::apply_evicted_txs
+    /// [`apply_update_events`]: Self::apply_update_events
+    pub fn apply_evicted_txs_events(&self, evicted_txs: Vec<EvictedTx>) -> Vec<WalletEvent> {
+        self.get_wallet()
+            .apply_evicted_txs_events(
+                evicted_txs
+                    .into_iter()
+                    .map(|etx| (etx.txid.0, etx.evicted_at)),
+            )
+            .into_iter()
+            .map(|event| event.into())
+            .collect()
     }
 
     /// The derivation index of this wallet. It will return `None` if it has not derived any addresses.
@@ -541,6 +578,45 @@ impl Wallet {
         self.get_wallet().list_unspent().map(|o| o.into()).collect()
     }
 
+    /// List the locked outpoints.
+    pub fn list_locked_outpoints(&self) -> Vec<OutPoint> {
+        self.get_wallet()
+            .list_locked_outpoints()
+            .map(Into::into)
+            .collect()
+    }
+
+    /// List unspent outpoints that are currently locked.
+    pub fn list_locked_unspent(&self) -> Vec<OutPoint> {
+        self.get_wallet()
+            .list_locked_unspent()
+            .map(Into::into)
+            .collect()
+    }
+
+    /// Whether the `outpoint` is locked. See `Wallet::lock_outpoint` for more.
+    pub fn is_outpoint_locked(&self, outpoint: OutPoint) -> bool {
+        self.get_wallet().is_outpoint_locked(outpoint.into())
+    }
+
+    /// Lock a wallet output identified by the given `outpoint`.
+    ///
+    /// A locked UTXO will not be selected as an input to fund a transaction. This is useful
+    /// for excluding or reserving candidate inputs during transaction creation.
+    ///
+    /// **You must persist the staged change for the lock status to be persistent**. To unlock a
+    /// previously locked outpoint, see `Wallet::unlock_outpoint`.
+    pub fn lock_outpoint(&self, outpoint: OutPoint) {
+        self.get_wallet().lock_outpoint(outpoint.into());
+    }
+
+    /// Unlock the wallet output of the specified `outpoint`.
+    ///
+    /// **You must persist the staged change for the lock status to be persistent**.
+    pub fn unlock_outpoint(&self, outpoint: OutPoint) {
+        self.get_wallet().unlock_outpoint(outpoint.into());
+    }
+
     /// List all relevant outputs (includes both spent and unspent, confirmed and unconfirmed).
     ///
     /// To list only unspent outputs (UTXOs), use [`Wallet::list_unspent`] instead.
@@ -559,6 +635,23 @@ impl Wallet {
     pub fn start_full_scan(&self) -> Arc<FullScanRequestBuilder> {
         let builder = self.get_wallet().start_full_scan();
         Arc::new(FullScanRequestBuilder(Mutex::new(Some(builder))))
+    }
+
+    /// Create a [`FullScanRequest`] builder at `start_time`.
+    pub fn start_full_scan_at(&self, start_time: u64) -> Arc<FullScanRequestBuilder> {
+        let builder = self.get_wallet().start_full_scan_at(start_time);
+        Arc::new(FullScanRequestBuilder(Mutex::new(Some(builder))))
+    }
+
+    /// Create a partial [`SyncRequest`] for all revealed spks at `start_time`.
+    ///
+    /// The `start_time` is used to record the time that a mempool transaction was last seen
+    /// (or evicted). See [`Wallet::start_sync_with_revealed_spks`] for more.
+    pub fn start_sync_with_revealed_spks_at(&self, start_time: u64) -> Arc<SyncRequestBuilder> {
+        let builder = self
+            .get_wallet()
+            .start_sync_with_revealed_spks_at(start_time);
+        Arc::new(SyncRequestBuilder(Mutex::new(Some(builder))))
     }
 
     /// Create a partial [`SyncRequest`] for this wallet for all revealed spks.
@@ -603,6 +696,14 @@ impl Wallet {
     /// Returns the latest checkpoint.
     pub fn latest_checkpoint(&self) -> BlockId {
         self.get_wallet().latest_checkpoint().block_id().into()
+    }
+
+    /// Get all the checkpoints the wallet is currently storing indexed by height.
+    pub fn checkpoints(&self) -> Vec<BlockId> {
+        self.get_wallet()
+            .checkpoints()
+            .map(|checkpoint| checkpoint.block_id().into())
+            .collect()
     }
 
     /// Get the [`TxDetails`] of a wallet transaction.
