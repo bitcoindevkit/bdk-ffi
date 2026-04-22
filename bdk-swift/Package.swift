@@ -14,6 +14,9 @@ let package = Package(
         .library(
             name: "BitcoinDevKit",
             targets: ["bdkFFI", "BitcoinDevKit"]),
+        .executable(
+            name: "WalletSetupBip32",
+            targets: ["WalletSetupBip32"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -37,6 +40,11 @@ let package = Package(
             resources: [
                 .copy("Resources/pre_existing_wallet_persistence_test.sqlite")
             ]
+        ),
+        .executableTarget(
+            name: "WalletSetupBip32",
+            dependencies: ["BitcoinDevKit"],
+            path: "Examples/WalletSetupBip32"
         ),
     ]
 )

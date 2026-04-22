@@ -43,6 +43,7 @@ Info.plist
 bdkffi.xcframework
 Sources/
 xcuserdata
+bdk-swift/data
 
 # Python related
 __pycache__

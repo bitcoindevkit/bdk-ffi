@@ -33,6 +33,13 @@ The `bdk-swift/build-xcframework.sh` script can be used instead to create a vers
 swift test
 ```
 
+### Run example files
+The `Examples` directory shows a sample of how some of the APIs can be used. The swift target to run is by convention the directory name of the example.
+
+```
+swift run WalletSetupBip32Example
+```
+
 ### Example Projects
 
 - [BDKSwiftExampleWallet](https://github.com/bitcoindevkit/BDKSwiftExampleWallet), iOS
