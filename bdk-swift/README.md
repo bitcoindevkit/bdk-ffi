@@ -37,7 +37,7 @@ swift test
 The `Examples` directory shows a sample of how some of the APIs can be used. The swift target to run is by convention the directory name of the example.
 
 ```
-swift run WalletSetupBip32Example
+swift run WalletSetupBip32
 ```
 
 ### Example Projects
