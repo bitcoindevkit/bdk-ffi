@@ -39,6 +39,7 @@ The `Examples` directory shows samples of how some of the APIs can be used. The 
 ```
 swift run WalletSetupBip32
 swift run MultisigTransaction
+swift run MultisigTaprootTransaction
 ```
 
 ### Example Projects
