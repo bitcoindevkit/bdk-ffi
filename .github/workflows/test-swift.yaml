@@ -41,3 +41,4 @@ jobs:
         run: |
           swift test --filter Offline
           swift build --target WalletSetupBip32
+          swift build --target MultisigTransaction

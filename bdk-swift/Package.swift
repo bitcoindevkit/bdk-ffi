@@ -17,6 +17,9 @@ let package = Package(
         .executable(
             name: "WalletSetupBip32",
             targets: ["WalletSetupBip32"]),
+        .executable(
+            name: "MultisigTransaction",
+            targets: ["MultisigTransaction"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -45,6 +48,11 @@ let package = Package(
             name: "WalletSetupBip32",
             dependencies: ["BitcoinDevKit"],
             path: "Examples/WalletSetupBip32"
+        ),
+        .executableTarget(
+            name: "MultisigTransaction",
+            dependencies: ["BitcoinDevKit"],
+            path: "Examples/MultisigTransaction"
         ),
     ]
 )

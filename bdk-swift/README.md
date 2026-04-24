@@ -34,10 +34,11 @@ swift test
 ```
 
 ### Run example files
-The `Examples` directory shows a sample of how some of the APIs can be used. The swift target to run is by convention the directory name of the example.
+The `Examples` directory shows samples of how some of the APIs can be used. The swift target to run is by convention the directory name of each example.
 
 ```
 swift run WalletSetupBip32
+swift run MultisigTransaction
 ```
 
 ### Example Projects
