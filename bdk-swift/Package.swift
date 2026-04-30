@@ -20,6 +20,9 @@ let package = Package(
         .executable(
             name: "MultisigTransaction",
             targets: ["MultisigTransaction"]),
+        .executable(
+            name: "MultisigTaprootTransaction",
+            targets: ["MultisigTaprootTransaction"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -53,6 +56,11 @@ let package = Package(
             name: "MultisigTransaction",
             dependencies: ["BitcoinDevKit"],
             path: "Examples/MultisigTransaction"
+        ),
+        .executableTarget(
+            name: "MultisigTaprootTransaction",
+            dependencies: ["BitcoinDevKit"],
+            path: "Examples/MultisigTaprootTransaction"
         ),
     ]
 )
