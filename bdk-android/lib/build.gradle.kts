@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "org.bitcoindevkit"
-version = "2.4.0-SNAPSHOT"
+version = "3.0.0-RC1"
 
 android {
     namespace = group.toString()
