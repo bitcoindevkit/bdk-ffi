@@ -28,12 +28,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Exposed `new_sh`, `new_wsh`,`new_bare` and `new_sh_wsh` methods on `Descriptor` type [#988]
 
 [#853]: https://github.com/bitcoindevkit/bdk-ffi/pull/853
-[#853]: https://github.com/bitcoindevkit/bdk-ffi/pull/945
-[#853]: https://github.com/bitcoindevkit/bdk-ffi/pull/949
-[#986]: https://github.com/bitcoindevkit/bdk-ffi/pull/971
-[#986]: https://github.com/bitcoindevkit/bdk-ffi/pull/973
+[#945]: https://github.com/bitcoindevkit/bdk-ffi/pull/945
+[#949]: https://github.com/bitcoindevkit/bdk-ffi/pull/949
+[#971]: https://github.com/bitcoindevkit/bdk-ffi/pull/971
+[#973]: https://github.com/bitcoindevkit/bdk-ffi/pull/973
 [#986]: https://github.com/bitcoindevkit/bdk-ffi/pull/986
-[#986]: https://github.com/bitcoindevkit/bdk-ffi/pull/988
+[#988]: https://github.com/bitcoindevkit/bdk-ffi/pull/988
 
 ## [v2.3.0]
 
@@ -48,24 +48,36 @@ This is version `2.3.0` of the BDK language bindings! This release uses the foll
 
 ### Added
 
-- Expose `Wallet::apply_update_events` which returns a `WalletEvent` type #908
-- Expose `Psbt::output` which returns a list of psbt `Output` #903
-- `Other` variant added to CBF `RecoveryPoint` to enable wallet birthdays #920
-- Implement `Display` trait for `FeeRate` #859
-- Expose `FeeRate::fee_vb` and `FeeRate::fee_wu` methods #859
-- Wallet API: expose `TxBuilder::only_witness_utxo` and `TxBuilder::add_foreign_utxo` #928
-- Esplora API: expose `get_block_by_hash` which returns a `Block` #936
-- Esplora API: expose `get_tip_hash` #930
-- Esplora API: expose `get_header_by_hash` #930
-- Esplora API: expose `get_address_txs` #930
-- Esplora API: expose `get_tx_no_opt` #930
-- Esplora API: expose `get_txid_at_block_index` #930
-- Esplora API: expose `get_merkle_proof` and `get_output_status` #942
-- Electrum API: expose `fetch_tx` #931
-- Electrum API: expose `block_header` #931
-- Electrum API: expose `block_headers_pop` #931
-- Electrum API: expose `relay_fee` and `transaction_get_raw` #938
-- DerivationPath: expose `child`, `extend`, and `to_u32_vec` #935
+- Expose `Wallet::apply_update_events` which returns a `WalletEvent` type [#908]
+- Expose `Psbt::output` which returns a list of psbt `Output` [#903]
+- `Other` variant added to CBF `RecoveryPoint` to enable wallet birthdays [#920]
+- Implement `Display` trait for `FeeRate` [#859]
+- Expose `FeeRate::fee_vb` and `FeeRate::fee_wu` methods [#859]
+- Wallet API: expose `TxBuilder::only_witness_utxo` and `TxBuilder::add_foreign_utxo` [#928]
+- Esplora API: expose `get_block_by_hash` which returns a `Block` [#936]
+- Esplora API: expose `get_tip_hash` [#930]
+- Esplora API: expose `get_header_by_hash` [#930]
+- Esplora API: expose `get_address_txs` [#930]
+- Esplora API: expose `get_tx_no_opt` [#930]
+- Esplora API: expose `get_txid_at_block_index` [#930]
+- Esplora API: expose `get_merkle_proof` and `get_output_status` [#942]
+- Electrum API: expose `fetch_tx` [#931]
+- Electrum API: expose `block_header` [#931]
+- Electrum API: expose `block_headers_pop` [#931]
+- Electrum API: expose `relay_fee` and `transaction_get_raw` [#938]
+- DerivationPath: expose `child`, `extend`, and `to_u32_vec` [#935]
+
+[#859]: https://github.com/bitcoindevkit/bdk-ffi/pull/859
+[#903]: https://github.com/bitcoindevkit/bdk-ffi/pull/903
+[#908]: https://github.com/bitcoindevkit/bdk-ffi/pull/908
+[#920]: https://github.com/bitcoindevkit/bdk-ffi/pull/920
+[#928]: https://github.com/bitcoindevkit/bdk-ffi/pull/928
+[#930]: https://github.com/bitcoindevkit/bdk-ffi/pull/930
+[#931]: https://github.com/bitcoindevkit/bdk-ffi/pull/931
+[#935]: https://github.com/bitcoindevkit/bdk-ffi/pull/935
+[#936]: https://github.com/bitcoindevkit/bdk-ffi/pull/936
+[#938]: https://github.com/bitcoindevkit/bdk-ffi/pull/938
+[#942]: https://github.com/bitcoindevkit/bdk-ffi/pull/942
 
 ## [v2.2.0]
 
@@ -298,6 +310,7 @@ This release updates the `bdk-ffi` libraries to the latest `bdk_wallet` `1.0.0-b
 [#623]: https://github.com/bitcoindevkit/bdk-ffi/pull/623
 [#625]: https://github.com/bitcoindevkit/bdk-ffi/pull/625
 [#629]: https://github.com/bitcoindevkit/bdk-ffi/pull/629
+[#630]: https://github.com/bitcoindevkit/bdk-ffi/pull/630
 [#645]: https://github.com/bitcoindevkit/bdk-ffi/pull/645
 
 ## [v1.0.0-beta.5]
@@ -617,6 +630,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 [#154]: https://github.com/bitcoindevkit/bdk-ffi/pull/154
 [#184]: https://github.com/bitcoindevkit/bdk-ffi/pull/184
 [#185]: https://github.com/bitcoindevkit/bdk-ffi/pull/185
+[#186]: https://github.com/bitcoindevkit/bdk-ffi/pull/186
 [#193]: https://github.com/bitcoindevkit/bdk-ffi/pull/193
 
 ## [v0.8.0]
