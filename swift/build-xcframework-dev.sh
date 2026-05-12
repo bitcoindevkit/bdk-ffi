@@ -3,13 +3,13 @@
 set -euo pipefail
 
 HEADER_BASENAME="BitcoinDevKitFFI"
-TARGETDIR="../bdk-ffi/target"
+TARGETDIR="../rust/target"
 OUTDIR="."
 NAME="bdkffi"
 STATIC_LIB_NAME="lib${NAME}.a"
-NEW_HEADER_DIR="../bdk-ffi/target/include"
+NEW_HEADER_DIR="../rust/target/include"
 PROFILE_DIR="debug"
-SWIFT_OUT_DIR="../bdk-swift/Sources/BitcoinDevKit"
+SWIFT_OUT_DIR="../swift/Sources/BitcoinDevKit"
 HEADER_OUT_DIR="${NEW_HEADER_DIR}/${HEADER_BASENAME}"
 MIN_IOS_VERSION="15.0"
 
@@ -25,7 +25,7 @@ IOS_DEVICE_TARGET="aarch64-apple-ios"
 
 export IPHONEOS_DEPLOYMENT_TARGET="${MIN_IOS_VERSION}"
 
-cd ../bdk-ffi/ || exit
+cd ../rust/ || exit
 
 rustup component add rust-src
 rustup target add "$MAC_TARGET" "$IOS_SIM_TARGET" "$IOS_DEVICE_TARGET"
@@ -69,7 +69,7 @@ echo -e "\n" >> "${HEADER_OUT_DIR}/module.modulemap"
 rm -f "${SWIFT_OUT_DIR}/${HEADER_BASENAME}.h"
 rm -f "${SWIFT_OUT_DIR}/${HEADER_BASENAME}.modulemap"
 
-cd ../bdk-swift/ || exit
+cd ../swift/ || exit
 
 rm -rf "${OUTDIR}/${NAME}.xcframework"
 

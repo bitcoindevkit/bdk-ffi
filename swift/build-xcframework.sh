@@ -4,19 +4,19 @@
 # to your application pointing at the bdk-swift directory.
 
 HEADER_BASENAME="BitcoinDevKitFFI"
-TARGETDIR="../bdk-ffi/target"
+TARGETDIR="../rust/target"
 OUTDIR="."
 RELDIR="release-smaller"
 NAME="bdkffi"
 STATIC_LIB_NAME="lib${NAME}.a"
-NEW_HEADER_DIR="../bdk-ffi/target/include"
-SWIFT_OUT_DIR="../bdk-swift/Sources/BitcoinDevKit"
+NEW_HEADER_DIR="../rust/target/include"
+SWIFT_OUT_DIR="../swift/Sources/BitcoinDevKit"
 HEADER_OUT_DIR="${NEW_HEADER_DIR}/${HEADER_BASENAME}"
 MIN_IOS_VERSION="15.0"
 
 export IPHONEOS_DEPLOYMENT_TARGET="${MIN_IOS_VERSION}"
 
-cd ../bdk-ffi/ || exit
+cd ../rust/ || exit
 
 # install component and targets
 rustup component add rust-src
@@ -67,7 +67,7 @@ lipo target/aarch64-apple-ios-sim/release-smaller/libbdkffi.a target/x86_64-appl
 mkdir -p target/lipo-macos/release-smaller
 lipo target/aarch64-apple-darwin/release-smaller/libbdkffi.a target/x86_64-apple-darwin/release-smaller/libbdkffi.a -create -output target/lipo-macos/release-smaller/libbdkffi.a
 
-cd ../bdk-swift/ || exit
+cd ../swift/ || exit
 
 # remove old xcframework directory
 rm -rf "${OUTDIR}/${NAME}.xcframework"

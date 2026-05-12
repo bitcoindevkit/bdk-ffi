@@ -13,7 +13,7 @@ COMPILATION_TARGET_ARM64_V8A="aarch64-linux-android"
 RESOURCE_DIR_ARM64_V8A="arm64-v8a"
 
 # Move to the Rust library directory
-cd ../bdk-ffi/ || exit
+cd ../rust/ || exit
 rustup target add $COMPILATION_TARGET_ARM64_V8A
 
 # Build the binaries
@@ -21,8 +21,8 @@ rustup target add $COMPILATION_TARGET_ARM64_V8A
 CC="aarch64-linux-android24-clang" CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER="aarch64-linux-android24-clang" cargo build --target $COMPILATION_TARGET_ARM64_V8A
 
 # Copy the binaries to their respective resource directories
-mkdir -p ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
-cp ./target/$COMPILATION_TARGET_ARM64_V8A/debug/$LIB_NAME ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
+mkdir -p ../kotlin/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
+cp ./target/$COMPILATION_TARGET_ARM64_V8A/debug/$LIB_NAME ../kotlin/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
 
 # Generate Kotlin bindings using uniffi-bindgen
-cargo run --bin uniffi-bindgen generate --library ./target/$COMPILATION_TARGET_ARM64_V8A/debug/$LIB_NAME --language kotlin --out-dir ../bdk-android/lib/src/main/kotlin/ --no-format
+cargo run --bin uniffi-bindgen generate --library ./target/$COMPILATION_TARGET_ARM64_V8A/debug/$LIB_NAME --language kotlin --out-dir ../kotlin/lib/src/main/kotlin/ --no-format

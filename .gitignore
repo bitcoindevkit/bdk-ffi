@@ -20,7 +20,6 @@ testdb
 .editorconfig
 bdk.kt
 .kotlin/
-bdk-jvm/examples/data/
 
 # Swift related
 /.build
@@ -43,7 +42,3 @@ Info.plist
 bdkffi.xcframework
 Sources/
 xcuserdata
-
-# Python related
-__pycache__
-.localenvironment/

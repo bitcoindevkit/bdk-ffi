@@ -8,12 +8,12 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "bdk-ffi/**"
-      - "bdk-swift/**"
+      - "rust/**"
+      - "swift/**"
   pull_request:
     paths:
-      - "bdk-ffi/**"
-      - "bdk-swift/**"
+      - "rust/**"
+      - "swift/**"
 
 permissions: {}
 
@@ -23,7 +23,7 @@ jobs:
     runs-on: macos-15
     defaults:
       run:
-        working-directory: bdk-swift
+        working-directory: swift
 
     steps:
       - name: "Checkout"

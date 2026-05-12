@@ -34,7 +34,7 @@ The `bdk-ffi` codebase in this repository can be used to produce language bindin
 If you are familiar with the build tools for the specific languages you wish to build the libraries for, you can use their normal build/test workflows. We also include some [just](https://just.systems/) files to simplify the work across different languages. If you have the `just` tool installed on your system, you can simply call the commands defined in the justfiles, for example:
 
 ```sh
-cd bdk-android
+cd kotlin
 just build
 just test
 just publish-local
@@ -75,16 +75,12 @@ sub   cv25519 2022-08-31 [E]
 ```
 
 2. Download the binary artifacts and corresponding signature files.
-- from [bdk-jvm]
-    - `bdk-jvm-<version>.jar`
-    - `bdk-jvm-<version>.jar.asc`
 - from [bdk-android]
     - `bdk-android-<version>.aar`
     - `bdk-android-<version>.aar.asc`
 
-3. Verify the signatures.
+1. Verify the signatures.
 ```shell
-gpg --verify bdk-jvm-<version>.jar.asc
 gpg --verify bdk-android-<version>.aar.asc
 
 # you should see a "Good signature" result

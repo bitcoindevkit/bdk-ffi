@@ -19,7 +19,7 @@ assignees: ""
 - [ ] Build the library and run the offline and live tests, and adjust them if necessary (note that you'll need an Android emulator running).
 ```shell
 # start an emulator prior to running the tests
-cd ./bdk-android/
+cd ./kotlin/
 just clean
 just build
 just test
@@ -31,7 +31,7 @@ just test
 - [ ] Delete the `target` directory in bdk-ffi.
 - [ ] Run all offline and live tests and adjust them if necessary.
 ```shell
-cd ./bdk-swift/
+cd ./swift/
 just clean
 just build
 just test
@@ -55,7 +55,7 @@ git push upstream v0.6.0
 - [ ] Make sure the released libraries work and contain the artifacts you would expect.
 - [ ] Build the Rust API docs and publish them to the repo's GitHub Pages.
 ```shell
-cd bdk-ffi/
+cd rust/
 just docs
 ```
 - [ ] Bump the version on master from `1.1.0-SNAPSHOT` to `1.2.0-SNAPSHOT` (Android) and `1.1.0-alpha.0` to `1.2.0-alpha.0` (Rust).

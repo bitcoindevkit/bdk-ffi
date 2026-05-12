@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: bdk-ffi
+        working-directory: rust
 
     steps:
       - name: "Check out PR branch"
