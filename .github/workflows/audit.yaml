@@ -13,6 +13,8 @@ on:
   schedule:
     - cron: '0 0 * * 0' # Once per week
 
+permissions: {}
+
 jobs:
   security-audit:
     name: "Security audit"
