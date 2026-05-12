@@ -1,3 +1,4 @@
+use bdk_kyoto::bip157;
 use bdk_kyoto::bip157::lookup_host;
 use bdk_kyoto::bip157::tokio;
 use bdk_kyoto::bip157::AddrV2;
@@ -6,7 +7,7 @@ use bdk_kyoto::bip157::Node;
 use bdk_kyoto::bip157::ServiceFlags;
 use bdk_kyoto::builder::Builder as BDKCbfBuilder;
 use bdk_kyoto::builder::BuilderExt;
-use bdk_kyoto::HeaderCheckpoint;
+use bdk_kyoto::HashCheckpoint;
 use bdk_kyoto::Receiver;
 use bdk_kyoto::RejectReason;
 use bdk_kyoto::Requester;
@@ -196,25 +197,25 @@ impl CbfBuilder {
                 if !matches!(network, Network::Bitcoin) {
                     bdk_kyoto::ScanType::Recovery {
                         used_script_index,
-                        checkpoint: HeaderCheckpoint::from_genesis(network),
+                        checkpoint: HashCheckpoint::from_genesis(network),
                     }
                 } else {
                     match checkpoint {
                         RecoveryPoint::GenesisBlock => bdk_kyoto::ScanType::Recovery {
                             used_script_index,
-                            checkpoint: HeaderCheckpoint::from_genesis(wallet.network()),
+                            checkpoint: HashCheckpoint::from_genesis(wallet.network()),
                         },
                         RecoveryPoint::SegwitActivation => bdk_kyoto::ScanType::Recovery {
                             used_script_index,
-                            checkpoint: HeaderCheckpoint::segwit_activation(),
+                            checkpoint: HashCheckpoint::segwit_activation(),
                         },
                         RecoveryPoint::TaprootActivation => bdk_kyoto::ScanType::Recovery {
                             used_script_index,
-                            checkpoint: HeaderCheckpoint::taproot_activation(),
+                            checkpoint: HashCheckpoint::taproot_activation(),
                         },
                         RecoveryPoint::Other { birthday } => bdk_kyoto::ScanType::Recovery {
                             used_script_index,
-                            checkpoint: HeaderCheckpoint::new(birthday.height, birthday.hash.0),
+                            checkpoint: HashCheckpoint::new(birthday.height, birthday.hash.0),
                         },
                     }
                 }
@@ -302,9 +303,9 @@ impl CbfClient {
 
     /// Broadcast a transaction to the network, erroring if the node has stopped running.
     pub async fn broadcast(&self, transaction: &Transaction) -> Result<Arc<Wtxid>, CbfError> {
-        let tx = transaction.into();
+        let tx: bip157::Transaction = transaction.into();
         self.sender
-            .broadcast_tx(tx)
+            .submit_package(tx)
             .await
             .map_err(From::from)
             .map(|wtxid| Arc::new(Wtxid(wtxid)))
