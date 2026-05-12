@@ -4,7 +4,16 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v2.3.0...HEAD)
+## [v3.0.0]
+
+This is version `3.0.0` of the BDK language bindings! This release uses the following Rust dependencies:
+
+- bdk_wallet `3.0.0`
+- bdk_electrum `0.23.2`
+- bdk_esplora `0.22.1`
+- bdk_kyoto `0.17.0`
+- bitcoin `0.32.8`
+- uniffi `0.30.0`
 
 ## Breaking
 
@@ -697,6 +706,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v3.0.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.3.0...v3.0.0
 [v2.3.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.2.0...v2.3.0
 [v2.2.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.0.0...v2.2.0
 [v2.0.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v1.2.0...v2.0.0
