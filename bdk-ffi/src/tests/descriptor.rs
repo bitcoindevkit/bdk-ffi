@@ -117,6 +117,23 @@ fn test_descriptor_from_string() {
 }
 
 #[test]
+fn test_unsupported_descriptor_forms() {
+    let unsupported = [
+        "addr(tb1qhjys9wxlfykmte7ftryptx975uqgd6kcm6a7z4)",
+        "raw(6a)",
+        "combo(0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798)",
+    ];
+
+    for descriptor in unsupported {
+        assert!(
+            Descriptor::new(descriptor.to_string(), NetworkKind::Test).is_err(),
+            "{} should not be supported",
+            descriptor
+        );
+    }
+}
+
+#[test]
 fn test_new_bip84_public_invalid_fingerprint() {
     let master: DescriptorSecretKey = get_descriptor_secret_key();
     let public_84 = master

@@ -137,14 +137,18 @@ class DescriptorTest {
         }
     }
 
-    // Cannot create addr() descriptor.
     @Test
-    fun cannotCreateAddrDescriptor() {
-        assertFails {
-            val descriptor: Descriptor = Descriptor(
-                "addr(tb1qhjys9wxlfykmte7ftryptx975uqgd6kcm6a7z4)",
-                NetworkKind.TEST
-            )
+    fun unsupportedDescriptorFormsFail() {
+        val unsupported = listOf(
+            "addr(tb1qhjys9wxlfykmte7ftryptx975uqgd6kcm6a7z4)",
+            "raw(6a)",
+            "combo(0279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798)"
+        )
+
+        unsupported.forEach { descriptor ->
+            assertFails {
+                Descriptor(descriptor, NetworkKind.TEST)
+            }
         }
     }
 
