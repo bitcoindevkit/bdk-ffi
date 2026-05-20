@@ -33,7 +33,11 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
       - name: "Check Cargo.lock"
-        run: cargo check --locked
+        run: |
+          if ! cargo check --locked; then
+            echo "::error::Cargo.lock is stale. Run 'cargo generate-lockfile'."
+            exit 1
+          fi
 
       - name: "Build"
         run: cargo build
