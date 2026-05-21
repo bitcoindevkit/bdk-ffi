@@ -29,15 +29,20 @@ pub struct ElectrumClient(BdkBdkElectrumClient<bdk_electrum::electrum_client::Cl
 impl ElectrumClient {
     /// Creates a new bdk client from a electrum_client::ElectrumApi
     /// Optional: Set the proxy of the builder
+    /// Optional: Set the timeout of the builder
     /// Optional: Set whether the server's TLS certificate is validated.
-    #[uniffi::constructor(default(socks5 = None, validate_domain = true))]
+    #[uniffi::constructor(default(socks5 = None, timeout = None, validate_domain = true))]
     pub fn new(
         url: String,
         socks5: Option<String>,
+        timeout: Option<u8>,
         validate_domain: bool,
     ) -> Result<Self, ElectrumError> {
         let mut config = bdk_electrum::electrum_client::ConfigBuilder::new();
         config = config.validate_domain(validate_domain);
+        if let Some(timeout) = timeout {
+            config = config.timeout(Some(timeout));
+        }
         if let Some(socks5) = socks5 {
             config = config.socks5(Some(bdk_electrum::electrum_client::Socks5Config::new(
                 socks5.as_str(),
