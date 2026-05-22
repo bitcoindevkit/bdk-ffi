@@ -35,6 +35,7 @@ This is version `3.0.0` of the BDK language bindings! This release uses the foll
 - New `DescriptorPublicKey::add_wildcard` method, which adds an unhardened wildcard to the derivation path of the descriptor [#853]
 - New `DescriptorSecretKey::add_wildcard(wildcard_type: WildcardType)` method, which adds a wildcard to the derivation path of the descriptor [#853]
 - Exposed `new_sh`, `new_wsh`,`new_bare` and `new_sh_wsh` methods on `Descriptor` type [#988]
+- Add optional `timeout` and `retry` parameters to the Electrum client constructor [#1010]
 
 [#853]: https://github.com/bitcoindevkit/bdk-ffi/pull/853
 [#945]: https://github.com/bitcoindevkit/bdk-ffi/pull/945
@@ -43,6 +44,7 @@ This is version `3.0.0` of the BDK language bindings! This release uses the foll
 [#973]: https://github.com/bitcoindevkit/bdk-ffi/pull/973
 [#986]: https://github.com/bitcoindevkit/bdk-ffi/pull/986
 [#988]: https://github.com/bitcoindevkit/bdk-ffi/pull/988
+[#1010]: https://github.com/bitcoindevkit/bdk-ffi/pull/1010
 
 ## [v2.3.0]
 
