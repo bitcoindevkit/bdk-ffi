@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 This is version `3.0.0` of the BDK language bindings! This release uses the following Rust dependencies:
 
 - bdk_wallet `3.0.0`
-- bdk_electrum `0.23.2`
+- bdk_electrum `0.24.0`
 - bdk_esplora `0.22.1`
 - bdk_kyoto `0.17.0`
 - bitcoin `0.32.8`
