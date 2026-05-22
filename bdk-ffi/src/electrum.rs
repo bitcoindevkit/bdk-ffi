@@ -19,6 +19,7 @@ use bdk_wallet::bitcoin::hex::{Case, DisplayHex};
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::sync::Arc;
+use std::time::Duration;
 
 /// Wrapper around an electrum_client::ElectrumApi which includes an internal in-memory transaction
 /// cache to avoid re-fetching already downloaded transactions.
@@ -29,7 +30,7 @@ pub struct ElectrumClient(BdkBdkElectrumClient<bdk_electrum::electrum_client::Cl
 impl ElectrumClient {
     /// Creates a new bdk client from a electrum_client::ElectrumApi
     /// Optional: Set the proxy of the builder
-    /// Optional: Set the timeout of the builder
+    /// Optional: Set the timeout (in seconds) of the builder
     /// Optional: Set the retry attempts number of the builder
     /// Optional: Set whether the server's TLS certificate is validated.
     #[uniffi::constructor(default(socks5 = None, timeout = None, retry = None, validate_domain = true))]
@@ -43,7 +44,7 @@ impl ElectrumClient {
         let mut config = bdk_electrum::electrum_client::ConfigBuilder::new();
         config = config.validate_domain(validate_domain);
         if let Some(timeout) = timeout {
-            config = config.timeout(Some(timeout));
+            config = config.timeout(Some(Duration::from_secs(timeout.into())));
         }
         if let Some(retry) = retry {
             config = config.retry(retry);
@@ -179,7 +180,7 @@ impl ElectrumClient {
     pub fn estimate_fee(&self, number: u64) -> Result<f64, ElectrumError> {
         self.0
             .inner
-            .estimate_fee(number as usize)
+            .estimate_fee(number as usize, None)
             .map_err(ElectrumError::from)
     }
 
