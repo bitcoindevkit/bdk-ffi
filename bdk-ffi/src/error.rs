@@ -1,3 +1,4 @@
+use crate::types::KeychainKind;
 use crate::OutPoint;
 
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
@@ -782,6 +783,24 @@ pub enum PsbtParseError {
 pub enum RequestBuilderError {
     #[error("the request has already been consumed")]
     RequestAlreadyConsumed,
+}
+
+/// Errors returned when selecting the derivation indices of a keychain to sync.
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
+pub enum SpkIndexError {
+    #[error("index {index} of the {keychain:?} keychain has not been revealed, the last revealed index is {last_revealed}")]
+    NotRevealed {
+        keychain: KeychainKind,
+        index: u32,
+        last_revealed: u32,
+    },
+
+    #[error("no index of the {keychain:?} keychain has been revealed")]
+    NoneRevealed { keychain: KeychainKind },
+
+    #[error("this wallet has no {keychain:?} keychain")]
+    KeychainNotFound { keychain: KeychainKind },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
