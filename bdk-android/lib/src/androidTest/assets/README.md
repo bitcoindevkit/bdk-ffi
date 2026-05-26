@@ -4,6 +4,7 @@
 
 The wallet database `awesome_wallet_1.sqlite3` is used for testing. This wallet:
 
+- Was created using bdk_wallet 2.X
 - Is a Regtest wallet
 - Was built using 2 descriptors
 - Has a transaction on address index 0
@@ -31,3 +32,12 @@ The wallet database `wallet_pre_v1.sqlite3` is used for testing. This wallet:
 - Has revealed the first 8 addresses on the external keychain (last revealed index is 7)
 - Has revealed the first address on the internal keychain (last revealed index is 0)
 - The descriptors are BIP86 descriptors with the MNEMONIC_AWESOME mnemonic
+
+## Old Databases
+
+The `old_databases` directory contains wallets created from different versions of BDK. These wallets:
+
+- Are Regtest wallets
+- Have revealed 7 addresses (0-6) on the external keychain (next address to come up is index 7)
+- Have revealed the first address (index 0) on the internal keychain (next address to come up is index 1)
+- The wallets were created with BIP84 descriptors with the MNEMONIC_ALL mnemonic
