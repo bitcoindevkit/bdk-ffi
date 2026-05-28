@@ -67,11 +67,29 @@ class DescriptorTest {
         val newPkhDescriptor = Descriptor.newPkh("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
         val newWpkhDescriptor = Descriptor.newWpkh("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
         val newShWpkhDescriptor = Descriptor.newShWpkh("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
+        val newTrDescriptor = Descriptor.newTr("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB","and_v(v:pk(02b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737),older(50))")
+        val newShWithWpkhDescriptor = Descriptor.newShWithWpkh(newWpkhDescriptor.toString())
 
         assertEquals(newPkDescriptor.descType(), DescriptorType.BARE)
         assertEquals(newPkhDescriptor.descType(), DescriptorType.PKH)
         assertEquals(newWpkhDescriptor.descType(), DescriptorType.WPKH)
         assertEquals(newShWpkhDescriptor.descType(), DescriptorType.SH_WPKH)
+        assertEquals(newTrDescriptor.descType(), DescriptorType.TR)
+        assertEquals(newShWithWpkhDescriptor.descType(), DescriptorType.SH_WPKH)
+    }
+
+    @Test
+    fun createTaprootDescriptors() {
+        val internalKey = "xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB"
+        val scriptTree = "and_v(v:pk(02b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737),older(50))"
+
+        // Taproot descriptor without a script tree
+        val newTrNoTree = Descriptor.newTr(internalKey, null)
+        // Taproot descriptor with a script tree
+        val newTrWithTree = Descriptor.newTr(internalKey, scriptTree)
+
+        assertEquals(newTrNoTree.descType(), DescriptorType.TR)
+        assertEquals(newTrWithTree.descType(), DescriptorType.TR)
     }
 
     @Test
@@ -81,10 +99,13 @@ class DescriptorTest {
         val newShWshDescriptor = Descriptor.newShWsh("pk(02b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737)")
         val newBareDescriptor = Descriptor.newBare("pk(02b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737)")
 
+        val newShWithWshDescriptor = Descriptor.newShWithWsh(newWshDescriptor.toString())
+
         assertEquals(newShDescriptor.descType(), DescriptorType.SH)
         assertEquals(newWshDescriptor.descType(), DescriptorType.WSH)
         assertEquals(newShWshDescriptor.descType(), DescriptorType.SH_WSH)
         assertEquals(newBareDescriptor.descType(), DescriptorType.BARE)
+        assertEquals(newShWithWshDescriptor.descType(), DescriptorType.SH_WSH)
     }
 
     @Test
@@ -95,6 +116,9 @@ class DescriptorTest {
         assertFailsWith<DescriptorException.Miniscript> { Descriptor.newSh(invalid) }
         assertFailsWith<DescriptorException.Miniscript> { Descriptor.newShWsh(invalid) }
         assertFailsWith<DescriptorException.Miniscript> { Descriptor.newBare(invalid) }
+        assertFailsWith<DescriptorException.Key> { Descriptor.newTr(invalid,invalid) }
+        assertFailsWith<DescriptorException.Miniscript> { Descriptor.newShWithWpkh(invalid) }
+        assertFailsWith<DescriptorException.Miniscript> { Descriptor.newShWithWsh(invalid) }
     }
 
     // BareCtx only allows pk(), pkh(), and multi(k<=3,...) at the top level. A timelock
@@ -104,20 +128,16 @@ class DescriptorTest {
         val compressedPk = "02b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737"
         val timelockConjunction = "and_v(v:pk($compressedPk),after(1000))"
 
-        // println("Complex miniscript: $timelockConjunction")
-        // println("Resulting descriptor: ${Descriptor.newWsh(timelockConjunction)}")
-
         // Can do
-        Descriptor.newSh(timelockConjunction)
-        Descriptor.newWsh(timelockConjunction)
+        val newShDescriptor = Descriptor.newSh(timelockConjunction)
+        val newWshDescriptor = Descriptor.newWsh(timelockConjunction)
+        Descriptor.newShWithWsh(newWshDescriptor.toString())
 
         // No can do
-        assertFailsWith<DescriptorException.Miniscript> {
-            Descriptor.newBare(timelockConjunction)
-            Descriptor.newWpkh(timelockConjunction)
-            Descriptor.newWsh(timelockConjunction)
-            Descriptor.newPkh(timelockConjunction)
-        }
+        assertFailsWith<DescriptorException.Miniscript> { Descriptor.newBare(timelockConjunction) }
+        assertFailsWith<DescriptorException.Key> { Descriptor.newWpkh(timelockConjunction) }
+        assertFailsWith<DescriptorException.Key> { Descriptor.newPkh(timelockConjunction) }
+        assertFailsWith<DescriptorException.Miniscript> { Descriptor.newShWithWpkh(newShDescriptor.toString()) }
     }
 
     // Segwitv0 (new_wsh) requires all keys to be compressed. An uncompressed key is valid
