@@ -16,7 +16,7 @@ version = "3.0.0-RC2"
 
 android {
     namespace = group.toString()
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
