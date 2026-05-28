@@ -10,7 +10,7 @@ This is version `3.0.0` of the BDK language bindings! This release uses the foll
 
 - bdk_wallet `3.0.0`
 - bdk_electrum `0.24.0`
-- bdk_esplora `0.22.1`
+- bdk_esplora `0.22.2`
 - bdk_kyoto `0.17.0`
 - bitcoin `0.32.8`
 - uniffi `0.30.0`
