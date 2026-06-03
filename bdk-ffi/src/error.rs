@@ -23,7 +23,6 @@ use bdk_wallet::keys::bip39::Error as BdkBip39Error;
 use bdk_wallet::migration::PreV1MigrationError as BdkPreV1MigrationError;
 use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
 use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
-#[allow(deprecated)]
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddForeignUtxoError as BdkAddForeignUtxoError;
 use bdk_wallet::tx_builder::AddUtxoError;
@@ -37,6 +36,7 @@ use std::convert::TryInto;
 // ------------------------------------------------------------------------
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum AddForeignUtxoError {
     #[error("foreign utxo outpoint txid does not match PSBT input txid")]
     InvalidTxid,
@@ -52,6 +52,7 @@ pub enum AddForeignUtxoError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum AddressParseError {
     #[error("base58 address encoding error")]
     Base58,
@@ -86,6 +87,7 @@ pub enum AddressParseError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum Bip32Error {
     #[error("cannot derive from a hardened key")]
     CannotDeriveFromHardenedKey,
@@ -122,6 +124,7 @@ pub enum Bip32Error {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum Bip39Error {
     #[error("the word count {word_count} is not supported")]
     BadWordCount { word_count: u64 },
@@ -140,6 +143,7 @@ pub enum Bip39Error {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum CalculateFeeError {
     #[error("missing transaction output: {out_points:?}")]
     MissingTxOut { out_points: Vec<OutPoint> },
@@ -149,12 +153,14 @@ pub enum CalculateFeeError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum CannotConnectError {
     #[error("cannot include height: {height}")]
     Include { height: u32 },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum CreateTxError {
     #[error("descriptor error: {error_message}")]
     Descriptor { error_message: String },
@@ -224,6 +230,7 @@ pub enum CreateTxError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum CreateWithPersistError {
     #[error("sqlite persistence error: {error_message}")]
     Persist { error_message: String },
@@ -236,6 +243,7 @@ pub enum CreateWithPersistError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum DescriptorError {
     #[error("invalid hd key path")]
     InvalidHdKeyPath,
@@ -278,6 +286,7 @@ pub enum DescriptorError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum DescriptorKeyError {
     #[error("error parsing descriptor key: {error_message}")]
     Parse { error_message: String },
@@ -293,6 +302,7 @@ pub enum DescriptorKeyError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum ElectrumError {
     #[error("{error_message}")]
     IOError { error_message: String },
@@ -347,6 +357,7 @@ pub enum ElectrumError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum EsploraError {
     #[error("minreq error: {error_message}")]
     Minreq { error_message: String },
@@ -392,6 +403,7 @@ pub enum EsploraError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum ExtractTxError {
     #[error("an absurdly high fee rate of {fee_rate} sat/vbyte")]
     AbsurdFeeRate { fee_rate: u64 },
@@ -407,13 +419,16 @@ pub enum ExtractTxError {
     )]
     OtherExtractTxErr,
 }
+
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum FeeRateError {
     #[error("arithmetic overflow")]
     ArithmeticOverflow,
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum FromScriptError {
     #[error("script is not a p2pkh, p2sh or witness program")]
     UnrecognizedScript,
@@ -430,12 +445,14 @@ pub enum FromScriptError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum RequestBuilderError {
     #[error("the request has already been consumed")]
     RequestAlreadyConsumed,
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum LoadWithPersistError {
     #[error("sqlite persistence error: {error_message}")]
     Persist { error_message: String },
@@ -448,6 +465,7 @@ pub enum LoadWithPersistError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum MiniscriptError {
     #[error("absolute locktime error")]
     AbsoluteLockTime,
@@ -562,6 +580,7 @@ pub enum MiniscriptError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum ParseAmountError {
     #[error("amount out of range")]
     OutOfRange,
@@ -584,12 +603,14 @@ pub enum ParseAmountError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum PersistenceError {
     #[error("persistence error: {error_message}")]
     Reason { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum PreV1MigrationError {
     #[error("migration helper is only available for sqlite-backed persisters")]
     SqliteOnly,
@@ -605,6 +626,7 @@ pub enum PreV1MigrationError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum PsbtError {
     #[error("invalid magic")]
     InvalidMagic,
@@ -709,6 +731,7 @@ pub enum PsbtError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum PsbtParseError {
     #[error("error in internal psbt data structure: {error_message}")]
     PsbtEncoding { error_message: String },
@@ -718,12 +741,14 @@ pub enum PsbtParseError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum SighashParseError {
     #[error("invalid sighash type: {error_message}")]
     Invalid { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum PsbtFinalizeError {
     #[error("an input at index {index} is invalid: {reason}")]
     InputError { reason: String, index: u32 },
@@ -734,6 +759,7 @@ pub enum PsbtFinalizeError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum SignerError {
     #[error("missing key for signing")]
     MissingKey,
@@ -788,6 +814,7 @@ pub enum SignerError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum TransactionError {
     #[error("io error")]
     Io,
@@ -813,12 +840,14 @@ pub enum TransactionError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum TxidParseError {
     #[error("invalid txid: {txid}")]
     InvalidTxid { txid: String },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum CbfError {
     #[error("the node is no longer running")]
     NodeStopped,
@@ -1650,6 +1679,7 @@ impl From<BdkEncodeError> for TransactionError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum HashParseError {
     #[error("invalid hash: expected length 32 bytes, got {len} bytes")]
     InvalidHash { len: u32 },
