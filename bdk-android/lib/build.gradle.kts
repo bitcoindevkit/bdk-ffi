@@ -16,7 +16,7 @@ version = "2.4.0-SNAPSHOT"
 
 android {
     namespace = group.toString()
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 24
