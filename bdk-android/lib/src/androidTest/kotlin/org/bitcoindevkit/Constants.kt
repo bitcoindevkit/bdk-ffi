@@ -43,3 +43,4 @@ const val BIP84_TEST_RECEIVE_PATH_0 = "84h/1h/0h/0"
 val TEST_BIP84_DESCRIPTOR_0 = Descriptor("wpkh($TEST_EXTENDED_PRIVKEY_0/$BIP84_TEST_RECEIVE_PATH_0/*)", NetworkKind.TEST)
 
 const val ESPLORA_REGTEST_URL = "http://10.0.2.2:3002"
+const val ELECTRUM_REGTEST_URL = "tcp://10.0.2.2:60401"
