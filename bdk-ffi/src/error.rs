@@ -224,6 +224,7 @@ pub enum CreateTxError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum CreateWithPersistError {
     #[error("sqlite persistence error: {error_message}")]
     Persist { error_message: String },
