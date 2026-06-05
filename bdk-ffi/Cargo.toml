@@ -16,7 +16,7 @@ path = "uniffi-bindgen.rs"
 
 [dependencies]
 bdk_wallet = { version = "=3.0.0", features = ["all-keys", "keys-bip39", "rusqlite"] }
-bdk_esplora = { version = "0.22.1", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
+bdk_esplora = { version = "0.22.2", default-features = false, features = ["std", "blocking", "blocking-https-rustls"] }
 bdk_electrum = { version = "0.24.0", default-features = false, features = ["use-rustls-ring"] }
 bdk_kyoto = { version = "0.17.0" }
 
