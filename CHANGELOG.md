@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - New `DescriptorPublicKey::add_wildcard` method, which adds an unhardened wildcard to the derivation path of the descriptor [#853]
 - New `DescriptorSecretKey::add_wildcard(wildcard_type: WildcardType)` method, which adds a wildcard to the derivation path of the descriptor [#853]
 - Exposed `new_sh`, `new_wsh`,`new_bare` and `new_sh_wsh` methods on `Descriptor` type [#988]
+- Exposed `new_tr`, `new_sh_with_wsh` and `new_sh_with_wpkh` methods on `Descriptor` type [#1016]
+
 
 [#853]: https://github.com/bitcoindevkit/bdk-ffi/pull/853
 [#853]: https://github.com/bitcoindevkit/bdk-ffi/pull/945
@@ -34,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [#986]: https://github.com/bitcoindevkit/bdk-ffi/pull/973
 [#986]: https://github.com/bitcoindevkit/bdk-ffi/pull/986
 [#986]: https://github.com/bitcoindevkit/bdk-ffi/pull/988
+[#1016]: https://github.com/bitcoindevkit/bdk-ffi/pull/1016
 
 ## [v2.3.0]
 
