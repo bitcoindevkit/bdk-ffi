@@ -148,6 +148,75 @@ class DescriptorTest {
         }
     }
 
+    // combo() (BIP-384) expands a single key into multiple descriptor types.
+    @Test
+    fun cannotCreateComboDescriptor() {
+        assertFailsWith<DescriptorException.Miniscript> {
+            Descriptor(
+                "combo(tpubD6NzVbkrYhZ4YSPGUiT67AZRVmJUjPn1Twt4JuYPrkGZiwVKyBofjVRej8A194X2X4Toyo22HSaJJYLH2g4gd2JGnztsKzShiRFwWgAYi5D/0h/0h/*h)#leqp7cnz",
+                NetworkKind.TEST
+            )
+        }
+    }
+
+    // BIP-389 multipath descriptors use <i;j> to combine external and internal chains.
+    // Construction succeeds, but address derivation does not.
+    @Test
+    fun cannotDeriveAddressFromMultipathDescriptor() {
+        val descriptor = Descriptor(
+            "wpkh(xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB/<0;1>/*)",
+            NetworkKind.MAIN
+        )
+        assertFailsWith<DescriptorException.MultiPath> {
+            descriptor.deriveAddress(0u, Network.BITCOIN)
+        }
+    }
+
+    // BIP-380 attaches an optional base32 checksum suffix to descriptors.
+    // A mismatched checksum is rejected.
+    @Test
+    fun cannotCreateDescriptorWithInvalidChecksum() {
+        assertFailsWith<DescriptorException.InvalidDescriptorChecksum> {
+            Descriptor(
+                "wpkh(xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB/0/*)#aaaaaaaa",
+                NetworkKind.MAIN
+            )
+        }
+    }
+
+    // raw() (BIP-385) embeds arbitrary script bytes directly in a descriptor.
+    @Test
+    fun cannotCreateRawDescriptor() {
+        assertFailsWith<DescriptorException.Miniscript> {
+            Descriptor(
+                "raw(6a)",
+                NetworkKind.MAIN
+            )
+        }
+    }
+
+    // rawtr() (BIP-386) embeds a Taproot output key directly, bypassing the BIP-86 tweak.
+    @Test
+    fun cannotCreateRawtrDescriptor() {
+        assertFailsWith<DescriptorException.Miniscript> {
+            Descriptor(
+                "rawtr(a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd)",
+                NetworkKind.MAIN
+            )
+        }
+    }
+
+    // musig() (BIP-390) aggregates N keys into a single Taproot output key using MuSig2.
+    @Test
+    fun cannotCreateMusigDescriptor() {
+        assertFailsWith<DescriptorException.Miniscript> {
+            Descriptor(
+                "tr(musig(02b4632d08485ff1df2db55b9dafd23347d1c47a457072a1e87be26896549a8737,03a34b99f22c790c4e36b2b3c2c35a36db06226e41c692fc82b8b56ac1c540c5bd))",
+                NetworkKind.MAIN
+            )
+        }
+    }
+
     @Test
     fun sanityCheck() {
         val safeDescriptor = Descriptor("multi(1,L4rK1yDtCWekvXuE6oXD9jCYfFNV2cWRpVuPLBcCU2z8TrisoyY1,5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss)", NetworkKind.MAIN)
