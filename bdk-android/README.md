@@ -16,27 +16,12 @@ dependencies {
 }
 ```
 
-### Snapshot releases
-
-To use a snapshot release, specify the snapshot repository url in the `repositories` block and use the snapshot version in the `dependencies` block:
-```kotlin
-repositories {
-    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-}
-
-dependencies {
-    implementation("org.bitcoindevkit:bdk-android:<version-SNAPSHOT>")
-}
-```
-
 ### Example Projects
 
 * [Devkit Wallet](https://github.com/bitcoindevkit/devkit-wallet)
 * [Padawan Wallet](https://github.com/thunderbiscuit/padawan-wallet)
 
 ### How to build
-
-_Note that Kotlin version `2.1.10` or later is required to build the library._
 
 1. Clone this repository.
 ```shell
@@ -67,8 +52,7 @@ bash ./scripts/build-<your-local-architecture>.sh
 ## How to publish to your local Maven repo
 
 ```shell
-cd bdk-android
-./gradlew publishToMavenLocal
+just publish-local
 ```
 
 ## Known issues
