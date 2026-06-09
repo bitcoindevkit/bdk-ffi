@@ -38,4 +38,4 @@ jobs:
         run: bash ./build-xcframework.sh
 
       - name: "Run Swift tests"
-        run: swift test --filter Offline
+        run: swift test

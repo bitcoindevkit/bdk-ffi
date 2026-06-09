@@ -1,7 +1,7 @@
 import XCTest
 @testable import BitcoinDevKit
 
-final class OfflineDescriptorTests: XCTestCase {
+final class DescriptorTests: XCTestCase {
     func testDescriptorBip86() throws {
         let mnemonic: Mnemonic = try Mnemonic.fromString(mnemonic: "space echo position wrist orient erupt relief museum myself grain wisdom tumble")
         let descriptorSecretKey: DescriptorSecretKey = DescriptorSecretKey(
