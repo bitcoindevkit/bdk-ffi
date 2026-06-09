@@ -28,11 +28,9 @@ clean:
   rm -rf ./Sources/
 
 [group("Test")]
-[doc("Run all tests, unless a filter is provided.")]
-test *FILTER:
-  swift test {{ if FILTER == "" { "" } else { "--filter " + FILTER } }}
-
-[group("Test")]
-[doc("Run only offline tests.")]
-test-offline:
-  swift test --filter Offline
+[doc("Run all tests.")]
+test:
+  #!/usr/bin/env bash
+  set -o pipefail
+  swift test --no-parallel 2>&1 | \
+    (command -v xcbeautify > /dev/null 2>&1 && xcbeautify || cat)
