@@ -1,0 +1,2 @@
+createSrcSidebar('[["bdkffi",["",[],["bitcoin.rs","descriptor.rs","electrum.rs","error.rs","esplora.rs","keys.rs","kyoto.rs","lib.rs","macros.rs","store.rs","tx_builder.rs","types.rs","wallet.rs"]]],["uniffi_bindgen",["",[],["uniffi-bindgen.rs"]]]]');
+//{"start":19,"fragment_lengths":[179,49]}
