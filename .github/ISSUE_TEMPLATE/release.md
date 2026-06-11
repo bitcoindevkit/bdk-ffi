@@ -61,6 +61,5 @@ just docs
 - [ ] Bump the version on master from `1.1.0-SNAPSHOT` to `1.2.0-SNAPSHOT` (Android) and `1.1.0-alpha.0` to `1.2.0-alpha.0` (Rust).
 - [ ] Apply changes to the release issue template if needed.
 - [ ] Make release on GitHub using the reviewed release notes.
-- [ ] Build API docs for Android locally and PR the website to the bitcoindevkit.org repo.
 - [ ] Post in the announcement channel.
 - [ ] Tweet about the new release!
