@@ -207,6 +207,7 @@ fn test_sighash_invalid_string_returns_error() {
 }
 
 #[test]
+#[ignore = "requires live MutinyNet Esplora access"]
 fn test_sighash_sets_psbt_input_sighash_type() {
     let wallet = create_and_sync_wallet();
     let utxos = wallet.list_unspent();
