@@ -168,6 +168,36 @@ impl Wallet {
         })
     }
 
+    /// Build a two-path descriptor `Wallet` by loading from persistence.
+    ///
+    /// Checks that the provided two-path descriptor matches exactly what is loaded
+    /// for both the external and internal keychains.
+    ///
+    /// Note that descriptor secret keys are not persisted to the db. This method
+    /// extracts keys from the provided descriptor while loading.
+    #[uniffi::constructor(default(lookahead = 25))]
+    pub fn load_from_two_path_descriptor(
+        two_path_descriptor: Arc<Descriptor>,
+        persister: Arc<Persister>,
+        lookahead: u32,
+    ) -> Result<Wallet, LoadWithPersistError> {
+        let descriptor = two_path_descriptor.to_string_with_secret();
+        let mut persist_lock = persister.inner.lock().unwrap();
+        let deref = persist_lock.deref_mut();
+
+        let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
+            .two_path_descriptor(descriptor)
+            .lookahead(lookahead)
+            .extract_keys()
+            .load_wallet(deref)
+            .map_err(LoadWithPersistError::from)?
+            .ok_or(LoadWithPersistError::CouldNotLoad)?;
+
+        Ok(Wallet {
+            inner_mutex: Mutex::new(wallet),
+        })
+    }
+
     /// Build a single-descriptor Wallet by loading from persistence.
     ///
     /// Note that the descriptor secret keys are not persisted to the db.
