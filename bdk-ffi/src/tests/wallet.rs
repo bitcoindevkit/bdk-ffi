@@ -1,8 +1,11 @@
-use crate::bitcoin::{Network, NetworkKind};
+use crate::bitcoin::{Network, NetworkKind, Psbt, Transaction};
 use crate::descriptor::Descriptor;
+use crate::signer::SignersContainer;
 use crate::store::Persister;
 use crate::wallet::Wallet;
 
+use bdk_wallet::bitcoin::Transaction as BdkTransaction;
+use bdk_wallet::bitcoin::{absolute, consensus::serialize, transaction};
 use bdk_wallet::KeychainKind;
 
 use std::sync::Arc;
@@ -33,6 +36,18 @@ fn build_wallet() -> Wallet {
         25,
     )
     .unwrap()
+}
+
+fn empty_psbt() -> Arc<Psbt> {
+    let tx = BdkTransaction {
+        version: transaction::Version::TWO,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![],
+        output: vec![],
+    };
+    let tx = Arc::new(Transaction::new(serialize(&tx)).unwrap());
+
+    Psbt::from_unsigned_tx(tx).unwrap()
 }
 
 #[test]
@@ -88,6 +103,41 @@ fn test_reveal_next_address() {
     assert_eq!(address_info.index, 0);
     assert_eq!(address_info.keychain, KeychainKind::External);
     assert_eq!(address_info.address.to_string(), EXPECTED_FIRST_ADDRESS);
+}
+
+#[test]
+fn test_signers_container_from_descriptor() {
+    let signers = SignersContainer::from_descriptor(external_descriptor());
+
+    assert!(!signers.is_empty());
+    assert_eq!(signers.len(), 1);
+}
+
+#[test]
+fn test_get_signers() {
+    let wallet = build_wallet();
+
+    let external_signers = wallet.get_signers(KeychainKind::External);
+    let internal_signers = wallet.get_signers(KeychainKind::Internal);
+
+    assert!(!external_signers.is_empty());
+    assert!(!internal_signers.is_empty());
+    assert_eq!(external_signers.len(), 1);
+    assert_eq!(internal_signers.len(), 1);
+}
+
+#[test]
+fn test_sign_with_signers() {
+    let wallet = build_wallet();
+    let psbt = empty_psbt();
+    let signers = vec![
+        wallet.get_signers(KeychainKind::External),
+        wallet.get_signers(KeychainKind::Internal),
+    ];
+
+    let finalized = wallet.sign_with_signers(psbt, signers, None).unwrap();
+
+    assert!(finalized);
 }
 
 #[test]
