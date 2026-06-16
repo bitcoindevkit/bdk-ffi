@@ -496,20 +496,17 @@ impl TxBuilder {
         let bdk_outpoint: BdkOutPoint = outpoint.into();
         let bdk_input: BdkInput = psbt_input.try_into()?;
 
-        if bdk_input.witness_utxo.is_none() {
-            match bdk_input.non_witness_utxo.as_ref() {
-                Some(tx) => {
-                    if tx.compute_txid() != bdk_outpoint.txid {
-                        return Err(AddForeignUtxoError::InvalidTxid);
-                    }
-                    if tx.output.len() <= bdk_outpoint.vout as usize {
-                        return Err(AddForeignUtxoError::InvalidOutpoint {
-                            outpoint: bdk_outpoint.to_string(),
-                        });
-                    }
-                }
-                None => return Err(AddForeignUtxoError::MissingUtxo),
+        if let Some(tx) = bdk_input.non_witness_utxo.as_ref() {
+            if tx.compute_txid() != bdk_outpoint.txid {
+                return Err(AddForeignUtxoError::InvalidTxid);
             }
+            if tx.output.len() <= bdk_outpoint.vout as usize {
+                return Err(AddForeignUtxoError::InvalidOutpoint {
+                    outpoint: bdk_outpoint.to_string(),
+                });
+            }
+        } else if bdk_input.witness_utxo.is_none() {
+            return Err(AddForeignUtxoError::MissingUtxo);
         }
 
         let bdk_weight = BdkWeight::from_wu(satisfaction_weight);
@@ -535,20 +532,17 @@ impl TxBuilder {
         let bdk_outpoint: BdkOutPoint = outpoint.into();
         let bdk_input: BdkInput = psbt_input.try_into()?;
 
-        if bdk_input.witness_utxo.is_none() {
-            match bdk_input.non_witness_utxo.as_ref() {
-                Some(tx) => {
-                    if tx.compute_txid() != bdk_outpoint.txid {
-                        return Err(AddForeignUtxoError::InvalidTxid);
-                    }
-                    if tx.output.len() <= bdk_outpoint.vout as usize {
-                        return Err(AddForeignUtxoError::InvalidOutpoint {
-                            outpoint: bdk_outpoint.to_string(),
-                        });
-                    }
-                }
-                None => return Err(AddForeignUtxoError::MissingUtxo),
+        if let Some(tx) = bdk_input.non_witness_utxo.as_ref() {
+            if tx.compute_txid() != bdk_outpoint.txid {
+                return Err(AddForeignUtxoError::InvalidTxid);
             }
+            if tx.output.len() <= bdk_outpoint.vout as usize {
+                return Err(AddForeignUtxoError::InvalidOutpoint {
+                    outpoint: bdk_outpoint.to_string(),
+                });
+            }
+        } else if bdk_input.witness_utxo.is_none() {
+            return Err(AddForeignUtxoError::MissingUtxo);
         }
 
         let bdk_weight = BdkWeight::from_wu(satisfaction_weight);
