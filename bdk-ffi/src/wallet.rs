@@ -1,4 +1,6 @@
-use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction, TxOut, Txid};
+use crate::bitcoin::{
+    Amount, BlockHash, FeeRate, OutPoint, Psbt, Script, Transaction, TxOut, Txid,
+};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
@@ -15,7 +17,10 @@ use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::KeyMap;
 #[allow(deprecated)]
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
-use bdk_wallet::{PersistedWallet, Wallet as BdkWallet};
+use bdk_wallet::{
+    CreateParams as BdkCreateParams, LoadParams as BdkLoadParams, PersistedWallet,
+    Wallet as BdkWallet,
+};
 
 use std::ops::DerefMut;
 use std::sync::{Arc, Mutex, MutexGuard};
@@ -37,6 +42,79 @@ pub struct Wallet {
     inner_mutex: Mutex<PersistedWallet<PersistenceType>>,
 }
 
+/// Parameters for `Wallet` creation.
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct CreateParams {
+    /// Use a custom `genesis_hash`.
+    pub genesis_hash: Option<Arc<BlockHash>>,
+    /// Use a custom `lookahead` value.
+    pub lookahead: u32,
+    /// Use a persistent cache of indexed script pubkeys (SPKs).
+    pub use_spk_cache: bool,
+}
+
+impl CreateParams {
+    fn with_lookahead(lookahead: u32) -> Self {
+        Self {
+            genesis_hash: None,
+            lookahead,
+            use_spk_cache: false,
+        }
+    }
+
+    fn apply_to(self, params: BdkCreateParams) -> BdkCreateParams {
+        let mut params = params
+            .lookahead(self.lookahead)
+            .use_spk_cache(self.use_spk_cache);
+
+        if let Some(genesis_hash) = self.genesis_hash {
+            params = params.genesis_hash(genesis_hash.as_ref().0);
+        }
+
+        params
+    }
+}
+
+/// Parameters for `Wallet` loading.
+#[derive(Clone, Debug, uniffi::Record)]
+pub struct LoadParams {
+    /// Checks that the given network matches the one loaded from persistence.
+    pub check_network: Option<Network>,
+    /// Checks that the given `genesis_hash` matches the one loaded from persistence.
+    pub check_genesis_hash: Option<Arc<BlockHash>>,
+    /// Use a custom `lookahead` value.
+    pub lookahead: u32,
+    /// Use a persistent cache of indexed script pubkeys (SPKs).
+    pub use_spk_cache: bool,
+}
+
+impl LoadParams {
+    fn with_lookahead(lookahead: u32) -> Self {
+        Self {
+            check_network: None,
+            check_genesis_hash: None,
+            lookahead,
+            use_spk_cache: false,
+        }
+    }
+
+    fn apply_to(self, params: BdkLoadParams) -> BdkLoadParams {
+        let mut params = params
+            .lookahead(self.lookahead)
+            .use_spk_cache(self.use_spk_cache);
+
+        if let Some(network) = self.check_network {
+            params = params.check_network(network);
+        }
+
+        if let Some(genesis_hash) = self.check_genesis_hash {
+            params = params.check_genesis_hash(genesis_hash.as_ref().0);
+        }
+
+        params
+    }
+}
+
 #[uniffi::export]
 impl Wallet {
     /// Build a new Wallet.
@@ -50,17 +128,37 @@ impl Wallet {
         persister: Arc<Persister>,
         lookahead: u32,
     ) -> Result<Self, CreateWithPersistError> {
+        Self::create_with_params(
+            descriptor,
+            change_descriptor,
+            network,
+            persister,
+            CreateParams::with_lookahead(lookahead),
+        )
+    }
+
+    /// Build a new Wallet with explicit create parameters.
+    ///
+    /// If you have previously created a wallet, use load instead.
+    #[uniffi::constructor]
+    pub fn create_with_params(
+        descriptor: Arc<Descriptor>,
+        change_descriptor: Arc<Descriptor>,
+        network: Network,
+        persister: Arc<Persister>,
+        params: CreateParams,
+    ) -> Result<Self, CreateWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
         let mut persist_lock = persister.inner.lock().unwrap();
         let deref = persist_lock.deref_mut();
 
-        let wallet: PersistedWallet<PersistenceType> =
-            BdkWallet::create(descriptor, change_descriptor)
-                .network(network)
-                .lookahead(lookahead)
-                .create_wallet(deref)
-                .map_err(CreateWithPersistError::from)?;
+        let bdk_params = BdkWallet::create(descriptor, change_descriptor).network(network);
+        let bdk_params = params.apply_to(bdk_params);
+
+        let wallet: PersistedWallet<PersistenceType> = bdk_params
+            .create_wallet(deref)
+            .map_err(CreateWithPersistError::from)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -92,13 +190,32 @@ impl Wallet {
         persister: Arc<Persister>,
         lookahead: u32,
     ) -> Result<Self, CreateWithPersistError> {
+        Self::create_single_with_params(
+            descriptor,
+            network,
+            persister,
+            CreateParams::with_lookahead(lookahead),
+        )
+    }
+
+    /// Build a new single descriptor `Wallet` with explicit create parameters.
+    ///
+    /// If you have previously created a wallet, use `Wallet::load` instead.
+    #[uniffi::constructor]
+    pub fn create_single_with_params(
+        descriptor: Arc<Descriptor>,
+        network: Network,
+        persister: Arc<Persister>,
+        params: CreateParams,
+    ) -> Result<Self, CreateWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let mut persist_lock = persister.inner.lock().unwrap();
         let deref = persist_lock.deref_mut();
 
-        let wallet: PersistedWallet<PersistenceType> = BdkWallet::create_single(descriptor)
-            .network(network)
-            .lookahead(lookahead)
+        let bdk_params = BdkWallet::create_single(descriptor).network(network);
+        let bdk_params = params.apply_to(bdk_params);
+
+        let wallet: PersistedWallet<PersistenceType> = bdk_params
             .create_wallet(deref)
             .map_err(CreateWithPersistError::from)?;
 
@@ -123,16 +240,34 @@ impl Wallet {
         persister: Arc<Persister>,
         lookahead: u32,
     ) -> Result<Self, CreateWithPersistError> {
+        Self::create_from_two_path_descriptor_with_params(
+            two_path_descriptor,
+            network,
+            persister,
+            CreateParams::with_lookahead(lookahead),
+        )
+    }
+
+    /// Build a new `Wallet` from a two-path descriptor with explicit create parameters.
+    ///
+    /// If you have previously created a wallet, use load instead.
+    #[uniffi::constructor]
+    pub fn create_from_two_path_descriptor_with_params(
+        two_path_descriptor: Arc<Descriptor>,
+        network: Network,
+        persister: Arc<Persister>,
+        params: CreateParams,
+    ) -> Result<Self, CreateWithPersistError> {
         let descriptor = two_path_descriptor.to_string_with_secret();
         let mut persist_lock = persister.inner.lock().unwrap();
         let deref = persist_lock.deref_mut();
 
-        let wallet: PersistedWallet<PersistenceType> =
-            BdkWallet::create_from_two_path_descriptor(descriptor)
-                .network(network)
-                .lookahead(lookahead)
-                .create_wallet(deref)
-                .map_err(CreateWithPersistError::from)?;
+        let bdk_params = BdkWallet::create_from_two_path_descriptor(descriptor).network(network);
+        let bdk_params = params.apply_to(bdk_params);
+
+        let wallet: PersistedWallet<PersistenceType> = bdk_params
+            .create_wallet(deref)
+            .map_err(CreateWithPersistError::from)?;
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
@@ -149,16 +284,36 @@ impl Wallet {
         persister: Arc<Persister>,
         lookahead: u32,
     ) -> Result<Wallet, LoadWithPersistError> {
+        Self::load_with_params(
+            descriptor,
+            change_descriptor,
+            persister,
+            LoadParams::with_lookahead(lookahead),
+        )
+    }
+
+    /// Build Wallet by loading from persistence with explicit load parameters.
+    ///
+    /// Note that the descriptor secret keys are not persisted to the db.
+    #[uniffi::constructor]
+    pub fn load_with_params(
+        descriptor: Arc<Descriptor>,
+        change_descriptor: Arc<Descriptor>,
+        persister: Arc<Persister>,
+        params: LoadParams,
+    ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
         let mut persist_lock = persister.inner.lock().unwrap();
         let deref = persist_lock.deref_mut();
 
-        let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
+        let bdk_params = BdkWallet::load()
             .descriptor(KeychainKind::External, Some(descriptor))
             .descriptor(KeychainKind::Internal, Some(change_descriptor))
-            .lookahead(lookahead)
-            .extract_keys()
+            .extract_keys();
+        let bdk_params = params.apply_to(bdk_params);
+
+        let wallet: PersistedWallet<PersistenceType> = bdk_params
             .load_wallet(deref)
             .map_err(LoadWithPersistError::from)?
             .ok_or(LoadWithPersistError::CouldNotLoad)?;
@@ -177,14 +332,28 @@ impl Wallet {
         persister: Arc<Persister>,
         lookahead: u32,
     ) -> Result<Wallet, LoadWithPersistError> {
+        Self::load_single_with_params(descriptor, persister, LoadParams::with_lookahead(lookahead))
+    }
+
+    /// Build a single-descriptor Wallet by loading from persistence with explicit load parameters.
+    ///
+    /// Note that the descriptor secret keys are not persisted to the db.
+    #[uniffi::constructor]
+    pub fn load_single_with_params(
+        descriptor: Arc<Descriptor>,
+        persister: Arc<Persister>,
+        params: LoadParams,
+    ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let mut persist_lock = persister.inner.lock().unwrap();
         let deref = persist_lock.deref_mut();
 
-        let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
+        let bdk_params = BdkWallet::load()
             .descriptor(KeychainKind::External, Some(descriptor))
-            .lookahead(lookahead)
-            .extract_keys()
+            .extract_keys();
+        let bdk_params = params.apply_to(bdk_params);
+
+        let wallet: PersistedWallet<PersistenceType> = bdk_params
             .load_wallet(deref)
             .map_err(LoadWithPersistError::from)?
             .ok_or(LoadWithPersistError::CouldNotLoad)?;
