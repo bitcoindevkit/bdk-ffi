@@ -209,6 +209,22 @@ impl From<BdkAddressInfo> for AddressInfo {
     }
 }
 
+/// A wallet keychain and its public descriptor.
+#[uniffi::export(Display)]
+#[derive(uniffi::Record)]
+pub struct WalletKeychain {
+    /// Type of keychain.
+    pub keychain: KeychainKind,
+    /// Public descriptor for the keychain.
+    pub public_descriptor: Arc<Descriptor>,
+}
+
+impl Display for WalletKeychain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}: {}", self.keychain, self.public_descriptor)
+    }
+}
+
 /// Balance, differentiated into various categories.
 #[derive(uniffi::Record)]
 pub struct Balance {

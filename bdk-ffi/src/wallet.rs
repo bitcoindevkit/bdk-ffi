@@ -8,10 +8,11 @@ use crate::store::{PersistenceType, Persister};
 use crate::types::{
     AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FullScanRequestBuilder,
     KeychainAndIndex, KeychainKind, LocalOutput, Policy, SentAndReceivedValues, SignOptions,
-    SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent,
+    SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent, WalletKeychain,
 };
 
 use bdk_wallet::bitcoin::Network;
+use bdk_wallet::keys::KeyMap;
 #[allow(deprecated)]
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{PersistedWallet, Wallet as BdkWallet};
@@ -422,6 +423,21 @@ impl Wallet {
     /// Get the Bitcoin network the wallet is using.
     pub fn network(&self) -> Network {
         self.get_wallet().network()
+    }
+
+    /// Iterator over all keychains in this wallet
+    pub fn keychains(&self) -> Vec<WalletKeychain> {
+        let wallet = self.get_wallet();
+        wallet
+            .keychains()
+            .map(|(keychain, descriptor)| WalletKeychain {
+                keychain,
+                public_descriptor: Arc::new(Descriptor {
+                    extended_descriptor: descriptor.clone(),
+                    key_map: KeyMap::default(),
+                }),
+            })
+            .collect()
     }
 
     /// Return the balance, separated into available, trusted-pending, untrusted-pending and
