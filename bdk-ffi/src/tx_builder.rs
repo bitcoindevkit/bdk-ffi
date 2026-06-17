@@ -11,6 +11,12 @@ use bdk_wallet::bitcoin::script::PushBytesBuf;
 use bdk_wallet::bitcoin::Psbt as BdkPsbt;
 use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::{OutPoint as BdkOutPoint, Sequence, Weight as BdkWeight};
+use bdk_wallet::coin_selection::{
+    CoinSelectionAlgorithm as BdkCoinSelectionAlgorithm,
+    LargestFirstCoinSelection as BdkLargestFirstCoinSelection,
+    OldestFirstCoinSelection as BdkOldestFirstCoinSelection,
+    SingleRandomDraw as BdkSingleRandomDraw,
+};
 use bdk_wallet::TxOrdering as BdkTxOrdering;
 
 use std::collections::BTreeMap;
@@ -49,6 +55,7 @@ pub struct TxBuilder {
     exclude_below_confirmations: Option<u32>,
     only_witness_utxo: bool,
     foreign_utxos: Vec<(BdkOutPoint, BdkInput, BdkWeight, Option<u32>)>,
+    coin_selection: Option<CoinSelectionAlgorithm>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -81,6 +88,7 @@ impl TxBuilder {
             exclude_below_confirmations: None,
             only_witness_utxo: false,
             foreign_utxos: Vec::new(),
+            coin_selection: None,
         }
     }
 
@@ -401,6 +409,14 @@ impl TxBuilder {
         })
     }
 
+    /// Choose the coin selection algorithm
+    pub fn coin_selection(&self, coin_selection: CoinSelectionAlgorithm) -> Arc<Self> {
+        Arc::new(TxBuilder {
+            coin_selection: Some(coin_selection),
+            ..self.clone()
+        })
+    }
+
     /// Only Fill-in the [`psbt::Input::witness_utxo`](bitcoin::psbt::Input::witness_utxo) field
     /// when spending from SegWit descriptors.
     ///
@@ -557,7 +573,32 @@ impl TxBuilder {
     pub fn finish(&self, wallet: &Arc<Wallet>) -> Result<Arc<Psbt>, CreateTxError> {
         // TODO: I had to change the wallet here to be mutable. Why is that now required with the 1.0 API?
         let mut wallet = wallet.get_wallet();
-        let mut tx_builder = wallet.build_tx();
+        let tx_builder = wallet.build_tx();
+        match self.coin_selection {
+            None | Some(CoinSelectionAlgorithm::BranchAndBound) => {
+                self.finish_with_builder(tx_builder)
+            }
+            Some(CoinSelectionAlgorithm::LargestFirst) => {
+                self.finish_with_builder(tx_builder.coin_selection(BdkLargestFirstCoinSelection))
+            }
+            Some(CoinSelectionAlgorithm::OldestFirst) => {
+                self.finish_with_builder(tx_builder.coin_selection(BdkOldestFirstCoinSelection))
+            }
+            Some(CoinSelectionAlgorithm::SingleRandomDraw) => {
+                self.finish_with_builder(tx_builder.coin_selection(BdkSingleRandomDraw))
+            }
+        }
+    }
+}
+
+impl TxBuilder {
+    fn finish_with_builder<Cs>(
+        &self,
+        mut tx_builder: bdk_wallet::TxBuilder<'_, Cs>,
+    ) -> Result<Arc<Psbt>, CreateTxError>
+    where
+        Cs: BdkCoinSelectionAlgorithm,
+    {
         if self.add_global_xpubs {
             tx_builder.add_global_xpubs();
         }
@@ -817,6 +858,20 @@ pub enum ChangeSpendPolicy {
     ChangeForbidden,
 }
 
+/// Coin selection algorithm to use when creating a transaction.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, uniffi::Enum)]
+pub enum CoinSelectionAlgorithm {
+    /// Branch and bound with single random draw fallback.
+    #[default]
+    BranchAndBound,
+    /// Select largest UTXOs first until the target is reached.
+    LargestFirst,
+    /// Select oldest local UTXOs first until the target is reached.
+    OldestFirst,
+    /// Shuffle optional UTXOs and select randomly until the target is reached.
+    SingleRandomDraw,
+}
+
 /// Ordering of the transaction's inputs and outputs.
 #[derive(Clone, Copy, Debug, Default, uniffi::Enum)]
 pub enum TxOrdering {
@@ -846,4 +901,42 @@ fn parse_sighash_type(sighash: &str) -> Result<BdkPsbtSighashType, SighashParseE
     BdkPsbtSighashType::from_str(sighash).map_err(|error| SighashParseError::Invalid {
         error_message: error.to_string(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CoinSelectionAlgorithm, TxBuilder};
+
+    #[test]
+    fn tx_builder_defaults_to_upstream_coin_selection() {
+        assert_eq!(TxBuilder::new().coin_selection, None);
+    }
+
+    #[test]
+    fn tx_builder_coin_selection_sets_algorithm_and_keeps_chainable_state() {
+        let tx_builder = TxBuilder::new()
+            .coin_selection(CoinSelectionAlgorithm::LargestFirst)
+            .manually_selected_only();
+
+        assert_eq!(
+            tx_builder.coin_selection,
+            Some(CoinSelectionAlgorithm::LargestFirst)
+        );
+        assert!(tx_builder.manually_selected_only);
+    }
+
+    #[test]
+    fn tx_builder_coin_selection_accepts_all_supported_algorithms() {
+        let algorithms = [
+            CoinSelectionAlgorithm::BranchAndBound,
+            CoinSelectionAlgorithm::LargestFirst,
+            CoinSelectionAlgorithm::OldestFirst,
+            CoinSelectionAlgorithm::SingleRandomDraw,
+        ];
+
+        for algorithm in algorithms {
+            let tx_builder = TxBuilder::new().coin_selection(algorithm);
+            assert_eq!(tx_builder.coin_selection, Some(algorithm));
+        }
+    }
 }
