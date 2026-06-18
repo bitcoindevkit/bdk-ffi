@@ -2,6 +2,7 @@ use crate::bitcoin::NetworkKind;
 use crate::error::DescriptorKeyError;
 use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::types::WildcardType;
+use bdk_wallet::keys::bip39::WordCount;
 use std::sync::Arc;
 
 fn get_inner() -> DescriptorSecretKey {
@@ -196,4 +197,15 @@ fn test_add_wildcard() {
         dpk_hardened.add_wildcard(),
         Err(DescriptorKeyError::CannotChangeWildcardType)
     ));
+}
+
+#[test]
+fn test_mnemonic_generation_word_count() {
+    let mnemonic_12 = Mnemonic::new(WordCount::Words12);
+    let words_12: Vec<&str> = mnemonic_12.to_string().split_whitespace().collect();
+    assert_eq!(words_12.len(), 12);
+
+    let mnemonic_24 = Mnemonic::new(WordCount::Words24);
+    let words_24: Vec<&str> = mnemonic_24.to_string().split_whitespace().collect();
+    assert_eq!(words_24.len(), 24);
 }

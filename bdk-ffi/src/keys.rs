@@ -11,10 +11,9 @@ use bdk_wallet::keys::bip39::WordCount;
 use bdk_wallet::keys::bip39::{Language, Mnemonic as BdkMnemonic};
 use bdk_wallet::keys::{
     DerivableKey, DescriptorPublicKey as BdkDescriptorPublicKey,
-    DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey, GeneratableKey, GeneratedKey,
+    DescriptorSecretKey as BdkDescriptorSecretKey, ExtendedKey,
 };
 use bdk_wallet::miniscript::descriptor::{DescriptorXKey, Wildcard};
-use bdk_wallet::miniscript::BareCtx;
 
 use crate::types::WildcardType;
 use std::convert::TryFrom;
@@ -32,15 +31,15 @@ impl Mnemonic {
     /// Generate a mnemonic given a word count.
     #[uniffi::constructor]
     pub fn new(word_count: WordCount) -> Self {
-        // TODO 4: I DON'T KNOW IF THIS IS A DECENT WAY TO GENERATE ENTROPY PLEASE CONFIRM
+        // Entropy size = word_count in bits / 8 (WordCount values are 128, 160, 192, 224, 256)
+        let entropy_size = word_count as usize / 8;
+        let mut entropy = vec![0u8; entropy_size];
         let mut rng = rand::thread_rng();
-        let mut entropy = [0u8; 32];
-        rng.fill(&mut entropy);
+        rng.fill_bytes(&mut entropy);
 
-        let generated_key: GeneratedKey<_, BareCtx> =
-            BdkMnemonic::generate_with_entropy((word_count, Language::English), entropy).unwrap();
-        let mnemonic = BdkMnemonic::parse_in(Language::English, generated_key.to_string()).unwrap();
-        Mnemonic(mnemonic)
+        BdkMnemonic::from_entropy(&entropy)
+            .map(Mnemonic)
+            .expect("valid entropy size for BIP39 mnemonic")
     }
     /// Parse a string as a mnemonic seed phrase.
     #[uniffi::constructor]
