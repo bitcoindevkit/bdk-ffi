@@ -1,4 +1,5 @@
 use crate::bitcoin::{Address, AddressData, Key, Network, ProprietaryKey, Psbt};
+use crate::error::PsbtError;
 use bdk_electrum::bdk_core::bitcoin::hex::DisplayHex;
 
 #[test]
@@ -360,13 +361,21 @@ fn test_to_address_data() {
 #[test]
 fn test_psbt_spend_utxo() {
     let psbt = sample_psbt();
-    let psbt_utxo = psbt.spend_utxo(0);
+    let psbt_utxo = psbt.spend_utxo(0).unwrap();
 
     assert_eq!(
         psbt_utxo,
         r#"{"value":9536,"script_pubkey":"0020432ae79fce8bf43def0e21fde7d2896cfb9d0c773f6e9ea723d1391012d00f56"}"#,
         "Psbt utxo does not match the expected value"
     );
+}
+
+#[test]
+fn test_psbt_spend_utxo_invalid_index_returns_error() {
+    let psbt = sample_psbt();
+    let error = psbt.spend_utxo(1).unwrap_err();
+
+    assert!(matches!(error, PsbtError::InputIndexOutOfBounds));
 }
 
 #[test]

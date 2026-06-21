@@ -12,6 +12,7 @@ use bdk_wallet::bitcoin::hex::DisplayHex;
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
+use bdk_wallet::bitcoin::psbt::SignError as BdkPsbtSignError;
 use bdk_wallet::bitcoin::script::PushBytesError;
 use bdk_wallet::chain::local_chain::CannotConnectError as BdkCannotConnectError;
 use bdk_wallet::chain::rusqlite::Error as BdkSqliteError;
@@ -617,6 +618,18 @@ pub enum PsbtError {
 
     #[error("output index is out of bounds of non witness script output array")]
     PsbtUtxoOutOfBounds,
+
+    #[error("input index is out of bounds")]
+    InputIndexOutOfBounds,
+
+    #[error("missing spend UTXO in PSBT")]
+    MissingSpendUtxo,
+
+    #[error("PSBT serialization error: {error_message}")]
+    Serialization { error_message: String },
+
+    #[error("PSBT spend UTXO error: {error_message}")]
+    SpendUtxo { error_message: String },
 
     #[error("invalid key: {key}")]
     InvalidKey { key: String },
@@ -1538,6 +1551,18 @@ impl From<BdkPsbtError> for PsbtError {
                 error_message: e.to_string(),
             },
             _ => PsbtError::OtherPsbtErr,
+        }
+    }
+}
+
+impl From<BdkPsbtSignError> for PsbtError {
+    fn from(error: BdkPsbtSignError) -> Self {
+        match error {
+            BdkPsbtSignError::IndexOutOfBounds(_) => PsbtError::InputIndexOutOfBounds,
+            BdkPsbtSignError::MissingSpendUtxo => PsbtError::MissingSpendUtxo,
+            _ => PsbtError::SpendUtxo {
+                error_message: error.to_string(),
+            },
         }
     }
 }
