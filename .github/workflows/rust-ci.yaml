@@ -8,10 +8,10 @@ name: Rust Continuous Integration
 on:
   push:
     paths:
-      - "bdk-ffi/**"
+      - "rust/**"
   pull_request:
     paths:
-      - "bdk-ffi/**"
+      - "rust/**"
 
 permissions: {}
 
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: bdk-ffi
+        working-directory: rust
 
     steps:
       - name: "Checkout"
@@ -53,7 +53,7 @@ jobs:
     runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: bdk-ffi
+        working-directory: rust
     steps:
       - name: "Checkout"
         uses: actions/checkout@v5

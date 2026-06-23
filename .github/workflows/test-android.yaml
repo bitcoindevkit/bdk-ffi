@@ -7,12 +7,12 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "bdk-ffi/**"
-      - "bdk-android/**"
+      - "rust/**"
+      - "kotlin/**"
   pull_request:
     paths:
-      - "bdk-ffi/**"
-      - "bdk-android/**"
+      - "rust/**"
+      - "kotlin/**"
 
 permissions: {}
 
@@ -64,7 +64,7 @@ jobs:
 
       - name: "Build Android library"
         run: |
-          cd bdk-android
+          cd kotlin
           bash ./scripts/release/build-release-linux-x86_64.sh
 
       - name: "Free Disk Space (Ubuntu)"
@@ -90,4 +90,4 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           emulator-options: "-no-window -gpu swiftshader_indirect -no-snapshot"
-          script: cd bdk-android && ./gradlew connectedAndroidTest --console=plain
+          script: cd kotlin && ./gradlew connectedAndroidTest --console=plain

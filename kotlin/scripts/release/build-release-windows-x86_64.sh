@@ -18,7 +18,7 @@ RESOURCE_DIR_X86_64="x86_64"
 RESOURCE_DIR_ARMEABI_V7A="armeabi-v7a"
 
 # Move to the Rust library directory
-cd ../bdk-ffi/ || exit
+cd ../rust/ || exit
 rustup target add $COMPILATION_TARGET_ARM64_V8A $COMPILATION_TARGET_ARMEABI_V7A $COMPILATION_TARGET_X86_64
 
 # Build the binaries
@@ -28,12 +28,12 @@ CC="x86_64-linux-android24-clang.cmd" CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER="
 CC="armv7a-linux-androideabi24-clang.cmd" CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER="armv7a-linux-androideabi24-clang.cmd" cargo build --profile release-smaller --target $COMPILATION_TARGET_ARMEABI_V7A
 
 # Copy the binaries to their respective resource directories
-mkdir -p ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
-mkdir -p ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_ARMEABI_V7A/
-mkdir -p ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_X86_64/
-cp ./target/$COMPILATION_TARGET_ARM64_V8A/release-smaller/$LIB_NAME ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
-cp ./target/$COMPILATION_TARGET_ARMEABI_V7A/release-smaller/$LIB_NAME ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_ARMEABI_V7A/
-cp ./target/$COMPILATION_TARGET_X86_64/release-smaller/$LIB_NAME ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_X86_64/
+mkdir -p ../kotlin/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
+mkdir -p ../kotlin/lib/src/main/jniLibs/$RESOURCE_DIR_ARMEABI_V7A/
+mkdir -p ../kotlin/lib/src/main/jniLibs/$RESOURCE_DIR_X86_64/
+cp ./target/$COMPILATION_TARGET_ARM64_V8A/release-smaller/$LIB_NAME ../kotlin/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
+cp ./target/$COMPILATION_TARGET_ARMEABI_V7A/release-smaller/$LIB_NAME ../kotlin/lib/src/main/jniLibs/$RESOURCE_DIR_ARMEABI_V7A/
+cp ./target/$COMPILATION_TARGET_X86_64/release-smaller/$LIB_NAME ../kotlin/lib/src/main/jniLibs/$RESOURCE_DIR_X86_64/
 
 # Generate Kotlin bindings using uniffi-bindgen. (Any of the other $COMPILATION_TARGET_* could have been used)
-cargo run --bin uniffi-bindgen generate --library ./target/$COMPILATION_TARGET_ARM64_V8A/release-smaller/$LIB_NAME --language kotlin --out-dir ../bdk-android/lib/src/main/kotlin/ --no-format
+cargo run --bin uniffi-bindgen generate --library ./target/$COMPILATION_TARGET_ARM64_V8A/release-smaller/$LIB_NAME --language kotlin --out-dir ../kotlin/lib/src/main/kotlin/ --no-format
