@@ -12,6 +12,7 @@ use crate::types::{
 };
 
 use bdk_wallet::bitcoin::Network;
+use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
 #[allow(deprecated)]
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{PersistedWallet, Wallet as BdkWallet};
@@ -661,6 +662,71 @@ impl Wallet {
     /// start a blockchain sync with a spk based blockchain client.
     pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequestBuilder> {
         let builder = self.get_wallet().start_sync_with_revealed_spks();
+        Arc::new(SyncRequestBuilder(Mutex::new(Some(builder))))
+    }
+
+    /// Create a partial [`SyncRequest`] for a specific set of derivation indices.
+    ///
+    /// Only the spks at the given indices are included. Indices that have not been revealed
+    /// (i.e. no spk exists for them) are silently skipped.
+    pub fn start_sync_with_spk_indices(
+        &self,
+        external_indices: Vec<u32>,
+        internal_indices: Vec<u32>,
+    ) -> Arc<SyncRequestBuilder> {
+        let wallet = self.get_wallet();
+        let spk_index = wallet.spk_index();
+        let chain_tip = wallet.local_chain().tip();
+
+        let spks = external_indices
+            .into_iter()
+            .filter_map(|i| {
+                spk_index
+                    .spk_at_index(KeychainKind::External, i)
+                    .map(|spk| ((KeychainKind::External, i), spk))
+            })
+            .chain(internal_indices.into_iter().filter_map(|i| {
+                spk_index
+                    .spk_at_index(KeychainKind::Internal, i)
+                    .map(|spk| ((KeychainKind::Internal, i), spk))
+            }));
+
+        let builder = BdkSyncRequest::builder()
+            .chain_tip(chain_tip)
+            .spks_with_indexes(spks);
+        Arc::new(SyncRequestBuilder(Mutex::new(Some(builder))))
+    }
+
+    /// Create a partial [`SyncRequest`] covering the last `external_count` revealed external
+    /// spks and the last `internal_count` revealed internal spks.
+    ///
+    /// Spks are selected from the end of the revealed range, so this captures the most recently
+    /// derived addresses. If fewer spks have been revealed than requested, all revealed spks for
+    /// that keychain are included.
+    pub fn start_sync_with_last_revealed_spks(
+        &self,
+        external_count: u32,
+        internal_count: u32,
+    ) -> Arc<SyncRequestBuilder> {
+        let wallet = self.get_wallet();
+        let spk_index = wallet.spk_index();
+        let chain_tip = wallet.local_chain().tip();
+
+        let external_spks = spk_index
+            .revealed_keychain_spks(KeychainKind::External)
+            .rev()
+            .take(external_count as usize)
+            .map(|(i, spk)| ((KeychainKind::External, i), spk));
+
+        let internal_spks = spk_index
+            .revealed_keychain_spks(KeychainKind::Internal)
+            .rev()
+            .take(internal_count as usize)
+            .map(|(i, spk)| ((KeychainKind::Internal, i), spk));
+
+        let builder = BdkSyncRequest::builder()
+            .chain_tip(chain_tip)
+            .spks_with_indexes(external_spks.chain(internal_spks));
         Arc::new(SyncRequestBuilder(Mutex::new(Some(builder))))
     }
 
