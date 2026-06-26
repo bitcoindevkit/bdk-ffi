@@ -1087,20 +1087,11 @@ impl GetPsbtInputError {
             BdkCreateTxError::UnknownUtxo => GetPsbtInputError::UnknownUtxo {
                 outpoint: format!("{}:{}", outpoint.txid, outpoint.vout),
             },
-            other => CreateTxError::from(other).into(),
-        }
-    }
-}
-
-impl From<CreateTxError> for GetPsbtInputError {
-    fn from(error: CreateTxError) -> Self {
-        match error {
-            CreateTxError::UnknownUtxo { outpoint } => GetPsbtInputError::UnknownUtxo { outpoint },
-            CreateTxError::MiniscriptPsbt { error_message } => {
-                GetPsbtInputError::MiniscriptPsbt { error_message }
-            }
+            BdkCreateTxError::MiniscriptPsbt(error) => GetPsbtInputError::MiniscriptPsbt {
+                error_message: error.to_string(),
+            },
             other => GetPsbtInputError::CreateTx {
-                error_message: other.to_string(),
+                error_message: CreateTxError::from(other).to_string(),
             },
         }
     }
