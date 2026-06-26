@@ -265,15 +265,17 @@ impl DescriptorSecretKey {
     pub fn secret_bytes(&self) -> Vec<u8> {
         let inner = &self.0;
         let secret_bytes: Vec<u8> = match inner {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorSecretKey::Single(single_key) => {
+                single_key.key.inner.secret_bytes().to_vec()
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 descriptor_x_key.xkey.private_key.secret_bytes().to_vec()
             }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
-            }
+            BdkDescriptorSecretKey::MultiXPrv(descriptor_multi_x_key) => descriptor_multi_x_key
+                .xkey
+                .private_key
+                .secret_bytes()
+                .to_vec(),
         };
 
         secret_bytes

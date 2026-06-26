@@ -47,6 +47,39 @@ fn test_create_wallet() {
 }
 
 #[test]
+fn test_keychains() {
+    let wallet = build_wallet();
+
+    let keychains = wallet.keychains();
+
+    assert_eq!(keychains.len(), 2);
+
+    let external = keychains
+        .iter()
+        .find(|keychain| keychain.keychain == KeychainKind::External)
+        .unwrap();
+    let internal = keychains
+        .iter()
+        .find(|keychain| keychain.keychain == KeychainKind::Internal)
+        .unwrap();
+    let external_public_descriptor = external.public_descriptor.to_string();
+    let internal_public_descriptor = internal.public_descriptor.to_string();
+
+    assert_eq!(
+        external_public_descriptor,
+        wallet.public_descriptor(KeychainKind::External)
+    );
+    assert_eq!(
+        internal_public_descriptor,
+        wallet.public_descriptor(KeychainKind::Internal)
+    );
+    assert!(external.public_descriptor.has_wildcard());
+    assert!(internal.public_descriptor.has_wildcard());
+    assert!(!external_public_descriptor.contains("tprv"));
+    assert!(!internal_public_descriptor.contains("tprv"));
+}
+
+#[test]
 fn test_reveal_next_address() {
     let wallet = build_wallet();
 
@@ -68,6 +101,18 @@ fn test_create_single_wallet() {
     .unwrap();
 
     assert_eq!(wallet.derivation_index(KeychainKind::External), None);
+
+    let keychains = wallet.keychains();
+
+    assert_eq!(keychains.len(), 1);
+    assert_eq!(keychains[0].keychain, KeychainKind::External);
+    let public_descriptor = keychains[0].public_descriptor.to_string();
+    assert_eq!(
+        public_descriptor,
+        wallet.public_descriptor(KeychainKind::External)
+    );
+    assert!(keychains[0].public_descriptor.has_wildcard());
+    assert!(!public_descriptor.contains("tprv"));
 
     let address_info = wallet.reveal_next_address(KeychainKind::External);
 

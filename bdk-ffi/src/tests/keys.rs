@@ -3,6 +3,7 @@ use crate::error::DescriptorKeyError;
 use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::types::WildcardType;
 use bdk_wallet::keys::bip39::WordCount;
+use bdk_wallet::bitcoin::PrivateKey as BdkPrivateKey;
 use std::sync::Arc;
 
 fn get_inner() -> DescriptorSecretKey {
@@ -92,6 +93,23 @@ fn test_from_str_inner() {
     // Should error out because you can't produce a DescriptorSecretKey from an xpub
     let key0 = "tpubDBrgjcxBxnXyL575sHdkpKohWu5qHKoQ7TJXKNrYznh5fVEGBv89hA8ENW7A8MFVpFUSvgLqc4Nj1WZcpePX6rrxviVtPowvMuGF5rdT2Vi";
     assert!(DescriptorSecretKey::from_string(key0.to_string()).is_err());
+}
+
+#[test]
+fn test_secret_bytes_from_single_and_multipath_keys() {
+    let wif = "L2wTu6hQrnDMiFNWA5na6jB12ErGQqtXwqpSL7aWquJaZG8Ai3ch";
+    let single_key = DescriptorSecretKey::from_string(wif.to_string()).unwrap();
+    let expected_single_bytes = BdkPrivateKey::from_wif(wif)
+        .unwrap()
+        .inner
+        .secret_bytes()
+        .to_vec();
+    assert_eq!(single_key.secret_bytes(), expected_single_bytes);
+
+    let base_xprv = "tprv8ZgxMBicQKsPcwcD4gSnMti126ZiETsuX7qwrtMypr6FBwAP65puFn4v6c3jrN9VwtMRMph6nyT63NrfUL4C3nBzPcduzVSuHD7zbX2JKVc";
+    let multipath_key = DescriptorSecretKey::from_string(format!("{base_xprv}/<0;1>/*")).unwrap();
+    let base_key = DescriptorSecretKey::from_string(base_xprv.to_string()).unwrap();
+    assert_eq!(multipath_key.secret_bytes(), base_key.secret_bytes());
 }
 
 #[test]
