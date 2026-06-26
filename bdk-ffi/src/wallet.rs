@@ -534,8 +534,8 @@ impl Wallet {
     ///   in the best chain.
     /// * The [`ChainPosition`] of the transaction in the best chain - whether the transaction is
     ///   confirmed or unconfirmed. If the transaction is confirmed, the anchor which proves the
-    ///   confirmation is provided. If the transaction is unconfirmed, the unix timestamp of when
-    ///   the transaction was last seen in the mempool is provided.
+    ///   confirmation is provided. If the transaction is unconfirmed, the unix timestamps of when
+    ///   the transaction was first and last seen in the mempool are provided.
     pub fn get_tx(&self, txid: Arc<Txid>) -> Result<Option<CanonicalTx>, TxidParseError> {
         Ok(self.get_wallet().get_tx(txid.0).map(|tx| tx.into()))
     }

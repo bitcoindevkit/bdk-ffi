@@ -77,8 +77,18 @@ pub enum ChainPosition {
         /// or equal to this child TXID.
         transitively: Option<Arc<Txid>>,
     },
-    /// The transaction was last seen in the mempool at this timestamp.
-    Unconfirmed { timestamp: Option<u64> },
+    /// The chain data is not confirmed.
+    Unconfirmed {
+        /// When the chain data was first seen in the mempool.
+        ///
+        /// This value will be `None` if the chain data was never seen in the mempool.
+        first_seen: Option<u64>,
+        /// When the chain data is last seen in the mempool.
+        ///
+        /// This value will be `None` if the chain data was never seen in the mempool and only seen
+        /// in a conflicting chain.
+        last_seen: Option<u64>,
+    },
 }
 
 impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
@@ -100,8 +110,12 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
                     transitively: transitively.map(|t| Arc::new(Txid(t))),
                 }
             }
-            BdkChainPosition::Unconfirmed { last_seen, .. } => ChainPosition::Unconfirmed {
-                timestamp: last_seen,
+            BdkChainPosition::Unconfirmed {
+                first_seen,
+                last_seen,
+            } => ChainPosition::Unconfirmed {
+                first_seen,
+                last_seen,
             },
         }
     }
