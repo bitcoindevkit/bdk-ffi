@@ -20,14 +20,14 @@ bdk_esplora = { version = "0.22.2", default-features = false, features = ["std",
 bdk_electrum = { version = "0.24.0", default-features = false, features = ["use-rustls-ring"] }
 bdk_kyoto = { version = "0.17.0" }
 
-uniffi = { version = "=0.31.1", features = ["cli"]}
+uniffi = { version = "=0.31.2", features = ["cli"]}
 thiserror = "2.0.17"
 
 [build-dependencies]
-uniffi = { version = "=0.31.1", features = ["build"] }
+uniffi = { version = "=0.31.2", features = ["build"] }
 
 [dev-dependencies]
-uniffi = { version = "=0.31.1", features = ["bindgen-tests"] }
+uniffi = { version = "=0.31.2", features = ["bindgen-tests"] }
 assert_matches = "1.5.0"
 
 [profile.release-smaller]
