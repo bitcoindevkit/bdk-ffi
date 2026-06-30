@@ -1507,10 +1507,14 @@ impl Psbt {
     }
 
     /// Returns the spending utxo for this PSBT's input at `input_index`.
-    pub fn spend_utxo(&self, input_index: u64) -> String {
+    pub fn spend_utxo(&self, input_index: u64) -> Result<String, PsbtError> {
         let psbt = self.0.lock().unwrap();
-        let utxo = psbt.spend_utxo(input_index as usize).unwrap();
-        serde_json::to_string(&utxo).unwrap()
+        let utxo = psbt
+            .spend_utxo(input_index as usize)
+            .map_err(PsbtError::from)?;
+        serde_json::to_string(&utxo).map_err(|error| PsbtError::Serialization {
+            error_message: error.to_string(),
+        })
     }
 
     /// The corresponding key-value map for each input in the unsigned transaction.

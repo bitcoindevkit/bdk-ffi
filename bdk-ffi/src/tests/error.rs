@@ -399,6 +399,23 @@ fn test_error_psbt() {
             "output index is out of bounds of non witness script output array",
         ),
         (
+            PsbtError::InputIndexOutOfBounds,
+            "input index is out of bounds",
+        ),
+        (PsbtError::MissingSpendUtxo, "missing spend UTXO in PSBT"),
+        (
+            PsbtError::Serialization {
+                error_message: "serialization error".to_string(),
+            },
+            "PSBT serialization error: serialization error",
+        ),
+        (
+            PsbtError::SpendUtxo {
+                error_message: "spend error".to_string(),
+            },
+            "PSBT spend UTXO error: spend error",
+        ),
+        (
             PsbtError::InvalidKey {
                 key: "key".to_string(),
             },
