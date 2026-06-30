@@ -32,7 +32,6 @@ impl Mnemonic {
     /// Generate a mnemonic given a word count.
     #[uniffi::constructor]
     pub fn new(word_count: WordCount) -> Self {
-        // TODO 4: I DON'T KNOW IF THIS IS A DECENT WAY TO GENERATE ENTROPY PLEASE CONFIRM
         let mut rng = rand::thread_rng();
         let mut entropy = [0u8; 32];
         rng.fill(&mut entropy);
@@ -42,6 +41,7 @@ impl Mnemonic {
         let mnemonic = BdkMnemonic::parse_in(Language::English, generated_key.to_string()).unwrap();
         Mnemonic(mnemonic)
     }
+
     /// Parse a string as a mnemonic seed phrase.
     #[uniffi::constructor]
     pub fn from_string(mnemonic: String) -> Result<Self, Bip39Error> {
