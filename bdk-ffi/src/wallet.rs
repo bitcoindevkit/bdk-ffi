@@ -491,7 +491,6 @@ impl Wallet {
     ///
     /// Returns true if the PSBT was finalized, or false otherwise.
     #[uniffi::method(default(sign_options = None))]
-    #[allow(deprecated)]
     pub fn sign_with_signers(
         &self,
         psbt: Arc<Psbt>,
