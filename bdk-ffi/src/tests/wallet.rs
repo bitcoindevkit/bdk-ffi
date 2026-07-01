@@ -150,3 +150,41 @@ fn test_create_two_path_wallet() {
     assert_eq!(wallet.derivation_index(KeychainKind::External), Some(0));
     assert_eq!(wallet.derivation_index(KeychainKind::Internal), Some(0));
 }
+
+#[test]
+fn test_load_from_two_path_descriptor() {
+    let persister = Arc::new(Persister::new_in_memory().unwrap());
+    let wallet = Wallet::create_from_two_path_descriptor(
+        two_path_descriptor(),
+        Network::Signet,
+        Arc::clone(&persister),
+        25,
+    )
+    .unwrap();
+
+    wallet.reveal_next_address(KeychainKind::External);
+    wallet.reveal_next_address(KeychainKind::Internal);
+    assert!(wallet.persist(Arc::clone(&persister)).unwrap());
+
+    let loaded_wallet =
+        Wallet::load_from_two_path_descriptor(two_path_descriptor(), Arc::clone(&persister), 25)
+            .unwrap();
+
+    assert_eq!(loaded_wallet.network(), Network::Signet);
+    assert_eq!(
+        loaded_wallet.derivation_index(KeychainKind::External),
+        Some(0)
+    );
+    assert_eq!(
+        loaded_wallet.derivation_index(KeychainKind::Internal),
+        Some(0)
+    );
+    assert_eq!(
+        loaded_wallet.next_derivation_index(KeychainKind::External),
+        1
+    );
+    assert_eq!(
+        loaded_wallet.next_derivation_index(KeychainKind::Internal),
+        1
+    );
+}

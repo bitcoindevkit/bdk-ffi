@@ -109,13 +109,18 @@ impl Wallet {
 
     /// Build a new `Wallet` from a two-path descriptor.
     ///
-    /// This function parses a multipath descriptor with exactly 2 paths and creates a wallet using the existing receive and change wallet creation logic.
+    /// This function parses a multipath descriptor with exactly 2 paths and creates a wallet
+    /// using the existing receive and change wallet creation logic. Use this method with public
+    /// extended keys (`xpub` prefix) to create watch-only wallets.
     ///
-    /// Multipath descriptors follow [BIP-389](https://github.com/bitcoin/bips/blob/master/bip-0389.mediawiki) and allow defining both receive and change derivation paths in a single descriptor using the <0;1> syntax.
+    /// Multipath descriptors follow [BIP-389](https://github.com/bitcoin/bips/blob/master/bip-0389.mediawiki)
+    /// and allow defining both receive and change derivation paths in a single descriptor using
+    /// the `<0;1>` syntax.
     ///
     /// If you have previously created a wallet, use load instead.
     ///
-    /// Returns an error if the descriptor is invalid or not a 2-path multipath descriptor.
+    /// Returns an error if the descriptor is not a 2-path multipath descriptor. Private multipath
+    /// descriptors cannot be constructed as `Descriptor` values for this API.
     #[uniffi::constructor(default(lookahead = 25))]
     pub fn create_from_two_path_descriptor(
         two_path_descriptor: Arc<Descriptor>,
@@ -157,6 +162,39 @@ impl Wallet {
         let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
             .descriptor(KeychainKind::External, Some(descriptor))
             .descriptor(KeychainKind::Internal, Some(change_descriptor))
+            .lookahead(lookahead)
+            .extract_keys()
+            .load_wallet(deref)
+            .map_err(LoadWithPersistError::from)?
+            .ok_or(LoadWithPersistError::CouldNotLoad)?;
+
+        Ok(Wallet {
+            inner_mutex: Mutex::new(wallet),
+        })
+    }
+
+    /// Build a two-path descriptor `Wallet` by loading from persistence.
+    ///
+    /// Checks that the provided two-path descriptor matches exactly what is loaded
+    /// for both the external and internal keychains.
+    ///
+    /// Use this method with public extended keys (`xpub` prefix) to load watch-only wallets.
+    /// Private multipath descriptors cannot be constructed as `Descriptor` values for this API.
+    ///
+    /// Note that descriptor secret keys are not persisted to the db. This method
+    /// extracts keys from the provided descriptor while loading.
+    #[uniffi::constructor(default(lookahead = 25))]
+    pub fn load_from_two_path_descriptor(
+        two_path_descriptor: Arc<Descriptor>,
+        persister: Arc<Persister>,
+        lookahead: u32,
+    ) -> Result<Wallet, LoadWithPersistError> {
+        let descriptor = two_path_descriptor.to_string();
+        let mut persist_lock = persister.inner.lock().unwrap();
+        let deref = persist_lock.deref_mut();
+
+        let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
+            .two_path_descriptor(descriptor)
             .lookahead(lookahead)
             .extract_keys()
             .load_wallet(deref)

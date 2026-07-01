@@ -1,6 +1,6 @@
-use crate::bitcoin::{Amount, Input, Network, NetworkKind, OutPoint, Script, TxOut};
+use crate::bitcoin::{Amount, Input, Network, NetworkKind, OutPoint, Script, Transaction, TxOut};
 use crate::descriptor::Descriptor;
-use crate::error::SighashParseError;
+use crate::error::{AddForeignUtxoError, SighashParseError};
 use crate::esplora::EsploraClient;
 use crate::store::Persister;
 use crate::tx_builder::TxBuilder;
@@ -8,6 +8,10 @@ use crate::types::FullScanScriptInspector;
 use crate::wallet::Wallet;
 
 use bdk_wallet::bitcoin::hashes::hex::FromHex;
+use bdk_wallet::bitcoin::{
+    absolute, consensus::serialize, transaction, Amount as BdkAmount, ScriptBuf as BdkScriptBuf,
+    Transaction as BdkTransaction, TxIn as BdkTxIn, TxOut as BdkTxOut,
+};
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -299,6 +303,94 @@ fn test_add_foreign_utxo_missing_witness_data() {
         result.is_err(),
         "Expected add_foreign_utxo() to fail with missing witness_utxo/non_witness_utxo"
     );
+}
+
+#[test]
+fn test_add_foreign_utxo_validates_non_witness_utxo_when_witness_utxo_is_present() {
+    let outpoint = OutPoint {
+        txid: Arc::new(
+            crate::bitcoin::Txid::from_string(
+                "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456".to_string(),
+            )
+            .unwrap(),
+        ),
+        vout: 0,
+    };
+
+    let witness_utxo = TxOut {
+        value: Arc::new(Amount::from_sat(50_000)),
+        script_pubkey: Arc::new(Script::new(
+            Vec::from_hex("0014d85c2b71d0060b09c9886aeb815e50991dda124d").unwrap(),
+        )),
+    };
+
+    let non_witness_tx = BdkTransaction {
+        version: transaction::Version::TWO,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![BdkTxIn::default()],
+        output: vec![BdkTxOut {
+            value: BdkAmount::from_sat(50_000),
+            script_pubkey: BdkScriptBuf::new(),
+        }],
+    };
+    let non_witness_utxo = Arc::new(Transaction::new(serialize(&non_witness_tx)).unwrap());
+
+    let psbt_input = Input {
+        non_witness_utxo: Some(non_witness_utxo.clone()),
+        witness_utxo: Some(witness_utxo.clone()),
+        partial_sigs: HashMap::new(),
+        sighash_type: None,
+        redeem_script: None,
+        witness_script: None,
+        bip32_derivation: HashMap::new(),
+        final_script_sig: None,
+        final_script_witness: None,
+        ripemd160_preimages: HashMap::new(),
+        sha256_preimages: HashMap::new(),
+        hash160_preimages: HashMap::new(),
+        hash256_preimages: HashMap::new(),
+        tap_key_sig: None,
+        tap_script_sigs: HashMap::new(),
+        tap_scripts: HashMap::new(),
+        tap_key_origins: HashMap::new(),
+        tap_internal_key: None,
+        tap_merkle_root: None,
+        proprietary: HashMap::new(),
+        unknown: HashMap::new(),
+    };
+
+    let result = TxBuilder::new().add_foreign_utxo(outpoint.clone(), psbt_input, 68);
+
+    assert!(matches!(result, Err(AddForeignUtxoError::InvalidTxid)));
+
+    let psbt_input_with_sequence = Input {
+        non_witness_utxo: Some(non_witness_utxo),
+        witness_utxo: Some(witness_utxo),
+        partial_sigs: HashMap::new(),
+        sighash_type: None,
+        redeem_script: None,
+        witness_script: None,
+        bip32_derivation: HashMap::new(),
+        final_script_sig: None,
+        final_script_witness: None,
+        ripemd160_preimages: HashMap::new(),
+        sha256_preimages: HashMap::new(),
+        hash160_preimages: HashMap::new(),
+        hash256_preimages: HashMap::new(),
+        tap_key_sig: None,
+        tap_script_sigs: HashMap::new(),
+        tap_scripts: HashMap::new(),
+        tap_key_origins: HashMap::new(),
+        tap_internal_key: None,
+        tap_merkle_root: None,
+        proprietary: HashMap::new(),
+        unknown: HashMap::new(),
+    };
+
+    let result =
+        TxBuilder::new().add_foreign_utxo_with_sequence(outpoint, psbt_input_with_sequence, 68, 0);
+
+    assert!(matches!(result, Err(AddForeignUtxoError::InvalidTxid)));
 }
 
 #[test]
