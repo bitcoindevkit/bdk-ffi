@@ -1,7 +1,8 @@
-use crate::bitcoin::{Network, NetworkKind};
+use crate::bitcoin::{BlockHash, Network, NetworkKind};
 use crate::descriptor::Descriptor;
+use crate::error::LoadWithPersistError;
 use crate::store::Persister;
-use crate::wallet::Wallet;
+use crate::wallet::{CreateParams, LoadParams, Wallet};
 
 use bdk_wallet::KeychainKind;
 
@@ -24,6 +25,15 @@ fn two_path_descriptor() -> Arc<Descriptor> {
     Arc::new(Descriptor::new(TWO_PATH_DESCRIPTOR.to_string(), NetworkKind::Test).unwrap())
 }
 
+fn custom_genesis_hash() -> Arc<BlockHash> {
+    Arc::new(
+        BlockHash::from_string(
+            "0000000000000000000000000000000000000000000000000000000000000000".to_string(),
+        )
+        .unwrap(),
+    )
+}
+
 fn build_wallet() -> Wallet {
     Wallet::new(
         external_descriptor(),
@@ -33,6 +43,88 @@ fn build_wallet() -> Wallet {
         25,
     )
     .unwrap()
+}
+
+#[test]
+fn test_create_wallet_with_params_sets_custom_genesis_hash() {
+    let genesis_hash = custom_genesis_hash();
+    let params = CreateParams {
+        genesis_hash: Some(Arc::clone(&genesis_hash)),
+        lookahead: 25,
+        use_spk_cache: true,
+    };
+
+    let wallet = Wallet::create_with_params(
+        external_descriptor(),
+        internal_descriptor(),
+        Network::Signet,
+        Arc::new(Persister::new_in_memory().unwrap()),
+        params,
+    )
+    .unwrap();
+
+    assert_eq!(wallet.network(), Network::Signet);
+    assert_eq!(wallet.latest_checkpoint().hash, genesis_hash);
+}
+
+#[test]
+fn test_load_wallet_with_params_checks_network_and_genesis_hash() {
+    let persister = Arc::new(Persister::new_in_memory().unwrap());
+    let genesis_hash = custom_genesis_hash();
+    let create_params = CreateParams {
+        genesis_hash: Some(Arc::clone(&genesis_hash)),
+        lookahead: 25,
+        use_spk_cache: true,
+    };
+
+    Wallet::create_with_params(
+        external_descriptor(),
+        internal_descriptor(),
+        Network::Signet,
+        Arc::clone(&persister),
+        create_params,
+    )
+    .unwrap();
+
+    let load_params = LoadParams {
+        check_network: Some(Network::Signet),
+        check_genesis_hash: Some(Arc::clone(&genesis_hash)),
+        lookahead: 25,
+        use_spk_cache: true,
+    };
+    let wallet = Wallet::load_with_params(
+        external_descriptor(),
+        internal_descriptor(),
+        Arc::clone(&persister),
+        load_params,
+    )
+    .unwrap();
+
+    assert_eq!(wallet.network(), Network::Signet);
+    assert_eq!(wallet.latest_checkpoint().hash, genesis_hash);
+
+    let mismatched_params = LoadParams {
+        check_network: Some(Network::Bitcoin),
+        check_genesis_hash: Some(custom_genesis_hash()),
+        lookahead: 25,
+        use_spk_cache: true,
+    };
+    let error = match Wallet::load_with_params(
+        external_descriptor(),
+        internal_descriptor(),
+        persister,
+        mismatched_params,
+    ) {
+        Ok(_) => panic!("loading with mismatched network should fail"),
+        Err(error) => error,
+    };
+
+    match error {
+        LoadWithPersistError::InvalidChangeSet { error_message } => {
+            assert!(error_message.contains("Network mismatch"));
+        }
+        error => panic!("expected InvalidChangeSet error, got {:?}", error),
+    }
 }
 
 #[test]
