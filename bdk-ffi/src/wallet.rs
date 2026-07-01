@@ -4,6 +4,7 @@ use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
     LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
 };
+use crate::signer::SignersContainer;
 use crate::store::{PersistenceType, Persister};
 use crate::types::{
     AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FullScanRequestBuilder,
@@ -475,6 +476,39 @@ impl Wallet {
 
         self.get_wallet()
             .sign(&mut psbt, bdk_sign_options)
+            .map_err(SignerError::from)
+    }
+
+    /// Sign a transaction with the provided signer containers.
+    ///
+    /// Signer containers are processed in the order provided. Signers inside each container are
+    /// processed according to their `SignerOrdering`.
+    ///
+    /// The `SignOptions` can be used to tweak the behavior of the software signers, and the way
+    /// the transaction is finalized at the end. Note that it can't be guaranteed that every signer
+    /// will follow the options, but the "software signers" (WIF keys and `xprv`) defined in this
+    /// library will.
+    ///
+    /// Returns true if the PSBT was finalized, or false otherwise.
+    #[uniffi::method(default(sign_options = None))]
+    pub fn sign_with_signers(
+        &self,
+        psbt: Arc<Psbt>,
+        signers: Vec<Arc<SignersContainer>>,
+        sign_options: Option<SignOptions>,
+    ) -> Result<bool, SignerError> {
+        let mut psbt = psbt.0.lock().unwrap();
+        let bdk_sign_options: BdkSignOptions = match sign_options {
+            Some(sign_options) => BdkSignOptions::from(sign_options),
+            None => BdkSignOptions::default(),
+        };
+        let signers = signers
+            .iter()
+            .map(|container| &container.inner)
+            .collect::<Vec<_>>();
+
+        self.get_wallet()
+            .sign_with_signers(&mut psbt, &signers, bdk_sign_options)
             .map_err(SignerError::from)
     }
 
