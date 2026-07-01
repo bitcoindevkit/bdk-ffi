@@ -181,7 +181,7 @@ impl Wallet {
         persister: Arc<Persister>,
         lookahead: u32,
     ) -> Result<Wallet, LoadWithPersistError> {
-        let descriptor = two_path_descriptor.to_string_with_secret();
+        let descriptor = two_path_descriptor.to_string();
         let mut persist_lock = persister.inner.lock().unwrap();
         let deref = persist_lock.deref_mut();
 
