@@ -453,13 +453,6 @@ impl Wallet {
         self.get_wallet().is_mine(script.0.clone())
     }
 
-    /// Get the signers.
-    pub fn get_signers(&self, keychain: KeychainKind) -> Arc<SignersContainer> {
-        let signers = self.get_wallet().get_signers(keychain).as_ref().clone();
-
-        Arc::new(SignersContainer::from(signers))
-    }
-
     /// Sign a transaction with all the wallet's signers, in the order specified by every signer's
     /// [`SignerOrdering`]. This function returns the `Result` type with an encapsulated `bool` that
     /// has the value true if the PSBT was finalized, or false otherwise.
