@@ -724,6 +724,21 @@ pub enum SighashParseError {
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
+pub enum GetPsbtInputError {
+    #[error("invalid sighash type: {error_message}")]
+    InvalidSighash { error_message: String },
+
+    #[error("reference to an unknown utxo: {outpoint}")]
+    UnknownUtxo { outpoint: String },
+
+    #[error("miniscript psbt error: {error_message}")]
+    MiniscriptPsbt { error_message: String },
+
+    #[error("create tx error: {error_message}")]
+    CreateTx { error_message: String },
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
 pub enum PsbtFinalizeError {
     #[error("an input at index {index} is invalid: {reason}")]
     InputError { reason: String, index: u32 },
@@ -1062,6 +1077,32 @@ impl From<BdkCreateTxError> for CreateTxError {
             BdkCreateTxError::MiniscriptPsbt(e) => CreateTxError::MiniscriptPsbt {
                 error_message: e.to_string(),
             },
+        }
+    }
+}
+
+impl GetPsbtInputError {
+    pub(crate) fn from_bdk_create_tx_error(error: BdkCreateTxError, outpoint: OutPoint) -> Self {
+        match error {
+            BdkCreateTxError::UnknownUtxo => GetPsbtInputError::UnknownUtxo {
+                outpoint: format!("{}:{}", outpoint.txid, outpoint.vout),
+            },
+            BdkCreateTxError::MiniscriptPsbt(error) => GetPsbtInputError::MiniscriptPsbt {
+                error_message: error.to_string(),
+            },
+            other => GetPsbtInputError::CreateTx {
+                error_message: CreateTxError::from(other).to_string(),
+            },
+        }
+    }
+}
+
+impl From<SighashParseError> for GetPsbtInputError {
+    fn from(error: SighashParseError) -> Self {
+        match error {
+            SighashParseError::Invalid { error_message } => {
+                GetPsbtInputError::InvalidSighash { error_message }
+            }
         }
     }
 }

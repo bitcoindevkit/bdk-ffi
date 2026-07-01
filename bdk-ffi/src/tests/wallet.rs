@@ -1,10 +1,19 @@
-use crate::bitcoin::{Network, NetworkKind};
+use crate::bitcoin::{Network, NetworkKind, Transaction};
 use crate::descriptor::Descriptor;
+use crate::error::GetPsbtInputError;
 use crate::store::Persister;
+use crate::types::{LocalOutput, UnconfirmedTx};
 use crate::wallet::Wallet;
 
+use bdk_wallet::bitcoin::absolute::LockTime;
+use bdk_wallet::bitcoin::transaction::Version;
+use bdk_wallet::bitcoin::{
+    Amount as BdkAmount, OutPoint as BdkOutPoint, ScriptBuf, Sequence,
+    Transaction as BdkTransaction, TxIn as BdkTxIn, TxOut as BdkTxOut, Txid as BdkTxid, Witness,
+};
 use bdk_wallet::KeychainKind;
 
+use std::str::FromStr;
 use std::sync::Arc;
 
 const EXTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)";
@@ -33,6 +42,40 @@ fn build_wallet() -> Wallet {
         25,
     )
     .unwrap()
+}
+
+fn fund_wallet(wallet: &Wallet) -> LocalOutput {
+    let address_info = wallet.reveal_next_address(KeychainKind::External);
+    let script_pubkey = ScriptBuf::from_bytes(address_info.address.script_pubkey().to_bytes());
+    let tx = BdkTransaction {
+        version: Version::TWO,
+        lock_time: LockTime::ZERO,
+        input: vec![BdkTxIn {
+            previous_output: BdkOutPoint {
+                txid: BdkTxid::from_str(
+                    "0101010101010101010101010101010101010101010101010101010101010101",
+                )
+                .unwrap(),
+                vout: 0,
+            },
+            script_sig: ScriptBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        }],
+        output: vec![BdkTxOut {
+            value: BdkAmount::from_sat(50_000),
+            script_pubkey,
+        }],
+    };
+
+    wallet.apply_unconfirmed_txs(vec![UnconfirmedTx {
+        tx: Arc::new(Transaction::from(tx)),
+        last_seen: 1,
+    }]);
+
+    let utxos = wallet.list_unspent();
+    assert_eq!(utxos.len(), 1);
+    utxos.into_iter().next().unwrap()
 }
 
 #[test]
@@ -149,4 +192,48 @@ fn test_create_two_path_wallet() {
     );
     assert_eq!(wallet.derivation_index(KeychainKind::External), Some(0));
     assert_eq!(wallet.derivation_index(KeychainKind::Internal), Some(0));
+}
+
+#[test]
+fn test_get_psbt_input_for_local_utxo() {
+    let wallet = build_wallet();
+    let utxo = fund_wallet(&wallet);
+
+    let psbt_input = wallet.get_psbt_input(utxo, None, false).unwrap();
+
+    assert!(psbt_input.witness_utxo.is_some() || psbt_input.non_witness_utxo.is_some());
+    assert_eq!(psbt_input.sighash_type, None);
+    assert!(!psbt_input.bip32_derivation.is_empty());
+}
+
+#[test]
+fn test_get_psbt_input_parses_sighash() {
+    let wallet = build_wallet();
+    let utxo = fund_wallet(&wallet);
+
+    let psbt_input = wallet
+        .get_psbt_input(
+            utxo,
+            Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY".to_string()),
+            false,
+        )
+        .unwrap();
+
+    assert_eq!(
+        psbt_input.sighash_type.as_deref(),
+        Some("SIGHASH_SINGLE|SIGHASH_ANYONECANPAY")
+    );
+}
+
+#[test]
+fn test_get_psbt_input_invalid_sighash_returns_error() {
+    let wallet = build_wallet();
+    let utxo = fund_wallet(&wallet);
+
+    let result = wallet.get_psbt_input(utxo, Some("not-a-sighash".to_string()), false);
+
+    assert!(matches!(
+        result,
+        Err(GetPsbtInputError::InvalidSighash { .. })
+    ));
 }
