@@ -40,7 +40,7 @@ impl SignersContainer {
         Self { inner }
     }
 
-    /// Returns the number of signers in the container.
+    /// Returns the number of signer entries registered in the container.
     pub fn len(&self) -> u64 {
         self.inner.signers().len() as u64
     }
