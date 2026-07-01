@@ -114,25 +114,12 @@ fn test_signers_container_from_descriptor() {
 }
 
 #[test]
-fn test_get_signers() {
-    let wallet = build_wallet();
-
-    let external_signers = wallet.get_signers(KeychainKind::External);
-    let internal_signers = wallet.get_signers(KeychainKind::Internal);
-
-    assert!(!external_signers.is_empty());
-    assert!(!internal_signers.is_empty());
-    assert_eq!(external_signers.len(), 1);
-    assert_eq!(internal_signers.len(), 1);
-}
-
-#[test]
 fn test_sign_with_signers() {
     let wallet = build_wallet();
     let psbt = empty_psbt();
     let signers = vec![
-        wallet.get_signers(KeychainKind::External),
-        wallet.get_signers(KeychainKind::Internal),
+        Arc::new(SignersContainer::from_descriptor(external_descriptor())),
+        Arc::new(SignersContainer::from_descriptor(internal_descriptor())),
     ];
 
     let finalized = wallet.sign_with_signers(psbt, signers, None).unwrap();

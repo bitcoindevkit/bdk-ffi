@@ -50,9 +50,3 @@ impl SignersContainer {
         self.inner.signers().is_empty()
     }
 }
-
-impl From<BdkSignersContainer> for SignersContainer {
-    fn from(inner: BdkSignersContainer) -> Self {
-        Self { inner }
-    }
-}
