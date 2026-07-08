@@ -1,8 +1,9 @@
-use crate::bitcoin::{Amount, FeeRate, OutPoint, Psbt, Script, Transaction, TxOut, Txid};
+use crate::bitcoin::{Amount, FeeRate, Input, OutPoint, Psbt, Script, Transaction, TxOut, Txid};
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
-    LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
+    GetPsbtInputError, LoadWithPersistError, PersistenceError, SighashParseError, SignerError,
+    TxidParseError,
 };
 use crate::store::{PersistenceType, Persister};
 use crate::types::{
@@ -11,6 +12,7 @@ use crate::types::{
     SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent, WalletKeychain,
 };
 
+use bdk_wallet::bitcoin::psbt::PsbtSighashType as BdkPsbtSighashType;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::KeyMap;
 #[allow(deprecated)]
@@ -18,6 +20,7 @@ use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{PersistedWallet, Wallet as BdkWallet};
 
 use std::ops::DerefMut;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 /// A Bitcoin wallet.
@@ -212,6 +215,26 @@ impl Wallet {
         self.get_wallet()
             .get_utxo(op.into())
             .map(|local_output| local_output.into())
+    }
+
+    /// Get the corresponding PSBT Input for a `LocalOutput`.
+    #[uniffi::method(default(sighash_type = None, only_witness_utxo = false))]
+    pub fn get_psbt_input(
+        &self,
+        utxo: LocalOutput,
+        sighash_type: Option<String>,
+        only_witness_utxo: bool,
+    ) -> Result<Input, GetPsbtInputError> {
+        let outpoint = utxo.outpoint.clone();
+        let sighash_type = sighash_type
+            .map(|sighash_type| parse_sighash_type(&sighash_type))
+            .transpose()?;
+        let psbt_input = self
+            .get_wallet()
+            .get_psbt_input(utxo.into(), sighash_type, only_witness_utxo)
+            .map_err(|error| GetPsbtInputError::from_bdk_create_tx_error(error, outpoint))?;
+
+        Ok(Input::from(&psbt_input))
     }
 
     /// Attempt to reveal the next address of the given `keychain`.
@@ -743,4 +766,10 @@ impl Wallet {
     pub(crate) fn get_wallet(&self) -> MutexGuard<'_, PersistedWallet<PersistenceType>> {
         self.inner_mutex.lock().expect("wallet")
     }
+}
+
+fn parse_sighash_type(sighash: &str) -> Result<BdkPsbtSighashType, SighashParseError> {
+    BdkPsbtSighashType::from_str(sighash).map_err(|error| SighashParseError::Invalid {
+        error_message: error.to_string(),
+    })
 }

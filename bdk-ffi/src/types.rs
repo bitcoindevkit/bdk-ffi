@@ -107,6 +107,24 @@ impl From<BdkChainPosition<BdkConfirmationBlockTime>> for ChainPosition {
     }
 }
 
+impl From<ChainPosition> for BdkChainPosition<BdkConfirmationBlockTime> {
+    fn from(chain_position: ChainPosition) -> Self {
+        match chain_position {
+            ChainPosition::Confirmed {
+                confirmation_block_time,
+                transitively,
+            } => BdkChainPosition::Confirmed {
+                anchor: confirmation_block_time.into(),
+                transitively: transitively.map(|txid| txid.0),
+            },
+            ChainPosition::Unconfirmed { timestamp } => BdkChainPosition::Unconfirmed {
+                first_seen: timestamp,
+                last_seen: timestamp,
+            },
+        }
+    }
+}
+
 /// Represents the confirmation block and time of a transaction.
 #[derive(Debug, Clone, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
 pub struct ConfirmationBlockTime {
@@ -286,6 +304,19 @@ impl From<BdkLocalOutput> for LocalOutput {
                 value: Arc::new(Amount(local_utxo.txout.value)),
                 script_pubkey: Arc::new(Script(local_utxo.txout.script_pubkey)),
             },
+            keychain: local_utxo.keychain,
+            is_spent: local_utxo.is_spent,
+            derivation_index: local_utxo.derivation_index,
+            chain_position: local_utxo.chain_position.into(),
+        }
+    }
+}
+
+impl From<LocalOutput> for BdkLocalOutput {
+    fn from(local_utxo: LocalOutput) -> Self {
+        BdkLocalOutput {
+            outpoint: local_utxo.outpoint.into(),
+            txout: local_utxo.txout.into(),
             keychain: local_utxo.keychain,
             is_spent: local_utxo.is_spent,
             derivation_index: local_utxo.derivation_index,
