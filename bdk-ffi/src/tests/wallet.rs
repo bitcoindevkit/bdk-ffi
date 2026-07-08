@@ -1,10 +1,18 @@
-use crate::bitcoin::{Network, NetworkKind};
+use crate::bitcoin::{Network, NetworkKind, Transaction};
 use crate::descriptor::Descriptor;
 use crate::store::Persister;
+use crate::types::{ChainPosition, UnconfirmedTx};
 use crate::wallet::Wallet;
 
+use bdk_wallet::bitcoin::absolute::LockTime;
+use bdk_wallet::bitcoin::transaction::Version;
+use bdk_wallet::bitcoin::{
+    Amount as BdkAmount, OutPoint as BdkOutPoint, ScriptBuf, Sequence,
+    Transaction as BdkTransaction, TxIn as BdkTxIn, TxOut as BdkTxOut, Txid as BdkTxid, Witness,
+};
 use bdk_wallet::KeychainKind;
 
+use std::str::FromStr;
 use std::sync::Arc;
 
 const EXTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)";
@@ -33,6 +41,33 @@ fn build_wallet() -> Wallet {
         25,
     )
     .unwrap()
+}
+
+fn unconfirmed_tx_to_wallet(wallet: &Wallet) -> Arc<Transaction> {
+    let address_info = wallet.reveal_next_address(KeychainKind::External);
+    let script_pubkey = ScriptBuf::from_bytes(address_info.address.script_pubkey().to_bytes());
+    let tx = BdkTransaction {
+        version: Version::TWO,
+        lock_time: LockTime::ZERO,
+        input: vec![BdkTxIn {
+            previous_output: BdkOutPoint {
+                txid: BdkTxid::from_str(
+                    "0101010101010101010101010101010101010101010101010101010101010101",
+                )
+                .unwrap(),
+                vout: 0,
+            },
+            script_sig: ScriptBuf::new(),
+            sequence: Sequence::MAX,
+            witness: Witness::default(),
+        }],
+        output: vec![BdkTxOut {
+            value: BdkAmount::from_sat(50_000),
+            script_pubkey,
+        }],
+    };
+
+    Arc::new(Transaction::from(tx))
 }
 
 #[test]
@@ -149,4 +184,30 @@ fn test_create_two_path_wallet() {
     );
     assert_eq!(wallet.derivation_index(KeychainKind::External), Some(0));
     assert_eq!(wallet.derivation_index(KeychainKind::Internal), Some(0));
+}
+
+#[test]
+fn test_chain_position_preserves_first_and_last_seen() {
+    let wallet = build_wallet();
+    let tx = unconfirmed_tx_to_wallet(&wallet);
+
+    wallet.apply_unconfirmed_txs(vec![UnconfirmedTx {
+        tx: tx.clone(),
+        last_seen: 10,
+    }]);
+    wallet.apply_unconfirmed_txs(vec![UnconfirmedTx { tx, last_seen: 20 }]);
+
+    let transactions = wallet.transactions();
+
+    assert_eq!(transactions.len(), 1);
+    match &transactions[0].chain_position {
+        ChainPosition::Unconfirmed {
+            first_seen,
+            last_seen,
+        } => {
+            assert_eq!(*first_seen, Some(10));
+            assert_eq!(*last_seen, Some(20));
+        }
+        other => panic!("expected unconfirmed chain position, got {:?}", other),
+    }
 }
