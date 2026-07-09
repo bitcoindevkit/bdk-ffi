@@ -196,7 +196,6 @@ impl Wallet {
         let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
             .two_path_descriptor(descriptor)
             .lookahead(lookahead)
-            .extract_keys()
             .load_wallet(deref)
             .map_err(LoadWithPersistError::from)?
             .ok_or(LoadWithPersistError::CouldNotLoad)?;
