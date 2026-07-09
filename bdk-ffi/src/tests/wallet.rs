@@ -129,10 +129,16 @@ fn test_reveal_next_address() {
 
 #[test]
 fn test_signers_container_from_descriptor() {
-    let signers = SignersContainer::from_descriptor(external_descriptor());
+    let secret_descriptor = external_descriptor();
+    let public_descriptor =
+        Arc::new(Descriptor::new(secret_descriptor.to_string(), NetworkKind::Test).unwrap());
+    let secret_signers = SignersContainer::from_descriptor(secret_descriptor);
+    let public_signers = SignersContainer::from_descriptor(public_descriptor);
 
-    assert!(!signers.is_empty());
-    assert_eq!(signers.len(), 1);
+    assert!(!secret_signers.is_empty());
+    assert_eq!(secret_signers.len(), 1);
+    assert!(public_signers.is_empty());
+    assert_eq!(public_signers.len(), 0);
 }
 
 #[test]
