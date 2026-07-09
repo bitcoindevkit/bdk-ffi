@@ -110,8 +110,9 @@ impl Wallet {
     /// Build a new `Wallet` from a two-path descriptor.
     ///
     /// This function parses a multipath descriptor with exactly 2 paths and creates a wallet
-    /// using the existing receive and change wallet creation logic. Use this method with public
-    /// extended keys (`xpub` prefix) to create watch-only wallets.
+    /// using the existing receive and change wallet creation logic.
+    ///
+    /// The provided descriptor may only contain extended public keys (`xpub`) with exactly 2 paths.
     ///
     /// Multipath descriptors follow [BIP-389](https://github.com/bitcoin/bips/blob/master/bip-0389.mediawiki)
     /// and allow defining both receive and change derivation paths in a single descriptor using
@@ -119,8 +120,7 @@ impl Wallet {
     ///
     /// If you have previously created a wallet, use load instead.
     ///
-    /// Returns an error if the descriptor is not a 2-path multipath descriptor. Private multipath
-    /// descriptors cannot be constructed as `Descriptor` values for this API.
+    /// Returns an error if the descriptor is not a 2-path multipath descriptor.
     #[uniffi::constructor(default(lookahead = 25))]
     pub fn create_from_two_path_descriptor(
         two_path_descriptor: Arc<Descriptor>,
@@ -178,11 +178,7 @@ impl Wallet {
     /// Checks that the provided two-path descriptor matches exactly what is loaded
     /// for both the external and internal keychains.
     ///
-    /// Use this method with public extended keys (`xpub` prefix) to load watch-only wallets.
-    /// Private multipath descriptors cannot be constructed as `Descriptor` values for this API.
-    ///
-    /// Note that descriptor secret keys are not persisted to the db. This method
-    /// extracts keys from the provided descriptor while loading.
+    /// The provided descriptor may only contain extended public keys (`xpub`) with exactly 2 paths.
     #[uniffi::constructor(default(lookahead = 25))]
     pub fn load_from_two_path_descriptor(
         two_path_descriptor: Arc<Descriptor>,
