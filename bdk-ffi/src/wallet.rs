@@ -7,10 +7,11 @@ use crate::error::{
 use crate::store::{PersistenceType, Persister};
 use crate::types::{
     AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FullScanRequestBuilder,
-    KeychainAndIndex, KeychainKind, LocalOutput, Policy, SentAndReceivedValues, SignOptions,
-    SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent, WalletKeychain,
+    KeychainAndIndex, KeychainKind, LocalOutput, Policy, SecpCtx, SentAndReceivedValues,
+    SignOptions, SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent, WalletKeychain,
 };
 
+use bdk_wallet::bitcoin::secp256k1::{All, Secp256k1};
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::keys::KeyMap;
 #[allow(deprecated)]
@@ -769,6 +770,12 @@ impl Wallet {
     /// This can be used to build a watch-only version of a wallet.
     pub fn public_descriptor(&self, keychain: KeychainKind) -> String {
         self.get_wallet().public_descriptor(keychain).to_string()
+    }
+
+    /// Return the secp256k1 context used for all signing operations.
+    pub fn secp_ctx(&self) -> Arc<SecpCtx> {
+        let secp: Secp256k1<All> = self.get_wallet().secp_ctx().clone();
+        Arc::new(SecpCtx { secp })
     }
 }
 
