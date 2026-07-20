@@ -12,7 +12,6 @@ use crate::types::{
 };
 
 use bdk_wallet::bitcoin::Network;
-use bdk_wallet::keys::KeyMap;
 #[allow(deprecated)]
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{PersistedWallet, Wallet as BdkWallet};
@@ -467,7 +466,7 @@ impl Wallet {
                 keychain,
                 public_descriptor: Arc::new(Descriptor {
                     extended_descriptor: descriptor.clone(),
-                    key_map: KeyMap::default(),
+                    key_map: Vec::new(),
                 }),
             })
             .collect()

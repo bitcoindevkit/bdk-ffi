@@ -5,7 +5,7 @@ use crate::error::DescriptorError;
 use crate::error::MiniscriptError;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
-use crate::types::KeychainKind;
+use crate::types::{KeyMap, KeychainKind};
 
 use bdk_wallet::bitcoin::bip32::Fingerprint;
 use bdk_wallet::bitcoin::key::Secp256k1;
@@ -13,7 +13,7 @@ use bdk_wallet::bitcoin::Network;
 use bdk_wallet::chain::DescriptorExt;
 use bdk_wallet::descriptor::{ExtendedDescriptor, IntoWalletDescriptor};
 use bdk_wallet::keys::DescriptorPublicKey as BdkDescriptorPublicKey;
-use bdk_wallet::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, KeyMap};
+use bdk_wallet::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, KeyMap as BdkKeyMap};
 use bdk_wallet::miniscript::descriptor::{ConversionError, TapTree};
 use bdk_wallet::miniscript::Descriptor as BdkDescriptor;
 use bdk_wallet::miniscript::Miniscript as BdkMiniscript;
@@ -31,7 +31,31 @@ use std::sync::Arc;
 #[uniffi::export(Debug, Display)]
 pub struct Descriptor {
     pub extended_descriptor: ExtendedDescriptor,
-    pub key_map: KeyMap,
+    pub key_map: Vec<KeyMap>,
+}
+
+impl From<bdk_wallet::keys::DescriptorPublicKey> for DescriptorPublicKey {
+    fn from(inner: bdk_wallet::keys::DescriptorPublicKey) -> Self {
+        DescriptorPublicKey(inner)
+    }
+}
+
+impl From<DescriptorPublicKey> for bdk_wallet::keys::DescriptorPublicKey {
+    fn from(wrapper: DescriptorPublicKey) -> Self {
+        wrapper.0
+    }
+}
+
+impl From<bdk_wallet::keys::DescriptorSecretKey> for DescriptorSecretKey {
+    fn from(inner: bdk_wallet::keys::DescriptorSecretKey) -> Self {
+        DescriptorSecretKey(inner)
+    }
+}
+
+impl From<DescriptorSecretKey> for bdk_wallet::keys::DescriptorSecretKey {
+    fn from(wrapper: DescriptorSecretKey) -> Self {
+        wrapper.0
+    }
 }
 
 #[uniffi::export]
@@ -42,6 +66,13 @@ impl Descriptor {
         let secp = Secp256k1::new();
         let (extended_descriptor, key_map) =
             descriptor.into_wallet_descriptor(&secp, network_kind)?;
+        let key_map: Vec<KeyMap> = key_map
+            .into_iter()
+            .map(|(pubkey, seckey)| KeyMap {
+                descriptor_public_key: Arc::new(pubkey.into()),
+                descriptor_secret_key: Arc::new(seckey.into()),
+            })
+            .collect();
         Ok(Self {
             extended_descriptor,
             key_map,
@@ -66,6 +97,13 @@ impl Descriptor {
                 let (extended_descriptor, key_map, _) = Bip44(derivable_key, keychain_kind)
                     .build(network_kind)
                     .unwrap();
+                let key_map: Vec<KeyMap> = key_map
+                    .into_iter()
+                    .map(|(pubkey, seckey)| KeyMap {
+                        descriptor_public_key: Arc::new(pubkey.into()),
+                        descriptor_secret_key: Arc::new(seckey.into()),
+                    })
+                    .collect();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -102,6 +140,13 @@ impl Descriptor {
                     Bip44Public(derivable_key, fingerprint, keychain_kind)
                         .build(network_kind)
                         .map_err(DescriptorError::from)?;
+                let key_map: Vec<KeyMap> = key_map
+                    .into_iter()
+                    .map(|(pubkey, seckey)| KeyMap {
+                        descriptor_public_key: Arc::new(pubkey.into()),
+                        descriptor_secret_key: Arc::new(seckey.into()),
+                    })
+                    .collect();
 
                 Ok(Self {
                     extended_descriptor,
@@ -132,6 +177,13 @@ impl Descriptor {
                 let (extended_descriptor, key_map, _) = Bip49(derivable_key, keychain_kind)
                     .build(network_kind)
                     .unwrap();
+                let key_map: Vec<KeyMap> = key_map
+                    .into_iter()
+                    .map(|(pubkey, seckey)| KeyMap {
+                        descriptor_public_key: Arc::new(pubkey.into()),
+                        descriptor_secret_key: Arc::new(seckey.into()),
+                    })
+                    .collect();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -168,7 +220,13 @@ impl Descriptor {
                     Bip49Public(derivable_key, fingerprint, keychain_kind)
                         .build(network_kind)
                         .map_err(DescriptorError::from)?;
-
+                let key_map: Vec<KeyMap> = key_map
+                    .into_iter()
+                    .map(|(pubkey, seckey)| KeyMap {
+                        descriptor_public_key: Arc::new(pubkey.into()),
+                        descriptor_secret_key: Arc::new(seckey.into()),
+                    })
+                    .collect();
                 Ok(Self {
                     extended_descriptor,
                     key_map,
@@ -198,6 +256,13 @@ impl Descriptor {
                 let (extended_descriptor, key_map, _) = Bip84(derivable_key, keychain_kind)
                     .build(network_kind)
                     .unwrap();
+                let key_map: Vec<KeyMap> = key_map
+                    .into_iter()
+                    .map(|(pubkey, seckey)| KeyMap {
+                        descriptor_public_key: Arc::new(pubkey.into()),
+                        descriptor_secret_key: Arc::new(seckey.into()),
+                    })
+                    .collect();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -234,7 +299,13 @@ impl Descriptor {
                     Bip84Public(derivable_key, fingerprint, keychain_kind)
                         .build(network_kind)
                         .map_err(DescriptorError::from)?;
-
+                let key_map: Vec<KeyMap> = key_map
+                    .into_iter()
+                    .map(|(pubkey, seckey)| KeyMap {
+                        descriptor_public_key: Arc::new(pubkey.into()),
+                        descriptor_secret_key: Arc::new(seckey.into()),
+                    })
+                    .collect();
                 Ok(Self {
                     extended_descriptor,
                     key_map,
@@ -264,6 +335,13 @@ impl Descriptor {
                 let (extended_descriptor, key_map, _) = Bip86(derivable_key, keychain_kind)
                     .build(network_kind)
                     .unwrap();
+                let key_map: Vec<KeyMap> = key_map
+                    .into_iter()
+                    .map(|(pubkey, seckey)| KeyMap {
+                        descriptor_public_key: Arc::new(pubkey.into()),
+                        descriptor_secret_key: Arc::new(seckey.into()),
+                    })
+                    .collect();
                 Self {
                     extended_descriptor,
                     key_map,
@@ -301,6 +379,14 @@ impl Descriptor {
                         .build(network_kind)
                         .map_err(DescriptorError::from)?;
 
+                let key_map: Vec<KeyMap> = key_map
+                    .into_iter()
+                    .map(|(pubkey, seckey)| KeyMap {
+                        descriptor_public_key: Arc::new(pubkey.into()),
+                        descriptor_secret_key: Arc::new(seckey.into()),
+                    })
+                    .collect();
+
                 Ok(Self {
                     extended_descriptor,
                     key_map,
@@ -337,7 +423,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -366,7 +452,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -395,7 +481,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -411,7 +497,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -434,7 +520,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -457,7 +543,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -480,7 +566,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -510,7 +596,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -540,7 +626,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -569,7 +655,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -599,7 +685,7 @@ impl Descriptor {
 
         Ok(Self {
             extended_descriptor,
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
@@ -616,7 +702,7 @@ impl Descriptor {
             let sh_with_wpkh = bdk_wallet::miniscript::Descriptor::new_sh_with_wpkh(wpkh_inner);
             Ok(Self {
                 extended_descriptor: ExtendedDescriptor::from(sh_with_wpkh),
-                key_map: KeyMap::new(),
+                key_map: Vec::new(),
             })
         } else {
             Err(DescriptorError::Miniscript {
@@ -638,7 +724,7 @@ impl Descriptor {
             let sh_with_wsh = bdk_wallet::miniscript::Descriptor::new_sh_with_wsh(wsh_inner);
             Ok(Self {
                 extended_descriptor: ExtendedDescriptor::from(sh_with_wsh),
-                key_map: KeyMap::new(),
+                key_map: Vec::new(),
             })
         } else {
             Err(DescriptorError::Miniscript {
@@ -674,15 +760,24 @@ impl Descriptor {
             })?;
         Ok(Self {
             extended_descriptor: ExtendedDescriptor::from(descriptor),
-            key_map: KeyMap::new(),
+            key_map: Vec::new(),
         })
     }
 
     /// Dangerously convert the descriptor to a string.
     pub fn to_string_with_secret(&self) -> String {
         let descriptor = &self.extended_descriptor;
-        let key_map = &self.key_map;
-        descriptor.to_string_with_secret(key_map)
+        let key_map: BdkKeyMap = self
+            .key_map
+            .iter()
+            .map(|entry| {
+                (
+                    entry.descriptor_public_key.0.clone(),
+                    entry.descriptor_secret_key.0.clone(),
+                )
+            })
+            .collect();
+        descriptor.to_string_with_secret(&key_map)
     }
 
     /// Does this descriptor contain paths: https://github.com/bitcoin/bips/blob/master/bip-0389.mediawiki
@@ -778,6 +873,11 @@ impl Descriptor {
             .map_err(|e| DescriptorError::Miniscript {
                 error_message: e.to_string(),
             })
+    }
+
+    /// Return the key_map entries
+    pub fn get_key_map(&self) -> Vec<KeyMap> {
+        self.key_map.clone()
     }
 }
 

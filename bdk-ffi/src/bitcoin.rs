@@ -702,6 +702,7 @@ pub struct Input {
 }
 
 use crate::error::AddForeignUtxoError;
+use crate::types::KeyMapWrapper;
 
 impl From<&BdkInput> for Input {
     fn from(input: &BdkInput) -> Self {
@@ -1523,6 +1524,33 @@ impl Psbt {
     pub fn output(&self) -> Vec<Output> {
         let psbt = self.0.lock().unwrap();
         psbt.outputs.iter().map(|o| o.into()).collect()
+    }
+
+    /// Attempts to create _all_ the required signatures for this PSBT using `k`.
+    ///
+    /// If you just want to sign an input with one specific key consider using `sighash_ecdsa` or
+    /// `sighash_taproot`. This function does not support scripts that contain `OP_CODESEPARATOR`.
+    ///
+    /// # Returns
+    ///
+    /// A map of input index -> keys used to sign, for Taproot specifics please see [`SigningKeys`].
+    ///
+    /// If an error is returned some signatures may already have been added to the PSBT. Since
+    /// `partial_sigs` is a [`BTreeMap`] it is safe to retry, previous sigs will be overwritten.
+    pub fn sign(&self, k: Arc<KeyMapWrapper>) -> Result<Arc<Psbt>, PsbtError> {
+        let mut psbt = self.0.lock().unwrap().clone();
+        let secp = Secp256k1::new();
+        let mut bdk_map: bdk_wallet::miniscript::descriptor::KeyMap =
+            std::collections::BTreeMap::new();
+        for key_map in &k.map {
+            bdk_map.insert(
+                key_map.descriptor_public_key.as_ref().0.clone(),
+                key_map.descriptor_secret_key.as_ref().0.clone(),
+            );
+        }
+        let bdk_wrapper = bdk_wallet::miniscript::descriptor::KeyMapWrapper::from(bdk_map);
+        let _ = psbt.sign(&bdk_wrapper, &secp);
+        Ok(Arc::new(Psbt(Mutex::new(psbt))))
     }
 }
 
