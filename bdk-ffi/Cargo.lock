@@ -147,6 +147,7 @@ dependencies = [
  "bdk_electrum",
  "bdk_esplora",
  "bdk_kyoto",
+ "bdk_sp",
  "bdk_wallet",
  "thiserror",
  "uniffi",
@@ -204,6 +205,15 @@ checksum = "346c1d502ee4613cf2201db9c3b93a2317772d8eaa372114f34bf5f374be94fd"
 dependencies = [
  "bdk_wallet",
  "bip157",
+]
+
+[[package]]
+name = "bdk_sp"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c401af00a119ceee1bd9aa35dd15c9130b5d8381003b141fb5456a938ab8efed"
+dependencies = [
+ "bitcoin",
 ]
 
 [[package]]
