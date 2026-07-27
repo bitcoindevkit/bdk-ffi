@@ -1,8 +1,14 @@
+#[cfg(feature = "experimental-silent-payments")]
+use crate::bitcoin::Transaction;
 use crate::bitcoin::{Amount, FeeRate, Input, OutPoint, Psbt, Script, Txid};
 use crate::error::{AddForeignUtxoError, CreateTxError, SighashParseError};
+#[cfg(feature = "experimental-silent-payments")]
+use crate::silent_payments::{SilentPaymentRecipient, SilentPaymentSendError};
 use crate::types::{KeychainKind, LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
+#[cfg(feature = "experimental-silent-payments")]
+use bdk_sp::send::psbt::derive_sp;
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
@@ -17,6 +23,11 @@ use bdk_wallet::coin_selection::{
     OldestFirstCoinSelection as BdkOldestFirstCoinSelection,
     SingleRandomDraw as BdkSingleRandomDraw,
 };
+#[cfg(feature = "experimental-silent-payments")]
+use bdk_wallet::miniscript::descriptor::KeyMapWrapper;
+#[cfg(feature = "experimental-silent-payments")]
+#[allow(deprecated)]
+use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::TxOrdering as BdkTxOrdering;
 
 use std::collections::BTreeMap;
@@ -26,6 +37,9 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 type ChangeSpendPolicy = bdk_wallet::ChangeSpendPolicy;
+
+#[cfg(feature = "experimental-silent-payments")]
+const MAX_SILENT_PAYMENT_RECIPIENTS_PER_SCAN_KEY: usize = 2323;
 
 /// A `TxBuilder` is created by calling `build_tx` on a wallet. After assigning it, you set options on it until finally
 /// calling `finish` to consume the builder and generate the transaction.
@@ -582,6 +596,183 @@ impl TxBuilder {
                 self.finish_with_builder(tx_builder.coin_selection(BdkSingleRandomDraw))
             }
         }
+    }
+}
+
+#[cfg(feature = "experimental-silent-payments")]
+#[uniffi::export]
+impl TxBuilder {
+    /// Builds and signs a BIP 352 silent payment transaction.
+    ///
+    /// This experimental method doesn't allow multi-party derivation, as the wallet must have
+    /// software descriptor keys for all inputs available for shared secret derivation.
+    /// Transactions created by this method don't opt in to replace-by-fee.
+    ///
+    /// WARNING: To avoid change address reuse you must persist the changes resulting from one or
+    /// more calls to this method before closing the wallet. See `Wallet::reveal_next_address`.
+    pub fn finish_and_sign_silent_payments(
+        &self,
+        wallet: &Arc<Wallet>,
+        recipients: Vec<SilentPaymentRecipient>,
+    ) -> Result<Arc<Transaction>, SilentPaymentSendError> {
+        if recipients.is_empty() {
+            return Err(SilentPaymentSendError::NoRecipients);
+        }
+        let mut recipient_counts = HashMap::new();
+        for recipient in &recipients {
+            let count = recipient_counts.entry(recipient.code.0.scan).or_insert(0);
+            *count += 1;
+            if *count > MAX_SILENT_PAYMENT_RECIPIENTS_PER_SCAN_KEY {
+                return Err(SilentPaymentSendError::RecipientLimitExceeded);
+            }
+        }
+        if !self.foreign_utxos.is_empty() {
+            return Err(SilentPaymentSendError::ForeignInputsUnsupported);
+        }
+        if self.only_witness_utxo {
+            return Err(SilentPaymentSendError::OnlyWitnessUtxoUnsupported);
+        }
+        if self
+            .sighash
+            .is_some_and(|sighash| !matches!(sighash.to_u32(), 0 | 1))
+        {
+            return Err(SilentPaymentSendError::UnsupportedSighash);
+        }
+        let sequence = self
+            .sequence
+            .map(Sequence)
+            .unwrap_or(Sequence::ENABLE_LOCKTIME_NO_RBF);
+        if sequence.is_rbf() {
+            return Err(SilentPaymentSendError::RbfUnsupported);
+        }
+
+        let mut wallet = wallet.get_wallet();
+        let wallet_network = wallet.network();
+        let mut silent_payment_builder = Self {
+            sequence: Some(sequence.to_consensus_u32()),
+            ..self.clone()
+        };
+        let mut payment_codes = Vec::with_capacity(recipients.len());
+        let mut placeholder_scripts = Vec::with_capacity(recipients.len());
+
+        for recipient in recipients {
+            if !recipient.code.is_valid_for_network(wallet_network) {
+                return Err(SilentPaymentSendError::NetworkMismatch {
+                    code: recipient.code.to_string(),
+                    wallet_network: wallet_network.to_string(),
+                });
+            }
+
+            let payment_code = recipient.code.0.clone();
+            let placeholder_script = payment_code.get_placeholder_p2tr_spk();
+            silent_payment_builder
+                .recipients
+                .push((placeholder_script.clone(), recipient.amount.0));
+            payment_codes.push(payment_code);
+            placeholder_scripts.push(placeholder_script);
+        }
+
+        let tx_builder = wallet.build_tx();
+        let psbt = match silent_payment_builder.coin_selection {
+            None | Some(CoinSelectionAlgorithm::BranchAndBound) => {
+                silent_payment_builder.finish_with_builder(tx_builder)
+            }
+            Some(CoinSelectionAlgorithm::LargestFirst) => silent_payment_builder
+                .finish_with_builder(tx_builder.coin_selection(BdkLargestFirstCoinSelection)),
+            Some(CoinSelectionAlgorithm::OldestFirst) => silent_payment_builder
+                .finish_with_builder(tx_builder.coin_selection(BdkOldestFirstCoinSelection)),
+            Some(CoinSelectionAlgorithm::SingleRandomDraw) => silent_payment_builder
+                .finish_with_builder(tx_builder.coin_selection(BdkSingleRandomDraw)),
+        }
+        .map_err(|error| SilentPaymentSendError::CreateTransaction {
+            error_message: error.to_string(),
+        })?;
+
+        let mut psbt = psbt.0.lock().unwrap().clone();
+        if psbt
+            .iter_funding_utxos()
+            .any(|utxo| utxo.is_ok_and(|utxo| utxo.script_pubkey.is_p2sh()))
+        {
+            return Err(SilentPaymentSendError::P2shInputsUnsupported);
+        }
+
+        let placeholder_outputs = psbt
+            .unsigned_tx
+            .output
+            .iter()
+            .enumerate()
+            .filter_map(|(index, output)| {
+                placeholder_scripts
+                    .contains(&output.script_pubkey)
+                    .then_some((index, output.script_pubkey.clone()))
+            })
+            .collect::<Vec<_>>();
+        if placeholder_outputs.len() != placeholder_scripts.len() {
+            return Err(SilentPaymentSendError::PlaceholderOutputMismatch {
+                expected: placeholder_scripts.len() as u64,
+                actual: placeholder_outputs.len() as u64,
+            });
+        }
+
+        let original_inputs = psbt.inputs.clone();
+        let sign_options = BdkSignOptions::default();
+
+        let finalized = wallet
+            .sign(&mut psbt, sign_options.clone())
+            .map_err(|error| SilentPaymentSendError::InitialSigning {
+                error_message: error.to_string(),
+            })?;
+        if !finalized {
+            return Err(SilentPaymentSendError::InitialSigningIncomplete);
+        }
+
+        for (original_input, input) in original_inputs.iter().zip(psbt.inputs.iter_mut()) {
+            let final_script_sig = input.final_script_sig.take();
+            let final_script_witness = input.final_script_witness.take();
+            *input = original_input.clone();
+            input.final_script_sig = final_script_sig;
+            input.final_script_witness = final_script_witness;
+        }
+
+        let secp = wallet.secp_ctx();
+        let mut key_map = wallet.get_signers(KeychainKind::External).as_key_map(secp);
+        key_map.extend(wallet.get_signers(KeychainKind::Internal).as_key_map(secp));
+        let key_provider = KeyMapWrapper::from(key_map);
+
+        derive_sp(&mut psbt, &key_provider, &payment_codes, secp)
+            .map_err(SilentPaymentSendError::from)?;
+
+        let placeholder_remains = placeholder_outputs.iter().any(|(index, placeholder)| {
+            psbt.unsigned_tx.output[*index].script_pubkey == *placeholder
+        });
+        if placeholder_remains {
+            return Err(SilentPaymentSendError::PlaceholderNotReplaced);
+        }
+
+        for input in &mut psbt.inputs {
+            input.final_script_sig = None;
+            input.final_script_witness = None;
+            input.partial_sigs.clear();
+            input.tap_key_sig = None;
+            input.tap_script_sigs.clear();
+        }
+
+        let finalized = wallet.sign(&mut psbt, sign_options).map_err(|error| {
+            SilentPaymentSendError::FinalSigning {
+                error_message: error.to_string(),
+            }
+        })?;
+        if !finalized {
+            return Err(SilentPaymentSendError::FinalSigningIncomplete);
+        }
+
+        let transaction =
+            psbt.extract_tx()
+                .map_err(|error| SilentPaymentSendError::ExtractTransaction {
+                    error_message: error.to_string(),
+                })?;
+
+        Ok(Arc::new(transaction.into()))
     }
 }
 
