@@ -413,3 +413,37 @@ fn test_load_from_two_path_descriptor() {
         1
     );
 }
+
+#[test]
+fn test_load_from_two_path_descriptor_with_params() {
+    let persister = Arc::new(Persister::new_in_memory().unwrap());
+    Wallet::create_from_two_path_descriptor(
+        two_path_descriptor(),
+        Network::Signet,
+        Arc::clone(&persister),
+        25,
+    )
+    .unwrap();
+
+    let params = LoadParams {
+        check_network: Some(Network::Bitcoin),
+        check_genesis_hash: None,
+        lookahead: 25,
+        use_spk_cache: false,
+    };
+    let error = match Wallet::load_from_two_path_descriptor_with_params(
+        two_path_descriptor(),
+        persister,
+        params,
+    ) {
+        Ok(_) => panic!("loading with mismatched network should fail"),
+        Err(error) => error,
+    };
+
+    match error {
+        LoadWithPersistError::InvalidChangeSet { error_message } => {
+            assert!(error_message.contains("Network mismatch"));
+        }
+        error => panic!("expected InvalidChangeSet error, got {:?}", error),
+    }
+}

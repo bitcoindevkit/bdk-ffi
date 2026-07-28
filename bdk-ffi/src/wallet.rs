@@ -341,13 +341,34 @@ impl Wallet {
         persister: Arc<Persister>,
         lookahead: u32,
     ) -> Result<Wallet, LoadWithPersistError> {
+        Self::load_from_two_path_descriptor_with_params(
+            two_path_descriptor,
+            persister,
+            LoadParams::with_lookahead(lookahead),
+        )
+    }
+
+    /// Build a two-path descriptor `Wallet` by loading from persistence with explicit load
+    /// parameters.
+    ///
+    /// Checks that the provided two-path descriptor matches exactly what is loaded
+    /// for both the external and internal keychains.
+    ///
+    /// The provided descriptor may only contain extended public keys (`xpub`) with exactly 2 paths.
+    #[uniffi::constructor]
+    pub fn load_from_two_path_descriptor_with_params(
+        two_path_descriptor: Arc<Descriptor>,
+        persister: Arc<Persister>,
+        params: LoadParams,
+    ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = two_path_descriptor.to_string();
         let mut persist_lock = persister.inner.lock().unwrap();
         let deref = persist_lock.deref_mut();
 
-        let wallet: PersistedWallet<PersistenceType> = BdkWallet::load()
-            .two_path_descriptor(descriptor)
-            .lookahead(lookahead)
+        let bdk_params = BdkWallet::load().two_path_descriptor(descriptor);
+        let bdk_params = params.apply_to(bdk_params);
+
+        let wallet: PersistedWallet<PersistenceType> = bdk_params
             .load_wallet(deref)
             .map_err(LoadWithPersistError::from)?
             .ok_or(LoadWithPersistError::CouldNotLoad)?;
