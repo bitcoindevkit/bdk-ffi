@@ -161,6 +161,13 @@ pub enum CannotConnectError {
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
+pub enum CbfError {
+    #[error("the node is no longer running")]
+    NodeStopped,
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum CreateTxError {
     #[error("descriptor error: {error_message}")]
     Descriptor { error_message: String },
@@ -446,9 +453,12 @@ pub enum FromScriptError {
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
-pub enum RequestBuilderError {
-    #[error("the request has already been consumed")]
-    RequestAlreadyConsumed,
+pub enum HashParseError {
+    #[error("invalid hash: expected length 32 bytes, got {len} bytes")]
+    InvalidHash { len: u32 },
+
+    #[error("invalid hex string: {hex}")]
+    InvalidHexString { hex: String },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
@@ -732,6 +742,17 @@ pub enum PsbtError {
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
+pub enum PsbtFinalizeError {
+    #[error("an input at index {index} is invalid: {reason}")]
+    InputError { reason: String, index: u32 },
+    #[error("wrong input count; expected: {in_tx}, got: {in_map}")]
+    WrongInputCount { in_tx: u32, in_map: u32 },
+    #[error("input index out of bounds; inputs: {psbt_inp}, requested: {requested}")]
+    InputIdxOutofBounds { psbt_inp: u32, requested: u32 },
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum PsbtParseError {
     #[error("error in internal psbt data structure: {error_message}")]
     PsbtEncoding { error_message: String },
@@ -742,20 +763,16 @@ pub enum PsbtParseError {
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
-pub enum SighashParseError {
-    #[error("invalid sighash type: {error_message}")]
-    Invalid { error_message: String },
+pub enum RequestBuilderError {
+    #[error("the request has already been consumed")]
+    RequestAlreadyConsumed,
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
-pub enum PsbtFinalizeError {
-    #[error("an input at index {index} is invalid: {reason}")]
-    InputError { reason: String, index: u32 },
-    #[error("wrong input count; expected: {in_tx}, got: {in_map}")]
-    WrongInputCount { in_tx: u32, in_map: u32 },
-    #[error("input index out of bounds; inputs: {psbt_inp}, requested: {requested}")]
-    InputIdxOutofBounds { psbt_inp: u32, requested: u32 },
+pub enum SighashParseError {
+    #[error("invalid sighash type: {error_message}")]
+    Invalid { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
@@ -844,13 +861,6 @@ pub enum TransactionError {
 pub enum TxidParseError {
     #[error("invalid txid: {txid}")]
     InvalidTxid { txid: String },
-}
-
-#[derive(Debug, thiserror::Error, uniffi::Error)]
-#[uniffi::export(Debug, Display)]
-pub enum CbfError {
-    #[error("the node is no longer running")]
-    NodeStopped,
 }
 
 // ------------------------------------------------------------------------
@@ -1676,16 +1686,6 @@ impl From<BdkEncodeError> for TransactionError {
             _ => TransactionError::OtherTransactionErr,
         }
     }
-}
-
-#[derive(Debug, thiserror::Error, uniffi::Error)]
-#[uniffi::export(Debug, Display)]
-pub enum HashParseError {
-    #[error("invalid hash: expected length 32 bytes, got {len} bytes")]
-    InvalidHash { len: u32 },
-
-    #[error("invalid hex string: {hex}")]
-    InvalidHexString { hex: String },
 }
 
 impl From<bdk_kyoto::bip157::ClientError> for CbfError {
