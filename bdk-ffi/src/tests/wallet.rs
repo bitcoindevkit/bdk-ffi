@@ -1,8 +1,14 @@
-use crate::bitcoin::{Network, NetworkKind};
+use crate::bitcoin::{Amount, Network, NetworkKind};
 use crate::descriptor::Descriptor;
+use crate::signer::SignersContainer;
 use crate::store::Persister;
+use crate::tx_builder::TxBuilder;
+use crate::types::Update;
 use crate::wallet::Wallet;
 
+use bdk_wallet::bitcoin::Amount as BdkAmount;
+use bdk_wallet::bitcoin::Transaction as BdkTransaction;
+use bdk_wallet::bitcoin::{absolute, transaction, TxOut as BdkTxOut};
 use bdk_wallet::KeychainKind;
 
 use std::sync::Arc;
@@ -33,6 +39,37 @@ fn build_wallet() -> Wallet {
         25,
     )
     .unwrap()
+}
+
+fn funded_wallet() -> Wallet {
+    let wallet = Wallet::new(
+        external_descriptor(),
+        internal_descriptor(),
+        Network::Regtest,
+        Arc::new(Persister::new_in_memory().unwrap()),
+        25,
+    )
+    .unwrap();
+
+    let address = wallet.reveal_next_address(KeychainKind::External).address;
+    let funding_tx = BdkTransaction {
+        version: transaction::Version::ONE,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![],
+        output: vec![BdkTxOut {
+            value: BdkAmount::from_sat(76_000),
+            script_pubkey: address.script_pubkey().0.clone(),
+        }],
+    };
+    let txid = funding_tx.compute_txid();
+    let mut update = bdk_wallet::Update::default();
+    update.last_active_indices.insert(KeychainKind::External, 0);
+    update.tx_update.txs.push(Arc::new(funding_tx));
+    update.tx_update.seen_ats.insert((txid, 1));
+
+    wallet.apply_update(Arc::new(Update(update))).unwrap();
+
+    wallet
 }
 
 #[test]
@@ -88,6 +125,102 @@ fn test_reveal_next_address() {
     assert_eq!(address_info.index, 0);
     assert_eq!(address_info.keychain, KeychainKind::External);
     assert_eq!(address_info.address.to_string(), EXPECTED_FIRST_ADDRESS);
+}
+
+#[test]
+fn test_signers_container_from_descriptor() {
+    let secret_descriptor = external_descriptor();
+    let public_descriptor =
+        Arc::new(Descriptor::new(secret_descriptor.to_string(), NetworkKind::Test).unwrap());
+    let secret_signers = SignersContainer::from_descriptor(secret_descriptor);
+    let public_signers = SignersContainer::from_descriptor(public_descriptor);
+
+    assert!(!secret_signers.is_empty());
+    assert_eq!(secret_signers.len(), 1);
+    assert!(public_signers.is_empty());
+    assert_eq!(public_signers.len(), 0);
+}
+
+#[test]
+fn test_sign_with_signers() {
+    let wallet = Arc::new(funded_wallet());
+    let recipient_script = wallet
+        .next_unused_address(KeychainKind::External)
+        .address
+        .script_pubkey();
+    let psbt = TxBuilder::new()
+        .add_recipient(&recipient_script, Arc::new(Amount::from_sat(10_000)))
+        .finish(&wallet)
+        .unwrap();
+    let signers = vec![Arc::new(SignersContainer::from_descriptor(
+        external_descriptor(),
+    ))];
+
+    let finalized = wallet
+        .sign_with_signers(Arc::clone(&psbt), signers, None)
+        .unwrap();
+    let signed_tx = psbt.extract_tx().unwrap();
+
+    assert!(finalized);
+    assert!(!signed_tx.input()[0].witness.is_empty());
+}
+
+#[test]
+fn test_sign_with_signers_for_public_wallet() {
+    let external_signer_descriptor = external_descriptor();
+    let external_public_descriptor = Arc::new(
+        Descriptor::new(external_signer_descriptor.to_string(), NetworkKind::Test).unwrap(),
+    );
+    let internal_public_descriptor =
+        Arc::new(Descriptor::new(internal_descriptor().to_string(), NetworkKind::Test).unwrap());
+    let wallet = Arc::new(
+        Wallet::new(
+            Arc::clone(&external_public_descriptor),
+            internal_public_descriptor,
+            Network::Regtest,
+            Arc::new(Persister::new_in_memory().unwrap()),
+            25,
+        )
+        .unwrap(),
+    );
+
+    let address = wallet.reveal_next_address(KeychainKind::External).address;
+    let funding_tx = BdkTransaction {
+        version: transaction::Version::ONE,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![],
+        output: vec![BdkTxOut {
+            value: BdkAmount::from_sat(76_000),
+            script_pubkey: address.script_pubkey().0.clone(),
+        }],
+    };
+    let txid = funding_tx.compute_txid();
+    let mut update = bdk_wallet::Update::default();
+    update.last_active_indices.insert(KeychainKind::External, 0);
+    update.tx_update.txs.push(Arc::new(funding_tx));
+    update.tx_update.seen_ats.insert((txid, 1));
+    wallet.apply_update(Arc::new(Update(update))).unwrap();
+
+    let recipient_script = wallet
+        .next_unused_address(KeychainKind::External)
+        .address
+        .script_pubkey();
+    let psbt = TxBuilder::new()
+        .add_recipient(&recipient_script, Arc::new(Amount::from_sat(10_000)))
+        .finish(&wallet)
+        .unwrap();
+    let signers = vec![Arc::new(SignersContainer::from_descriptor_with_context(
+        external_signer_descriptor,
+        external_public_descriptor,
+    ))];
+
+    let finalized = wallet
+        .sign_with_signers(Arc::clone(&psbt), signers, None)
+        .unwrap();
+    let signed_tx = psbt.extract_tx().unwrap();
+
+    assert!(finalized);
+    assert!(!signed_tx.input()[0].witness.is_empty());
 }
 
 #[test]

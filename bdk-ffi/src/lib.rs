@@ -6,6 +6,7 @@ mod esplora;
 mod keys;
 mod kyoto;
 mod macros;
+mod signer;
 mod store;
 mod tx_builder;
 mod types;
