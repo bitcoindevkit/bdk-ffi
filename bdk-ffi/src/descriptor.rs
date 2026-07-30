@@ -678,6 +678,14 @@ impl Descriptor {
         })
     }
 
+    /// Return a public version of this descriptor without secret key material.
+    pub fn as_public(&self) -> Arc<Self> {
+        Arc::new(Self {
+            extended_descriptor: self.extended_descriptor.clone(),
+            key_map: KeyMap::new(),
+        })
+    }
+
     /// Dangerously convert the descriptor to a string.
     pub fn to_string_with_secret(&self) -> String {
         let descriptor = &self.extended_descriptor;

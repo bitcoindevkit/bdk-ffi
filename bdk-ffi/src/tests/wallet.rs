@@ -222,11 +222,15 @@ fn test_reveal_next_address() {
 #[test]
 fn test_signers_container_from_descriptor() {
     let secret_descriptor = external_descriptor();
-    let public_descriptor =
-        Arc::new(Descriptor::new(secret_descriptor.to_string(), NetworkKind::Test).unwrap());
-    let secret_signers = SignersContainer::from_descriptor(secret_descriptor);
-    let public_signers = SignersContainer::from_descriptor(public_descriptor);
+    let public_descriptor = secret_descriptor.as_public();
+    let secret_signers = SignersContainer::from_descriptor(Arc::clone(&secret_descriptor));
+    let public_signers = SignersContainer::from_descriptor(Arc::clone(&public_descriptor));
 
+    assert_eq!(public_descriptor.to_string(), secret_descriptor.to_string());
+    assert_eq!(
+        public_descriptor.to_string_with_secret(),
+        secret_descriptor.to_string()
+    );
     assert!(!secret_signers.is_empty());
     assert_eq!(secret_signers.len(), 1);
     assert!(public_signers.is_empty());
