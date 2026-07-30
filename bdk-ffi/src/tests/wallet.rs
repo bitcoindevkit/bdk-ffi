@@ -264,11 +264,8 @@ fn test_sign_with_signers() {
 #[test]
 fn test_sign_with_signers_for_public_wallet() {
     let external_signer_descriptor = external_descriptor();
-    let external_public_descriptor = Arc::new(
-        Descriptor::new(external_signer_descriptor.to_string(), NetworkKind::Test).unwrap(),
-    );
-    let internal_public_descriptor =
-        Arc::new(Descriptor::new(internal_descriptor().to_string(), NetworkKind::Test).unwrap());
+    let external_public_descriptor = external_signer_descriptor.as_public();
+    let internal_public_descriptor = internal_descriptor().as_public();
     let wallet = Arc::new(
         Wallet::new(
             Arc::clone(&external_public_descriptor),
