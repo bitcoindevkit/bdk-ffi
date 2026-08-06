@@ -44,6 +44,10 @@ just publish-local
 
 To add new structs and functions, see the [UniFFI User Guide](https://mozilla.github.io/uniffi-rs/) and the [uniffi-examples](https://thunderbiscuit.github.io/uniffi-examples/) repository.
 
+## Security Policy
+
+To report a security issue, please refer to the [security policy](SECURITY.md).
+
 ## Goals
 
 1. Language bindings should feel idiomatic in target languages/platforms
