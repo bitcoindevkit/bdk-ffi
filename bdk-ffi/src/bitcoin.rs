@@ -1447,6 +1447,38 @@ impl Psbt {
         Ok(Arc::new(transaction))
     }
 
+    /// Extracts the `Transaction` from a `Psbt` by filling in the available signature information.
+    ///
+    /// #### Errors
+    ///
+    /// See `extract_tx`.
+    pub fn extract_tx_with_fee_rate_limit(
+        &self,
+        max_fee_rate: Arc<FeeRate>,
+    ) -> Result<Arc<Transaction>, ExtractTxError> {
+        let tx: BdkTransaction = self
+            .0
+            .lock()
+            .unwrap()
+            .clone()
+            .extract_tx_with_fee_rate_limit(max_fee_rate.0)?;
+        let transaction: Transaction = tx.into();
+        Ok(Arc::new(transaction))
+    }
+
+    /// Perform `extract_tx` without the fee rate check.
+    ///
+    /// This can result in a transaction with absurdly high fees. Use with caution.
+    pub fn extract_tx_unchecked_fee_rate(&self) -> Arc<Transaction> {
+        let tx: BdkTransaction = self
+            .0
+            .lock()
+            .unwrap()
+            .clone()
+            .extract_tx_unchecked_fee_rate();
+        Arc::new(tx.into())
+    }
+
     /// Calculates transaction fee.
     ///
     /// 'Fee' being the amount that will be paid for mining a transaction with the current inputs
