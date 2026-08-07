@@ -14,8 +14,9 @@ class DescriptorTest {
     // Create extended WPKH descriptors for all networks.
     @Test
     fun createExtendedWPKHDescriptors() {
-        Descriptor("wpkh($TEST_EXTENDED_PRIVKEY/$BIP84_TEST_RECEIVE_PATH/*)", NetworkKind.TEST)
+        val dec = Descriptor("wpkh($TEST_EXTENDED_PRIVKEY/$BIP84_TEST_RECEIVE_PATH/*)", NetworkKind.TEST)
         Descriptor("wpkh($MAINNET_EXTENDED_PRIVKEY/$BIP84_MAINNET_RECEIVE_PATH/*)", NetworkKind.MAIN)
+        val keyMap = dec.getKeyMap()
     }
 
     // Create extended TR descriptors for all networks.
