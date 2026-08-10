@@ -986,6 +986,32 @@ impl Wallet {
             .map(|details| details.into())
     }
 
+    /// Get [`TxDetails`] for all canonical transactions in a wallet,
+    /// sorted from newest to oldest by chain position.
+    ///
+    /// This is a convenience method that combines [`Wallet::transactions`] and
+    /// [`Wallet::tx_details`] into a single call, avoiding multiple FFI
+    /// round-trips when building a transaction history view.
+    ///
+    /// Note that `fee` and `fee_rate` fields may be `None` for transactions
+    /// that include inputs not owned by this wallet, unless those inputs were
+    /// previously inserted via [`Wallet::insert_txout`].
+    pub fn all_tx_details(&self) -> Vec<crate::types::TxDetails> {
+        let wallet = self.get_wallet();
+
+        let txids: Vec<bdk_wallet::bitcoin::Txid> = wallet
+            .transactions_sort_by(|tx1, tx2| tx2.chain_position.cmp(&tx1.chain_position))
+            .into_iter()
+            .map(|tx| tx.tx_node.txid)
+            .collect();
+
+        txids
+            .into_iter()
+            .filter_map(|txid| wallet.tx_details(txid))
+            .map(crate::types::TxDetails::from)
+            .collect()
+    }
+
     /// Returns the descriptor used to create addresses for a particular `keychain`.
     ///
     /// It's the "public" version of the wallet's descriptor, meaning a new descriptor that has
