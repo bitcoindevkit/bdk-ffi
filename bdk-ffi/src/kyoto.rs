@@ -67,9 +67,12 @@ pub struct CbfNode {
 #[uniffi::export]
 impl CbfNode {
     /// Start the node on a detached OS thread and immediately return.
+    /// Subsequent calls have no effect.
     pub fn run(self: Arc<Self>) {
         let mut lock = self.node.lock().unwrap();
-        let node = lock.take().expect("cannot call run more than once");
+        let Some(node) = lock.take() else {
+            return;
+        };
         std::thread::spawn(|| {
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
@@ -611,5 +614,20 @@ impl DisplayExt for RejectReason {
             RejectReason::Checkpoint => "Inconsistent with compiled checkpoint.",
         };
         message.into()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CbfNode;
+    use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn running_a_consumed_node_is_a_no_op() {
+        let node = Arc::new(CbfNode {
+            node: Mutex::new(None),
+        });
+
+        node.run();
     }
 }
