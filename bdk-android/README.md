@@ -42,7 +42,7 @@ export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
 ```sh
 # build Android library
 cd bdk-android
-bash ./scripts/build-<your-local-architecture>.sh
+bash ./scripts/release/build-release-<your-local-architecture>.sh
 ```
 5. Start android emulator and run tests
 ```sh
