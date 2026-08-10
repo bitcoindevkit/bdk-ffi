@@ -448,3 +448,44 @@ fn test_load_from_two_path_descriptor_with_params() {
         error => panic!("expected InvalidChangeSet error, got {:?}", error),
     }
 }
+
+#[test]
+fn test_all_tx_details_empty_wallet() {
+    let wallet = Wallet::new(
+        external_descriptor(),
+        internal_descriptor(),
+        Network::Signet,
+        Arc::new(Persister::new_in_memory().unwrap()),
+        25,
+    )
+    .unwrap();
+
+    let details = wallet.all_tx_details();
+
+    assert!(
+        details.is_empty(),
+        "Expected no tx details for a fresh wallet, got {}",
+        details.len()
+    );
+}
+
+#[test]
+fn test_all_tx_details_matches_tx_details_per_item() {
+    let wallet = Wallet::new(
+        external_descriptor(),
+        internal_descriptor(),
+        Network::Signet,
+        Arc::new(Persister::new_in_memory().unwrap()),
+        25,
+    )
+    .unwrap();
+
+    let all_details = wallet.all_tx_details();
+    let all_txs = wallet.transactions();
+
+    assert_eq!(
+        all_details.len(),
+        all_txs.len(),
+        "all_tx_details() and transactions() must return the same number of items"
+    );
+}
