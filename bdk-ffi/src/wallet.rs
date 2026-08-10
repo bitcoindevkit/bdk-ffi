@@ -1005,6 +1005,10 @@ impl Wallet {
             .map(|tx| tx.tx_node.txid)
             .collect();
 
+        if txids.is_empty() {
+            return Vec::new();
+        }
+
         txids
             .into_iter()
             .filter_map(|txid| wallet.tx_details(txid))
