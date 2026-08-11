@@ -54,25 +54,22 @@ impl Descriptor {
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
-    ) -> Self {
+    ) -> Result<Self, DescriptorError> {
         let derivable_key = &secret_key.0;
 
         match derivable_key {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorSecretKey::Single(_) | BdkDescriptorSecretKey::MultiXPrv(_) => {
+                Err(DescriptorError::InvalidKeyType)
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) = Bip44(derivable_key, keychain_kind)
                     .build(network_kind)
-                    .unwrap();
-                Self {
+                    .map_err(DescriptorError::from)?;
+                Ok(Self {
                     extended_descriptor,
                     key_map,
-                }
-            }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
+                })
             }
         }
     }
@@ -93,8 +90,8 @@ impl Descriptor {
         let derivable_key = &public_key.0;
 
         match derivable_key {
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorPublicKey::Single(_) | BdkDescriptorPublicKey::MultiXPub(_) => {
+                Err(DescriptorError::InvalidKeyType)
             }
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
@@ -108,9 +105,6 @@ impl Descriptor {
                     key_map,
                 })
             }
-            BdkDescriptorPublicKey::MultiXPub(_) => {
-                unreachable!()
-            }
         }
     }
 
@@ -120,25 +114,22 @@ impl Descriptor {
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
-    ) -> Self {
+    ) -> Result<Self, DescriptorError> {
         let derivable_key = &secret_key.0;
 
         match derivable_key {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorSecretKey::Single(_) | BdkDescriptorSecretKey::MultiXPrv(_) => {
+                Err(DescriptorError::InvalidKeyType)
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) = Bip49(derivable_key, keychain_kind)
                     .build(network_kind)
-                    .unwrap();
-                Self {
+                    .map_err(DescriptorError::from)?;
+                Ok(Self {
                     extended_descriptor,
                     key_map,
-                }
-            }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
+                })
             }
         }
     }
@@ -159,8 +150,8 @@ impl Descriptor {
         let derivable_key = &public_key.0;
 
         match derivable_key {
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorPublicKey::Single(_) | BdkDescriptorPublicKey::MultiXPub(_) => {
+                Err(DescriptorError::InvalidKeyType)
             }
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
@@ -174,9 +165,6 @@ impl Descriptor {
                     key_map,
                 })
             }
-            BdkDescriptorPublicKey::MultiXPub(_) => {
-                unreachable!()
-            }
         }
     }
 
@@ -186,25 +174,22 @@ impl Descriptor {
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
-    ) -> Self {
+    ) -> Result<Self, DescriptorError> {
         let derivable_key = &secret_key.0;
 
         match derivable_key {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorSecretKey::Single(_) | BdkDescriptorSecretKey::MultiXPrv(_) => {
+                Err(DescriptorError::InvalidKeyType)
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) = Bip84(derivable_key, keychain_kind)
                     .build(network_kind)
-                    .unwrap();
-                Self {
+                    .map_err(DescriptorError::from)?;
+                Ok(Self {
                     extended_descriptor,
                     key_map,
-                }
-            }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
+                })
             }
         }
     }
@@ -225,8 +210,8 @@ impl Descriptor {
         let derivable_key = &public_key.0;
 
         match derivable_key {
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorPublicKey::Single(_) | BdkDescriptorPublicKey::MultiXPub(_) => {
+                Err(DescriptorError::InvalidKeyType)
             }
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
@@ -240,9 +225,6 @@ impl Descriptor {
                     key_map,
                 })
             }
-            BdkDescriptorPublicKey::MultiXPub(_) => {
-                unreachable!()
-            }
         }
     }
 
@@ -252,25 +234,22 @@ impl Descriptor {
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
-    ) -> Self {
+    ) -> Result<Self, DescriptorError> {
         let derivable_key = &secret_key.0;
 
         match derivable_key {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorSecretKey::Single(_) | BdkDescriptorSecretKey::MultiXPrv(_) => {
+                Err(DescriptorError::InvalidKeyType)
             }
             BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
                 let (extended_descriptor, key_map, _) = Bip86(derivable_key, keychain_kind)
                     .build(network_kind)
-                    .unwrap();
-                Self {
+                    .map_err(DescriptorError::from)?;
+                Ok(Self {
                     extended_descriptor,
                     key_map,
-                }
-            }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
+                })
             }
         }
     }
@@ -291,8 +270,8 @@ impl Descriptor {
         let derivable_key = &public_key.0;
 
         match derivable_key {
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
+            BdkDescriptorPublicKey::Single(_) | BdkDescriptorPublicKey::MultiXPub(_) => {
+                Err(DescriptorError::InvalidKeyType)
             }
             BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
                 let derivable_key = descriptor_x_key.xkey;
@@ -305,9 +284,6 @@ impl Descriptor {
                     extended_descriptor,
                     key_map,
                 })
-            }
-            BdkDescriptorPublicKey::MultiXPub(_) => {
-                unreachable!()
             }
         }
     }
