@@ -1397,6 +1397,14 @@ impl From<BdkSqliteError> for PersistenceError {
     }
 }
 
+impl From<uniffi::UnexpectedUniFFICallbackError> for PersistenceError {
+    fn from(error: uniffi::UnexpectedUniFFICallbackError) -> Self {
+        PersistenceError::Reason {
+            error_message: error.reason,
+        }
+    }
+}
+
 impl From<BdkPreV1MigrationError> for PreV1MigrationError {
     fn from(error: BdkPreV1MigrationError) -> Self {
         match error {
