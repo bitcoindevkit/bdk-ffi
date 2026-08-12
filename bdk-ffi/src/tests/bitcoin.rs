@@ -1,4 +1,5 @@
-use crate::bitcoin::{Address, AddressData, Key, Network, ProprietaryKey, Psbt};
+use crate::bitcoin::{Address, AddressData, Key, Network, ProprietaryKey, Psbt, Transaction};
+use crate::error::TransactionError;
 use bdk_electrum::bdk_core::bitcoin::hex::DisplayHex;
 
 #[test]
@@ -355,6 +356,31 @@ fn test_to_address_data() {
     assert!(matches!(p2pkh_data, AddressData::P2pkh { .. }));
     assert!(matches!(p2sh_data, AddressData::P2sh { .. }));
     assert!(matches!(segwit_data, AddressData::Segwit { .. }));
+}
+
+#[test]
+fn test_transaction_new_rejects_trailing_bytes() {
+    let transaction = bdk_wallet::bitcoin::Transaction {
+        version: bdk_wallet::bitcoin::transaction::Version::TWO,
+        lock_time: bdk_wallet::bitcoin::absolute::LockTime::ZERO,
+        input: vec![bdk_wallet::bitcoin::TxIn::default()],
+        output: vec![bdk_wallet::bitcoin::TxOut {
+            value: bdk_wallet::bitcoin::Amount::from_sat(50_000),
+            script_pubkey: bdk_wallet::bitcoin::ScriptBuf::new(),
+        }],
+    };
+    let transaction_bytes = bdk_wallet::bitcoin::consensus::serialize(&transaction);
+
+    let parsed_transaction = Transaction::new(transaction_bytes.clone()).unwrap();
+    assert_eq!(parsed_transaction.serialize(), transaction_bytes);
+
+    let mut transaction_bytes_with_trailing_garbage = transaction_bytes;
+    transaction_bytes_with_trailing_garbage.extend_from_slice(&[0xde, 0xad, 0xbe, 0xef]);
+
+    assert!(matches!(
+        Transaction::new(transaction_bytes_with_trailing_garbage),
+        Err(TransactionError::ParseFailed)
+    ));
 }
 
 #[test]

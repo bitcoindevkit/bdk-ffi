@@ -14,10 +14,8 @@ use bdk_wallet::bitcoin::blockdata::block::Block as BdkBlock;
 use bdk_wallet::bitcoin::blockdata::block::Header as BdkHeader;
 use bdk_wallet::bitcoin::consensus::encode::deserialize;
 use bdk_wallet::bitcoin::consensus::encode::serialize;
-use bdk_wallet::bitcoin::consensus::Decodable;
 use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
 use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
-use bdk_wallet::bitcoin::io::Cursor;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::psbt::Output as BdkOutput;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
@@ -443,8 +441,7 @@ impl Transaction {
     /// Creates a new `Transaction` instance from serialized transaction bytes.
     #[uniffi::constructor]
     pub fn new(transaction_bytes: Vec<u8>) -> Result<Self, TransactionError> {
-        let mut decoder = Cursor::new(transaction_bytes);
-        let tx: BdkTransaction = BdkTransaction::consensus_decode(&mut decoder)?;
+        let tx: BdkTransaction = deserialize(&transaction_bytes)?;
         Ok(Transaction(tx))
     }
 
