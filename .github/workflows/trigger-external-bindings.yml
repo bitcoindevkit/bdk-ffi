@@ -42,6 +42,7 @@ jobs:
 
       # Trigger trigger-bdk-python-test workflow in bdk-python repository
       - name: Trigger tests in bdk-python repository
+        if: ${{ !cancelled() }}
         env:
           BDK_PYTHON_ACCESS_TOKEN: ${{ secrets.BDK_PYTHON_ACCESS_TOKEN }}
         run: |
