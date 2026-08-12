@@ -1332,6 +1332,7 @@ impl From<BdkExtractTxError> for ExtractTxError {
     fn from(error: BdkExtractTxError) -> Self {
         match error {
             BdkExtractTxError::AbsurdFeeRate { fee_rate, .. } => {
+                let fee_rate = crate::bitcoin::FeeRate::from(fee_rate);
                 let sat_per_vbyte = fee_rate.to_sat_per_vb_ceil();
                 ExtractTxError::AbsurdFeeRate {
                     fee_rate: sat_per_vbyte,
