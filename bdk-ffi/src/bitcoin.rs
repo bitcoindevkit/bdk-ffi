@@ -1029,7 +1029,30 @@ impl TryFrom<Input> for BdkInput {
                 })?;
 
                 let output_key_parity = k.output_key_parity;
+                if !matches!(output_key_parity, 0 | 1) {
+                    return Err(AddForeignUtxoError::InputConversionError {
+                        error_message: format!(
+                            "invalid output key parity: {}",
+                            output_key_parity
+                        ),
+                    });
+                }
+
                 let leaf_version_u8 = k.leaf_version;
+                if v.leaf_version != leaf_version_u8 {
+                    return Err(AddForeignUtxoError::InputConversionError {
+                        error_message: format!(
+                            "tap script leaf version {} does not match control block leaf version {}",
+                            v.leaf_version, leaf_version_u8
+                        ),
+                    });
+                }
+
+                let leaf_version = LeafVersion::from_consensus(leaf_version_u8).map_err(|_| {
+                    AddForeignUtxoError::InputConversionError {
+                        error_message: format!("invalid leaf version: {}", leaf_version_u8),
+                    }
+                })?;
 
                 let merkle_branch: Vec<TapNodeHash> = k
                     .merkle_branch
@@ -1043,7 +1066,8 @@ impl TryFrom<Input> for BdkInput {
                     })
                     .collect::<Result<_, AddForeignUtxoError>>()?;
 
-                let mut control_block_bytes = vec![output_key_parity | leaf_version_u8];
+                let mut control_block_bytes =
+                    vec![output_key_parity | leaf_version.to_consensus()];
                 control_block_bytes.extend_from_slice(&internal_key.serialize());
                 for hash in &merkle_branch {
                     control_block_bytes.extend_from_slice(&hash.to_byte_array());
@@ -1052,12 +1076,6 @@ impl TryFrom<Input> for BdkInput {
                 let control_block = BdkControlBlock::decode(&control_block_bytes).map_err(|e| {
                     AddForeignUtxoError::InputConversionError {
                         error_message: format!("invalid control block: {}", e),
-                    }
-                })?;
-
-                let leaf_version = LeafVersion::from_consensus(leaf_version_u8).map_err(|_| {
-                    AddForeignUtxoError::InputConversionError {
-                        error_message: format!("invalid leaf version: {}", leaf_version_u8),
                     }
                 })?;
 
