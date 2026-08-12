@@ -59,7 +59,54 @@ final class PersistenceTests: XCTestCase {
 
             XCTAssertEqual(
                 errorMessage,
+                "unexpected initialize failure"
+            )
+            XCTAssertEqual(
+                loadError.description,
                 "persistence error: unexpected initialize failure"
+            )
+        }
+    }
+
+    func testUnexpectedPersistErrorReturnsCreatePersistenceError() {
+        struct UnexpectedPersistError: Error, CustomStringConvertible {
+            var description: String { "unexpected persist failure" }
+        }
+
+        final class ThrowingPersistence: Persistence, @unchecked Sendable {
+            func initialize() throws -> ChangeSet {
+                ChangeSet()
+            }
+
+            func persist(changeset: ChangeSet) throws {
+                throw UnexpectedPersistError()
+            }
+        }
+
+        let persister = Persister.custom(persistence: ThrowingPersistence())
+
+        XCTAssertThrowsError(
+            try Wallet(
+                descriptor: descriptor,
+                changeDescriptor: changeDescriptor,
+                network: .signet,
+                persister: persister
+            )
+        ) { error in
+            guard let createError = error as? CreateWithPersistError else {
+                XCTFail("Expected CreateWithPersistError, got \(error)")
+                return
+            }
+
+            guard case let .Persist(errorMessage) = createError else {
+                XCTFail("Expected .Persist, got \(createError)")
+                return
+            }
+
+            XCTAssertEqual(errorMessage, "unexpected persist failure")
+            XCTAssertEqual(
+                createError.description,
+                "persistence error: unexpected persist failure"
             )
         }
     }

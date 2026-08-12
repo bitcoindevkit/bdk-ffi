@@ -239,7 +239,7 @@ pub enum CreateTxError {
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
 pub enum CreateWithPersistError {
-    #[error("sqlite persistence error: {error_message}")]
+    #[error("persistence error: {error_message}")]
     Persist { error_message: String },
 
     #[error("the wallet has already been created")]
@@ -464,7 +464,7 @@ pub enum HashParseError {
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
 pub enum LoadWithPersistError {
-    #[error("sqlite persistence error: {error_message}")]
+    #[error("persistence error: {error_message}")]
     Persist { error_message: String },
 
     #[error("the loaded changeset cannot construct wallet: {error_message}")]
@@ -1131,9 +1131,9 @@ impl From<BdkCreateWithPersistError<chain::rusqlite::Error>> for CreateWithPersi
 impl From<BdkCreateWithPersistError<PersistenceError>> for CreateWithPersistError {
     fn from(error: BdkCreateWithPersistError<PersistenceError>) -> Self {
         match error {
-            BdkCreateWithPersistError::Persist(e) => CreateWithPersistError::Persist {
-                error_message: e.to_string(),
-            },
+            BdkCreateWithPersistError::Persist(PersistenceError::Reason { error_message }) => {
+                CreateWithPersistError::Persist { error_message }
+            }
             BdkCreateWithPersistError::Descriptor(e) => CreateWithPersistError::Descriptor {
                 error_message: e.to_string(),
             },
@@ -1377,9 +1377,9 @@ impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistEr
 impl From<BdkLoadWithPersistError<PersistenceError>> for LoadWithPersistError {
     fn from(error: BdkLoadWithPersistError<PersistenceError>) -> Self {
         match error {
-            BdkLoadWithPersistError::Persist(e) => LoadWithPersistError::Persist {
-                error_message: e.to_string(),
-            },
+            BdkLoadWithPersistError::Persist(PersistenceError::Reason { error_message }) => {
+                LoadWithPersistError::Persist { error_message }
+            }
             BdkLoadWithPersistError::InvalidChangeSet(e) => {
                 LoadWithPersistError::InvalidChangeSet {
                     error_message: e.to_string(),
