@@ -50,9 +50,10 @@ impl Mnemonic {
             .map_err(Bip39Error::from)
     }
 
-    /// Construct a mnemonic given an array of bytes. Note that using weak entropy will result in a loss
-    /// of funds. To ensure the entropy is generated properly, read about your operating
-    /// system specific ways to generate secure random numbers.
+    /// Construct a mnemonic from caller-provided entropy.
+    ///
+    /// This function does not generate entropy. Callers must provide cryptographically secure
+    /// entropy; weak entropy can result in loss of funds.
     #[uniffi::constructor]
     pub fn from_entropy(entropy: Vec<u8>) -> Result<Self, Bip39Error> {
         BdkMnemonic::from_entropy(entropy.as_slice())
