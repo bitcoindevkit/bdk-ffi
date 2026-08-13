@@ -26,8 +26,8 @@ use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddForeignUtxoError as BdkAddForeignUtxoError;
 use bdk_wallet::tx_builder::AddUtxoError;
+use bdk_wallet::CreateWithPersistError as BdkCreateWithPersistError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
-use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
 
 use std::convert::TryInto;
 
@@ -1111,23 +1111,6 @@ impl From<PushBytesError> for CreateTxError {
     }
 }
 
-impl From<BdkCreateWithPersistError<chain::rusqlite::Error>> for CreateWithPersistError {
-    fn from(error: BdkCreateWithPersistError<chain::rusqlite::Error>) -> Self {
-        match error {
-            BdkCreateWithPersistError::Persist(e) => CreateWithPersistError::Persist {
-                error_message: e.to_string(),
-            },
-            BdkCreateWithPersistError::Descriptor(e) => CreateWithPersistError::Descriptor {
-                error_message: e.to_string(),
-            },
-            // Objects cannot currently be used in enumerations
-            BdkCreateWithPersistError::DataAlreadyExists(_e) => {
-                CreateWithPersistError::DataAlreadyExists
-            }
-        }
-    }
-}
-
 impl From<BdkCreateWithPersistError<PersistenceError>> for CreateWithPersistError {
     fn from(error: BdkCreateWithPersistError<PersistenceError>) -> Self {
         match error {
@@ -1355,21 +1338,6 @@ impl From<BdkFromScriptError> for FromScriptError {
                 error_message: e.to_string(),
             },
             _ => FromScriptError::OtherFromScriptErr,
-        }
-    }
-}
-
-impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistError {
-    fn from(error: BdkLoadWithPersistError<chain::rusqlite::Error>) -> Self {
-        match error {
-            BdkLoadWithPersistError::Persist(e) => LoadWithPersistError::Persist {
-                error_message: e.to_string(),
-            },
-            BdkLoadWithPersistError::InvalidChangeSet(e) => {
-                LoadWithPersistError::InvalidChangeSet {
-                    error_message: e.to_string(),
-                }
-            }
         }
     }
 }
