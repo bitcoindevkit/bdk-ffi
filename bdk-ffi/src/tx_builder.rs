@@ -275,6 +275,7 @@ impl TxBuilder {
     pub fn fee_rate(&self, fee_rate: &FeeRate) -> Arc<Self> {
         Arc::new(TxBuilder {
             fee_rate: Some(fee_rate.clone()),
+            fee_absolute: None,
             ..self.clone()
         })
     }
@@ -286,6 +287,7 @@ impl TxBuilder {
     /// Note that this is really a minimum absolute fee – it’s possible to overshoot it slightly since adding a change output to drain the remaining excess might not be viable.
     pub fn fee_absolute(&self, fee_amount: Arc<Amount>) -> Arc<Self> {
         Arc::new(TxBuilder {
+            fee_rate: None,
             fee_absolute: Some(fee_amount),
             ..self.clone()
         })
@@ -900,6 +902,8 @@ fn parse_sighash_type(sighash: &str) -> Result<BdkPsbtSighashType, SighashParseE
 #[cfg(test)]
 mod tests {
     use super::{CoinSelectionAlgorithm, TxBuilder};
+    use crate::bitcoin::{Amount, FeeRate};
+    use std::sync::Arc;
 
     #[test]
     fn tx_builder_defaults_to_upstream_coin_selection() {
@@ -932,5 +936,36 @@ mod tests {
             let tx_builder = TxBuilder::new().coin_selection(algorithm);
             assert_eq!(tx_builder.coin_selection, Some(algorithm));
         }
+    }
+
+    #[test]
+    fn tx_builder_fee_absolute_overrides_fee_rate() {
+        let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
+        let tx_builder = TxBuilder::new()
+            .fee_rate(&fee_rate)
+            .fee_absolute(Arc::new(Amount::from_sat(500)));
+
+        assert!(tx_builder.fee_rate.is_none());
+        assert_eq!(
+            tx_builder.fee_absolute.as_ref().map(|fee| fee.to_sat()),
+            Some(500)
+        );
+    }
+
+    #[test]
+    fn tx_builder_fee_rate_overrides_fee_absolute() {
+        let fee_rate = FeeRate::from_sat_per_vb(2).unwrap();
+        let tx_builder = TxBuilder::new()
+            .fee_absolute(Arc::new(Amount::from_sat(500)))
+            .fee_rate(&fee_rate);
+
+        assert!(tx_builder.fee_absolute.is_none());
+        assert_eq!(
+            tx_builder
+                .fee_rate
+                .as_ref()
+                .map(FeeRate::to_sat_per_vb_ceil),
+            Some(2)
+        );
     }
 }
