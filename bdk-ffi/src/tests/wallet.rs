@@ -1,10 +1,10 @@
-use crate::bitcoin::{Amount, BlockHash, Network, NetworkKind};
+use crate::bitcoin::{Amount, BlockHash, FeeRate, Network, NetworkKind};
 use crate::descriptor::Descriptor;
-use crate::error::LoadWithPersistError;
+use crate::error::{CreateTxError, LoadWithPersistError};
 use crate::signer::SignersContainer;
 use crate::store::Persister;
-use crate::tx_builder::TxBuilder;
-use crate::types::Update;
+use crate::tx_builder::{BumpFeeTxBuilder, TxBuilder};
+use crate::types::{UnconfirmedTx, Update};
 use crate::wallet::{CreateParams, LoadParams, Wallet};
 
 use bdk_wallet::bitcoin::Amount as BdkAmount;
@@ -80,6 +80,57 @@ fn funded_wallet() -> Wallet {
     wallet.apply_update(Arc::new(Update(update))).unwrap();
 
     wallet
+}
+
+#[test]
+fn test_tx_builder_invalid_current_height_returns_error() {
+    let wallet = Arc::new(funded_wallet());
+    let recipient_script = wallet
+        .next_unused_address(KeychainKind::External)
+        .address
+        .script_pubkey();
+
+    let result = TxBuilder::new()
+        .add_recipient(&recipient_script, Arc::new(Amount::from_sat(10_000)))
+        .current_height(500_000_000)
+        .finish(&wallet);
+
+    assert!(matches!(
+        result,
+        Err(CreateTxError::LockTimeConversionError)
+    ));
+}
+
+#[test]
+fn test_bump_fee_tx_builder_invalid_current_height_returns_error() {
+    let wallet = Arc::new(funded_wallet());
+    let recipient_script = wallet
+        .next_unused_address(KeychainKind::External)
+        .address
+        .script_pubkey();
+    let original_tx = TxBuilder::new()
+        .add_recipient(&recipient_script, Arc::new(Amount::from_sat(10_000)))
+        .finish(&wallet)
+        .unwrap()
+        .extract_tx()
+        .unwrap();
+
+    assert!(original_tx.is_explicitly_rbf());
+
+    let txid = original_tx.compute_txid();
+    wallet.apply_unconfirmed_txs(vec![UnconfirmedTx {
+        tx: original_tx,
+        last_seen: 2,
+    }]);
+
+    let result = BumpFeeTxBuilder::new(txid, Arc::new(FeeRate::from_sat_per_vb(2).unwrap()))
+        .current_height(500_000_000)
+        .finish(&wallet);
+
+    assert!(matches!(
+        result,
+        Err(CreateTxError::LockTimeConversionError)
+    ));
 }
 
 #[test]

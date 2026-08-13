@@ -3,7 +3,7 @@ use crate::error::{AddForeignUtxoError, CreateTxError, SighashParseError};
 use crate::types::{KeychainKind, LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
-use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
+use bdk_wallet::bitcoin::absolute::{Height as BdkHeight, LockTime as BdkLockTime};
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::psbt::PsbtSighashType as BdkPsbtSighashType;
@@ -637,7 +637,9 @@ impl TxBuilder {
             tx_builder.add_data(&push_bytes);
         }
         if let Some(height) = self.current_height {
-            tx_builder.current_height(height);
+            let height = BdkHeight::from_consensus(height)
+                .map_err(|_| CreateTxError::LockTimeConversionError)?;
+            tx_builder.current_height(height.to_consensus_u32());
         }
         if let Some(locktime) = &self.locktime {
             let bdk_locktime: BdkLockTime = locktime.try_into()?;
@@ -817,7 +819,9 @@ impl BumpFeeTxBuilder {
             tx_builder.set_exact_sequence(Sequence(sequence));
         }
         if let Some(height) = self.current_height {
-            tx_builder.current_height(height);
+            let height = BdkHeight::from_consensus(height)
+                .map_err(|_| CreateTxError::LockTimeConversionError)?;
+            tx_builder.current_height(height.to_consensus_u32());
         }
         if let Some(locktime) = &self.locktime {
             let bdk_locktime: BdkLockTime = locktime.try_into()?;
