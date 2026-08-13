@@ -1,10 +1,10 @@
 use crate::bitcoin::{Amount, BlockHash, Network, NetworkKind};
 use crate::descriptor::Descriptor;
-use crate::error::LoadWithPersistError;
+use crate::error::{LoadWithPersistError, PersistenceError};
 use crate::signer::SignersContainer;
-use crate::store::Persister;
+use crate::store::{Persistence, Persister};
 use crate::tx_builder::TxBuilder;
-use crate::types::Update;
+use crate::types::{ChangeSet, Update};
 use crate::wallet::{CreateParams, LoadParams, Wallet};
 
 use bdk_wallet::bitcoin::Amount as BdkAmount;
@@ -12,7 +12,11 @@ use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::{absolute, transaction, TxOut as BdkTxOut};
 use bdk_wallet::KeychainKind;
 
-use std::sync::Arc;
+use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::{mpsc, Arc, Mutex, Weak};
+use std::thread;
+use std::time::Duration;
 
 const EXTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)";
 const INTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/*)";
@@ -447,4 +451,419 @@ fn test_load_from_two_path_descriptor_with_params() {
         }
         error => panic!("expected InvalidChangeSet error, got {:?}", error),
     }
+}
+
+#[test]
+fn test_custom_persistence_callback_can_read_same_wallet() {
+    struct ReentrantReadPersistence {
+        wallet: Arc<Wallet>,
+        reads: AtomicUsize,
+    }
+
+    impl Persistence for ReentrantReadPersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, _changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            let _ = self.wallet.balance();
+            self.reads.fetch_add(1, Ordering::Relaxed);
+            Ok(())
+        }
+    }
+
+    let wallet = Arc::new(build_wallet());
+    wallet.reveal_next_address(KeychainKind::External);
+    let persistence = Arc::new(ReentrantReadPersistence {
+        wallet: Arc::clone(&wallet),
+        reads: AtomicUsize::new(0),
+    });
+    let persister = Arc::new(Persister::custom(persistence.clone()));
+    let (sender, receiver) = mpsc::channel();
+    let wallet_for_thread = Arc::clone(&wallet);
+    let handle = thread::spawn(move || {
+        sender.send(wallet_for_thread.persist(persister)).unwrap();
+    });
+
+    let persisted = receiver
+        .recv_timeout(Duration::from_secs(2))
+        .expect("reentrant persistence callback should not deadlock")
+        .unwrap();
+    handle.join().unwrap();
+
+    assert!(persisted);
+    assert_eq!(persistence.reads.load(Ordering::Relaxed), 1);
+    assert!(wallet.staged().is_none());
+}
+
+#[test]
+fn test_custom_persistence_callback_mutation_remains_staged() {
+    struct ReentrantMutationPersistence {
+        wallet: Arc<Wallet>,
+        calls: AtomicUsize,
+        persisted: Mutex<Vec<bdk_wallet::ChangeSet>>,
+    }
+
+    impl Persistence for ReentrantMutationPersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            self.persisted
+                .lock()
+                .unwrap()
+                .push(changeset.as_ref().clone().into());
+            if self.calls.fetch_add(1, Ordering::Relaxed) == 0 {
+                self.wallet.reveal_next_address(KeychainKind::External);
+            }
+            Ok(())
+        }
+    }
+
+    let wallet = Arc::new(build_wallet());
+    wallet.reveal_next_address(KeychainKind::External);
+    let persistence = Arc::new(ReentrantMutationPersistence {
+        wallet: Arc::clone(&wallet),
+        calls: AtomicUsize::new(0),
+        persisted: Mutex::new(Vec::new()),
+    });
+    let persister = Arc::new(Persister::custom(persistence.clone()));
+    let (sender, receiver) = mpsc::channel();
+    let wallet_for_thread = Arc::clone(&wallet);
+    let persister_for_thread = Arc::clone(&persister);
+    let handle = thread::spawn(move || {
+        sender
+            .send(wallet_for_thread.persist(persister_for_thread))
+            .unwrap();
+    });
+
+    let first_persisted = receiver
+        .recv_timeout(Duration::from_secs(2))
+        .expect("reentrant wallet mutation should not deadlock")
+        .unwrap();
+    handle.join().unwrap();
+
+    assert!(first_persisted);
+    assert_eq!(wallet.derivation_index(KeychainKind::External), Some(1));
+    let staged: bdk_wallet::ChangeSet = wallet.staged().unwrap().as_ref().clone().into();
+    assert_eq!(
+        staged.indexer.last_revealed.values().copied().max(),
+        Some(1)
+    );
+
+    assert!(wallet.persist(Arc::clone(&persister)).unwrap());
+    assert!(!wallet.persist(persister).unwrap());
+
+    let persisted = persistence.persisted.lock().unwrap();
+    let persisted_indexes: Vec<Option<u32>> = persisted
+        .iter()
+        .map(|changeset| changeset.indexer.last_revealed.values().copied().max())
+        .collect();
+    assert_eq!(persisted_indexes, vec![Some(0), Some(1)]);
+    assert!(wallet.staged().is_none());
+}
+
+#[test]
+fn test_custom_persistence_error_retains_reentrant_mutation() {
+    struct FailAfterMutationPersistence {
+        wallet: Arc<Wallet>,
+        should_fail: AtomicBool,
+        persisted: Mutex<Vec<bdk_wallet::ChangeSet>>,
+    }
+
+    impl Persistence for FailAfterMutationPersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            self.persisted
+                .lock()
+                .unwrap()
+                .push(changeset.as_ref().clone().into());
+            if self.should_fail.swap(false, Ordering::Relaxed) {
+                self.wallet.reveal_next_address(KeychainKind::External);
+                return Err(PersistenceError::Reason {
+                    error_message: "write failed".to_string(),
+                });
+            }
+            Ok(())
+        }
+    }
+
+    let wallet = Arc::new(build_wallet());
+    wallet.reveal_next_address(KeychainKind::External);
+    let persistence = Arc::new(FailAfterMutationPersistence {
+        wallet: Arc::clone(&wallet),
+        should_fail: AtomicBool::new(true),
+        persisted: Mutex::new(Vec::new()),
+    });
+    let persister = Arc::new(Persister::custom(persistence.clone()));
+
+    let error = wallet.persist(Arc::clone(&persister)).unwrap_err();
+    assert!(error.to_string().contains("write failed"));
+    let staged: bdk_wallet::ChangeSet = wallet.staged().unwrap().as_ref().clone().into();
+    assert_eq!(
+        staged.indexer.last_revealed.values().copied().max(),
+        Some(1)
+    );
+
+    assert!(wallet.persist(persister).unwrap());
+    let persisted = persistence.persisted.lock().unwrap();
+    let persisted_indexes: Vec<Option<u32>> = persisted
+        .iter()
+        .map(|changeset| changeset.indexer.last_revealed.values().copied().max())
+        .collect();
+    assert_eq!(persisted_indexes, vec![Some(0), Some(1)]);
+    assert!(wallet.staged().is_none());
+}
+
+#[test]
+fn test_nested_persist_on_same_wallet_fails_fast() {
+    struct CountingPersistence(AtomicUsize);
+
+    impl Persistence for CountingPersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, _changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            self.0.fetch_add(1, Ordering::Relaxed);
+            Ok(())
+        }
+    }
+
+    struct NestedWalletPersistence {
+        wallet: Arc<Wallet>,
+        nested_persister: Arc<Persister>,
+        nested_result: Mutex<Option<Result<bool, PersistenceError>>>,
+    }
+
+    impl Persistence for NestedWalletPersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, _changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            let result = self.wallet.persist(Arc::clone(&self.nested_persister));
+            *self.nested_result.lock().unwrap() = Some(result);
+            Ok(())
+        }
+    }
+
+    let wallet = Arc::new(build_wallet());
+    wallet.reveal_next_address(KeychainKind::External);
+    let nested_persistence = Arc::new(CountingPersistence(AtomicUsize::new(0)));
+    let nested_persister = Arc::new(Persister::custom(nested_persistence.clone()));
+    let persistence = Arc::new(NestedWalletPersistence {
+        wallet: Arc::clone(&wallet),
+        nested_persister,
+        nested_result: Mutex::new(None),
+    });
+    let persister = Arc::new(Persister::custom(persistence.clone()));
+    let (sender, receiver) = mpsc::channel();
+    let wallet_for_thread = Arc::clone(&wallet);
+    let handle = thread::spawn(move || {
+        sender.send(wallet_for_thread.persist(persister)).unwrap();
+    });
+
+    let persisted = receiver
+        .recv_timeout(Duration::from_secs(2))
+        .expect("nested wallet persistence should fail instead of deadlocking")
+        .unwrap();
+    handle.join().unwrap();
+
+    assert!(persisted);
+    match persistence.nested_result.lock().unwrap().take().unwrap() {
+        Err(PersistenceError::Reason { error_message }) => {
+            assert_eq!(
+                error_message,
+                "wallet persistence operation already in progress"
+            );
+        }
+        result => panic!("expected nested persistence to fail, got {:?}", result),
+    }
+    assert_eq!(nested_persistence.0.load(Ordering::Relaxed), 0);
+    assert!(wallet.staged().is_none());
+}
+
+#[test]
+fn test_reentrant_persist_with_same_persister_fails_fast() {
+    struct ReentrantPersisterPersistence {
+        nested_wallet: Arc<Wallet>,
+        persister: Mutex<Option<Weak<Persister>>>,
+        calls: AtomicUsize,
+        nested_result: Mutex<Option<Result<bool, PersistenceError>>>,
+    }
+
+    impl Persistence for ReentrantPersisterPersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, _changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            if self.calls.fetch_add(1, Ordering::Relaxed) == 0 {
+                let persister = self
+                    .persister
+                    .lock()
+                    .unwrap()
+                    .as_ref()
+                    .unwrap()
+                    .upgrade()
+                    .unwrap();
+                let result = self.nested_wallet.persist(persister);
+                *self.nested_result.lock().unwrap() = Some(result);
+            }
+            Ok(())
+        }
+    }
+
+    let wallet = Arc::new(build_wallet());
+    let nested_wallet = Arc::new(build_wallet());
+    wallet.reveal_next_address(KeychainKind::External);
+    nested_wallet.reveal_next_address(KeychainKind::External);
+    let persistence = Arc::new(ReentrantPersisterPersistence {
+        nested_wallet: Arc::clone(&nested_wallet),
+        persister: Mutex::new(None),
+        calls: AtomicUsize::new(0),
+        nested_result: Mutex::new(None),
+    });
+    let persister = Arc::new(Persister::custom(persistence.clone()));
+    *persistence.persister.lock().unwrap() = Some(Arc::downgrade(&persister));
+    let (sender, receiver) = mpsc::channel();
+    let wallet_for_thread = Arc::clone(&wallet);
+    let persister_for_thread = Arc::clone(&persister);
+    let handle = thread::spawn(move || {
+        sender
+            .send(wallet_for_thread.persist(persister_for_thread))
+            .unwrap();
+    });
+
+    let persisted = receiver
+        .recv_timeout(Duration::from_secs(2))
+        .expect("reentrant persister use should fail instead of deadlocking")
+        .unwrap();
+    handle.join().unwrap();
+
+    assert!(persisted);
+    match persistence.nested_result.lock().unwrap().take().unwrap() {
+        Err(PersistenceError::Reason { error_message }) => {
+            assert_eq!(
+                error_message,
+                "custom persistence operation already in progress"
+            );
+        }
+        result => panic!("expected reentrant persister use to fail, got {:?}", result),
+    }
+    assert!(nested_wallet.staged().is_some());
+    assert!(nested_wallet.persist(Arc::clone(&persister)).unwrap());
+    assert_eq!(persistence.calls.load(Ordering::Relaxed), 2);
+    assert!(nested_wallet.staged().is_none());
+}
+
+#[test]
+fn test_custom_persister_guards_complete_wallet_creation() {
+    struct ReentrantCreatePersistence {
+        persister: Mutex<Option<Weak<Persister>>>,
+        attempted: AtomicBool,
+        nested_result: Mutex<Option<Result<(), String>>>,
+    }
+
+    impl Persistence for ReentrantCreatePersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, _changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            if !self.attempted.swap(true, Ordering::Relaxed) {
+                let persister = self
+                    .persister
+                    .lock()
+                    .unwrap()
+                    .as_ref()
+                    .unwrap()
+                    .upgrade()
+                    .unwrap();
+                let result = Wallet::new(
+                    external_descriptor(),
+                    internal_descriptor(),
+                    Network::Signet,
+                    persister,
+                    25,
+                )
+                .map(|_| ())
+                .map_err(|error| error.to_string());
+                *self.nested_result.lock().unwrap() = Some(result);
+            }
+            Ok(())
+        }
+    }
+
+    let persistence = Arc::new(ReentrantCreatePersistence {
+        persister: Mutex::new(None),
+        attempted: AtomicBool::new(false),
+        nested_result: Mutex::new(None),
+    });
+    let persister = Arc::new(Persister::custom(persistence.clone()));
+    *persistence.persister.lock().unwrap() = Some(Arc::downgrade(&persister));
+    let (sender, receiver) = mpsc::channel();
+    let handle = thread::spawn(move || {
+        let result = Wallet::new(
+            external_descriptor(),
+            internal_descriptor(),
+            Network::Signet,
+            persister,
+            25,
+        )
+        .map(|_| ())
+        .map_err(|error| error.to_string());
+        sender.send(result).unwrap();
+    });
+
+    receiver
+        .recv_timeout(Duration::from_secs(2))
+        .expect("reentrant wallet creation should fail instead of deadlocking")
+        .unwrap();
+    handle.join().unwrap();
+
+    let nested_error = persistence
+        .nested_result
+        .lock()
+        .unwrap()
+        .take()
+        .unwrap()
+        .unwrap_err();
+    assert!(nested_error.contains("custom persistence operation already in progress"));
+}
+
+#[test]
+fn test_custom_persistence_panic_releases_operation_guards() {
+    struct PanicOncePersistence(AtomicBool);
+
+    impl Persistence for PanicOncePersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, _changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            if self.0.swap(false, Ordering::Relaxed) {
+                panic!("persistence callback panicked");
+            }
+            Ok(())
+        }
+    }
+
+    let wallet = Arc::new(build_wallet());
+    wallet.reveal_next_address(KeychainKind::External);
+    let persister = Arc::new(Persister::custom(Arc::new(PanicOncePersistence(
+        AtomicBool::new(true),
+    ))));
+
+    let panic_result = catch_unwind(AssertUnwindSafe(|| wallet.persist(Arc::clone(&persister))));
+    assert!(panic_result.is_err());
+    assert!(wallet.staged().is_some());
+
+    assert!(wallet.persist(persister).unwrap());
+    assert!(wallet.staged().is_none());
 }
