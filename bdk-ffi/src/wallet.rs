@@ -999,20 +999,32 @@ impl Wallet {
     pub fn all_tx_details(&self) -> Vec<crate::types::TxDetails> {
         let wallet = self.get_wallet();
 
-        let txids: Vec<bdk_wallet::bitcoin::Txid> = wallet
+        wallet
             .transactions_sort_by(|tx1, tx2| tx2.chain_position.cmp(&tx1.chain_position))
             .into_iter()
-            .map(|tx| tx.tx_node.txid)
-            .collect();
+            .map(|canonical_tx| {
+                let tx = canonical_tx.tx_node.tx;
+                let txid = canonical_tx.tx_node.txid;
 
-        if txids.is_empty() {
-            return Vec::new();
-        }
+                let (sent, received) = wallet.sent_and_received(&tx);
+                let fee = wallet.calculate_fee(&tx).ok();
+                let fee_rate = wallet.calculate_fee_rate(&tx).ok();
 
-        txids
-            .into_iter()
-            .filter_map(|txid| wallet.tx_details(txid))
-            .map(crate::types::TxDetails::from)
+                let balance_delta = received.to_signed().expect("valid SignedAmount")
+                    - sent.to_signed().expect("valid SignedAmount");
+
+                bdk_wallet::TxDetails {
+                    txid,
+                    sent,
+                    received,
+                    fee,
+                    fee_rate,
+                    balance_delta,
+                    chain_position: canonical_tx.chain_position,
+                    tx,
+                }
+                .into()
+            })
             .collect()
     }
 
