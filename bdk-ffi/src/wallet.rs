@@ -989,9 +989,9 @@ impl Wallet {
     /// Get [`TxDetails`] for all canonical transactions in a wallet,
     /// sorted from newest to oldest by chain position.
     ///
-    /// This is a convenience method that combines [`Wallet::transactions`] and
-    /// [`Wallet::tx_details`] into a single call, avoiding multiple FFI
-    /// round-trips when building a transaction history view.
+    /// This derives transaction details directly from the [`WalletTx`]s returned
+    /// by `transactions_sort_by`, avoiding multiple FFI round-trips and repeated
+    /// transaction-history scans performed by [`Wallet::tx_details`].
     ///
     /// Note that `fee` and `fee_rate` fields may be `None` for transactions
     /// that include inputs not owned by this wallet, unless those inputs were
