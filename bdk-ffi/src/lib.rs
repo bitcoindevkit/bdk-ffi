@@ -7,6 +7,8 @@ mod keys;
 mod kyoto;
 mod macros;
 mod signer;
+#[cfg(feature = "experimental-silent-payments")]
+mod silent_payments;
 mod store;
 mod tx_builder;
 mod types;

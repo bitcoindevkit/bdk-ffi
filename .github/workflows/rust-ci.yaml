@@ -47,6 +47,9 @@ jobs:
       - name: "Test"
         run: CLASSPATH=./tests/jna/jna-5.14.0.jar cargo test --features uniffi/bindgen-tests
 
+      - name: "Test experimental silent payments"
+        run: CLASSPATH=./tests/jna/jna-5.14.0.jar cargo test --features "experimental-silent-payments uniffi/bindgen-tests"
+
   check:
     name: "Run clippy and fmt"
     needs: test
@@ -70,3 +73,6 @@ jobs:
 
       - name: "Check clippy"
         run: cargo clippy --all-targets --features "uniffi/bindgen-tests"
+
+      - name: "Check clippy with experimental silent payments"
+        run: cargo clippy --all-targets --features "experimental-silent-payments uniffi/bindgen-tests"
