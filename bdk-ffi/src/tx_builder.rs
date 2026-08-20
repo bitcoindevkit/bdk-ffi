@@ -3,7 +3,7 @@ use crate::error::{AddForeignUtxoError, CreateTxError, SighashParseError};
 use crate::types::{KeychainKind, LockTime, ScriptAmount};
 use crate::wallet::Wallet;
 
-use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
+use bdk_wallet::bitcoin::absolute::{Height as BdkHeight, LockTime as BdkLockTime};
 use bdk_wallet::bitcoin::amount::Amount as BdkAmount;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::psbt::PsbtSighashType as BdkPsbtSighashType;
@@ -343,8 +343,9 @@ impl TxBuilder {
     /// 1. Set the `nLockTime` for preventing fee sniping. Note: This will be ignored if you manually specify a
     ///    `nlocktime` using `TxBuilder::nlocktime`.
     ///
-    /// 2. Decide whether coinbase outputs are mature or not. If the coinbase outputs are not mature at `current_height`,
-    ///    we ignore them in the coin selection. If you want to create a transaction that spends immature coinbase inputs,
+    /// 2. Decide whether coinbase outputs are mature or not. If the coinbase outputs are not mature
+    ///    at spending height, which is `current_height` + 1, we ignore them in the coin selection.
+    ///    If you want to create a transaction that spends immature coinbase inputs,
     ///    manually add them using `TxBuilder::add_utxos`.
     ///    In both cases, if you don’t provide a current height, we use the last sync height.
     pub fn current_height(&self, height: u32) -> Arc<Self> {
@@ -637,7 +638,9 @@ impl TxBuilder {
             tx_builder.add_data(&push_bytes);
         }
         if let Some(height) = self.current_height {
-            tx_builder.current_height(height);
+            let height = BdkHeight::from_consensus(height)
+                .map_err(|_| CreateTxError::LockTimeConversionError)?;
+            tx_builder.current_height(height.to_consensus_u32());
         }
         if let Some(locktime) = &self.locktime {
             let bdk_locktime: BdkLockTime = locktime.try_into()?;
@@ -733,8 +736,9 @@ impl BumpFeeTxBuilder {
     /// 1. Set the `nLockTime` for preventing fee sniping. Note: This will be ignored if you manually specify a
     ///    `nlocktime` using `TxBuilder::nlocktime`.
     ///
-    /// 2. Decide whether coinbase outputs are mature or not. If the coinbase outputs are not mature at `current_height`,
-    ///    we ignore them in the coin selection. If you want to create a transaction that spends immature coinbase inputs,
+    /// 2. Decide whether coinbase outputs are mature or not. If the coinbase outputs are not mature
+    ///    at spending height, which is `current_height` + 1, we ignore them in the coin selection.
+    ///    If you want to create a transaction that spends immature coinbase inputs,
     ///    manually add them using `TxBuilder::add_utxos`.
     ///    In both cases, if you don’t provide a current height, we use the last sync height.
     pub fn current_height(&self, height: u32) -> Arc<Self> {
@@ -817,7 +821,9 @@ impl BumpFeeTxBuilder {
             tx_builder.set_exact_sequence(Sequence(sequence));
         }
         if let Some(height) = self.current_height {
-            tx_builder.current_height(height);
+            let height = BdkHeight::from_consensus(height)
+                .map_err(|_| CreateTxError::LockTimeConversionError)?;
+            tx_builder.current_height(height.to_consensus_u32());
         }
         if let Some(locktime) = &self.locktime {
             let bdk_locktime: BdkLockTime = locktime.try_into()?;
