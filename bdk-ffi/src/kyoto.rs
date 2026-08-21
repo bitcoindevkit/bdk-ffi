@@ -67,12 +67,10 @@ pub struct CbfNode {
 #[uniffi::export]
 impl CbfNode {
     /// Start the node on a detached OS thread and immediately return.
-    /// Subsequent calls have no effect.
-    pub fn run(self: Arc<Self>) {
+    /// Returns an error if the node has already been started.
+    pub fn run(self: Arc<Self>) -> Result<(), CbfError> {
         let mut lock = self.node.lock().unwrap();
-        let Some(node) = lock.take() else {
-            return;
-        };
+        let node = lock.take().ok_or(CbfError::NodeAlreadyStarted)?;
         std::thread::spawn(|| {
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
@@ -82,6 +80,7 @@ impl CbfNode {
                     let _ = node.run().await;
                 })
         });
+        Ok(())
     }
 }
 
@@ -619,15 +618,65 @@ impl DisplayExt for RejectReason {
 
 #[cfg(test)]
 mod tests {
-    use super::CbfNode;
-    use std::sync::{Arc, Mutex};
+    use super::{bip157, BDKCbfBuilder, CbfError, CbfNode, Network};
+    use std::sync::{Arc, Barrier, Mutex};
+
+    fn node() -> (Arc<CbfNode>, bip157::Client) {
+        let (node, client) = BDKCbfBuilder::new(Network::Regtest)
+            .whitelist_only()
+            .build();
+        (
+            Arc::new(CbfNode {
+                node: Mutex::new(Some(node)),
+            }),
+            client,
+        )
+    }
 
     #[test]
-    fn running_a_consumed_node_is_a_no_op() {
+    fn running_a_consumed_node_returns_an_error() {
         let node = Arc::new(CbfNode {
             node: Mutex::new(None),
         });
 
-        node.run();
+        assert!(matches!(node.run(), Err(CbfError::NodeAlreadyStarted)));
+    }
+
+    #[test]
+    fn running_a_node_twice_returns_an_error() {
+        let (node, _client) = node();
+
+        assert!(Arc::clone(&node).run().is_ok());
+        assert!(matches!(node.run(), Err(CbfError::NodeAlreadyStarted)));
+    }
+
+    #[test]
+    fn concurrent_run_calls_allow_one_caller() {
+        let (node, _client) = node();
+        let barrier = Arc::new(Barrier::new(2));
+
+        let handles: Vec<_> = (0..2)
+            .map(|_| {
+                let node = Arc::clone(&node);
+                let barrier = Arc::clone(&barrier);
+                std::thread::spawn(move || {
+                    barrier.wait();
+                    node.run()
+                })
+            })
+            .collect();
+
+        let results: Vec<_> = handles
+            .into_iter()
+            .map(|handle| handle.join().unwrap())
+            .collect();
+        assert_eq!(results.iter().filter(|result| result.is_ok()).count(), 1);
+        assert_eq!(
+            results
+                .iter()
+                .filter(|result| matches!(result, Err(CbfError::NodeAlreadyStarted)))
+                .count(),
+            1
+        );
     }
 }
