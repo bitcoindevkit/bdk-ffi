@@ -12,6 +12,7 @@ use bdk_wallet::bitcoin::hex::DisplayHex;
 use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
+use bdk_wallet::bitcoin::psbt::SignError as BdkSignError;
 use bdk_wallet::bitcoin::script::PushBytesError;
 use bdk_wallet::chain::local_chain::CannotConnectError as BdkCannotConnectError;
 use bdk_wallet::chain::rusqlite::Error as BdkSqliteError;
@@ -828,6 +829,77 @@ pub enum SignerError {
 
     #[error("Psbt error: {error_message}")]
     Psbt { error_message: String },
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
+pub enum SignError {
+    #[error("input index out of bounds")]
+    IndexOutOfBounds { error_message: String },
+    #[error("invalid sighash type")]
+    InvalidSighashType,
+    #[error("missing input utxo")]
+    MissingInputUtxo,
+    #[error("missing redeem script")]
+    MissingRedeemScript,
+    #[error("missing spending utxo")]
+    MissingSpendUtxo,
+    #[error("missing witness script")]
+    MissingWitnessScript,
+    #[error("signing algorithm and key type does not match")]
+    MismatchedAlgoKey,
+    #[error("attempted to ECDSA sign a non-ECDSA input")]
+    NotEcdsa,
+    #[error("the scriptPubkey is not a P2WPKH script")]
+    NotWpkh,
+    #[error("sighash computation error (segwit v0 input): {error_message}")]
+    SegwitV0Sighash { error_message: String },
+    #[error("sighash computation error (p2wpkh input): {error_message}")]
+    P2wpkhSighash { error_message: String },
+    #[error("sighash computation error (taproot input): {error_message}")]
+    TaprootError { error_message: String },
+    #[error("unable to determine the output type")]
+    UnknownOutputType,
+    #[error("unable to find key")]
+    KeyNotFound,
+    #[error("attempt to sign an input with the wrong signing algorithm")]
+    WrongSigningAlgorithm,
+    #[error("signing request currently unsupported")]
+    Unsupported,
+    #[error("unknown signing error")]
+    Unknown,
+}
+
+impl From<BdkSignError> for SignError {
+    fn from(error: BdkSignError) -> Self {
+        match error {
+            BdkSignError::IndexOutOfBounds(e) => Self::IndexOutOfBounds {
+                error_message: e.to_string(),
+            },
+            BdkSignError::InvalidSighashType => Self::InvalidSighashType,
+            BdkSignError::MissingInputUtxo => Self::MissingInputUtxo,
+            BdkSignError::MissingRedeemScript => Self::MissingRedeemScript,
+            BdkSignError::MissingSpendUtxo => Self::MissingSpendUtxo,
+            BdkSignError::MissingWitnessScript => Self::MissingWitnessScript,
+            BdkSignError::MismatchedAlgoKey => Self::MismatchedAlgoKey,
+            BdkSignError::NotEcdsa => Self::NotEcdsa,
+            BdkSignError::NotWpkh => Self::NotWpkh,
+            BdkSignError::SegwitV0Sighash(e) => Self::SegwitV0Sighash {
+                error_message: e.to_string(),
+            },
+            BdkSignError::P2wpkhSighash(e) => Self::P2wpkhSighash {
+                error_message: e.to_string(),
+            },
+            BdkSignError::TaprootError(e) => Self::TaprootError {
+                error_message: e.to_string(),
+            },
+            BdkSignError::UnknownOutputType => Self::UnknownOutputType,
+            BdkSignError::KeyNotFound => Self::KeyNotFound,
+            BdkSignError::WrongSigningAlgorithm => Self::WrongSigningAlgorithm,
+            BdkSignError::Unsupported => Self::Unsupported,
+            _ => Self::Unknown, // Catch all for any other errors not explicitly handled. Satisfies non-exhaustive.
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
