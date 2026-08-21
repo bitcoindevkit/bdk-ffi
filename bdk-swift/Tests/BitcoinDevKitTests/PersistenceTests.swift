@@ -25,6 +25,92 @@ final class PersistenceTests: XCTestCase {
         dbFilePath = resourceUrl
     }
 
+    func testUnexpectedInitializeErrorReturnsLoadPersistenceError() {
+        struct UnexpectedInitializeError: Error, CustomStringConvertible {
+            var description: String { "unexpected initialize failure" }
+        }
+
+        final class ThrowingPersistence: Persistence, @unchecked Sendable {
+            func initialize() throws -> ChangeSet {
+                throw UnexpectedInitializeError()
+            }
+
+            func persist(changeset: ChangeSet) throws {}
+        }
+
+        let persister = Persister.custom(persistence: ThrowingPersistence())
+
+        XCTAssertThrowsError(
+            try Wallet.load(
+                descriptor: descriptor,
+                changeDescriptor: changeDescriptor,
+                persister: persister
+            )
+        ) { error in
+            guard let loadError = error as? LoadWithPersistError else {
+                XCTFail("Expected LoadWithPersistError, got \(error)")
+                return
+            }
+
+            guard case let .Persist(errorMessage) = loadError else {
+                XCTFail("Expected .Persist, got \(loadError)")
+                return
+            }
+
+            XCTAssertEqual(
+                errorMessage,
+                "unexpected initialize failure"
+            )
+            XCTAssertEqual(
+                loadError.description,
+                "persistence error: unexpected initialize failure"
+            )
+        }
+    }
+
+    func testUnexpectedPersistErrorReturnsCreatePersistenceError() {
+        struct UnexpectedPersistError: Error, CustomStringConvertible {
+            var description: String { "unexpected persist failure" }
+        }
+
+        final class ThrowingPersistence: Persistence, @unchecked Sendable {
+            func initialize() throws -> ChangeSet {
+                ChangeSet()
+            }
+
+            func persist(changeset: ChangeSet) throws {
+                throw UnexpectedPersistError()
+            }
+        }
+
+        let persister = Persister.custom(persistence: ThrowingPersistence())
+
+        XCTAssertThrowsError(
+            try Wallet(
+                descriptor: descriptor,
+                changeDescriptor: changeDescriptor,
+                network: .signet,
+                persister: persister
+            )
+        ) { error in
+            guard let createError = error as? CreateWithPersistError else {
+                XCTFail("Expected CreateWithPersistError, got \(error)")
+                return
+            }
+
+            guard case let .Persist(errorMessage) = createError else {
+                XCTFail("Expected .Persist, got \(createError)")
+                return
+            }
+
+            XCTAssertEqual(errorMessage, "unexpected persist failure")
+            XCTAssertEqual(
+                createError.description,
+                "persistence error: unexpected persist failure"
+            )
+        }
+    }
+
     func testPersistence() throws {
         let persister = try Persister.newSqlite(path: dbFilePath.path)
         let wallet = try Wallet.load(

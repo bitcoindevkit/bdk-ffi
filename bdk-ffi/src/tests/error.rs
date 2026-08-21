@@ -1,7 +1,13 @@
 use crate::error::{
-    Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError, ElectrumError,
-    EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError, SignerError,
+    Bip32Error, Bip39Error, CannotConnectError, CreateWithPersistError, DescriptorError,
+    DescriptorKeyError, ElectrumError, EsploraError, ExtractTxError, LoadWithPersistError,
+    PersistenceError, PsbtError, PsbtParseError, RequestBuilderError, SignerError,
     TransactionError, TxidParseError,
+};
+
+use bdk_wallet::{
+    CreateWithPersistError as BdkCreateWithPersistError,
+    LoadWithPersistError as BdkLoadWithPersistError,
 };
 
 #[test]
@@ -102,6 +108,78 @@ fn test_error_cannot_connect() {
     let error = CannotConnectError::Include { height: 42 };
 
     assert_eq!(format!("{}", error), "cannot include height: 42");
+}
+
+#[test]
+fn test_error_create_with_persist() {
+    let custom_error: CreateWithPersistError =
+        BdkCreateWithPersistError::Persist(PersistenceError::Reason {
+            error_message: "custom failure".to_string(),
+        })
+        .into();
+
+    match &custom_error {
+        CreateWithPersistError::Persist { error_message } => {
+            assert_eq!(error_message, "custom failure");
+        }
+        error => panic!("expected Persist error, got {:?}", error),
+    }
+    assert_eq!(
+        custom_error.to_string(),
+        "persistence error: custom failure"
+    );
+
+    let sqlite_error: CreateWithPersistError = BdkCreateWithPersistError::Persist(
+        PersistenceError::from(bdk_wallet::rusqlite::Error::InvalidQuery),
+    )
+    .into();
+
+    match &sqlite_error {
+        CreateWithPersistError::Persist { error_message } => {
+            assert_eq!(error_message, "Query is not read-only");
+        }
+        error => panic!("expected Persist error, got {:?}", error),
+    }
+    assert_eq!(
+        sqlite_error.to_string(),
+        "persistence error: Query is not read-only"
+    );
+}
+
+#[test]
+fn test_error_load_with_persist() {
+    let custom_error: LoadWithPersistError =
+        BdkLoadWithPersistError::Persist(PersistenceError::Reason {
+            error_message: "custom failure".to_string(),
+        })
+        .into();
+
+    match &custom_error {
+        LoadWithPersistError::Persist { error_message } => {
+            assert_eq!(error_message, "custom failure");
+        }
+        error => panic!("expected Persist error, got {:?}", error),
+    }
+    assert_eq!(
+        custom_error.to_string(),
+        "persistence error: custom failure"
+    );
+
+    let sqlite_error: LoadWithPersistError = BdkLoadWithPersistError::Persist(
+        PersistenceError::from(bdk_wallet::rusqlite::Error::InvalidQuery),
+    )
+    .into();
+
+    match &sqlite_error {
+        LoadWithPersistError::Persist { error_message } => {
+            assert_eq!(error_message, "Query is not read-only");
+        }
+        error => panic!("expected Persist error, got {:?}", error),
+    }
+    assert_eq!(
+        sqlite_error.to_string(),
+        "persistence error: Query is not read-only"
+    );
 }
 
 #[test]
