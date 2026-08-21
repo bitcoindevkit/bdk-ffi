@@ -1,8 +1,11 @@
 use crate::error::{
-    Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError, ElectrumError,
-    EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError, SignerError,
-    TransactionError, TxidParseError,
+    Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError, DescriptorKeyError,
+    ElectrumError, EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError,
+    SignerError, TransactionError, TxidParseError,
 };
+use bdk_wallet::bitcoin::Amount;
+use bdk_wallet::coin_selection::InsufficientFunds as BdkInsufficientFunds;
+use bdk_wallet::error::CreateTxError as BdkCreateTxError;
 
 #[test]
 fn test_error_bip32() {
@@ -102,6 +105,22 @@ fn test_error_cannot_connect() {
     let error = CannotConnectError::Include { height: 42 };
 
     assert_eq!(format!("{}", error), "cannot include height: 42");
+}
+
+#[test]
+fn test_error_create_tx_insufficient_funds_conversion() {
+    let error = BdkCreateTxError::CoinSelection(BdkInsufficientFunds {
+        needed: Amount::from_sat(50_000),
+        available: Amount::from_sat(30_000),
+    });
+
+    match CreateTxError::from(error) {
+        CreateTxError::InsufficientFunds { needed, available } => {
+            assert_eq!(needed, 50_000);
+            assert_eq!(available, 30_000);
+        }
+        other => panic!("expected insufficient funds error, got {:?}", other),
+    }
 }
 
 #[test]
