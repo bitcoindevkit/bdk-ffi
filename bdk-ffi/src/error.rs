@@ -787,8 +787,8 @@ pub enum SignerError {
     #[error("user canceled operation")]
     UserCanceled,
 
-    #[error("input index out of range")]
-    InputIndexOutOfRange,
+    #[error("{error_message}")]
+    InputIndexOutOfRange { error_message: String },
 
     #[error("missing non-witness utxo information")]
     MissingNonWitnessUtxo,
@@ -1643,7 +1643,9 @@ impl From<BdkSignerError> for SignerError {
             BdkSignerError::MissingKey => SignerError::MissingKey,
             BdkSignerError::InvalidKey => SignerError::InvalidKey,
             BdkSignerError::UserCanceled => SignerError::UserCanceled,
-            BdkSignerError::InputIndexOutOfRange(_) => SignerError::InputIndexOutOfRange,
+            BdkSignerError::InputIndexOutOfRange(e) => SignerError::InputIndexOutOfRange {
+                error_message: e.to_string(),
+            },
             BdkSignerError::MissingNonWitnessUtxo => SignerError::MissingNonWitnessUtxo,
             BdkSignerError::InvalidNonWitnessUtxo => SignerError::InvalidNonWitnessUtxo,
             BdkSignerError::MissingWitnessUtxo => SignerError::MissingWitnessUtxo,

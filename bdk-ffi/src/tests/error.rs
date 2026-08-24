@@ -3,6 +3,7 @@ use crate::error::{
     EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError, SignerError,
     TransactionError, TxidParseError,
 };
+use bdk_wallet::IndexOutOfBoundsError as BdkIndexOutOfBoundsError;
 
 #[test]
 fn test_error_bip32() {
@@ -556,8 +557,10 @@ fn test_signer_errors() {
         (SignerError::InvalidKey, "invalid key provided"),
         (SignerError::UserCanceled, "user canceled operation"),
         (
-            SignerError::InputIndexOutOfRange,
-            "input index out of range",
+            SignerError::InputIndexOutOfRange {
+                error_message: BdkIndexOutOfBoundsError::new(3, 1).to_string(),
+            },
+            "Index out of bounds: index 3 is greater than or equal to length 1",
         ),
         (
             SignerError::MissingNonWitnessUtxo,
