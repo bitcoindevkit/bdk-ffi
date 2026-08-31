@@ -256,11 +256,32 @@ impl DescriptorSecretKey {
         }
     }
 
-    /// Return the descriptor public key corresponding to this secret.
-    pub fn as_public(&self) -> Arc<DescriptorPublicKey> {
+    /// Returns the public version of this key.
+    ///
+    /// If the key is an "XPrv", the hardened derivation steps will be applied
+    /// before converting it to a public key.
+    ///
+    /// It will return an error if the key is a "multi-xpriv", as we wouldn't
+    /// always be able to apply hardened derivation steps if there are multiple
+    /// paths.
+    pub fn as_public(&self) -> Result<Arc<DescriptorPublicKey>, DescriptorKeyError> {
         let secp = Secp256k1::new();
-        let descriptor_public_key = self.0.to_public(&secp).unwrap();
-        Arc::new(DescriptorPublicKey(descriptor_public_key))
+        let descriptor_public_key = self.0.to_public(&secp).map_err(DescriptorKeyError::from)?;
+        Ok(Arc::new(DescriptorPublicKey(descriptor_public_key)))
+    }
+
+    /// Get as many keys as derivation paths in this key.
+    ///
+    /// For raw keys and single-path extended keys it will return the key itself.
+    /// For multipath extended keys it will return a single-path extended key per derivation
+    /// path.
+    pub fn to_single_keys(&self) -> Vec<Arc<Self>> {
+        self.0
+            .clone()
+            .into_single_keys()
+            .into_iter()
+            .map(|key| Arc::new(Self(key)))
+            .collect()
     }
 
     /// Return the bytes of this descriptor secret key.

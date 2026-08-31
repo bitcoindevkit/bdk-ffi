@@ -55,7 +55,7 @@ final class DescriptorTests: XCTestCase {
         let mnemonic = try Mnemonic.fromString(mnemonic: "awesome awesome awesome awesome awesome awesome awesome awesome awesome awesome awesome awesome")
         let secretKey = DescriptorSecretKey(networkKind: NetworkKind.test, mnemonic: mnemonic, password: nil)
         let derived = try secretKey.derive(path: DerivationPath(path: "m/86'/1'/0'"))
-        let publicKey = derived.asPublic()
+        let publicKey = try derived.asPublic()
         let withWildcard = try publicKey.addWildcard()
         XCTAssertTrue(withWildcard.description.hasSuffix("/*"))
     }
