@@ -4,7 +4,60 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v3.0.0...HEAD)
+## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v3.1.0...HEAD)
+
+## [v3.1.0]
+
+This is version `3.1.0` of the BDK language bindings! This release uses the following Rust dependencies:
+
+- bdk_wallet `3.1.0`
+- bdk_electrum `0.24.0`
+- bdk_esplora `0.22.2`
+- bdk_kyoto `0.17.1`
+- bitcoin `0.32.102`
+- miniscript `12.3.7`
+- uniffi `0.31.2`
+
+### Added
+
+- Add `Descriptor::new_sh_with_wpkh`, `Descriptor::new_sh_with_wsh`, and `Descriptor::new_tr` constructors [#1016]
+- Add `Wallet::keychains` [#1031]
+- Add `TxBuilder::coin_selection` [#1033]
+- Expose two path descriptor wallet loading [#1042]
+- Add option to restrict peers in Kyoto client [#1047]
+- Export Display trait on errors [#1021]
+- Expose wallet signing with provided signers by [#1043]
+- Expose Wallet create and load params [#1044]
+- Add public descriptor conversion [#1054]
+- Expose extract_tx_with_fee_rate_limit and extract_tx_unchecked_fee_rate on Psbt [#1056]
+
+### Fixed
+
+- Return secret bytes for single descriptor keys [#1027]
+- Reject trailing bytes when decoding transactions [#1070]
+- Reject invalid transaction builder current heights [#1086]
+- Remove temporary Esplora panic handling [#1107]
+- Enforce last call wins fee policy in TxBuilder [#1085]
+- PsbtExt::finalize re-finalizes already finalized inputs [#1015]
+- TxBuilder: always validate `non_witness_utxo` in `add_foreign_utxo` [#1030]
+
+[#1015]: https://github.com/bitcoindevkit/bdk-ffi/pull/1015
+[#1016]: https://github.com/bitcoindevkit/bdk-ffi/pull/1016
+[#1021]: https://github.com/bitcoindevkit/bdk-ffi/pull/1021
+[#1027]: https://github.com/bitcoindevkit/bdk-ffi/pull/1027
+[#1030]: https://github.com/bitcoindevkit/bdk-ffi/pull/1030
+[#1031]: https://github.com/bitcoindevkit/bdk-ffi/pull/1031
+[#1033]: https://github.com/bitcoindevkit/bdk-ffi/pull/1033
+[#1042]: https://github.com/bitcoindevkit/bdk-ffi/pull/1042
+[#1043]: https://github.com/bitcoindevkit/bdk-ffi/pull/1043
+[#1044]: https://github.com/bitcoindevkit/bdk-ffi/pull/1044
+[#1047]: https://github.com/bitcoindevkit/bdk-ffi/pull/1047
+[#1054]: https://github.com/bitcoindevkit/bdk-ffi/pull/1054
+[#1056]: https://github.com/bitcoindevkit/bdk-ffi/pull/1056
+[#1070]: https://github.com/bitcoindevkit/bdk-ffi/pull/1070
+[#1085]: https://github.com/bitcoindevkit/bdk-ffi/pull/1085
+[#1086]: https://github.com/bitcoindevkit/bdk-ffi/pull/1086
+[#1107]: https://github.com/bitcoindevkit/bdk-ffi/pull/1107
 
 ## [v3.0.0]
 
@@ -710,6 +763,7 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v3.1.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v3.0.0...v3.1.0
 [v3.0.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.3.0...v3.0.0
 [v2.3.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.2.0...v2.3.0
 [v2.2.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.0.0...v2.2.0
