@@ -15,6 +15,6 @@ trap cleanup EXIT
 
 # Build the docs
 rm -rf target/doc
-cargo doc --no-deps
+cargo doc --locked --no-deps
 printf '%s\n' '<meta http-equiv="refresh" content="0; url=bdkffi/index.html">' > target/doc/index.html
 printf 'Documentation built at target/doc/\n'

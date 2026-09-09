@@ -2,17 +2,17 @@ default:
   just --list
 
 build:
-  cargo build --profile release-smaller
+  cargo build --locked --profile release-smaller
 
 build-dev:
-  cargo build
+  cargo build --locked
 
 check:
    cargo fmt
-   cargo clippy
+   cargo clippy --locked
 
 test:
-  cargo test
+  cargo test --locked
 
 # Build API documentation for gh-pages or local browsing
 docs:
