@@ -227,6 +227,35 @@ fn test_create_wallet() {
 }
 
 #[test]
+fn test_persist_preserves_persistence_error_message() {
+    use crate::error::PersistenceError;
+    use crate::store::Persistence;
+    use crate::types::ChangeSet;
+
+    struct FailingPersistence;
+
+    impl Persistence for FailingPersistence {
+        fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+            Ok(Arc::new(ChangeSet::new()))
+        }
+
+        fn persist(&self, _changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+            Err(PersistenceError::Reason {
+                error_message: "write failed".to_string(),
+            })
+        }
+    }
+
+    let wallet = build_wallet();
+    wallet.reveal_next_address(KeychainKind::External);
+    let persister = Arc::new(Persister::custom(Arc::new(FailingPersistence)));
+
+    let error = wallet.persist(persister).unwrap_err();
+
+    assert_eq!(error.to_string(), "persistence error: write failed");
+}
+
+#[test]
 fn test_keychains() {
     let wallet = build_wallet();
 

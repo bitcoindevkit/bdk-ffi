@@ -945,11 +945,7 @@ impl Wallet {
     pub fn persist(&self, persister: Arc<Persister>) -> Result<bool, PersistenceError> {
         let mut persist_lock = persister.inner.lock().unwrap();
         let deref = persist_lock.deref_mut();
-        self.get_wallet()
-            .persist(deref)
-            .map_err(|e| PersistenceError::Reason {
-                error_message: e.to_string(),
-            })
+        self.get_wallet().persist(deref)
     }
 
     /// Get a reference of the staged [`ChangeSet`] that is yet to be committed (if any).

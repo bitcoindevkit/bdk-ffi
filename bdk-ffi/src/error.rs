@@ -26,8 +26,8 @@ use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddForeignUtxoError as BdkAddForeignUtxoError;
 use bdk_wallet::tx_builder::AddUtxoError;
+use bdk_wallet::CreateWithPersistError as BdkCreateWithPersistError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
-use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
 
 use std::convert::TryInto;
 
@@ -239,7 +239,7 @@ pub enum CreateTxError {
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
 pub enum CreateWithPersistError {
-    #[error("sqlite persistence error: {error_message}")]
+    #[error("persistence error: {error_message}")]
     Persist { error_message: String },
 
     #[error("the wallet has already been created")]
@@ -464,7 +464,7 @@ pub enum HashParseError {
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
 pub enum LoadWithPersistError {
-    #[error("sqlite persistence error: {error_message}")]
+    #[error("persistence error: {error_message}")]
     Persist { error_message: String },
 
     #[error("the loaded changeset cannot construct wallet: {error_message}")]
@@ -1111,29 +1111,12 @@ impl From<PushBytesError> for CreateTxError {
     }
 }
 
-impl From<BdkCreateWithPersistError<chain::rusqlite::Error>> for CreateWithPersistError {
-    fn from(error: BdkCreateWithPersistError<chain::rusqlite::Error>) -> Self {
-        match error {
-            BdkCreateWithPersistError::Persist(e) => CreateWithPersistError::Persist {
-                error_message: e.to_string(),
-            },
-            BdkCreateWithPersistError::Descriptor(e) => CreateWithPersistError::Descriptor {
-                error_message: e.to_string(),
-            },
-            // Objects cannot currently be used in enumerations
-            BdkCreateWithPersistError::DataAlreadyExists(_e) => {
-                CreateWithPersistError::DataAlreadyExists
-            }
-        }
-    }
-}
-
 impl From<BdkCreateWithPersistError<PersistenceError>> for CreateWithPersistError {
     fn from(error: BdkCreateWithPersistError<PersistenceError>) -> Self {
         match error {
-            BdkCreateWithPersistError::Persist(e) => CreateWithPersistError::Persist {
-                error_message: e.to_string(),
-            },
+            BdkCreateWithPersistError::Persist(PersistenceError::Reason { error_message }) => {
+                CreateWithPersistError::Persist { error_message }
+            }
             BdkCreateWithPersistError::Descriptor(e) => CreateWithPersistError::Descriptor {
                 error_message: e.to_string(),
             },
@@ -1359,27 +1342,12 @@ impl From<BdkFromScriptError> for FromScriptError {
     }
 }
 
-impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistError {
-    fn from(error: BdkLoadWithPersistError<chain::rusqlite::Error>) -> Self {
-        match error {
-            BdkLoadWithPersistError::Persist(e) => LoadWithPersistError::Persist {
-                error_message: e.to_string(),
-            },
-            BdkLoadWithPersistError::InvalidChangeSet(e) => {
-                LoadWithPersistError::InvalidChangeSet {
-                    error_message: e.to_string(),
-                }
-            }
-        }
-    }
-}
-
 impl From<BdkLoadWithPersistError<PersistenceError>> for LoadWithPersistError {
     fn from(error: BdkLoadWithPersistError<PersistenceError>) -> Self {
         match error {
-            BdkLoadWithPersistError::Persist(e) => LoadWithPersistError::Persist {
-                error_message: e.to_string(),
-            },
+            BdkLoadWithPersistError::Persist(PersistenceError::Reason { error_message }) => {
+                LoadWithPersistError::Persist { error_message }
+            }
             BdkLoadWithPersistError::InvalidChangeSet(e) => {
                 LoadWithPersistError::InvalidChangeSet {
                     error_message: e.to_string(),
@@ -1393,6 +1361,14 @@ impl From<BdkSqliteError> for PersistenceError {
     fn from(error: BdkSqliteError) -> Self {
         PersistenceError::Reason {
             error_message: error.to_string(),
+        }
+    }
+}
+
+impl From<uniffi::UnexpectedUniFFICallbackError> for PersistenceError {
+    fn from(error: uniffi::UnexpectedUniFFICallbackError) -> Self {
+        PersistenceError::Reason {
+            error_message: error.reason,
         }
     }
 }
