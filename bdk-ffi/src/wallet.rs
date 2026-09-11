@@ -3,7 +3,7 @@ use crate::bitcoin::{
 };
 use crate::descriptor::Descriptor;
 use crate::error::{
-    CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
+    AddressError, CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
     LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
 };
 use crate::signer::SignersContainer;
@@ -14,8 +14,11 @@ use crate::types::{
     SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent, WalletKeychain,
 };
 
+use bdk_wallet::bitcoin::bip32::ChildNumber;
 use bdk_wallet::bitcoin::Network;
+use bdk_wallet::descriptor::ExtendedDescriptor;
 use bdk_wallet::keys::KeyMap;
+use bdk_wallet::miniscript::Descriptor as BdkDescriptor;
 #[allow(deprecated)]
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{
@@ -442,22 +445,40 @@ impl Wallet {
     ///
     /// This will increment the keychain's derivation index. If the keychain's descriptor doesn't
     /// contain a wildcard or every address is already revealed up to the maximum derivation
+    ///
+    /// Returns an error when the keychain's descriptor is a bare descriptor, which has
+    /// no address form.
+    ///
     /// index defined in [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki),
     /// then the last revealed address will be returned.
-    pub fn reveal_next_address(&self, keychain: KeychainKind) -> AddressInfo {
-        self.get_wallet().reveal_next_address(keychain).into()
+    pub fn reveal_next_address(&self, keychain: KeychainKind) -> Result<AddressInfo, AddressError> {
+        let mut wallet = self.get_wallet();
+        check_address_form(wallet.public_descriptor(keychain))?;
+        Ok(wallet.reveal_next_address(keychain).into())
     }
 
     /// Peek an address of the given `keychain` at `index` without revealing it.
     ///
     /// For non-wildcard descriptors this returns the same address at every provided index.
     ///
-    /// # Panics
-    ///
-    /// This panics when the caller requests for an address of derivation index greater than the
-    /// [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) max index.
-    pub fn peek_address(&self, keychain: KeychainKind, index: u32) -> AddressInfo {
-        self.get_wallet().peek_address(keychain, index).into()
+    /// Returns an error when the `index` is greater than the
+    /// [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) maximum
+    /// derivation index, or when the keychain's descriptor is a bare descriptor, which has
+    /// no address form.
+    pub fn peek_address(
+        &self,
+        keychain: KeychainKind,
+        index: u32,
+    ) -> Result<AddressInfo, AddressError> {
+        let wallet = self.get_wallet();
+        let descriptor = wallet.public_descriptor(keychain);
+
+        if descriptor.has_wildcard() && ChildNumber::from_normal_idx(index).is_err() {
+            return Err(AddressError::IndexOutOfBounds { index });
+        }
+        check_address_form(descriptor)?;
+
+        Ok(wallet.peek_address(keychain, index).into())
     }
 
     /// The index of the next address that you would get if you were to ask the wallet for a new
@@ -472,10 +493,15 @@ impl Wallet {
     /// This will attempt to reveal a new address if all previously revealed addresses have
     /// been used, in which case the returned address will be the same as calling [`Wallet::reveal_next_address`].
     ///
+    /// Returns an error when the keychain's descriptor is a bare descriptor, which has
+    /// no address form.
+    ///
     /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
     /// calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
-    pub fn next_unused_address(&self, keychain: KeychainKind) -> AddressInfo {
-        self.get_wallet().next_unused_address(keychain).into()
+    pub fn next_unused_address(&self, keychain: KeychainKind) -> Result<AddressInfo, AddressError> {
+        let mut wallet = self.get_wallet();
+        check_address_form(wallet.public_descriptor(keychain))?;
+        Ok(wallet.next_unused_address(keychain).into())
     }
 
     /// Marks an address used of the given `keychain` at `index`.
@@ -504,13 +530,22 @@ impl Wallet {
     /// possible index. If all addresses up to the given `index` are already revealed, then
     /// no new addresses are returned.
     ///
+    /// Returns an error when the keychain's descriptor is a bare descriptor, which has
+    /// no address form.
+    ///
     /// **WARNING**: To avoid address reuse you must persist the changes resulting from one or more
     /// calls to this method before closing the wallet. See [`Wallet::reveal_next_address`].
-    pub fn reveal_addresses_to(&self, keychain: KeychainKind, index: u32) -> Vec<AddressInfo> {
-        self.get_wallet()
+    pub fn reveal_addresses_to(
+        &self,
+        keychain: KeychainKind,
+        index: u32,
+    ) -> Result<Vec<AddressInfo>, AddressError> {
+        let mut wallet = self.get_wallet();
+        check_address_form(wallet.public_descriptor(keychain))?;
+        Ok(wallet
             .reveal_addresses_to(keychain, index)
             .map(|address_info| address_info.into())
-            .collect()
+            .collect())
     }
 
     /// List addresses that are revealed but unused.
@@ -518,11 +553,19 @@ impl Wallet {
     /// Note if the returned iterator is empty you can reveal more addresses
     /// by using [`reveal_next_address`](Self::reveal_next_address) or
     /// [`reveal_addresses_to`](Self::reveal_addresses_to).
-    pub fn list_unused_addresses(&self, keychain: KeychainKind) -> Vec<AddressInfo> {
-        self.get_wallet()
+    ///
+    /// Returns an error when the keychain's descriptor is a bare descriptor, which has
+    /// no address form.
+    pub fn list_unused_addresses(
+        &self,
+        keychain: KeychainKind,
+    ) -> Result<Vec<AddressInfo>, AddressError> {
+        let wallet = self.get_wallet();
+        check_address_form(wallet.public_descriptor(keychain))?;
+        Ok(wallet
             .list_unused_addresses(keychain)
             .map(|address_info| address_info.into())
-            .collect()
+            .collect())
     }
 
     /// Applies an update to the wallet and stages the changes (but does not persist them).
@@ -1000,4 +1043,15 @@ impl Wallet {
     pub(crate) fn get_wallet(&self) -> MutexGuard<'_, PersistedWallet<PersistenceType>> {
         self.inner_mutex.lock().expect("wallet")
     }
+}
+
+/// Checks that `descriptor` can produce an address.
+///
+/// Bare descriptors, e.g `pk(...)` and top-level and `multi(...)`, commit the spending
+/// condition directly to the output, and no address encoding exists for that shape.
+fn check_address_form(descriptor: &ExtendedDescriptor) -> Result<(), AddressError> {
+    if matches!(descriptor, BdkDescriptor::Bare(_)) {
+        return Err(AddressError::BareDescriptorAddr);
+    }
+    Ok(())
 }

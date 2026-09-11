@@ -28,6 +28,7 @@ fn test_policy_path() {
     let wallet = create_and_sync_wallet();
     let address = wallet
         .next_unused_address(bdk_wallet::KeychainKind::External)
+        .unwrap()
         .address;
     println!("Wallet address: {:?}", address);
 
@@ -115,6 +116,7 @@ fn test_only_witness_utxo_with_finish() {
         // At minimum, verify the builder methods don't panic
         let address = wallet
             .next_unused_address(bdk_wallet::KeychainKind::External)
+            .unwrap()
             .address;
         let _builder = TxBuilder::new()
             .add_recipient(
@@ -129,6 +131,7 @@ fn test_only_witness_utxo_with_finish() {
 
     let address = wallet
         .next_unused_address(bdk_wallet::KeychainKind::External)
+        .unwrap()
         .address;
 
     // Get policy paths for the multisig wallet
@@ -223,6 +226,7 @@ fn test_sighash_sets_psbt_input_sighash_type() {
 
     let address = wallet
         .next_unused_address(bdk_wallet::KeychainKind::External)
+        .unwrap()
         .address;
     let ext_policy = wallet.policies(bdk_wallet::KeychainKind::External);
     let int_policy = wallet.policies(bdk_wallet::KeychainKind::Internal);
@@ -399,6 +403,7 @@ fn test_add_foreign_utxo_with_witness_utxo_succeeds() {
     let wallet = create_and_sync_wallet();
     let address = wallet
         .next_unused_address(bdk_wallet::KeychainKind::External)
+        .unwrap()
         .address;
 
     let outpoint = OutPoint {
@@ -478,6 +483,7 @@ fn test_add_multiple_foreign_utxos_and_finish() {
     let wallet = create_and_sync_wallet();
     let address = wallet
         .next_unused_address(bdk_wallet::KeychainKind::External)
+        .unwrap()
         .address;
 
     // Create first foreign UTXO
@@ -601,6 +607,7 @@ fn test_combined_only_witness_utxo_and_foreign_utxo_with_finish() {
     let wallet = create_and_sync_wallet();
     let address = wallet
         .next_unused_address(bdk_wallet::KeychainKind::External)
+        .unwrap()
         .address;
 
     let outpoint = OutPoint {

@@ -1,7 +1,7 @@
 use crate::error::{
-    Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError, ElectrumError,
-    EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError, SignerError,
-    TransactionError, TxidParseError,
+    AddressError, Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError,
+    ElectrumError, EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError,
+    SignerError, TransactionError, TxidParseError,
 };
 
 #[test]
@@ -634,6 +634,21 @@ fn test_error_txid_parse() {
         },
         "invalid txid: 123abc",
     )];
+
+    for (error, expected_message) in cases {
+        assert_eq!(error.to_string(), expected_message);
+    }
+}
+
+#[test]
+fn test_error_address() {
+    let cases = vec![
+        (
+            AddressError::IndexOutOfBounds { index: 2147483648 },
+            "derivation index 2147483648 is greater than the bip32 maximum index of 2147483647",
+        ),
+        (AddressError::BareDescriptorAddr, "bare descriptor address"),
+    ];
 
     for (error, expected_message) in cases {
         assert_eq!(error.to_string(), expected_message);

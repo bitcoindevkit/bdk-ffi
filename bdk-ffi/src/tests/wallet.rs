@@ -1,11 +1,12 @@
 use crate::bitcoin::{Amount, BlockHash, FeeRate, Network, NetworkKind};
 use crate::descriptor::Descriptor;
-use crate::error::{CreateTxError, LoadWithPersistError};
+use crate::error::{AddressError, CreateTxError, LoadWithPersistError};
 use crate::signer::SignersContainer;
 use crate::store::Persister;
 use crate::tx_builder::{BumpFeeTxBuilder, TxBuilder};
 use crate::types::{UnconfirmedTx, Update};
 use crate::wallet::{CreateParams, LoadParams, Wallet};
+use assert_matches::assert_matches;
 
 use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
@@ -15,6 +16,10 @@ use bdk_wallet::KeychainKind;
 use std::sync::Arc;
 
 const EXTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)";
+const BARE_EXTERNAL_DESCRIPTOR: &str = "pk(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)";
+const BARE_INTERNAL_DESCRIPTOR: &str = "pk(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/*)";
+const NO_WILDCARD_EXTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/0)";
+const NO_WILDCARD_INTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/0)";
 const INTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/*)";
 const TWO_PATH_DESCRIPTOR: &str = "wpkh([9a6a2580/84'/1'/0']tpubDDnGNapGEY6AZAdQbfRJgMg9fvz8pUBrLwvyvUqEgcUfgzM6zc2eVK4vY9x9L5FJWdX8WumXuLEDV5zDZnTfbn87vLe9XceCFwTu9so9Kks/<0;1>/*)";
 const EXPECTED_FIRST_ADDRESS: &str = "tb1qhjys9wxlfykmte7ftryptx975uqgd6kcm6a7z4";
@@ -51,6 +56,17 @@ fn build_wallet() -> Wallet {
     .unwrap()
 }
 
+fn build_wallet_from(external: &str, internal: &str) -> Wallet {
+    Wallet::new(
+        Arc::new(Descriptor::new(external.to_string(), NetworkKind::Test).unwrap()),
+        Arc::new(Descriptor::new(internal.to_string(), NetworkKind::Test).unwrap()),
+        Network::Signet,
+        Arc::new(Persister::new_in_memory().unwrap()),
+        25,
+    )
+    .unwrap()
+}
+
 fn funded_wallet() -> Wallet {
     let wallet = Wallet::new(
         external_descriptor(),
@@ -61,7 +77,10 @@ fn funded_wallet() -> Wallet {
     )
     .unwrap();
 
-    let address = wallet.reveal_next_address(KeychainKind::External).address;
+    let address = wallet
+        .reveal_next_address(KeychainKind::External)
+        .unwrap()
+        .address;
     let funding_tx = BdkTransaction {
         version: transaction::Version::ONE,
         lock_time: absolute::LockTime::ZERO,
@@ -87,6 +106,7 @@ fn test_tx_builder_invalid_current_height_returns_error() {
     let wallet = Arc::new(funded_wallet());
     let recipient_script = wallet
         .next_unused_address(KeychainKind::External)
+        .unwrap()
         .address
         .script_pubkey();
 
@@ -106,6 +126,7 @@ fn test_bump_fee_tx_builder_invalid_current_height_returns_error() {
     let wallet = Arc::new(funded_wallet());
     let recipient_script = wallet
         .next_unused_address(KeychainKind::External)
+        .unwrap()
         .address
         .script_pubkey();
     let original_tx = TxBuilder::new()
@@ -263,11 +284,109 @@ fn test_keychains() {
 fn test_reveal_next_address() {
     let wallet = build_wallet();
 
-    let address_info = wallet.reveal_next_address(KeychainKind::External);
+    let address_info = wallet.reveal_next_address(KeychainKind::External).unwrap();
 
     assert_eq!(address_info.index, 0);
     assert_eq!(address_info.keychain, KeychainKind::External);
     assert_eq!(address_info.address.to_string(), EXPECTED_FIRST_ADDRESS);
+}
+
+#[test]
+fn test_peek_address() {
+    let wallet = build_wallet();
+
+    let address_info = wallet.peek_address(KeychainKind::External, 0).unwrap();
+
+    assert_eq!(address_info.index, 0);
+    assert_eq!(address_info.keychain, KeychainKind::External);
+    assert_eq!(address_info.address.to_string(), EXPECTED_FIRST_ADDRESS);
+}
+
+#[test]
+fn test_peek_address_at_max_index() {
+    let wallet = build_wallet();
+
+    let address_info = wallet
+        .peek_address(KeychainKind::External, 2147483647)
+        .unwrap();
+
+    assert_eq!(address_info.index, 2147483647);
+}
+
+#[test]
+fn test_peek_address_above_max_index_returns_error() {
+    let wallet = build_wallet();
+
+    assert_matches!(
+        wallet.peek_address(KeychainKind::External, 2147483648),
+        Err(AddressError::IndexOutOfBounds { index: 2147483648 })
+    );
+}
+
+#[test]
+fn test_peek_address_non_wildcard_descriptor_ignores_index() {
+    let wallet = build_wallet_from(
+        NO_WILDCARD_EXTERNAL_DESCRIPTOR,
+        NO_WILDCARD_INTERNAL_DESCRIPTOR,
+    );
+
+    let first = wallet.peek_address(KeychainKind::External, 0).unwrap();
+    let out_of_range = wallet
+        .peek_address(KeychainKind::External, u32::MAX)
+        .unwrap();
+
+    assert_eq!(out_of_range.index, 0);
+    assert_eq!(first.address.to_string(), out_of_range.address.to_string());
+}
+
+#[test]
+fn test_peek_address_bare_descriptor_returns_error() {
+    let wallet = build_wallet_from(BARE_EXTERNAL_DESCRIPTOR, BARE_INTERNAL_DESCRIPTOR);
+
+    assert_matches!(
+        wallet.peek_address(KeychainKind::External, 0),
+        Err(AddressError::BareDescriptorAddr)
+    );
+}
+
+#[test]
+fn test_reveal_next_address_bare_descriptor_returns_error() {
+    let wallet = build_wallet_from(BARE_EXTERNAL_DESCRIPTOR, BARE_INTERNAL_DESCRIPTOR);
+
+    assert_matches!(
+        wallet.reveal_next_address(KeychainKind::External),
+        Err(AddressError::BareDescriptorAddr)
+    );
+}
+
+#[test]
+fn test_next_unused_address_bare_descriptor_returns_error() {
+    let wallet = build_wallet_from(BARE_EXTERNAL_DESCRIPTOR, BARE_INTERNAL_DESCRIPTOR);
+
+    assert_matches!(
+        wallet.next_unused_address(KeychainKind::External),
+        Err(AddressError::BareDescriptorAddr)
+    );
+}
+
+#[test]
+fn test_reveal_addresses_to_bare_descriptor_returns_error() {
+    let wallet = build_wallet_from(BARE_EXTERNAL_DESCRIPTOR, BARE_INTERNAL_DESCRIPTOR);
+
+    assert_matches!(
+        wallet.reveal_addresses_to(KeychainKind::External, 3),
+        Err(AddressError::BareDescriptorAddr)
+    );
+}
+
+#[test]
+fn test_list_unused_addresses_bare_descriptor_returns_error() {
+    let wallet = build_wallet_from(BARE_EXTERNAL_DESCRIPTOR, BARE_INTERNAL_DESCRIPTOR);
+
+    assert_matches!(
+        wallet.list_unused_addresses(KeychainKind::External),
+        Err(AddressError::BareDescriptorAddr)
+    );
 }
 
 #[test]
@@ -293,6 +412,7 @@ fn test_sign_with_signers() {
     let wallet = Arc::new(funded_wallet());
     let recipient_script = wallet
         .next_unused_address(KeychainKind::External)
+        .unwrap()
         .address
         .script_pubkey();
     let psbt = TxBuilder::new()
@@ -328,7 +448,10 @@ fn test_sign_with_signers_for_public_wallet() {
         .unwrap(),
     );
 
-    let address = wallet.reveal_next_address(KeychainKind::External).address;
+    let address = wallet
+        .reveal_next_address(KeychainKind::External)
+        .unwrap()
+        .address;
     let funding_tx = BdkTransaction {
         version: transaction::Version::ONE,
         lock_time: absolute::LockTime::ZERO,
@@ -347,6 +470,7 @@ fn test_sign_with_signers_for_public_wallet() {
 
     let recipient_script = wallet
         .next_unused_address(KeychainKind::External)
+        .unwrap()
         .address
         .script_pubkey();
     let psbt = TxBuilder::new()
@@ -391,7 +515,7 @@ fn test_create_single_wallet() {
     assert!(keychains[0].public_descriptor.has_wildcard());
     assert!(!public_descriptor.contains("tprv"));
 
-    let address_info = wallet.reveal_next_address(KeychainKind::External);
+    let address_info = wallet.reveal_next_address(KeychainKind::External).unwrap();
 
     assert_eq!(address_info.index, 0);
     assert_eq!(address_info.keychain, KeychainKind::External);
@@ -413,8 +537,8 @@ fn test_create_two_path_wallet() {
     assert_eq!(wallet.derivation_index(KeychainKind::External), None);
     assert_eq!(wallet.derivation_index(KeychainKind::Internal), None);
 
-    let external_address = wallet.reveal_next_address(KeychainKind::External);
-    let internal_address = wallet.reveal_next_address(KeychainKind::Internal);
+    let external_address = wallet.reveal_next_address(KeychainKind::External).unwrap();
+    let internal_address = wallet.reveal_next_address(KeychainKind::Internal).unwrap();
 
     assert_eq!(external_address.index, 0);
     assert_eq!(external_address.keychain, KeychainKind::External);
@@ -439,8 +563,8 @@ fn test_load_from_two_path_descriptor() {
     )
     .unwrap();
 
-    wallet.reveal_next_address(KeychainKind::External);
-    wallet.reveal_next_address(KeychainKind::Internal);
+    wallet.reveal_next_address(KeychainKind::External).unwrap();
+    wallet.reveal_next_address(KeychainKind::Internal).unwrap();
     assert!(wallet.persist(Arc::clone(&persister)).unwrap());
 
     let loaded_wallet =
