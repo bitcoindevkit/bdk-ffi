@@ -1,6 +1,13 @@
-use crate::bitcoin::{Address, AddressData, Key, Network, ProprietaryKey, Psbt, Transaction};
-use crate::error::TransactionError;
+use crate::bitcoin::{
+    Address, AddressData, ControlBlock, Input, Key, Network, ProprietaryKey, Psbt, Script,
+    TapScriptEntry, Transaction,
+};
+use crate::error::{AddForeignUtxoError, TransactionError};
 use bdk_electrum::bdk_core::bitcoin::hex::DisplayHex;
+use bdk_wallet::bitcoin::psbt::Input as BdkInput;
+use std::collections::HashMap;
+use std::convert::TryFrom;
+use std::sync::Arc;
 
 #[test]
 fn test_is_valid_for_network() {
@@ -380,6 +387,104 @@ fn test_transaction_new_rejects_trailing_bytes() {
     assert!(matches!(
         Transaction::new(transaction_bytes_with_trailing_garbage),
         Err(TransactionError::ParseFailed)
+    ));
+}
+
+#[test]
+fn test_input_conversion_rejects_invalid_taproot_output_key_parity() {
+    let control_block = ControlBlock {
+        internal_key: vec![
+            0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac, 0x55, 0xa0, 0x62, 0x95, 0xce, 0x87,
+            0x0b, 0x07, 0x02, 0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9, 0x59, 0xf2, 0x81, 0x5b,
+            0x16, 0xf8, 0x17, 0x98,
+        ],
+        merkle_branch: Vec::new(),
+        output_key_parity: 2,
+        leaf_version: 0xc0,
+    };
+    let tap_script = TapScriptEntry {
+        script: Arc::new(Script::new(vec![0x51])),
+        leaf_version: 0xc0,
+    };
+    let input = Input {
+        non_witness_utxo: None,
+        witness_utxo: None,
+        partial_sigs: HashMap::new(),
+        sighash_type: None,
+        redeem_script: None,
+        witness_script: None,
+        bip32_derivation: HashMap::new(),
+        final_script_sig: None,
+        final_script_witness: None,
+        ripemd160_preimages: HashMap::new(),
+        sha256_preimages: HashMap::new(),
+        hash160_preimages: HashMap::new(),
+        hash256_preimages: HashMap::new(),
+        tap_key_sig: None,
+        tap_script_sigs: HashMap::new(),
+        tap_scripts: HashMap::from([(control_block, tap_script)]),
+        tap_key_origins: HashMap::new(),
+        tap_internal_key: None,
+        tap_merkle_root: None,
+        proprietary: HashMap::new(),
+        unknown: HashMap::new(),
+    };
+
+    let result = BdkInput::try_from(input);
+
+    assert!(matches!(
+        result,
+        Err(AddForeignUtxoError::InputConversionError { error_message })
+            if error_message.contains("invalid output key parity")
+    ));
+}
+
+#[test]
+fn test_input_conversion_rejects_mismatched_taproot_leaf_versions() {
+    let control_block = ControlBlock {
+        internal_key: vec![
+            0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac, 0x55, 0xa0, 0x62, 0x95, 0xce, 0x87,
+            0x0b, 0x07, 0x02, 0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9, 0x59, 0xf2, 0x81, 0x5b,
+            0x16, 0xf8, 0x17, 0x98,
+        ],
+        merkle_branch: Vec::new(),
+        output_key_parity: 0,
+        leaf_version: 0xc0,
+    };
+    let tap_script = TapScriptEntry {
+        script: Arc::new(Script::new(vec![0x51])),
+        leaf_version: 0xc2,
+    };
+    let input = Input {
+        non_witness_utxo: None,
+        witness_utxo: None,
+        partial_sigs: HashMap::new(),
+        sighash_type: None,
+        redeem_script: None,
+        witness_script: None,
+        bip32_derivation: HashMap::new(),
+        final_script_sig: None,
+        final_script_witness: None,
+        ripemd160_preimages: HashMap::new(),
+        sha256_preimages: HashMap::new(),
+        hash160_preimages: HashMap::new(),
+        hash256_preimages: HashMap::new(),
+        tap_key_sig: None,
+        tap_script_sigs: HashMap::new(),
+        tap_scripts: HashMap::from([(control_block, tap_script)]),
+        tap_key_origins: HashMap::new(),
+        tap_internal_key: None,
+        tap_merkle_root: None,
+        proprietary: HashMap::new(),
+        unknown: HashMap::new(),
+    };
+
+    let result = BdkInput::try_from(input);
+
+    assert!(matches!(
+        result,
+        Err(AddForeignUtxoError::InputConversionError { error_message })
+            if error_message.contains("does not match control block leaf version")
     ));
 }
 
