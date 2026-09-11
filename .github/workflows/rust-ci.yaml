@@ -42,10 +42,10 @@ jobs:
           fi
 
       - name: "Build"
-        run: cargo build
+        run: cargo build --locked
 
       - name: "Test"
-        run: CLASSPATH=./tests/jna/jna-5.14.0.jar cargo test --features uniffi/bindgen-tests
+        run: CLASSPATH=./tests/jna/jna-5.14.0.jar cargo test --locked --features uniffi/bindgen-tests
 
   check:
     name: "Run clippy and fmt"
@@ -69,4 +69,4 @@ jobs:
         run: cargo fmt --all -- --config format_code_in_doc_comments=true --check
 
       - name: "Check clippy"
-        run: cargo clippy --all-targets --features "uniffi/bindgen-tests"
+        run: cargo clippy --locked --all-targets --features "uniffi/bindgen-tests"
