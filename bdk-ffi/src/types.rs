@@ -43,6 +43,7 @@ use bdk_esplora::esplora_client::api::MerkleProof as BdkMerkleProof;
 use bdk_esplora::esplora_client::api::OutputStatus as BdkOutputStatus;
 use bdk_esplora::esplora_client::api::Tx as BdkTx;
 use bdk_esplora::esplora_client::api::TxStatus as BdkTxStatus;
+use bdk_wallet::bitcoin::secp256k1::{All, Secp256k1};
 
 pub(crate) type KeychainKind = bdk_wallet::KeychainKind;
 
@@ -1435,6 +1436,30 @@ impl From<bdk_wallet::ChangeSet> for ChangeSet {
             indexer,
             locked_outpoints,
         }
+    }
+}
+
+/// The secp256k1 engine, used to execute all signature operations.
+#[derive(Debug, uniffi::Object)]
+#[uniffi::export(Debug, Display)]
+pub struct SecpCtx {
+    pub(crate) secp: Secp256k1<All>,
+}
+
+#[uniffi::export]
+impl SecpCtx {
+    /// Create a new SecpCtx
+    #[uniffi::constructor]
+    pub fn new() -> Self {
+        SecpCtx {
+            secp: Secp256k1::new(),
+        }
+    }
+}
+
+impl Display for SecpCtx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.secp)
     }
 }
 
