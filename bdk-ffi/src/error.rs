@@ -1082,9 +1082,11 @@ impl From<BdkCreateTxError> for CreateTxError {
             BdkCreateTxError::OutputBelowDustLimit(index) => CreateTxError::OutputBelowDustLimit {
                 index: index as u64,
             },
-            BdkCreateTxError::CoinSelection(e) => CreateTxError::CoinSelection {
-                error_message: e.to_string(),
-            },
+            BdkCreateTxError::CoinSelection(e) => {
+                let needed = e.needed.to_sat();
+                let available = e.available.to_sat();
+                CreateTxError::InsufficientFunds { needed, available }
+            }
             BdkCreateTxError::NoRecipients => CreateTxError::NoRecipients,
             BdkCreateTxError::Psbt(e) => CreateTxError::Psbt {
                 error_message: e.to_string(),
