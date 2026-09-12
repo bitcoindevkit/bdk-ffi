@@ -1,6 +1,16 @@
-use crate::bitcoin::{Address, AddressData, Key, Network, ProprietaryKey, Psbt, Transaction};
+use crate::bitcoin::{
+    Address, AddressData, FeeRate, Key, Network, ProprietaryKey, Psbt, Transaction,
+};
 use crate::error::TransactionError;
 use bdk_electrum::bdk_core::bitcoin::hex::DisplayHex;
+
+#[test]
+fn maximum_fee_rate_converts_and_displays_without_overflow() {
+    let fee_rate = FeeRate::from_sat_per_kwu(u64::MAX);
+
+    assert_eq!(fee_rate.to_sat_per_vb_ceil(), u64::MAX / 250 + 1);
+    assert_eq!(fee_rate.to_string(), "73786976294838207.00 sat/vbyte");
+}
 
 #[test]
 fn test_is_valid_for_network() {

@@ -163,7 +163,7 @@ impl FeeRate {
 
     /// Converts to sat/vB rounding up.
     pub fn to_sat_per_vb_ceil(&self) -> u64 {
-        self.0.to_sat_per_vb_ceil()
+        self.0.to_sat_per_kwu().div_ceil(250)
     }
 
     /// Converts to sat/vB rounding down.
@@ -203,7 +203,7 @@ impl FeeRate {
 
 impl Display for FeeRate {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:#}", self.0)
+        write!(f, "{}.00 sat/vbyte", self.to_sat_per_vb_ceil())
     }
 }
 
