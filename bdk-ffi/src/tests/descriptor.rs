@@ -184,3 +184,29 @@ fn test_descriptor_derive_address_multipath_error() {
 
     assert_matches!(error, DescriptorError::MultiPath);
 }
+
+#[test]
+fn test_descriptor_derive_address_hardened_path_error() {
+    let descriptor = Descriptor::new_wpkh(
+        "[9a6a2580/84'/1'/0']tpubDDnGNapGEY6AZAdQbfRJgMg9fvz8pUBrLwvyvUqEgcUfgzM6zc2eVK4vY9x9L5FJWdX8WumXuLEDV5zDZnTfbn87vLe9XceCFwTu9so9Kks/0'"
+            .to_string(),
+    )
+    .expect("descriptor with a hardened fixed path parses");
+
+    let error = descriptor.derive_address(0, Network::Testnet).unwrap_err();
+
+    assert_matches!(error, DescriptorError::HardenedDerivationXpub);
+}
+
+#[test]
+fn test_descriptor_derive_address_hardened_wildcard_error() {
+    let descriptor = Descriptor::new_wpkh(
+        "[9a6a2580/84'/1'/0']tpubDDnGNapGEY6AZAdQbfRJgMg9fvz8pUBrLwvyvUqEgcUfgzM6zc2eVK4vY9x9L5FJWdX8WumXuLEDV5zDZnTfbn87vLe9XceCFwTu9so9Kks/*h"
+            .to_string(),
+    )
+    .expect("descriptor with a hardened wildcard parses");
+
+    let error = descriptor.derive_address(0, Network::Testnet).unwrap_err();
+
+    assert_matches!(error, DescriptorError::HardenedDerivationXpub);
+}
