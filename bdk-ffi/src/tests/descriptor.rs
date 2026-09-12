@@ -1,6 +1,6 @@
 use crate::bitcoin::{Network, NetworkKind};
 use crate::descriptor::Descriptor;
-use crate::error::DescriptorError;
+use crate::error::{DescriptorError, DescriptorKeyError};
 use crate::keys::{DerivationPath, DescriptorSecretKey, Mnemonic};
 use crate::types::KeychainKind;
 
@@ -18,22 +18,26 @@ fn test_descriptor_templates() {
     let handmade_public_44 = master
         .derive(&DerivationPath::new("m/44h/1h/0h".to_string()).unwrap())
         .unwrap()
-        .as_public();
+        .as_public()
+        .unwrap();
     // Public 44: [d1d04177/44'/1'/0']tpubDCoPjomfTqh1e7o1WgGpQtARWtkueXQAepTeNpWiitS3Sdv8RKJ1yvTrGHcwjDXp2SKyMrTEca4LoN7gEUiGCWboyWe2rz99Kf4jK4m2Zmx/*
     let handmade_public_49 = master
         .derive(&DerivationPath::new("m/49h/1h/0h".to_string()).unwrap())
         .unwrap()
-        .as_public();
+        .as_public()
+        .unwrap();
     // Public 49: [d1d04177/49'/1'/0']tpubDC65ZRvk1NDddHrVAUAZrUPJ772QXzooNYmPywYF9tMyNLYKf5wpKE7ZJvK9kvfG3FV7rCsHBNXy1LVKW95jrmC7c7z4hq7a27aD2sRrAhR/*
     let handmade_public_84 = master
         .derive(&DerivationPath::new("m/84h/1h/0h".to_string()).unwrap())
         .unwrap()
-        .as_public();
+        .as_public()
+        .unwrap();
     // Public 84: [d1d04177/84'/1'/0']tpubDDNxbq17egjFk2edjv8oLnzxk52zny9aAYNv9CMqTzA4mQDiQq818sEkNe9Gzmd4QU8558zftqbfoVBDQorG3E4Wq26tB2JeE4KUoahLkx6/*
     let handmade_public_86 = master
         .derive(&DerivationPath::new("m/86h/1h/0h".to_string()).unwrap())
         .unwrap()
-        .as_public();
+        .as_public()
+        .unwrap();
     // Public 86: [d1d04177/86'/1'/0']tpubDCJzjbcGbdEfXMWaL6QmgVmuSfXkrue7m2YNoacWwyc7a2XjXaKojRqNEbo41CFL3PyYmKdhwg2fkGpLX4SQCbQjCGxAkWHJTw9WEeenrJb/*
     let template_private_44 =
         Descriptor::new_bip44(&master, KeychainKind::External, NetworkKind::Test);
@@ -122,7 +126,8 @@ fn test_new_bip84_public_invalid_fingerprint() {
     let public_84 = master
         .derive(&DerivationPath::new("m/84h/1h/0h".to_string()).unwrap())
         .unwrap()
-        .as_public();
+        .as_public()
+        .unwrap();
 
     let error = Descriptor::new_bip84_public(
         &public_84,
@@ -183,4 +188,46 @@ fn test_descriptor_derive_address_multipath_error() {
     let error = descriptor.derive_address(0, Network::Testnet).unwrap_err();
 
     assert_matches!(error, DescriptorError::MultiPath);
+}
+
+/// Build a BIP-389 multipath xpriv (e.g. `tprv.../<0;1>/*`)
+fn generate_multipath_xpriv() -> String {
+    // A valid BIP-32 tprv.
+    let xprv_str = "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h";
+
+    // Construct the secret key from the plain xprv.
+    let secret_key = DescriptorSecretKey::from_string(xprv_str.to_string()).expect("valid xprv");
+
+    // Append a BIP-389 multipath component `<0;1>` and a wildcard. The multipath component
+    // must be separated from the key by a `/`, i.e. `tprv.../<0;1>/*`.
+    format!("{}/<0;1>/*", secret_key)
+}
+
+#[test]
+fn test_descriptor_secret_key_from_string() {
+    let multipath_xpriv = generate_multipath_xpriv();
+    println!("multipath xpriv: {}", multipath_xpriv);
+
+    let key = DescriptorSecretKey::from_string(multipath_xpriv.clone())
+        .expect("multipath secret key parses");
+    assert_eq!(key.to_string(), multipath_xpriv);
+}
+
+#[test]
+fn test_multipath_xpriv_as_public() {
+    // Converting a multipath xpriv directly to a public key is not supported and returns an error
+    let multipath_xpriv = generate_multipath_xpriv();
+    let key =
+        DescriptorSecretKey::from_string(multipath_xpriv).expect("multipath secret key parses");
+
+    assert_matches!(key.as_public(), Err(DescriptorKeyError::Parse { .. }));
+
+    // Splitting into single-path keys first lets each one be converted to a public key.
+    let single_keys = key.to_single_keys();
+    assert_eq!(single_keys.len(), 2);
+    for single_key in single_keys {
+        single_key
+            .as_public()
+            .expect("single-path key converts to public");
+    }
 }
