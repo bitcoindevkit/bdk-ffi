@@ -986,6 +986,48 @@ impl Wallet {
             .map(|details| details.into())
     }
 
+    /// Get [`TxDetails`] for all canonical transactions in a wallet,
+    /// sorted from newest to oldest by chain position.
+    ///
+    /// This derives transaction details directly from the [`WalletTx`]s returned
+    /// by `transactions_sort_by`, avoiding multiple FFI round-trips and repeated
+    /// transaction-history scans performed by [`Wallet::tx_details`].
+    ///
+    /// Note that `fee` and `fee_rate` fields may be `None` for transactions
+    /// that include inputs not owned by this wallet, unless those inputs were
+    /// previously inserted via [`Wallet::insert_txout`].
+    pub fn all_tx_details(&self) -> Vec<crate::types::TxDetails> {
+        let wallet = self.get_wallet();
+
+        wallet
+            .transactions_sort_by(|tx1, tx2| tx2.chain_position.cmp(&tx1.chain_position))
+            .into_iter()
+            .map(|canonical_tx| {
+                let tx = canonical_tx.tx_node.tx;
+                let txid = canonical_tx.tx_node.txid;
+
+                let (sent, received) = wallet.sent_and_received(&tx);
+                let fee = wallet.calculate_fee(&tx).ok();
+                let fee_rate = wallet.calculate_fee_rate(&tx).ok();
+
+                let balance_delta = received.to_signed().expect("valid SignedAmount")
+                    - sent.to_signed().expect("valid SignedAmount");
+
+                bdk_wallet::TxDetails {
+                    txid,
+                    sent,
+                    received,
+                    fee,
+                    fee_rate,
+                    balance_delta,
+                    chain_position: canonical_tx.chain_position,
+                    tx,
+                }
+                .into()
+            })
+            .collect()
+    }
+
     /// Returns the descriptor used to create addresses for a particular `keychain`.
     ///
     /// It's the "public" version of the wallet's descriptor, meaning a new descriptor that has
