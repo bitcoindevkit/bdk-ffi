@@ -1,5 +1,6 @@
 use crate::OutPoint;
 
+#[cfg(not(target_arch = "wasm32"))]
 use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_esplora::esplora_client::Error as BdkEsploraError;
 use bdk_wallet::bitcoin::address::ParseError as BdkParseError;
@@ -13,21 +14,25 @@ use bdk_wallet::bitcoin::psbt::Error as BdkPsbtError;
 use bdk_wallet::bitcoin::psbt::ExtractTxError as BdkExtractTxError;
 use bdk_wallet::bitcoin::psbt::PsbtParseError as BdkPsbtParseError;
 use bdk_wallet::bitcoin::script::PushBytesError;
+#[cfg(not(target_arch = "wasm32"))]
+use bdk_wallet::chain;
 use bdk_wallet::chain::local_chain::CannotConnectError as BdkCannotConnectError;
+#[cfg(not(target_arch = "wasm32"))]
 use bdk_wallet::chain::rusqlite::Error as BdkSqliteError;
 use bdk_wallet::chain::tx_graph::CalculateFeeError as BdkCalculateFeeError;
 use bdk_wallet::descriptor::DescriptorError as BdkDescriptorError;
 use bdk_wallet::error::BuildFeeBumpError;
 use bdk_wallet::error::CreateTxError as BdkCreateTxError;
 use bdk_wallet::keys::bip39::Error as BdkBip39Error;
+#[cfg(not(target_arch = "wasm32"))]
 use bdk_wallet::migration::PreV1MigrationError as BdkPreV1MigrationError;
 use bdk_wallet::miniscript::descriptor::DescriptorKeyParseError as BdkDescriptorKeyParseError;
 use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddForeignUtxoError as BdkAddForeignUtxoError;
 use bdk_wallet::tx_builder::AddUtxoError;
+use bdk_wallet::CreateWithPersistError as BdkCreateWithPersistError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
-use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
 
 use std::convert::TryInto;
 
@@ -368,6 +373,9 @@ pub enum ElectrumError {
 pub enum EsploraError {
     #[error("minreq error: {error_message}")]
     Minreq { error_message: String },
+
+    #[error("reqwest error: {error_message}")]
+    Reqwest { error_message: String },
 
     #[error("http error with status code {status} and message {error_message}")]
     HttpResponse { status: u16, error_message: String },
@@ -901,6 +909,7 @@ impl From<BdkAddForeignUtxoError> for AddForeignUtxoError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<BdkElectrumError> for ElectrumError {
     fn from(error: BdkElectrumError) -> Self {
         match error {
@@ -1111,6 +1120,7 @@ impl From<PushBytesError> for CreateTxError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<BdkCreateWithPersistError<chain::rusqlite::Error>> for CreateWithPersistError {
     fn from(error: BdkCreateWithPersistError<chain::rusqlite::Error>) -> Self {
         match error {
@@ -1241,7 +1251,12 @@ impl From<BdkBip32Error> for DescriptorKeyError {
 impl From<BdkEsploraError> for EsploraError {
     fn from(error: BdkEsploraError) -> Self {
         match error {
+            #[cfg(not(target_arch = "wasm32"))]
             BdkEsploraError::Minreq(e) => EsploraError::Minreq {
+                error_message: e.to_string(),
+            },
+            #[cfg(target_arch = "wasm32")]
+            BdkEsploraError::Reqwest(e) => EsploraError::Reqwest {
                 error_message: e.to_string(),
             },
             BdkEsploraError::HttpResponse { status, message } => EsploraError::HttpResponse {
@@ -1282,7 +1297,12 @@ impl From<BdkEsploraError> for EsploraError {
 impl From<Box<BdkEsploraError>> for EsploraError {
     fn from(error: Box<BdkEsploraError>) -> Self {
         match *error {
+            #[cfg(not(target_arch = "wasm32"))]
             BdkEsploraError::Minreq(e) => EsploraError::Minreq {
+                error_message: e.to_string(),
+            },
+            #[cfg(target_arch = "wasm32")]
+            BdkEsploraError::Reqwest(e) => EsploraError::Reqwest {
                 error_message: e.to_string(),
             },
             BdkEsploraError::HttpResponse { status, message } => EsploraError::HttpResponse {
@@ -1359,6 +1379,7 @@ impl From<BdkFromScriptError> for FromScriptError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistError {
     fn from(error: BdkLoadWithPersistError<chain::rusqlite::Error>) -> Self {
         match error {
@@ -1389,6 +1410,7 @@ impl From<BdkLoadWithPersistError<PersistenceError>> for LoadWithPersistError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<BdkSqliteError> for PersistenceError {
     fn from(error: BdkSqliteError) -> Self {
         PersistenceError::Reason {
@@ -1397,6 +1419,7 @@ impl From<BdkSqliteError> for PersistenceError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<BdkPreV1MigrationError> for PreV1MigrationError {
     fn from(error: BdkPreV1MigrationError) -> Self {
         match error {
@@ -1688,6 +1711,7 @@ impl From<BdkEncodeError> for TransactionError {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<bdk_kyoto::bip157::ClientError> for CbfError {
     fn from(_value: bdk_kyoto::bip157::ClientError) -> Self {
         CbfError::NodeStopped
