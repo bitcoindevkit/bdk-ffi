@@ -57,9 +57,10 @@ jobs:
           ndk-version: r26c
 
       - name: "Set up Rust"
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           cache: false
+          rustflags: "-D warnings"
 
       - name: "Build Android library"
         run: |

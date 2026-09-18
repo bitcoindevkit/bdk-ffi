@@ -30,9 +30,10 @@ jobs:
           persist-credentials: false
 
       - name: "Set up Rust"
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           cache: false
+          rustflags: "-D warnings"
 
       - name: "Check Cargo.lock"
         run: |
@@ -60,9 +61,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           cache: false
+          rustflags: "-D warnings"
           components: clippy, rustfmt
 
       - name: "Check fmt"
