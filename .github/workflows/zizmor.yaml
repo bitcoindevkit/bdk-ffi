@@ -24,9 +24,10 @@ jobs:
           persist-credentials: false
 
       - name: "Set up Rust"
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@v2
         with:
           cache: false
+          rustflags: "-D warnings"
 
       - name: "Install zizmor"
         run: cargo install zizmor --locked --version 1.30.1
