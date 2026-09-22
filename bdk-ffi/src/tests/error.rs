@@ -1,7 +1,13 @@
+use crate::bitcoin::Psbt;
 use crate::error::{
     Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError, ElectrumError,
     EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError, SignerError,
     TransactionError, TxidParseError,
+};
+
+use bdk_wallet::bitcoin::{
+    absolute, transaction, Amount as BdkAmount, Psbt as BdkPsbt, ScriptBuf as BdkScriptBuf,
+    Transaction as BdkTransaction, TxOut as BdkTxOut,
 };
 
 #[test]
@@ -371,6 +377,34 @@ fn test_error_extract_tx() {
     for (error, expected_message) in cases {
         assert_eq!(error.to_string(), expected_message);
     }
+}
+
+#[test]
+fn test_extract_tx_fee_overflow_maps_to_maximum_fee_rate() {
+    let transaction = BdkTransaction {
+        version: transaction::Version::TWO,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![],
+        output: vec![
+            BdkTxOut {
+                value: BdkAmount::MAX,
+                script_pubkey: BdkScriptBuf::new(),
+            },
+            BdkTxOut {
+                value: BdkAmount::MAX,
+                script_pubkey: BdkScriptBuf::new(),
+            },
+        ],
+    };
+    let psbt = BdkPsbt::from_unsigned_tx(transaction).unwrap();
+
+    let error = Psbt::from(psbt).extract_tx().unwrap_err();
+
+    assert!(matches!(
+        error,
+        ExtractTxError::AbsurdFeeRate { fee_rate }
+            if fee_rate == u64::MAX / 250 + 1
+    ));
 }
 
 #[test]
