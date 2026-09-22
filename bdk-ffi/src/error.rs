@@ -164,6 +164,9 @@ pub enum CannotConnectError {
 pub enum CbfError {
     #[error("the node is no longer running")]
     NodeStopped,
+
+    #[error("the node has already been started")]
+    NodeAlreadyStarted,
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
