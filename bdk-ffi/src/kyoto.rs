@@ -207,31 +207,33 @@ impl CbfBuilder {
                 checkpoint,
             } => {
                 let network = wallet.network();
-                // Any other network has taproot and segwit baked in since the genesis block.
-                if !matches!(network, Network::Bitcoin) {
-                    bdk_kyoto::ScanType::Recovery {
+                match checkpoint {
+                    RecoveryPoint::GenesisBlock => bdk_kyoto::ScanType::Recovery {
                         used_script_index,
                         checkpoint: HashCheckpoint::from_genesis(network),
-                    }
-                } else {
-                    match checkpoint {
-                        RecoveryPoint::GenesisBlock => bdk_kyoto::ScanType::Recovery {
-                            used_script_index,
-                            checkpoint: HashCheckpoint::from_genesis(wallet.network()),
-                        },
-                        RecoveryPoint::SegwitActivation => bdk_kyoto::ScanType::Recovery {
+                    },
+                    RecoveryPoint::SegwitActivation if matches!(network, Network::Bitcoin) => {
+                        bdk_kyoto::ScanType::Recovery {
                             used_script_index,
                             checkpoint: HashCheckpoint::segwit_activation(),
-                        },
-                        RecoveryPoint::TaprootActivation => bdk_kyoto::ScanType::Recovery {
+                        }
+                    }
+                    RecoveryPoint::TaprootActivation if matches!(network, Network::Bitcoin) => {
+                        bdk_kyoto::ScanType::Recovery {
                             used_script_index,
                             checkpoint: HashCheckpoint::taproot_activation(),
-                        },
-                        RecoveryPoint::Other { birthday } => bdk_kyoto::ScanType::Recovery {
-                            used_script_index,
-                            checkpoint: HashCheckpoint::new(birthday.height, birthday.hash.0),
-                        },
+                        }
                     }
+                    RecoveryPoint::SegwitActivation | RecoveryPoint::TaprootActivation => {
+                        bdk_kyoto::ScanType::Recovery {
+                            used_script_index,
+                            checkpoint: HashCheckpoint::from_genesis(network),
+                        }
+                    }
+                    RecoveryPoint::Other { birthday } => bdk_kyoto::ScanType::Recovery {
+                        used_script_index,
+                        checkpoint: HashCheckpoint::new(birthday.height, birthday.hash.0),
+                    },
                 }
             }
         };
