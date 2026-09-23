@@ -6,6 +6,7 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.runner.RunWith
+import kotlin.test.assertNotNull
 
 @RunWith(AndroidJUnit4::class)
 class WalletTest {
@@ -64,5 +65,18 @@ class WalletTest {
             actual = address2.address,
             "Addresses should be the same"
         )
+    }
+
+    @Test
+    fun getWalletSecpCtx() {
+        val wallet: Wallet = Wallet.createSingle(
+            descriptor = BIP84_DESCRIPTOR,
+            network = Network.TESTNET,
+            persister = conn
+        )
+        val secp = wallet.secpCtx()
+        val stringSpec = secp.toString()
+
+        assertNotNull(stringSpec, "SecpCtx should not be null")
     }
 }
