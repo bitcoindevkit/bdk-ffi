@@ -11,6 +11,89 @@ fn get_descriptor_secret_key() -> DescriptorSecretKey {
     DescriptorSecretKey::new(NetworkKind::Test, &mnemonic, None)
 }
 
+fn assert_invalid_secret_template_key(key: &DescriptorSecretKey) {
+    assert_matches!(
+        Descriptor::new_bip44(key, KeychainKind::External, NetworkKind::Test),
+        Err(DescriptorError::InvalidKeyType)
+    );
+    assert_matches!(
+        Descriptor::new_bip49(key, KeychainKind::External, NetworkKind::Test),
+        Err(DescriptorError::InvalidKeyType)
+    );
+    assert_matches!(
+        Descriptor::new_bip84(key, KeychainKind::External, NetworkKind::Test),
+        Err(DescriptorError::InvalidKeyType)
+    );
+    assert_matches!(
+        Descriptor::new_bip86(key, KeychainKind::External, NetworkKind::Test),
+        Err(DescriptorError::InvalidKeyType)
+    );
+}
+
+fn assert_invalid_public_template_key(key: &crate::keys::DescriptorPublicKey) {
+    assert_matches!(
+        Descriptor::new_bip44_public(
+            key,
+            "00000000".to_string(),
+            KeychainKind::External,
+            NetworkKind::Test,
+        ),
+        Err(DescriptorError::InvalidKeyType)
+    );
+    assert_matches!(
+        Descriptor::new_bip49_public(
+            key,
+            "00000000".to_string(),
+            KeychainKind::External,
+            NetworkKind::Test,
+        ),
+        Err(DescriptorError::InvalidKeyType)
+    );
+    assert_matches!(
+        Descriptor::new_bip84_public(
+            key,
+            "00000000".to_string(),
+            KeychainKind::External,
+            NetworkKind::Test,
+        ),
+        Err(DescriptorError::InvalidKeyType)
+    );
+    assert_matches!(
+        Descriptor::new_bip86_public(
+            key,
+            "00000000".to_string(),
+            KeychainKind::External,
+            NetworkKind::Test,
+        ),
+        Err(DescriptorError::InvalidKeyType)
+    );
+}
+
+#[test]
+fn test_descriptor_templates_reject_single_keys() {
+    let secret = DescriptorSecretKey::from_string(
+        "L2wTu6hQrnDMiFNWA5na6jB12ErGQqtXwqpSL7aWquJaZG8Ai3ch".to_string(),
+    )
+    .unwrap();
+    let public = secret.as_public();
+
+    assert_invalid_secret_template_key(&secret);
+    assert_invalid_public_template_key(&public);
+}
+
+#[test]
+fn test_descriptor_templates_reject_multipath_keys() {
+    let base_xprv = "tprv8ZgxMBicQKsPcwcD4gSnMti126ZiETsuX7qwrtMypr6FBwAP65puFn4v6c3jrN9VwtMRMph6nyT63NrfUL4C3nBzPcduzVSuHD7zbX2JKVc";
+    let secret = DescriptorSecretKey::from_string(format!("{base_xprv}/<0;1>/*")).unwrap();
+    let public = crate::keys::DescriptorPublicKey::from_string(
+        "tpubDDnGNapGEY6AZAdQbfRJgMg9fvz8pUBrLwvyvUqEgcUfgzM6zc2eVK4vY9x9L5FJWdX8WumXuLEDV5zDZnTfbn87vLe9XceCFwTu9so9Kks/<0;1>/*".to_string(),
+    )
+    .unwrap();
+
+    assert_invalid_secret_template_key(&secret);
+    assert_invalid_public_template_key(&public);
+}
+
 #[test]
 fn test_descriptor_templates() {
     let master: DescriptorSecretKey = get_descriptor_secret_key();
@@ -36,13 +119,13 @@ fn test_descriptor_templates() {
         .as_public();
     // Public 86: [d1d04177/86'/1'/0']tpubDCJzjbcGbdEfXMWaL6QmgVmuSfXkrue7m2YNoacWwyc7a2XjXaKojRqNEbo41CFL3PyYmKdhwg2fkGpLX4SQCbQjCGxAkWHJTw9WEeenrJb/*
     let template_private_44 =
-        Descriptor::new_bip44(&master, KeychainKind::External, NetworkKind::Test);
+        Descriptor::new_bip44(&master, KeychainKind::External, NetworkKind::Test).unwrap();
     let template_private_49 =
-        Descriptor::new_bip49(&master, KeychainKind::External, NetworkKind::Test);
+        Descriptor::new_bip49(&master, KeychainKind::External, NetworkKind::Test).unwrap();
     let template_private_84 =
-        Descriptor::new_bip84(&master, KeychainKind::External, NetworkKind::Test);
+        Descriptor::new_bip84(&master, KeychainKind::External, NetworkKind::Test).unwrap();
     let template_private_86 =
-        Descriptor::new_bip86(&master, KeychainKind::External, NetworkKind::Test);
+        Descriptor::new_bip86(&master, KeychainKind::External, NetworkKind::Test).unwrap();
     // the extended public keys are the same when creating them manually as they are with the templates
     let template_public_44 = Descriptor::new_bip44_public(
         &handmade_public_44,
@@ -155,7 +238,8 @@ fn test_descriptor_derive_address() {
         &get_descriptor_secret_key(),
         KeychainKind::External,
         NetworkKind::Test,
-    );
+    )
+    .unwrap();
 
     let derived = descriptor
         .derive_address(0, Network::Testnet)

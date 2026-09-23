@@ -7,7 +7,7 @@ use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::types::KeychainKind;
 
-use bdk_wallet::bitcoin::bip32::Fingerprint;
+use bdk_wallet::bitcoin::bip32::{Fingerprint, Xpriv, Xpub};
 use bdk_wallet::bitcoin::key::Secp256k1;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::chain::DescriptorExt;
@@ -34,6 +34,39 @@ pub struct Descriptor {
     pub key_map: KeyMap,
 }
 
+impl Descriptor {
+    fn require_xprv(secret_key: &DescriptorSecretKey) -> Result<Xpriv, DescriptorError> {
+        match &secret_key.0 {
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => Ok(descriptor_x_key.xkey),
+            BdkDescriptorSecretKey::Single(_) | BdkDescriptorSecretKey::MultiXPrv(_) => {
+                Err(DescriptorError::InvalidKeyType)
+            }
+        }
+    }
+
+    fn require_xpub(public_key: &DescriptorPublicKey) -> Result<Xpub, DescriptorError> {
+        match &public_key.0 {
+            BdkDescriptorPublicKey::XPub(descriptor_x_key) => Ok(descriptor_x_key.xkey),
+            BdkDescriptorPublicKey::Single(_) | BdkDescriptorPublicKey::MultiXPub(_) => {
+                Err(DescriptorError::InvalidKeyType)
+            }
+        }
+    }
+
+    fn from_template<T: DescriptorTemplate>(
+        template: T,
+        network_kind: NetworkKind,
+    ) -> Result<Self, DescriptorError> {
+        let (extended_descriptor, key_map, _) = template
+            .build(network_kind)
+            .map_err(DescriptorError::from)?;
+        Ok(Self {
+            extended_descriptor,
+            key_map,
+        })
+    }
+}
+
 #[uniffi::export]
 impl Descriptor {
     /// Parse a string as a descriptor for the given network.
@@ -54,27 +87,9 @@ impl Descriptor {
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
-    ) -> Self {
-        let derivable_key = &secret_key.0;
-
-        match derivable_key {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
-            }
-            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
-                let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip44(derivable_key, keychain_kind)
-                    .build(network_kind)
-                    .unwrap();
-                Self {
-                    extended_descriptor,
-                    key_map,
-                }
-            }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
-            }
-        }
+    ) -> Result<Self, DescriptorError> {
+        let derivable_key = Self::require_xprv(secret_key)?;
+        Self::from_template(Bip44(derivable_key, keychain_kind), network_kind)
     }
 
     /// Multi-account hierarchy descriptor: https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
@@ -90,28 +105,11 @@ impl Descriptor {
                 error_message: error.to_string(),
             }
         })?;
-        let derivable_key = &public_key.0;
-
-        match derivable_key {
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
-            }
-            BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
-                let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) =
-                    Bip44Public(derivable_key, fingerprint, keychain_kind)
-                        .build(network_kind)
-                        .map_err(DescriptorError::from)?;
-
-                Ok(Self {
-                    extended_descriptor,
-                    key_map,
-                })
-            }
-            BdkDescriptorPublicKey::MultiXPub(_) => {
-                unreachable!()
-            }
-        }
+        let derivable_key = Self::require_xpub(public_key)?;
+        Self::from_template(
+            Bip44Public(derivable_key, fingerprint, keychain_kind),
+            network_kind,
+        )
     }
 
     /// P2SH nested P2WSH descriptor: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
@@ -120,27 +118,9 @@ impl Descriptor {
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
-    ) -> Self {
-        let derivable_key = &secret_key.0;
-
-        match derivable_key {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
-            }
-            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
-                let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip49(derivable_key, keychain_kind)
-                    .build(network_kind)
-                    .unwrap();
-                Self {
-                    extended_descriptor,
-                    key_map,
-                }
-            }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
-            }
-        }
+    ) -> Result<Self, DescriptorError> {
+        let derivable_key = Self::require_xprv(secret_key)?;
+        Self::from_template(Bip49(derivable_key, keychain_kind), network_kind)
     }
 
     /// P2SH nested P2WSH descriptor: https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki
@@ -156,28 +136,11 @@ impl Descriptor {
                 error_message: error.to_string(),
             }
         })?;
-        let derivable_key = &public_key.0;
-
-        match derivable_key {
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
-            }
-            BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
-                let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) =
-                    Bip49Public(derivable_key, fingerprint, keychain_kind)
-                        .build(network_kind)
-                        .map_err(DescriptorError::from)?;
-
-                Ok(Self {
-                    extended_descriptor,
-                    key_map,
-                })
-            }
-            BdkDescriptorPublicKey::MultiXPub(_) => {
-                unreachable!()
-            }
-        }
+        let derivable_key = Self::require_xpub(public_key)?;
+        Self::from_template(
+            Bip49Public(derivable_key, fingerprint, keychain_kind),
+            network_kind,
+        )
     }
 
     /// Pay to witness PKH descriptor: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
@@ -186,27 +149,9 @@ impl Descriptor {
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
-    ) -> Self {
-        let derivable_key = &secret_key.0;
-
-        match derivable_key {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
-            }
-            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
-                let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip84(derivable_key, keychain_kind)
-                    .build(network_kind)
-                    .unwrap();
-                Self {
-                    extended_descriptor,
-                    key_map,
-                }
-            }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
-            }
-        }
+    ) -> Result<Self, DescriptorError> {
+        let derivable_key = Self::require_xprv(secret_key)?;
+        Self::from_template(Bip84(derivable_key, keychain_kind), network_kind)
     }
 
     /// Pay to witness PKH descriptor: https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki
@@ -222,28 +167,11 @@ impl Descriptor {
                 error_message: error.to_string(),
             }
         })?;
-        let derivable_key = &public_key.0;
-
-        match derivable_key {
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
-            }
-            BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
-                let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) =
-                    Bip84Public(derivable_key, fingerprint, keychain_kind)
-                        .build(network_kind)
-                        .map_err(DescriptorError::from)?;
-
-                Ok(Self {
-                    extended_descriptor,
-                    key_map,
-                })
-            }
-            BdkDescriptorPublicKey::MultiXPub(_) => {
-                unreachable!()
-            }
-        }
+        let derivable_key = Self::require_xpub(public_key)?;
+        Self::from_template(
+            Bip84Public(derivable_key, fingerprint, keychain_kind),
+            network_kind,
+        )
     }
 
     /// Single key P2TR descriptor: https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
@@ -252,27 +180,9 @@ impl Descriptor {
         secret_key: &DescriptorSecretKey,
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
-    ) -> Self {
-        let derivable_key = &secret_key.0;
-
-        match derivable_key {
-            BdkDescriptorSecretKey::Single(_) => {
-                unreachable!()
-            }
-            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
-                let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) = Bip86(derivable_key, keychain_kind)
-                    .build(network_kind)
-                    .unwrap();
-                Self {
-                    extended_descriptor,
-                    key_map,
-                }
-            }
-            BdkDescriptorSecretKey::MultiXPrv(_) => {
-                unreachable!()
-            }
-        }
+    ) -> Result<Self, DescriptorError> {
+        let derivable_key = Self::require_xprv(secret_key)?;
+        Self::from_template(Bip86(derivable_key, keychain_kind), network_kind)
     }
 
     /// Single key P2TR descriptor: https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki
@@ -288,28 +198,11 @@ impl Descriptor {
                 error_message: error.to_string(),
             }
         })?;
-        let derivable_key = &public_key.0;
-
-        match derivable_key {
-            BdkDescriptorPublicKey::Single(_) => {
-                unreachable!()
-            }
-            BdkDescriptorPublicKey::XPub(descriptor_x_key) => {
-                let derivable_key = descriptor_x_key.xkey;
-                let (extended_descriptor, key_map, _) =
-                    Bip86Public(derivable_key, fingerprint, keychain_kind)
-                        .build(network_kind)
-                        .map_err(DescriptorError::from)?;
-
-                Ok(Self {
-                    extended_descriptor,
-                    key_map,
-                })
-            }
-            BdkDescriptorPublicKey::MultiXPub(_) => {
-                unreachable!()
-            }
-        }
+        let derivable_key = Self::require_xpub(public_key)?;
+        Self::from_template(
+            Bip86Public(derivable_key, fingerprint, keychain_kind),
+            network_kind,
+        )
     }
 
     /// Create a new wsh sorted multi descriptor

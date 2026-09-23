@@ -264,6 +264,9 @@ pub enum DescriptorError {
     #[error("the descriptor contains multipath keys, which are not supported yet")]
     MultiPath,
 
+    #[error("invalid descriptor key type for template")]
+    InvalidKeyType,
+
     #[error("key error: {error_message}")]
     Key { error_message: String },
 

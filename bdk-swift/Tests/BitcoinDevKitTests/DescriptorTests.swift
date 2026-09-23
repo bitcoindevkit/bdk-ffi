@@ -9,7 +9,7 @@ final class DescriptorTests: XCTestCase {
             mnemonic: mnemonic,
             password: nil
         )
-        let descriptor: Descriptor = Descriptor.newBip86(
+        let descriptor: Descriptor = try Descriptor.newBip86(
             secretKey: descriptorSecretKey,
             keychainKind: KeychainKind.external,
             networkKind: NetworkKind.test
