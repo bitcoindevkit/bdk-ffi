@@ -1,12 +1,18 @@
-use crate::error::{PersistenceError, PreV1MigrationError};
+use crate::error::PersistenceError;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::error::PreV1MigrationError;
 use crate::types::{ChangeSet, KeychainKind};
 
+#[cfg(not(target_arch = "wasm32"))]
 use bdk_wallet::migration::{
     get_pre_v1_wallet_keychains as bdk_get_pre_v1_wallet_keychains,
     PreV1WalletKeychain as BdkPreV1WalletKeychain,
 };
-use bdk_wallet::{rusqlite::Connection as BdkConnection, WalletPersister};
+#[cfg(not(target_arch = "wasm32"))]
+use bdk_wallet::rusqlite::Connection as BdkConnection;
+use bdk_wallet::WalletPersister;
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::ops::DerefMut;
 use std::sync::{Arc, Mutex};
 
@@ -22,6 +28,7 @@ pub trait Persistence: Send + Sync {
 
 pub(crate) enum PersistenceType {
     Custom(Arc<dyn Persistence>),
+    #[cfg(not(target_arch = "wasm32"))]
     Sql(Mutex<BdkConnection>),
 }
 
@@ -46,6 +53,18 @@ pub struct Persister {
 
 #[uniffi::export]
 impl Persister {
+    /// Use a native persistence layer.
+    #[uniffi::constructor]
+    pub fn custom(persistence: Arc<dyn Persistence>) -> Self {
+        Self {
+            inner: PersistenceType::Custom(persistence).into(),
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[uniffi::export]
+impl Persister {
     /// Create a new Sqlite connection at the specified file path.
     #[uniffi::constructor]
     pub fn new_sqlite(path: String) -> Result<Self, PersistenceError> {
@@ -62,14 +81,6 @@ impl Persister {
         Ok(Self {
             inner: PersistenceType::Sql(conn.into()).into(),
         })
-    }
-
-    /// Use a native persistence layer.
-    #[uniffi::constructor]
-    pub fn custom(persistence: Arc<dyn Persistence>) -> Self {
-        Self {
-            inner: PersistenceType::Custom(persistence).into(),
-        }
     }
 
     /// Retrieve keychain metadata from a pre-v1 BDK SQLite wallet database.
@@ -89,6 +100,7 @@ impl Persister {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl From<BdkPreV1WalletKeychain> for PreV1WalletKeychain {
     fn from(value: BdkPreV1WalletKeychain) -> Self {
         Self {
@@ -104,6 +116,7 @@ impl WalletPersister for PersistenceType {
 
     fn initialize(persister: &mut Self) -> Result<bdk_wallet::ChangeSet, Self::Error> {
         match persister {
+            #[cfg(not(target_arch = "wasm32"))]
             PersistenceType::Sql(ref conn) => {
                 let mut lock = conn.lock().unwrap();
                 let deref = lock.deref_mut();
@@ -117,6 +130,7 @@ impl WalletPersister for PersistenceType {
 
     fn persist(persister: &mut Self, changeset: &bdk_wallet::ChangeSet) -> Result<(), Self::Error> {
         match persister {
+            #[cfg(not(target_arch = "wasm32"))]
             PersistenceType::Sql(ref conn) => {
                 let mut lock = conn.lock().unwrap();
                 let deref = lock.deref_mut();
