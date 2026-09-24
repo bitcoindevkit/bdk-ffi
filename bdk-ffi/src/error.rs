@@ -53,6 +53,16 @@ pub enum AddForeignUtxoError {
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
+pub enum AddressError {
+    #[error("derivation index {index} is greater than the bip32 maximum index of 2147483647")]
+    IndexOutOfBounds { index: u32 },
+
+    #[error("bare descriptor address")]
+    BareDescriptorAddr,
+}
+
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
 pub enum AddressParseError {
     #[error("base58 address encoding error")]
     Base58,

@@ -189,7 +189,7 @@ pub struct ScriptAmount {
 }
 
 /// A derived address and the index it was found at.
-#[derive(uniffi::Record)]
+#[derive(Debug, uniffi::Record)]
 pub struct AddressInfo {
     /// Child index of this address
     pub index: u32,
