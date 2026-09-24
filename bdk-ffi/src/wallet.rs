@@ -906,8 +906,7 @@ impl Wallet {
     /// This operation is generally only used when importing or restoring a previously used wallet
     /// in which the list of used scripts is not known.
     pub fn start_full_scan(&self) -> Arc<FullScanRequestBuilder> {
-        let builder = self.get_wallet().start_full_scan();
-        Arc::new(FullScanRequestBuilder(Mutex::new(Some(builder))))
+        self.start_full_scan_at(unix_now())
     }
 
     /// Create a [`FullScanRequest`] builder at `start_time`.
@@ -933,8 +932,7 @@ impl Wallet {
     /// [`SyncRequest`] collects all revealed script pubkeys from the wallet keychain needed to
     /// start a blockchain sync with a spk based blockchain client.
     pub fn start_sync_with_revealed_spks(&self) -> Arc<SyncRequestBuilder> {
-        let builder = self.get_wallet().start_sync_with_revealed_spks();
-        Arc::new(SyncRequestBuilder(Mutex::new(Some(builder))))
+        self.start_sync_with_revealed_spks_at(unix_now())
     }
 
     /// Persist staged changes of wallet into persister.
@@ -999,5 +997,21 @@ impl Wallet {
 impl Wallet {
     pub(crate) fn get_wallet(&self) -> MutexGuard<'_, PersistedWallet<PersistenceType>> {
         self.inner_mutex.lock().expect("wallet")
+    }
+}
+
+/// Seconds since the Unix epoch. `std::time` panics on wasm32-unknown-unknown, so there the
+/// time comes from the host's `Date.now()`.
+fn unix_now() -> u64 {
+    #[cfg(target_arch = "wasm32")]
+    {
+        (js_sys::Date::now() / 1000.0) as u64
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::time::UNIX_EPOCH
+            .elapsed()
+            .expect("system time is after the Unix epoch")
+            .as_secs()
     }
 }
