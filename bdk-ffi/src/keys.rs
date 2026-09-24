@@ -135,7 +135,7 @@ impl_from_core_type!(BdkDerivationPath, DerivationPath);
 impl_into_core_type!(DerivationPath, BdkDerivationPath);
 
 /// The descriptor secret key, either a single private key or an xprv.
-#[derive(Debug, uniffi::Object)]
+#[derive(Debug, uniffi::Object, Eq, PartialEq, Clone)]
 #[uniffi::export(Debug, Display)]
 pub struct DescriptorSecretKey(pub(crate) BdkDescriptorSecretKey);
 
@@ -291,7 +291,7 @@ impl Display for DescriptorSecretKey {
 }
 
 /// A descriptor public key.
-#[derive(Debug, uniffi::Object)]
+#[derive(Debug, uniffi::Object, Eq, PartialEq, Hash, Clone, Ord, PartialOrd)]
 #[uniffi::export(Debug, Display)]
 pub struct DescriptorPublicKey(pub(crate) BdkDescriptorPublicKey);
 
