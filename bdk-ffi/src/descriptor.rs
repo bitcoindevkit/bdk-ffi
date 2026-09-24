@@ -7,15 +7,16 @@ use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::types::KeychainKind;
 
-use bdk_wallet::bitcoin::bip32::Fingerprint;
+use bdk_wallet::bitcoin::bip32::{ChildNumber, Fingerprint};
 use bdk_wallet::bitcoin::key::Secp256k1;
 use bdk_wallet::bitcoin::Network;
 use bdk_wallet::chain::DescriptorExt;
 use bdk_wallet::descriptor::{ExtendedDescriptor, IntoWalletDescriptor};
 use bdk_wallet::keys::DescriptorPublicKey as BdkDescriptorPublicKey;
 use bdk_wallet::keys::{DescriptorSecretKey as BdkDescriptorSecretKey, KeyMap};
-use bdk_wallet::miniscript::descriptor::{ConversionError, TapTree};
+use bdk_wallet::miniscript::descriptor::{ConversionError, DescriptorXKey, TapTree, Wildcard};
 use bdk_wallet::miniscript::Descriptor as BdkDescriptor;
+use bdk_wallet::miniscript::ForEachKey;
 use bdk_wallet::miniscript::Miniscript as BdkMiniscript;
 use bdk_wallet::template::{
     Bip44, Bip44Public, Bip49, Bip49Public, Bip84, Bip84Public, Bip86, Bip86Public,
@@ -699,9 +700,36 @@ impl Descriptor {
     }
 
     /// A unique identifier for the descriptor.
-    pub fn descriptor_id(&self) -> Arc<DescriptorId> {
+    ///
+    /// Returns an error for multipath descriptors, and for descriptors retaining hardened public
+    /// key derivations or hardened wildcards.
+    pub fn descriptor_id(&self) -> Result<Arc<DescriptorId>, DescriptorError> {
+        if self.extended_descriptor.is_multipath() {
+            return Err(DescriptorError::MultiPath);
+        }
+
+        // Miniscript 12.3.7 panics before returning `ConversionError` for these paths, and
+        // `bdk_chain`'s `descriptor_id` unwraps the result — so this check is still needed
+        // even once a fixed Miniscript release is pinned.
+        let contains_hardened_public_key_derivation = self.extended_descriptor.for_any_key(|key| {
+            if let BdkDescriptorPublicKey::XPub(DescriptorXKey {
+                derivation_path,
+                wildcard,
+                ..
+            }) = key
+            {
+                return *wildcard == Wildcard::Hardened
+                    || derivation_path.into_iter().any(ChildNumber::is_hardened);
+            }
+
+            false
+        });
+        if contains_hardened_public_key_derivation {
+            return Err(DescriptorError::HardenedDerivationXpub);
+        }
+
         let d_id = self.extended_descriptor.descriptor_id();
-        Arc::new(DescriptorId(d_id.0))
+        Ok(Arc::new(DescriptorId(d_id.0)))
     }
 
     /// Return descriptors for all valid paths.
