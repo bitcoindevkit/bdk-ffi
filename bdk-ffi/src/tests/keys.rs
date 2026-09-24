@@ -46,7 +46,7 @@ fn extend_dpk(
 fn test_generate_descriptor_secret_key() {
     let master_dsk = get_inner();
     assert_eq!(master_dsk.to_string(), "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h");
-    assert_eq!(master_dsk.as_public().to_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa");
+    assert_eq!(master_dsk.as_public().unwrap().to_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa");
 }
 
 #[test]
@@ -54,7 +54,7 @@ fn test_derive_self() {
     let master_dsk = get_inner();
     let derived_dsk: &DescriptorSecretKey = &derive_dsk(&master_dsk, "m").unwrap();
     assert_eq!(derived_dsk.to_string(), "[d1d04177]tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h");
-    let master_dpk: &DescriptorPublicKey = &master_dsk.as_public();
+    let master_dpk: &DescriptorPublicKey = &master_dsk.as_public().unwrap();
     let derived_dpk: &DescriptorPublicKey = &derive_dpk(master_dpk, "m").unwrap();
     assert_eq!(derived_dpk.to_string(), "[d1d04177]tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa");
 }
@@ -64,7 +64,7 @@ fn test_derive_descriptors_keys() {
     let master_dsk = get_inner();
     let derived_dsk: &DescriptorSecretKey = &derive_dsk(&master_dsk, "m/0").unwrap();
     assert_eq!(derived_dsk.to_string(), "[d1d04177/0]tprv8d7Y4JLmD25jkKbyDZXcdoPHu1YtMHuH21qeN7mFpjfumtSU7eZimFYUCSa3MYzkEYfSNRBV34GEr2QXwZCMYRZ7M1g6PUtiLhbJhBZEGYJ");
-    let master_dpk: &DescriptorPublicKey = &master_dsk.as_public();
+    let master_dpk: &DescriptorPublicKey = &master_dsk.as_public().unwrap();
     let derived_dpk: &DescriptorPublicKey = &derive_dpk(master_dpk, "m/0").unwrap();
     assert_eq!(derived_dpk.to_string(), "[d1d04177/0]tpubD9oaCiP1MPmQdndm7DCD3D3QU34pWd6BbKSRedoZF1UJcNhEk3PJwkALNYkhxeTKL29oGNR7psqvT1KZydCGqUDEKXN6dVQJY2R8ooLPy8m");
 }
@@ -74,7 +74,7 @@ fn test_extend_descriptor_keys() {
     let master_dsk = get_inner();
     let extended_dsk: &DescriptorSecretKey = &extend_dsk(&master_dsk, "m/0").unwrap();
     assert_eq!(extended_dsk.to_string(), "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h/0");
-    let master_dpk: &DescriptorPublicKey = &master_dsk.as_public();
+    let master_dpk: &DescriptorPublicKey = &master_dsk.as_public().unwrap();
     let extended_dpk: &DescriptorPublicKey = &extend_dpk(master_dpk, "m/0").unwrap();
     assert_eq!(extended_dpk.to_string(), "tpubD6NzVbkrYhZ4WywdEfYbbd62yuvqLjAZuPsNyvzCNV85JekAEMbKHWSHLF9h3j45SxewXDcLv328B1SEZrxg4iwGfmdt1pDFjZiTkGiFqGa/0");
     let wif = "L2wTu6hQrnDMiFNWA5na6jB12ErGQqtXwqpSL7aWquJaZG8Ai3ch";
@@ -124,7 +124,7 @@ fn test_derive_and_extend_inner() {
 
 #[test]
 fn test_derive_hardened_path_using_public() {
-    let master_dpk = get_inner().as_public();
+    let master_dpk = get_inner().as_public().unwrap();
     let derived_dpk = &derive_dpk(&master_dpk, "m/84h/1h/0h");
     assert!(derived_dpk.is_err());
 }
@@ -198,7 +198,7 @@ fn test_add_wildcard() {
     ));
 
     // DescriptorPublicKey: add_wildcard() always adds an unhardened wildcard
-    let dpk = extended_key.as_public();
+    let dpk = extended_key.as_public().unwrap();
     let dpk_with_wildcard = dpk.add_wildcard().unwrap();
     assert_eq!(dpk_with_wildcard.to_string(), "[5bc5d243/84/2']tpubDAFG7XHSgRo927vaVKhcJAjuYW6AXJPunmS8So9ipV1xUyAUzEoBoiS5xSgPNBmjPMSnSXKjsJnTHWieJzUVxz8TUdWm8BUqgy4wL9yz5hp/1/*");
 
@@ -209,7 +209,7 @@ fn test_add_wildcard() {
     );
 
     // Calling add_wildcard on a DPK converted from a DSK with a hardened wildcard returns an error
-    let dpk_hardened = dsk_hardened.as_public();
+    let dpk_hardened = dsk_hardened.as_public().unwrap();
     assert!(matches!(
         dpk_hardened.add_wildcard(),
         Err(DescriptorKeyError::CannotChangeWildcardType)
