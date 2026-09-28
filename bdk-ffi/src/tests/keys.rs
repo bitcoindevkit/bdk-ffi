@@ -1,4 +1,5 @@
-use crate::bitcoin::NetworkKind;
+use crate::bitcoin::{Network, NetworkKind};
+use crate::descriptor::Descriptor;
 use crate::error::DescriptorKeyError;
 use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::types::WildcardType;
@@ -383,5 +384,214 @@ fn test_secret_bytes_match_bip_test_vectors() {
             .secret_bytes()
             .to_lower_hex_string(),
         "41f41d69260df4cf277826a9b65a3717e4eeddbeedf637f212ca096576479361"
+    )
+}
+
+#[test]
+fn test_derive_applies_extended_path() {
+    let master_dsk = get_inner();
+
+    // extend(m/1h).derive(m/2h) must equal derive(m/1h/2h), not derive(m/2h)
+    let extended_then_derived = derive_dsk(&extend_dsk(&master_dsk, "1h").unwrap(), "2h").unwrap();
+    let derived_full = derive_dsk(&master_dsk, "m/1h/2h").unwrap();
+    let derived_only = derive_dsk(&master_dsk, "m/2h").unwrap();
+    assert_eq!(extended_then_derived.to_string(), derived_full.to_string());
+    assert_ne!(extended_then_derived.to_string(), derived_only.to_string());
+
+    // Multiple chained extends are all applied
+    let many_extends = extend_dsk(
+        &extend_dsk(&extend_dsk(&master_dsk, "44h").unwrap(), "1h").unwrap(),
+        "0h",
+    )
+    .unwrap();
+    assert_eq!(
+        derive_dsk(&many_extends, "0").unwrap().to_string(),
+        derive_dsk(&master_dsk, "m/44h/1h/0h/0")
+            .unwrap()
+            .to_string()
+    );
+
+    // Same for public keys
+    let master_dpk = master_dsk.as_public();
+    let extended_then_derived = derive_dpk(&extend_dpk(&master_dpk, "1").unwrap(), "2").unwrap();
+    let derived_full = derive_dpk(&master_dpk, "m/1/2").unwrap();
+    assert_eq!(extended_then_derived.to_string(), derived_full.to_string());
+    assert!(extended_then_derived
+        .to_string()
+        .starts_with("[d1d04177/1/2]"));
+}
+
+#[test]
+fn test_derive_applies_parsed_path() {
+    let master_dsk = get_inner();
+
+    // A key parsed with a path suffix must have that path applied by derive()
+    let parsed = DescriptorSecretKey::from_string(format!("{master_dsk}/84h/1h/0h")).unwrap();
+    assert_eq!(
+        derive_dsk(&parsed, "0").unwrap().to_string(),
+        derive_dsk(&master_dsk, "m/84h/1h/0h/0")
+            .unwrap()
+            .to_string()
+    );
+
+    // Keys with an origin keep that origin and append the full path to it
+    let account = derive_dsk(&master_dsk, "m/84h/1h/0h").unwrap();
+    let parsed_with_origin = DescriptorSecretKey::from_string(format!("{account}/1")).unwrap();
+    assert_eq!(
+        derive_dsk(&parsed_with_origin, "5").unwrap().to_string(),
+        derive_dsk(&master_dsk, "m/84h/1h/0h/1/5")
+            .unwrap()
+            .to_string()
+    );
+
+    let account_dpk = account.as_public();
+    let parsed_dpk = DescriptorPublicKey::from_string(format!("{account_dpk}/1")).unwrap();
+    assert_eq!(
+        derive_dpk(&parsed_dpk, "5").unwrap().to_string(),
+        derive_dsk(&master_dsk, "m/84h/1h/0h/1/5")
+            .unwrap()
+            .as_public()
+            .to_string()
+    );
+}
+
+// Official test vectors from BIP-32, BIP-84 and BIP-86. Each test reaches the BIP key through
+// extend() and/or fromString() with a path suffix, then derive(), so any pending derivation
+// path that is dropped or misapplied shows up as a mismatch against the published values.
+
+fn path(path: &str) -> DerivationPath {
+    DerivationPath::new(path.to_string()).unwrap()
+}
+
+fn address(descriptor: String) -> String {
+    Descriptor::new(descriptor, NetworkKind::Main)
+        .unwrap()
+        .derive_address(0, Network::Bitcoin)
+        .unwrap()
+        .to_string()
+}
+
+// BIP-39 mnemonic used by the BIP-84 and BIP-86 test vectors.
+fn abandon_master() -> DescriptorSecretKey {
+    let mnemonic = Mnemonic::from_string("abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about".to_string()).unwrap();
+    DescriptorSecretKey::new(NetworkKind::Main, &mnemonic, None)
+}
+
+// BIP-32 test vector 1, seed 000102030405060708090a0b0c0d0e0f.
+const BIP32_V1_MASTER_XPRV: &str = "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi";
+
+#[test]
+fn test_bip32_vector_1_extend_then_derive() {
+    let master = DescriptorSecretKey::from_string(BIP32_V1_MASTER_XPRV.to_string()).unwrap();
+
+    // Chain m/0H/1/2H
+    let key = master
+        .extend(&path("0h"))
+        .unwrap()
+        .extend(&path("1"))
+        .unwrap()
+        .derive(&path("2h"))
+        .unwrap();
+    assert_eq!(key.to_string(), "[3442193e/0'/1/2']xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM");
+
+    // Chain m/0H/1/2H/2/1000000000
+    let key = master
+        .extend(&path("0h/1/2h"))
+        .unwrap()
+        .derive(&path("2/1000000000"))
+        .unwrap();
+    assert_eq!(key.to_string(), "[3442193e/0'/1/2'/2/1000000000]xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76");
+    assert_eq!(key.as_public().to_string(), "[3442193e/0'/1/2'/2/1000000000]xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy");
+}
+
+#[test]
+fn test_bip32_vector_1_public_parsed_path_then_derive() {
+    // Chain m/0H/1/2H xpub with its origin, and a pending "/2" parsed from the string.
+    let key = DescriptorPublicKey::from_string("[3442193e/0'/1/2']xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5/2".to_string()).unwrap();
+
+    // Chain m/0H/1/2H/2/1000000000
+    assert_eq!(
+        key.derive(&path("1000000000")).unwrap().to_string(),
+        "[3442193e/0'/1/2'/2/1000000000]xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy"
+    );
+}
+
+#[test]
+fn test_bip86_vectors() {
+    let master = abandon_master();
+    assert_eq!(master.to_string(), "xprv9s21ZrQH143K3GJpoapnV8SFfukcVBSfeCficPSGfubmSFDxo1kuHnLisriDvSnRRuL2Qrg5ggqHKNVpxR86QEC8w35uxmGoggxtQTPvfUu");
+
+    // First receiving address, m/86'/0'/0'/0/0, via extend() then derive()
+    let first_receive = master
+        .extend(&path("86h/0h/0h"))
+        .unwrap()
+        .derive(&path("0/0"))
+        .unwrap();
+    assert_eq!(first_receive.to_string(), "[73c5da0a/86'/0'/0'/0/0]xprvA449goEeU9okwCzzZaxiy475EQGQzBkc65su82nXEvcwzfSskb2hAt2WymrjyRL6kpbVTGL3cKtp9herYXSjjQ1j4stsXXiRF7kXkCacK3T");
+    assert_eq!(
+        address(format!("tr({})", first_receive.as_public())),
+        "bc1p5cyxnuxmeuwuvkwfem96lqzszd02n6xdcjrs20cac6yqjjwudpxqkedrcr"
+    );
+
+    // Second receiving address, m/86'/0'/0'/0/1, via fromString() with a path suffix
+    let account = DescriptorSecretKey::from_string(format!("{master}/86h/0h/0h")).unwrap();
+    let second_receive = account.derive(&path("0/1")).unwrap();
+    assert_eq!(second_receive.to_string(), "[73c5da0a/86'/0'/0'/0/1]xprvA449goEeU9okyiF1LmKiDaTgeXvmh87DVyRd35VPbsSop8n8uALpbtrUhUXByPFKK7C2yuqrB1FrhiDkEMC4RGmA5KTwsE1aB5jRu9zHsuQ");
+    assert_eq!(
+        address(format!("tr({})", second_receive.as_public())),
+        "bc1p4qhjn9zdvkux4e44uhx8tc55attvtyu358kutcqkudyccelu0was9fqzwh"
+    );
+
+    // First change address, m/86'/0'/0'/1/0, from the published account xpub
+    let account_xpub = DescriptorPublicKey::from_string("[73c5da0a/86'/0'/0']xpub6BgBgsespWvERF3LHQu6CnqdvfEvtMcQjYrcRzx53QJjSxarj2afYWcLteoGVky7D3UKDP9QyrLprQ3VCECoY49yfdDEHGCtMMj92pReUsQ".to_string()).unwrap();
+    let first_change = account_xpub
+        .extend(&path("1"))
+        .unwrap()
+        .derive(&path("0"))
+        .unwrap();
+    assert_eq!(first_change.to_string(), "[73c5da0a/86'/0'/0'/1/0]xpub6GL8SnQwRCGDhB59LEz9HMyM6sRYoByXBzXK3iEKWgCz8XrZNHUzd9L3AUBELW5NzA7dEFvMas1F84TuPH3xqdUA5tumaGWFgihJzWytXe3");
+    assert_eq!(
+        address(format!("tr({first_change})")),
+        "bc1p3qkhfews2uk44qtvauqyr2ttdsw7svhkl9nkm9s9c3x4ax5h60wqwruhk7"
+    );
+}
+
+#[test]
+fn test_bip84_vectors() {
+    // BIP-84 publishes zprv/zpub keys, which BDK does not produce, so these checks compare the
+    // published addresses instead.
+    let master = abandon_master();
+
+    // First receiving address, m/84'/0'/0'/0/0, via extend() then derive()
+    let first_receive = master
+        .extend(&path("84h/0h/0h"))
+        .unwrap()
+        .derive(&path("0/0"))
+        .unwrap();
+    assert_eq!(
+        address(format!("wpkh({})", first_receive.as_public())),
+        "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
+    );
+
+    // Second receiving address, m/84'/0'/0'/0/1, via fromString() with a path suffix
+    let account = DescriptorSecretKey::from_string(format!("{master}/84h/0h/0h/0")).unwrap();
+    assert_eq!(
+        address(format!(
+            "wpkh({})",
+            account.derive(&path("1")).unwrap().as_public()
+        )),
+        "bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g"
+    );
+
+    // First change address, m/84'/0'/0'/1/0, from the account xpub
+    let account_xpub = master.derive(&path("m/84h/0h/0h")).unwrap().as_public();
+    let first_change = account_xpub
+        .extend(&path("1"))
+        .unwrap()
+        .derive(&path("0"))
+        .unwrap();
+    assert_eq!(
+        address(format!("wpkh({first_change})")),
+        "bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el"
     );
 }
