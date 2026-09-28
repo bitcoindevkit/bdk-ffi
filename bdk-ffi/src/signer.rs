@@ -31,11 +31,19 @@ impl SignersContainer {
         context_descriptor: Arc<Descriptor>,
     ) -> Self {
         let secp = Secp256k1::new();
-        let inner = BdkSignersContainer::build(
-            signer_descriptor.key_map.clone(),
-            &context_descriptor.extended_descriptor,
-            &secp,
-        );
+        let key_map: bdk_wallet::miniscript::descriptor::KeyMap = signer_descriptor
+            .key_map
+            .iter()
+            .map(|entry| {
+                (
+                    entry.descriptor_public_key.0.clone(),
+                    entry.descriptor_secret_key.0.clone(),
+                )
+            })
+            .collect();
+
+        let inner =
+            BdkSignersContainer::build(key_map, &context_descriptor.extended_descriptor, &secp);
 
         Self { inner }
     }
