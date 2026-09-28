@@ -32,11 +32,16 @@ pub struct EsploraClient(BlockingClient);
 impl EsploraClient {
     /// Creates a new bdk client from an esplora_client::BlockingClient.
     /// Optional: Set the proxy of the builder.
-    #[uniffi::constructor(default(proxy = None))]
-    pub fn new(url: String, proxy: Option<String>) -> Self {
+    /// Optional: Set the timeout (in seconds) of the builder. When unset, no timeout is
+    /// configured and a request can block indefinitely if the server stops responding.
+    #[uniffi::constructor(default(proxy = None, timeout = None))]
+    pub fn new(url: String, proxy: Option<String>, timeout: Option<u8>) -> Self {
         let mut builder = Builder::new(url.as_str());
         if let Some(proxy) = proxy {
             builder = builder.proxy(proxy.as_str());
+        }
+        if let Some(timeout) = timeout {
+            builder = builder.timeout(timeout.into());
         }
         Self(builder.build_blocking())
     }
