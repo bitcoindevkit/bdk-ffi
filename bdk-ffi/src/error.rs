@@ -26,6 +26,7 @@ use bdk_wallet::miniscript::psbt::Error as BdkPsbtFinalizeError;
 use bdk_wallet::signer::SignerError as BdkSignerError;
 use bdk_wallet::tx_builder::AddForeignUtxoError as BdkAddForeignUtxoError;
 use bdk_wallet::tx_builder::AddUtxoError;
+use bdk_wallet::LoadError as BdkLoadError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
 use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
 
@@ -34,6 +35,21 @@ use std::convert::TryInto;
 // ------------------------------------------------------------------------
 // error definitions
 // ------------------------------------------------------------------------
+
+/// Stand-in for the upstream error text on paths that parse a user-supplied
+/// descriptor or key.
+///
+/// The parsers we build on quote the offending input back in their error
+/// messages: rust-miniscript's expression parser renders an unparsable node as
+/// `unexpected «<the whole raw node>(0 args) ...»`, so a user who pastes an
+/// xprv or a seed phrase into a descriptor field and makes a typo would get an
+/// error carrying the complete secret. Consumers of these bindings could
+/// log or forward exceptions so an `error_message` has to be treated as public.
+///
+/// Rather than try to recognize secret material inside those messages, we do
+/// not pass them on at all. The error variant still says what kind of failure
+/// it was; only the upstream text is dropped.
+pub(crate) const WITHHELD: &str = "details omitted to avoid quoting the input";
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
@@ -973,8 +989,8 @@ impl From<BdkBip32Error> for Bip32Error {
     fn from(error: BdkBip32Error) -> Self {
         match error {
             BdkBip32Error::CannotDeriveFromHardenedKey => Bip32Error::CannotDeriveFromHardenedKey,
-            BdkBip32Error::Secp256k1(e) => Bip32Error::Secp256k1 {
-                error_message: e.to_string(),
+            BdkBip32Error::Secp256k1(_) => Bip32Error::Secp256k1 {
+                error_message: WITHHELD.to_string(),
             },
             BdkBip32Error::InvalidChildNumber(num) => {
                 Bip32Error::InvalidChildNumber { child_number: num }
@@ -987,17 +1003,17 @@ impl From<BdkBip32Error> for Bip32Error {
             BdkBip32Error::WrongExtendedKeyLength(len) => {
                 Bip32Error::WrongExtendedKeyLength { length: len as u32 }
             }
-            BdkBip32Error::Base58(e) => Bip32Error::Base58 {
-                error_message: e.to_string(),
+            BdkBip32Error::Base58(_) => Bip32Error::Base58 {
+                error_message: WITHHELD.to_string(),
             },
-            BdkBip32Error::Hex(e) => Bip32Error::Hex {
-                error_message: e.to_string(),
+            BdkBip32Error::Hex(_) => Bip32Error::Hex {
+                error_message: WITHHELD.to_string(),
             },
             BdkBip32Error::InvalidPublicKeyHexLength(len) => {
                 Bip32Error::InvalidPublicKeyHexLength { length: len as u32 }
             }
             _ => Bip32Error::UnknownError {
-                error_message: format!("Unhandled error: {error:?}"),
+                error_message: WITHHELD.to_string(),
             },
         }
     }
@@ -1048,11 +1064,11 @@ impl From<BdkCannotConnectError> for CannotConnectError {
 impl From<BdkCreateTxError> for CreateTxError {
     fn from(error: BdkCreateTxError) -> Self {
         match error {
-            BdkCreateTxError::Descriptor(e) => CreateTxError::Descriptor {
-                error_message: e.to_string(),
+            BdkCreateTxError::Descriptor(_) => CreateTxError::Descriptor {
+                error_message: WITHHELD.to_string(),
             },
-            BdkCreateTxError::Policy(e) => CreateTxError::Policy {
-                error_message: e.to_string(),
+            BdkCreateTxError::Policy(_) => CreateTxError::Policy {
+                error_message: WITHHELD.to_string(),
             },
             BdkCreateTxError::SpendingPolicyRequired(kind) => {
                 CreateTxError::SpendingPolicyRequired {
@@ -1117,8 +1133,8 @@ impl From<BdkCreateWithPersistError<chain::rusqlite::Error>> for CreateWithPersi
             BdkCreateWithPersistError::Persist(e) => CreateWithPersistError::Persist {
                 error_message: e.to_string(),
             },
-            BdkCreateWithPersistError::Descriptor(e) => CreateWithPersistError::Descriptor {
-                error_message: e.to_string(),
+            BdkCreateWithPersistError::Descriptor(_) => CreateWithPersistError::Descriptor {
+                error_message: WITHHELD.to_string(),
             },
             // Objects cannot currently be used in enumerations
             BdkCreateWithPersistError::DataAlreadyExists(_e) => {
@@ -1134,8 +1150,8 @@ impl From<BdkCreateWithPersistError<PersistenceError>> for CreateWithPersistErro
             BdkCreateWithPersistError::Persist(e) => CreateWithPersistError::Persist {
                 error_message: e.to_string(),
             },
-            BdkCreateWithPersistError::Descriptor(e) => CreateWithPersistError::Descriptor {
-                error_message: e.to_string(),
+            BdkCreateWithPersistError::Descriptor(_) => CreateWithPersistError::Descriptor {
+                error_message: WITHHELD.to_string(),
             },
             // Objects cannot currently be used in enumerations
             BdkCreateWithPersistError::DataAlreadyExists(_e) => {
@@ -1189,31 +1205,31 @@ impl From<BdkDescriptorError> for DescriptorError {
             }
             BdkDescriptorError::HardenedDerivationXpub => DescriptorError::HardenedDerivationXpub,
             BdkDescriptorError::MultiPath => DescriptorError::MultiPath,
-            BdkDescriptorError::Key(e) => DescriptorError::Key {
-                error_message: e.to_string(),
+            BdkDescriptorError::Key(_) => DescriptorError::Key {
+                error_message: WITHHELD.to_string(),
             },
-            BdkDescriptorError::Policy(e) => DescriptorError::Policy {
-                error_message: e.to_string(),
+            BdkDescriptorError::Policy(_) => DescriptorError::Policy {
+                error_message: WITHHELD.to_string(),
             },
             BdkDescriptorError::InvalidDescriptorCharacter(char) => {
                 DescriptorError::InvalidDescriptorCharacter {
                     char: char.to_string(),
                 }
             }
-            BdkDescriptorError::Bip32(e) => DescriptorError::Bip32 {
-                error_message: e.to_string(),
+            BdkDescriptorError::Bip32(_) => DescriptorError::Bip32 {
+                error_message: WITHHELD.to_string(),
             },
-            BdkDescriptorError::Base58(e) => DescriptorError::Base58 {
-                error_message: e.to_string(),
+            BdkDescriptorError::Base58(_) => DescriptorError::Base58 {
+                error_message: WITHHELD.to_string(),
             },
-            BdkDescriptorError::Pk(e) => DescriptorError::Pk {
-                error_message: e.to_string(),
+            BdkDescriptorError::Pk(_) => DescriptorError::Pk {
+                error_message: WITHHELD.to_string(),
             },
-            BdkDescriptorError::Miniscript(e) => DescriptorError::Miniscript {
-                error_message: e.to_string(),
+            BdkDescriptorError::Miniscript(_) => DescriptorError::Miniscript {
+                error_message: WITHHELD.to_string(),
             },
-            BdkDescriptorError::Hex(e) => DescriptorError::Hex {
-                error_message: e.to_string(),
+            BdkDescriptorError::Hex(_) => DescriptorError::Hex {
+                error_message: WITHHELD.to_string(),
             },
             BdkDescriptorError::ExternalAndInternalAreTheSame => {
                 DescriptorError::ExternalAndInternalAreTheSame
@@ -1223,17 +1239,17 @@ impl From<BdkDescriptorError> for DescriptorError {
 }
 
 impl From<BdkDescriptorKeyParseError> for DescriptorKeyError {
-    fn from(err: BdkDescriptorKeyParseError) -> DescriptorKeyError {
+    fn from(_: BdkDescriptorKeyParseError) -> DescriptorKeyError {
         DescriptorKeyError::Parse {
-            error_message: format!("DescriptorKeyError error: {err:?}"),
+            error_message: WITHHELD.to_string(),
         }
     }
 }
 
 impl From<BdkBip32Error> for DescriptorKeyError {
-    fn from(error: BdkBip32Error) -> DescriptorKeyError {
+    fn from(_: BdkBip32Error) -> DescriptorKeyError {
         DescriptorKeyError::Bip32 {
-            error_message: format!("BIP32 derivation error: {error:?}"),
+            error_message: WITHHELD.to_string(),
         }
     }
 }
@@ -1368,7 +1384,7 @@ impl From<BdkLoadWithPersistError<chain::rusqlite::Error>> for LoadWithPersistEr
             },
             BdkLoadWithPersistError::InvalidChangeSet(e) => {
                 LoadWithPersistError::InvalidChangeSet {
-                    error_message: e.to_string(),
+                    error_message: load_error_message(e),
                 }
             }
         }
@@ -1383,10 +1399,25 @@ impl From<BdkLoadWithPersistError<PersistenceError>> for LoadWithPersistError {
             },
             BdkLoadWithPersistError::InvalidChangeSet(e) => {
                 LoadWithPersistError::InvalidChangeSet {
-                    error_message: e.to_string(),
+                    error_message: load_error_message(e),
                 }
             }
         }
+    }
+}
+
+/// The message for a [`BdkLoadError`].
+///
+/// Only the descriptor arm carries parser text, and so the input the caller
+/// passed in; the network, genesis and descriptor mismatches describe data
+/// already parsed and are safe to pass on.
+fn load_error_message(error: BdkLoadError) -> String {
+    match error {
+        BdkLoadError::Descriptor(_) => WITHHELD.to_string(),
+        BdkLoadError::MissingNetwork => error.to_string(),
+        BdkLoadError::MissingGenesis => error.to_string(),
+        BdkLoadError::MissingDescriptor(_) => error.to_string(),
+        BdkLoadError::Mismatch(_) => error.to_string(),
     }
 }
 
@@ -1421,23 +1452,23 @@ impl From<bdk_wallet::miniscript::Error> for MiniscriptError {
         use bdk_wallet::miniscript::Error as BdkMiniscriptError;
         match error {
             BdkMiniscriptError::AbsoluteLockTime(_) => MiniscriptError::AbsoluteLockTime,
-            BdkMiniscriptError::AddrError(e) => MiniscriptError::AddrError {
-                error_message: e.to_string(),
+            BdkMiniscriptError::AddrError(_) => MiniscriptError::AddrError {
+                error_message: WITHHELD.to_string(),
             },
-            BdkMiniscriptError::AddrP2shError(e) => MiniscriptError::AddrP2shError {
-                error_message: e.to_string(),
+            BdkMiniscriptError::AddrP2shError(_) => MiniscriptError::AddrP2shError {
+                error_message: WITHHELD.to_string(),
             },
-            BdkMiniscriptError::AnalysisError(e) => MiniscriptError::AnalysisError {
-                error_message: e.to_string(),
+            BdkMiniscriptError::AnalysisError(_) => MiniscriptError::AnalysisError {
+                error_message: WITHHELD.to_string(),
             },
             BdkMiniscriptError::AtOutsideOr(_) => MiniscriptError::AtOutsideOr,
-            BdkMiniscriptError::BadDescriptor(s) => {
-                MiniscriptError::BadDescriptor { error_message: s }
-            }
+            BdkMiniscriptError::BadDescriptor(_) => MiniscriptError::BadDescriptor {
+                error_message: WITHHELD.to_string(),
+            },
             BdkMiniscriptError::BareDescriptorAddr => MiniscriptError::BareDescriptorAddr,
             BdkMiniscriptError::CmsTooManyKeys(n) => MiniscriptError::CmsTooManyKeys { keys: n },
-            BdkMiniscriptError::ContextError(e) => MiniscriptError::ContextError {
-                error_message: e.to_string(),
+            BdkMiniscriptError::ContextError(_) => MiniscriptError::ContextError {
+                error_message: WITHHELD.to_string(),
             },
             BdkMiniscriptError::CouldNotSatisfy => MiniscriptError::CouldNotSatisfy,
             BdkMiniscriptError::ExpectedChar(c) => MiniscriptError::ExpectedChar {
@@ -1446,8 +1477,8 @@ impl From<bdk_wallet::miniscript::Error> for MiniscriptError {
             BdkMiniscriptError::ImpossibleSatisfaction => MiniscriptError::ImpossibleSatisfaction,
             BdkMiniscriptError::InvalidOpcode(_) => MiniscriptError::InvalidOpcode,
             BdkMiniscriptError::InvalidPush(_) => MiniscriptError::InvalidPush,
-            BdkMiniscriptError::LiftError(e) => MiniscriptError::LiftError {
-                error_message: e.to_string(),
+            BdkMiniscriptError::LiftError(_) => MiniscriptError::LiftError {
+                error_message: WITHHELD.to_string(),
             },
             BdkMiniscriptError::MaxRecursiveDepthExceeded => {
                 MiniscriptError::MaxRecursiveDepthExceeded
@@ -1460,28 +1491,36 @@ impl From<bdk_wallet::miniscript::Error> for MiniscriptError {
             BdkMiniscriptError::MultipathDescLenMismatch => {
                 MiniscriptError::MultipathDescLenMismatch
             }
-            BdkMiniscriptError::NonMinimalVerify(s) => {
-                MiniscriptError::NonMinimalVerify { error_message: s }
-            }
+            BdkMiniscriptError::NonMinimalVerify(_) => MiniscriptError::NonMinimalVerify {
+                error_message: WITHHELD.to_string(),
+            },
             BdkMiniscriptError::NonStandardBareScript => MiniscriptError::NonStandardBareScript,
-            BdkMiniscriptError::NonTopLevel(s) => MiniscriptError::NonTopLevel { error_message: s },
+            BdkMiniscriptError::NonTopLevel(_) => MiniscriptError::NonTopLevel {
+                error_message: WITHHELD.to_string(),
+            },
             BdkMiniscriptError::ParseThreshold(_) => MiniscriptError::ParseThreshold,
-            BdkMiniscriptError::PolicyError(e) => MiniscriptError::PolicyError {
-                error_message: e.to_string(),
+            BdkMiniscriptError::PolicyError(_) => MiniscriptError::PolicyError {
+                error_message: WITHHELD.to_string(),
             },
             BdkMiniscriptError::PubKeyCtxError(_, _) => MiniscriptError::PubKeyCtxError,
             BdkMiniscriptError::RelativeLockTime(_) => MiniscriptError::RelativeLockTime,
-            BdkMiniscriptError::Script(e) => MiniscriptError::Script {
-                error_message: e.to_string(),
+            BdkMiniscriptError::Script(_) => MiniscriptError::Script {
+                error_message: WITHHELD.to_string(),
             },
-            BdkMiniscriptError::Secp(e) => MiniscriptError::Secp {
-                error_message: e.to_string(),
+            BdkMiniscriptError::Secp(_) => MiniscriptError::Secp {
+                error_message: WITHHELD.to_string(),
             },
             BdkMiniscriptError::Threshold(_) => MiniscriptError::Threshold,
             BdkMiniscriptError::TrNoScriptCode => MiniscriptError::TrNoScriptCode,
-            BdkMiniscriptError::Trailing(s) => MiniscriptError::Trailing { error_message: s },
-            BdkMiniscriptError::TypeCheck(s) => MiniscriptError::TypeCheck { error_message: s },
-            BdkMiniscriptError::Unexpected(s) => MiniscriptError::Unexpected { error_message: s },
+            BdkMiniscriptError::Trailing(_) => MiniscriptError::Trailing {
+                error_message: WITHHELD.to_string(),
+            },
+            BdkMiniscriptError::TypeCheck(_) => MiniscriptError::TypeCheck {
+                error_message: WITHHELD.to_string(),
+            },
+            BdkMiniscriptError::Unexpected(_) => MiniscriptError::Unexpected {
+                error_message: WITHHELD.to_string(),
+            },
             BdkMiniscriptError::UnexpectedStart => MiniscriptError::UnexpectedStart,
             BdkMiniscriptError::UnknownWrapper(c) => MiniscriptError::UnknownWrapper {
                 char: c.to_string(),

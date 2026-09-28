@@ -3,6 +3,7 @@ use crate::bitcoin::DescriptorType;
 use crate::bitcoin::{Address, NetworkKind};
 use crate::error::DescriptorError;
 use crate::error::MiniscriptError;
+use crate::error::WITHHELD;
 use crate::keys::DescriptorPublicKey;
 use crate::keys::DescriptorSecretKey;
 use crate::types::KeychainKind;
@@ -85,11 +86,10 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
     ) -> Result<Self, DescriptorError> {
-        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).map_err(|error| {
-            DescriptorError::Bip32 {
-                error_message: error.to_string(),
-            }
-        })?;
+        let fingerprint =
+            Fingerprint::from_str(fingerprint.as_str()).map_err(|_| DescriptorError::Bip32 {
+                error_message: WITHHELD.to_string(),
+            })?;
         let derivable_key = &public_key.0;
 
         match derivable_key {
@@ -151,11 +151,10 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
     ) -> Result<Self, DescriptorError> {
-        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).map_err(|error| {
-            DescriptorError::Bip32 {
-                error_message: error.to_string(),
-            }
-        })?;
+        let fingerprint =
+            Fingerprint::from_str(fingerprint.as_str()).map_err(|_| DescriptorError::Bip32 {
+                error_message: WITHHELD.to_string(),
+            })?;
         let derivable_key = &public_key.0;
 
         match derivable_key {
@@ -217,11 +216,10 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
     ) -> Result<Self, DescriptorError> {
-        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).map_err(|error| {
-            DescriptorError::Bip32 {
-                error_message: error.to_string(),
-            }
-        })?;
+        let fingerprint =
+            Fingerprint::from_str(fingerprint.as_str()).map_err(|_| DescriptorError::Bip32 {
+                error_message: WITHHELD.to_string(),
+            })?;
         let derivable_key = &public_key.0;
 
         match derivable_key {
@@ -283,11 +281,10 @@ impl Descriptor {
         keychain_kind: KeychainKind,
         network_kind: NetworkKind,
     ) -> Result<Self, DescriptorError> {
-        let fingerprint = Fingerprint::from_str(fingerprint.as_str()).map_err(|error| {
-            DescriptorError::Bip32 {
-                error_message: error.to_string(),
-            }
-        })?;
+        let fingerprint =
+            Fingerprint::from_str(fingerprint.as_str()).map_err(|_| DescriptorError::Bip32 {
+                error_message: WITHHELD.to_string(),
+            })?;
         let derivable_key = &public_key.0;
 
         match derivable_key {
@@ -319,17 +316,17 @@ impl Descriptor {
         let bdk_pks: Vec<BdkDescriptorPublicKey> = pks
             .iter()
             .map(|pk| {
-                BdkDescriptorPublicKey::from_str(pk).map_err(|e| DescriptorError::Key {
-                    error_message: e.to_string(),
+                BdkDescriptorPublicKey::from_str(pk).map_err(|_| DescriptorError::Key {
+                    error_message: WITHHELD.to_string(),
                 })
             })
             .collect::<Result<Vec<BdkDescriptorPublicKey>, DescriptorError>>()?;
         let miniscript_descriptor =
             match bdk_wallet::miniscript::Descriptor::new_wsh_sortedmulti(k as usize, bdk_pks) {
                 Ok(descriptor) => descriptor,
-                Err(e) => {
+                Err(_) => {
                     return Err(DescriptorError::Miniscript {
-                        error_message: e.to_string(),
+                        error_message: WITHHELD.to_string(),
                     })
                 }
             };
@@ -348,17 +345,17 @@ impl Descriptor {
         let bdk_pks: Vec<BdkDescriptorPublicKey> = pks
             .iter()
             .map(|pk| {
-                BdkDescriptorPublicKey::from_str(pk).map_err(|e| DescriptorError::Key {
-                    error_message: e.to_string(),
+                BdkDescriptorPublicKey::from_str(pk).map_err(|_| DescriptorError::Key {
+                    error_message: WITHHELD.to_string(),
                 })
             })
             .collect::<Result<Vec<BdkDescriptorPublicKey>, DescriptorError>>()?;
         let miniscript_descriptor =
             match bdk_wallet::miniscript::Descriptor::new_sh_sortedmulti(k as usize, bdk_pks) {
                 Ok(descriptor) => descriptor,
-                Err(e) => {
+                Err(_) => {
                     return Err(DescriptorError::Miniscript {
-                        error_message: e.to_string(),
+                        error_message: WITHHELD.to_string(),
                     })
                 }
             };
@@ -377,17 +374,17 @@ impl Descriptor {
         let bdk_pks: Vec<BdkDescriptorPublicKey> = pks
             .iter()
             .map(|pk| {
-                BdkDescriptorPublicKey::from_str(pk).map_err(|e| DescriptorError::Key {
-                    error_message: e.to_string(),
+                BdkDescriptorPublicKey::from_str(pk).map_err(|_| DescriptorError::Key {
+                    error_message: WITHHELD.to_string(),
                 })
             })
             .collect::<Result<Vec<BdkDescriptorPublicKey>, DescriptorError>>()?;
         let miniscript_descriptor =
             match bdk_wallet::miniscript::Descriptor::new_sh_wsh_sortedmulti(k as usize, bdk_pks) {
                 Ok(descriptor) => descriptor,
-                Err(e) => {
+                Err(_) => {
                     return Err(DescriptorError::Miniscript {
-                        error_message: e.to_string(),
+                        error_message: WITHHELD.to_string(),
                     })
                 }
             };
@@ -402,8 +399,8 @@ impl Descriptor {
     /// Create a new pay-to-pubkey descriptor from a public key string.
     #[uniffi::constructor]
     pub fn new_pk(pk: String) -> Result<Self, DescriptorError> {
-        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Key {
-            error_message: e.to_string(),
+        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|_| DescriptorError::Key {
+            error_message: WITHHELD.to_string(),
         })?;
 
         let miniscript_descriptor = bdk_wallet::miniscript::Descriptor::new_pk(key);
@@ -418,15 +415,15 @@ impl Descriptor {
     /// Create a new PkH descriptor
     #[uniffi::constructor]
     pub fn new_pkh(pk: String) -> Result<Self, DescriptorError> {
-        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Key {
-            error_message: e.to_string(),
+        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|_| DescriptorError::Key {
+            error_message: WITHHELD.to_string(),
         })?;
 
         let miniscript_descriptor = match bdk_wallet::miniscript::Descriptor::new_pkh(key) {
             Ok(descriptor) => descriptor,
-            Err(e) => {
+            Err(_) => {
                 return Err(DescriptorError::Miniscript {
-                    error_message: e.to_string(),
+                    error_message: WITHHELD.to_string(),
                 })
             }
         };
@@ -441,15 +438,15 @@ impl Descriptor {
     /// Create a new Wpkh descriptor Will return Err if uncompressed key is used
     #[uniffi::constructor]
     pub fn new_wpkh(pk: String) -> Result<Self, DescriptorError> {
-        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Key {
-            error_message: e.to_string(),
+        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|_| DescriptorError::Key {
+            error_message: WITHHELD.to_string(),
         })?;
 
         let miniscript_descriptor = match bdk_wallet::miniscript::Descriptor::new_wpkh(key) {
             Ok(descriptor) => descriptor,
-            Err(e) => {
+            Err(_) => {
                 return Err(DescriptorError::Miniscript {
-                    error_message: e.to_string(),
+                    error_message: WITHHELD.to_string(),
                 })
             }
         };
@@ -464,15 +461,15 @@ impl Descriptor {
     /// Create a new sh wrapped wpkh from Pk. Errors when uncompressed keys are supplied
     #[uniffi::constructor]
     pub fn new_sh_wpkh(pk: String) -> Result<Self, DescriptorError> {
-        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|e| DescriptorError::Key {
-            error_message: e.to_string(),
+        let key = BdkDescriptorPublicKey::from_str(&pk).map_err(|_| DescriptorError::Key {
+            error_message: WITHHELD.to_string(),
         })?;
 
         let miniscript_descriptor = match bdk_wallet::miniscript::Descriptor::new_sh_wpkh(key) {
             Ok(descriptor) => descriptor,
-            Err(e) => {
+            Err(_) => {
                 return Err(DescriptorError::Miniscript {
-                    error_message: e.to_string(),
+                    error_message: WITHHELD.to_string(),
                 })
             }
         };
@@ -490,9 +487,9 @@ impl Descriptor {
     pub fn new_wsh(mini_script: String) -> Result<Self, DescriptorError> {
         let parsed_miniscript = match BdkMiniscript::from_str(&mini_script) {
             Ok(miniscript) => miniscript,
-            Err(e) => {
+            Err(_) => {
                 return Err(DescriptorError::Miniscript {
-                    error_message: e.to_string(),
+                    error_message: WITHHELD.to_string(),
                 });
             }
         };
@@ -500,9 +497,9 @@ impl Descriptor {
         let miniscript_descriptor =
             match bdk_wallet::miniscript::Descriptor::new_wsh(parsed_miniscript) {
                 Ok(descriptor) => descriptor,
-                Err(e) => {
+                Err(_) => {
                     return Err(DescriptorError::Miniscript {
-                        error_message: e.to_string(),
+                        error_message: WITHHELD.to_string(),
                     })
                 }
             };
@@ -520,9 +517,9 @@ impl Descriptor {
     pub fn new_sh_wsh(mini_script: String) -> Result<Self, DescriptorError> {
         let parsed_miniscript = match BdkMiniscript::from_str(&mini_script) {
             Ok(miniscript) => miniscript,
-            Err(e) => {
+            Err(_) => {
                 return Err(DescriptorError::Miniscript {
-                    error_message: e.to_string(),
+                    error_message: WITHHELD.to_string(),
                 });
             }
         };
@@ -530,9 +527,9 @@ impl Descriptor {
         let miniscript_descriptor =
             match bdk_wallet::miniscript::Descriptor::new_sh_wsh(parsed_miniscript) {
                 Ok(descriptor) => descriptor,
-                Err(e) => {
+                Err(_) => {
                     return Err(DescriptorError::Miniscript {
-                        error_message: e.to_string(),
+                        error_message: WITHHELD.to_string(),
                     })
                 }
             };
@@ -549,9 +546,9 @@ impl Descriptor {
     pub fn new_sh(mini_script: String) -> Result<Self, DescriptorError> {
         let parsed_miniscript = match BdkMiniscript::from_str(&mini_script) {
             Ok(miniscript) => miniscript,
-            Err(e) => {
+            Err(_) => {
                 return Err(DescriptorError::Miniscript {
-                    error_message: e.to_string(),
+                    error_message: WITHHELD.to_string(),
                 });
             }
         };
@@ -559,9 +556,9 @@ impl Descriptor {
         let miniscript_descriptor =
             match bdk_wallet::miniscript::Descriptor::new_sh(parsed_miniscript) {
                 Ok(descriptor) => descriptor,
-                Err(e) => {
+                Err(_) => {
                     return Err(DescriptorError::Miniscript {
-                        error_message: e.to_string(),
+                        error_message: WITHHELD.to_string(),
                     })
                 }
             };
@@ -579,9 +576,9 @@ impl Descriptor {
     pub fn new_bare(mini_script: String) -> Result<Self, DescriptorError> {
         let parsed_miniscript = match BdkMiniscript::from_str(&mini_script) {
             Ok(miniscript) => miniscript,
-            Err(e) => {
+            Err(_) => {
                 return Err(DescriptorError::Miniscript {
-                    error_message: e.to_string(),
+                    error_message: WITHHELD.to_string(),
                 });
             }
         };
@@ -589,9 +586,9 @@ impl Descriptor {
         let miniscript_descriptor =
             match bdk_wallet::miniscript::Descriptor::new_bare(parsed_miniscript) {
                 Ok(descriptor) => descriptor,
-                Err(e) => {
+                Err(_) => {
                     return Err(DescriptorError::Miniscript {
-                        error_message: e.to_string(),
+                        error_message: WITHHELD.to_string(),
                     })
                 }
             };
@@ -606,11 +603,12 @@ impl Descriptor {
     /// Create a new sh wrapper for the given wpkh descriptor
     #[uniffi::constructor]
     pub fn new_sh_with_wpkh(wpkh: String) -> Result<Self, DescriptorError> {
-        let descriptor = BdkDescriptor::<BdkDescriptorPublicKey>::from_str(&wpkh).map_err(|e| {
-            DescriptorError::Miniscript {
-                error_message: e.to_string(),
-            }
-        })?;
+        let descriptor =
+            BdkDescriptor::<BdkDescriptorPublicKey>::from_str(&wpkh).map_err(|_| {
+                DescriptorError::Miniscript {
+                    error_message: WITHHELD.to_string(),
+                }
+            })?;
 
         if let BdkDescriptor::Wpkh(wpkh_inner) = descriptor {
             let sh_with_wpkh = bdk_wallet::miniscript::Descriptor::new_sh_with_wpkh(wpkh_inner);
@@ -628,9 +626,9 @@ impl Descriptor {
     /// Create a new sh wrapper for the given wsh descriptor
     #[uniffi::constructor]
     pub fn new_sh_with_wsh(wsh: String) -> Result<Self, DescriptorError> {
-        let descriptor = BdkDescriptor::<BdkDescriptorPublicKey>::from_str(&wsh).map_err(|e| {
+        let descriptor = BdkDescriptor::<BdkDescriptorPublicKey>::from_str(&wsh).map_err(|_| {
             DescriptorError::Miniscript {
-                error_message: e.to_string(),
+                error_message: WITHHELD.to_string(),
             }
         })?;
 
@@ -651,14 +649,14 @@ impl Descriptor {
     /// Errors when miniscript exceeds resource limits under Tap context
     #[uniffi::constructor]
     pub fn new_tr(key: String, script: Option<String>) -> Result<Self, DescriptorError> {
-        let key = BdkDescriptorPublicKey::from_str(&key).map_err(|e| DescriptorError::Key {
-            error_message: e.to_string(),
+        let key = BdkDescriptorPublicKey::from_str(&key).map_err(|_| DescriptorError::Key {
+            error_message: WITHHELD.to_string(),
         })?;
         let tap_tree = match script {
             Some(s) => {
                 let ms_tap =
-                    BdkMiniscript::from_str(&s).map_err(|e| DescriptorError::Miniscript {
-                        error_message: e.to_string(),
+                    BdkMiniscript::from_str(&s).map_err(|_| DescriptorError::Miniscript {
+                        error_message: WITHHELD.to_string(),
                     })?;
 
                 Some(TapTree::Leaf(Arc::new(ms_tap)))
@@ -667,9 +665,9 @@ impl Descriptor {
         };
 
         let descriptor =
-            bdk_wallet::miniscript::Descriptor::new_tr(key, tap_tree).map_err(|e| {
+            bdk_wallet::miniscript::Descriptor::new_tr(key, tap_tree).map_err(|_| {
                 DescriptorError::Miniscript {
-                    error_message: e.to_string(),
+                    error_message: WITHHELD.to_string(),
                 }
             })?;
         Ok(Self {
@@ -729,8 +727,8 @@ impl Descriptor {
         let weight = self
             .extended_descriptor
             .max_weight_to_satisfy()
-            .map_err(|e| DescriptorError::Miniscript {
-                error_message: e.to_string(),
+            .map_err(|_| DescriptorError::Miniscript {
+                error_message: WITHHELD.to_string(),
             })?;
         Ok(weight.to_wu())
     }
@@ -758,8 +756,8 @@ impl Descriptor {
 
         let address = derived_descriptor
             .address(network)
-            .map_err(|error| DescriptorError::Miniscript {
-                error_message: error.to_string(),
+            .map_err(|_| DescriptorError::Miniscript {
+                error_message: WITHHELD.to_string(),
             })?
             .into();
 
@@ -783,8 +781,8 @@ impl Descriptor {
     pub fn sanity_check(&self) -> Result<(), DescriptorError> {
         self.extended_descriptor
             .sanity_check()
-            .map_err(|e| DescriptorError::Miniscript {
-                error_message: e.to_string(),
+            .map_err(|_| DescriptorError::Miniscript {
+                error_message: WITHHELD.to_string(),
             })
     }
 }
