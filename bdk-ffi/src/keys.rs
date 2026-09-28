@@ -264,20 +264,31 @@ impl DescriptorSecretKey {
     }
 
     /// Return the bytes of this descriptor secret key.
+    ///
+    /// For an extended private key, the key is derived along the derivation path it carries
+    /// before its bytes are returned.
+    ///
+    /// A key carrying a wildcard (`*` or `*h`) or a multipath key (one with a step such as
+    /// `<0;1>`) names a family of keys rather than a single key, so an empty vector is returned
+    /// for it. An empty vector is also returned if the derivation would exceed the maximum BIP-32
+    /// depth.
     pub fn secret_bytes(&self) -> Vec<u8> {
+        let secp = Secp256k1::new();
         let inner = &self.0;
         let secret_bytes: Vec<u8> = match inner {
             BdkDescriptorSecretKey::Single(single_key) => {
                 single_key.key.inner.secret_bytes().to_vec()
             }
-            BdkDescriptorSecretKey::XPrv(descriptor_x_key) => {
-                descriptor_x_key.xkey.private_key.secret_bytes().to_vec()
+            BdkDescriptorSecretKey::XPrv(descriptor_x_key)
+                if descriptor_x_key.wildcard == Wildcard::None =>
+            {
+                descriptor_x_key
+                    .xkey
+                    .derive_priv(&secp, &descriptor_x_key.derivation_path)
+                    .map(|derived| derived.private_key.secret_bytes().to_vec())
+                    .unwrap_or_default()
             }
-            BdkDescriptorSecretKey::MultiXPrv(descriptor_multi_x_key) => descriptor_multi_x_key
-                .xkey
-                .private_key
-                .secret_bytes()
-                .to_vec(),
+            BdkDescriptorSecretKey::XPrv(_) | BdkDescriptorSecretKey::MultiXPrv(_) => Vec::new(),
         };
 
         secret_bytes
