@@ -1,6 +1,7 @@
 use crate::bitcoin::{Network, NetworkKind};
 use crate::descriptor::Descriptor;
 use crate::error::DescriptorError;
+use crate::error::WITHHELD;
 use crate::keys::{DerivationPath, DescriptorSecretKey, Mnemonic};
 use crate::types::KeychainKind;
 
@@ -183,4 +184,65 @@ fn test_descriptor_derive_address_multipath_error() {
     let error = descriptor.derive_address(0, Network::Testnet).unwrap_err();
 
     assert_matches!(error, DescriptorError::MultiPath);
+}
+
+/// The extended private key matching `get_descriptor_secret_key`'s mnemonic.
+const TPRV: &str = "tprv8ZgxMBicQKsPdWuqM1t1CDRvQtQuBPyfL6GbhQwtxDKgUAVPbxmj71pRA8raTqLrec5LyTs5TqCxdABcZr77bt2KyWA5bizJHnC4g4ysm4h";
+
+#[test]
+fn test_descriptor_parse_error_does_not_leak_secret_key() {
+    // A key pasted without its script function never reaches the key parser:
+    // miniscript's expression parser quotes the unrecognized node back
+    // verbatim.
+    let malformed = format!("{TPRV}/84h/1h/0h/0/*");
+
+    let error = Descriptor::new(malformed, NetworkKind::Test).unwrap_err();
+
+    assert!(
+        !error.to_string().contains(TPRV),
+        "descriptor parse error leaked the private key: {}",
+        error
+    );
+    assert_matches!(error, DescriptorError::Miniscript { error_message } if error_message == WITHHELD);
+}
+
+#[test]
+fn test_descriptor_parse_error_does_not_leak_mnemonic() {
+    let mnemonic = "chaos fabric time speed sponsor all flat solution wisdom trophy crack object robot pave observe combine where aware bench orient secret primary cable detect";
+
+    let error = Descriptor::new(mnemonic.to_string(), NetworkKind::Test).unwrap_err();
+
+    assert!(
+        !error.to_string().contains("chaos fabric time"),
+        "descriptor parse error leaked the seed phrase: {}",
+        error
+    );
+}
+
+#[test]
+fn test_secret_key_parse_error_does_not_leak_secret_key() {
+    let error = DescriptorSecretKey::from_string(format!("{TPRV}/0/*/0")).unwrap_err();
+
+    assert!(
+        !error.to_string().contains(TPRV),
+        "key parse error leaked the private key: {}",
+        error
+    );
+}
+
+#[test]
+fn test_descriptor_error_still_identifies_the_failure() {
+    // Withholding the parser text costs us the detail, but the variant still
+    // says what kind of failure it was.
+    let unparsable = format!("wpkh({TPRV}/84h/1h/0h/0/*");
+    assert_matches!(
+        Descriptor::new(unparsable, NetworkKind::Test).unwrap_err(),
+        DescriptorError::Miniscript { .. }
+    );
+
+    let bad_checksum = format!("wpkh({TPRV}/84h/1h/0h/0/*)#aaaaaaaa");
+    assert_matches!(
+        Descriptor::new(bad_checksum, NetworkKind::Test).unwrap_err(),
+        DescriptorError::InvalidDescriptorChecksum
+    );
 }
