@@ -2,6 +2,7 @@ use crate::bitcoin::NetworkKind;
 use crate::error::DescriptorKeyError;
 use crate::keys::{DerivationPath, DescriptorPublicKey, DescriptorSecretKey, Mnemonic};
 use crate::types::WildcardType;
+use bdk_wallet::bitcoin::hex::DisplayHex;
 use bdk_wallet::bitcoin::PrivateKey as BdkPrivateKey;
 use std::sync::Arc;
 
@@ -107,8 +108,8 @@ fn test_secret_bytes_from_single_and_multipath_keys() {
 
     let base_xprv = "tprv8ZgxMBicQKsPcwcD4gSnMti126ZiETsuX7qwrtMypr6FBwAP65puFn4v6c3jrN9VwtMRMph6nyT63NrfUL4C3nBzPcduzVSuHD7zbX2JKVc";
     let multipath_key = DescriptorSecretKey::from_string(format!("{base_xprv}/<0;1>/*")).unwrap();
-    let base_key = DescriptorSecretKey::from_string(base_xprv.to_string()).unwrap();
-    assert_eq!(multipath_key.secret_bytes(), base_key.secret_bytes());
+    // A multipath key names a family of keys, not a single one, so it has no secret bytes.
+    assert!(multipath_key.secret_bytes().is_empty());
 }
 
 #[test]
@@ -214,4 +215,173 @@ fn test_add_wildcard() {
         dpk_hardened.add_wildcard(),
         Err(DescriptorKeyError::CannotChangeWildcardType)
     ));
+}
+
+// A key built with extend() records its derivation path but keeps the extended key it was built
+// from, so secret_bytes() has to walk that path before reading out the private key.
+#[test]
+fn test_secret_bytes_follow_derivation_path() {
+    let mnemonic =
+        Mnemonic::from_string("all all all all all all all all all all all all".to_string())
+            .unwrap();
+    let master = DescriptorSecretKey::new(NetworkKind::Test, &mnemonic, None);
+    let master_xprv = "tprv8ZgxMBicQKsPdfqH2fGKQkBAMXpqCpC6v6WhYnEZC7TbpcEavC1N27tHbFP16eLm9XdFDW6cqnGChit8gWXyyT1zQ3xFqUWgHTS9XBQw3j5";
+    assert_eq!(master.to_string(), master_xprv);
+    assert_eq!(
+        master.secret_bytes().to_lower_hex_string(),
+        "a1ee72b13e74424be7875abd2702d42d0baf2bb7e52baeb8524540fecaf38b26"
+    );
+
+    let extended = extend_dsk(&master, "m/1h").unwrap();
+    assert_eq!(extended.to_string(), format!("{master_xprv}/1'"));
+    assert_eq!(
+        extended.secret_bytes().to_lower_hex_string(),
+        "78a3ce14aca05a6235a3c989d850b9e9ec5ccec90e4a6dad0877838a499b5618"
+    );
+    assert_ne!(
+        extended.secret_bytes().to_lower_hex_string(),
+        master.secret_bytes().to_lower_hex_string()
+    );
+
+    // extend() and derive() name the same key, so they agree on its bytes.
+    let derived = derive_dsk(&master, "m/1h").unwrap();
+    assert_eq!(
+        extended.secret_bytes().to_lower_hex_string(),
+        derived.secret_bytes().to_lower_hex_string()
+    );
+}
+
+// The account-plus-index shape extend() is built for: one fixed prefix, one varying index. Every
+// index has to yield its own key.
+#[test]
+fn test_secret_bytes_differ_per_index() {
+    let mnemonic =
+        Mnemonic::from_string("all all all all all all all all all all all all".to_string())
+            .unwrap();
+    let master = DescriptorSecretKey::new(NetworkKind::Test, &mnemonic, None);
+    let account = extend_dsk(&master, "m/84h/1h/0h/55h/3").unwrap();
+
+    let master_bytes = master.secret_bytes().to_lower_hex_string();
+    let mut seen = std::collections::HashSet::new();
+    for index in [0u32, 42, 1000] {
+        let child = extend_dsk(&account, &format!("m/{index}")).unwrap();
+        let child_bytes = child.secret_bytes().to_lower_hex_string();
+        assert_ne!(child_bytes, master_bytes);
+        assert!(seen.insert(child_bytes.clone()));
+        // Matches the key derive() produces for the full path.
+        let full = derive_dsk(&master, &format!("m/84h/1h/0h/55h/3/{index}")).unwrap();
+        assert_eq!(child_bytes, full.secret_bytes().to_lower_hex_string());
+    }
+
+    let index_42 = extend_dsk(&account, "m/42").unwrap();
+    assert_eq!(
+        index_42.secret_bytes().to_lower_hex_string(),
+        "56f63b26cbfcd98e949ea0a2dc6f66a522c418c9e98eacb3e5c3b15b330fa72e"
+    );
+}
+
+// A wildcard names a family of keys rather than a concrete child, so no secret bytes are returned
+// for it.
+#[test]
+fn test_secret_bytes_with_wildcard() {
+    let mnemonic =
+        Mnemonic::from_string("all all all all all all all all all all all all".to_string())
+            .unwrap();
+    let master = DescriptorSecretKey::new(NetworkKind::Test, &mnemonic, None);
+    let account = extend_dsk(&master, "m/84h/1h/0h").unwrap();
+    assert!(!account.secret_bytes().is_empty());
+
+    let unhardened = account.add_wildcard(WildcardType::Unhardened).unwrap();
+    assert!(unhardened.secret_bytes().is_empty());
+
+    let hardened = account.add_wildcard(WildcardType::Hardened).unwrap();
+    assert!(hardened.secret_bytes().is_empty());
+}
+
+// Expected bytes are the private keys embedded in the xprv/WIF strings published in BIP-32 (test
+// vector 1), BIP-84 and BIP-86, so they check secret_bytes() against values that do not come from
+// this library.
+#[test]
+fn test_secret_bytes_match_bip_test_vectors() {
+    // BIP-32 test vector 1, seed 000102030405060708090a0b0c0d0e0f.
+    // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#test-vector-1
+    let master = DescriptorSecretKey::from_string("xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi".to_string()).unwrap();
+    assert_eq!(
+        master.secret_bytes().to_lower_hex_string(),
+        "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35"
+    );
+    for (path, expected) in [
+        (
+            "m/0h/1/2h",
+            "cbce0d719ecf7431d88e6a89fa1483e02e35092af60c042b1df2ff59fa424dca",
+        ),
+        (
+            "m/0h/1/2h/2/1000000000",
+            "471b76e389e528d6de6d816857e012c5455051cad6660850e58372a6c3e6e7c8",
+        ),
+    ] {
+        assert_eq!(
+            extend_dsk(&master, path)
+                .unwrap()
+                .secret_bytes()
+                .to_lower_hex_string(),
+            expected
+        );
+        assert_eq!(
+            derive_dsk(&master, path)
+                .unwrap()
+                .secret_bytes()
+                .to_lower_hex_string(),
+            expected
+        );
+    }
+
+    // BIP-84 and BIP-86 share this mnemonic.
+    let mnemonic = Mnemonic::from_string(
+        "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+            .to_string(),
+    )
+    .unwrap();
+    let root = DescriptorSecretKey::new(NetworkKind::Main, &mnemonic, None);
+    assert_eq!(root.to_string(), "xprv9s21ZrQH143K3GJpoapnV8SFfukcVBSfeCficPSGfubmSFDxo1kuHnLisriDvSnRRuL2Qrg5ggqHKNVpxR86QEC8w35uxmGoggxtQTPvfUu");
+    assert_eq!(
+        root.secret_bytes().to_lower_hex_string(),
+        "1837c1be8e2995ec11cda2b066151be2cfb48adf9e47b151d46adab3a21cdf67"
+    );
+
+    // BIP-84 account 0, extended from the account key the way a wallet would walk its addresses.
+    // https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki#test-vectors
+    let bip84_account = extend_dsk(&root, "m/84h/0h/0h").unwrap();
+    for (path, expected) in [
+        (
+            "m/0/0",
+            "4604b4b710fe91f584fff084e1a9159fe4f8408fff380596a604948474ce4fa3",
+        ),
+        (
+            "m/0/1",
+            "2fd0affa51529f940a358ec0c50de81267d0bf5158ca61887347676946362c5b",
+        ),
+        (
+            "m/1/0",
+            "3277578a56b721e4c9f071f1e24aa0f94c4ff72e7967fea03b134f605f07c8fd",
+        ),
+    ] {
+        assert_eq!(
+            extend_dsk(&bip84_account, path)
+                .unwrap()
+                .secret_bytes()
+                .to_lower_hex_string(),
+            expected
+        );
+    }
+
+    // BIP-86 account 0, first receiving address.
+    // https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki#test-vectors
+    assert_eq!(
+        extend_dsk(&root, "m/86h/0h/0h/0/0")
+            .unwrap()
+            .secret_bytes()
+            .to_lower_hex_string(),
+        "41f41d69260df4cf277826a9b65a3717e4eeddbeedf637f212ca096576479361"
+    );
 }
