@@ -4,7 +4,33 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v3.1.0...HEAD)
+## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v3.1.1...HEAD)
+
+## [v3.1.1]
+
+This is version `3.1.1` of the BDK language bindings! This release uses the following Rust dependencies:
+
+- bdk_wallet `3.1.0`
+- bdk_electrum `0.24.0`
+- bdk_esplora `0.22.2`
+- bdk_kyoto `0.17.1`
+- bitcoin `0.32.102`
+- miniscript `12.3.7`
+- uniffi `0.31.2`
+
+### Fixed
+
+- Prevent overflow when converting and displaying very large fee rates [#1076]
+- Honor Kyoto recovery birthdays on non-mainnet networks instead of falling back to genesis [#1077]
+- Redact descriptor and key parsing error messages that could echo back sensitive input [#1131]
+- `DescriptorSecretKey::secret_bytes` returns the key derived along the key's derivation path [#1132]
+- `DescriptorSecretKey::derive` and `DescriptorPublicKey::derive` apply a derivation path already set on the key [#1133]
+
+[#1076]: https://github.com/bitcoindevkit/bdk-ffi/pull/1076
+[#1077]: https://github.com/bitcoindevkit/bdk-ffi/pull/1077
+[#1131]: https://github.com/bitcoindevkit/bdk-ffi/pull/1131
+[#1132]: https://github.com/bitcoindevkit/bdk-ffi/pull/1132
+[#1133]: https://github.com/bitcoindevkit/bdk-ffi/pull/1133
 
 ## [v3.1.0]
 
