@@ -21,6 +21,21 @@ use std::convert::TryFrom;
 use std::sync::Arc;
 use std::time::Duration;
 
+/// Configuration for an electrum client
+#[derive(Clone, uniffi::Record)]
+pub struct ElectrumClientConfig {
+    /// Electrum server URL
+    pub url: String,
+    /// Proxy socks5 configuration, default None
+    pub socks5: Option<String>,
+    /// timeout in seconds, default None (depends on TcpStream default)
+    pub timeout: Option<u8>,
+    /// number of retry if any error, default 1
+    pub retry: Option<u8>,
+    /// when ssl, validate the domain, default true
+    pub validate_domain: bool,
+}
+
 /// Wrapper around an electrum_client::ElectrumApi which includes an internal in-memory transaction
 /// cache to avoid re-fetching already downloaded transactions.
 #[derive(uniffi::Object)]
@@ -28,7 +43,7 @@ pub struct ElectrumClient(BdkBdkElectrumClient<bdk_electrum::electrum_client::Cl
 
 #[uniffi::export]
 impl ElectrumClient {
-    /// Creates a new bdk client from a electrum_client::ElectrumApi
+    /// Creates a new bdk client from an electrum server URL
     /// Optional: Set the proxy of the builder
     /// Optional: Set the timeout (in seconds) of the builder
     /// Optional: Set the retry attempts number of the builder
@@ -41,21 +56,35 @@ impl ElectrumClient {
         retry: Option<u8>,
         validate_domain: bool,
     ) -> Result<Self, ElectrumError> {
+        Self::connect(ElectrumClientConfig {
+            url,
+            socks5,
+            timeout,
+            retry,
+            validate_domain,
+        })
+    }
+
+    /// Creates a new bdk client from `ElectrumClientConfig`
+    #[uniffi::constructor]
+    pub fn connect(client_config: ElectrumClientConfig) -> Result<Self, ElectrumError> {
         let mut config = bdk_electrum::electrum_client::ConfigBuilder::new();
-        config = config.validate_domain(validate_domain);
-        if let Some(timeout) = timeout {
+        config = config.validate_domain(client_config.validate_domain);
+        if let Some(timeout) = client_config.timeout {
             config = config.timeout(Some(Duration::from_secs(timeout.into())));
         }
-        if let Some(retry) = retry {
+        if let Some(retry) = client_config.retry {
             config = config.retry(retry);
         }
-        if let Some(socks5) = socks5 {
+        if let Some(socks5) = client_config.socks5 {
             config = config.socks5(Some(bdk_electrum::electrum_client::Socks5Config::new(
                 socks5.as_str(),
             )));
         }
-        let inner_client =
-            bdk_electrum::electrum_client::Client::from_config(url.as_str(), config.build())?;
+        let inner_client = bdk_electrum::electrum_client::Client::from_config(
+            client_config.url.as_str(),
+            config.build(),
+        )?;
         let client = BdkBdkElectrumClient::new(inner_client);
         Ok(Self(client))
     }
