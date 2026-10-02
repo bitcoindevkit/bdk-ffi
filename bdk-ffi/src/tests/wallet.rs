@@ -499,3 +499,92 @@ fn test_load_from_two_path_descriptor_with_params() {
         error => panic!("expected InvalidChangeSet error, got {:?}", error),
     }
 }
+
+#[test]
+fn test_all_tx_details_empty_wallet() {
+    let wallet = Wallet::new(
+        external_descriptor(),
+        internal_descriptor(),
+        Network::Signet,
+        Arc::new(Persister::new_in_memory().unwrap()),
+        25,
+    )
+    .unwrap();
+
+    let details = wallet.all_tx_details();
+
+    assert!(
+        details.is_empty(),
+        "Expected no tx details for a fresh wallet, got {}",
+        details.len()
+    );
+}
+
+#[test]
+fn test_all_tx_details_populated_wallet() {
+    let wallet = funded_wallet();
+    let address2 = wallet.reveal_next_address(KeychainKind::External).address;
+
+    let tx2 = BdkTransaction {
+        version: transaction::Version::ONE,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![],
+        output: vec![BdkTxOut {
+            value: BdkAmount::from_sat(50_000),
+            script_pubkey: address2.script_pubkey().0.clone(),
+        }],
+    };
+
+    let txid2 = tx2.compute_txid();
+
+    let mut update2 = bdk_wallet::Update::default();
+    update2.tx_update.txs.push(Arc::new(tx2.clone()));
+    update2.tx_update.seen_ats.insert((txid2, 2));
+
+    wallet.apply_update(Arc::new(Update(update2))).unwrap();
+
+    let details = wallet.all_tx_details();
+
+    assert_eq!(details.len(), 2);
+
+    let expected_txids: Vec<_> = wallet
+        .transactions()
+        .into_iter()
+        .map(|tx| tx.transaction.compute_txid())
+        .collect();
+
+    let actual_txids: Vec<_> = details
+        .iter()
+        .map(|detail| detail.tx.compute_txid())
+        .collect();
+
+    assert_eq!(actual_txids, expected_txids);
+
+    for detail in &details {
+        let txid = detail.tx.compute_txid();
+
+        let expected = wallet
+            .tx_details(txid.clone().into())
+            .expect("transaction details should exist in wallet");
+
+        assert_eq!(detail.txid, expected.txid);
+        assert_eq!(detail.sent, expected.sent);
+        assert_eq!(detail.received, expected.received);
+        assert_eq!(
+            detail.fee.as_ref().map(|fee| fee.to_sat()),
+            expected.fee.as_ref().map(|fee| fee.to_sat())
+        );
+        assert_eq!(
+            detail
+                .fee_rate
+                .as_ref()
+                .map(|fee_rate| fee_rate.to_sat_per_vb_ceil()),
+            expected
+                .fee_rate
+                .as_ref()
+                .map(|fee_rate| fee_rate.to_sat_per_vb_ceil())
+        );
+        assert_eq!(detail.balance_delta, expected.balance_delta);
+        assert_eq!(detail.tx, expected.tx);
+    }
+}
