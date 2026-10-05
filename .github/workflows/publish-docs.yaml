@@ -1,0 +1,66 @@
+name: Publish Rust API Docs
+
+# Builds the Rust API docs for bdk-ffi and deploys them to GitHub Pages.
+# Runs on release tag pushes, or manually via workflow_dispatch for a given tag.
+# The docs build uses bdk-ffi/scripts/build-docs.sh, which relies on BSD sed, so it runs on macOS.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build the docs from (e.g. v3.1.1)"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: "Build docs"
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: bdk-ffi
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          persist-credentials: false
+
+      - name: "Set up Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          cache: false
+
+      - name: "Build docs"
+        run: bash scripts/build-docs.sh
+
+      - name: "Upload Pages artifact"
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: bdk-ffi/target/doc
+
+  deploy:
+    name: "Deploy to GitHub Pages"
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: "Deploy"
+        id: deployment
+        uses: actions/deploy-pages@v5

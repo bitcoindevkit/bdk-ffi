@@ -53,11 +53,7 @@ git push upstream v0.6.0
 - [ ] Update all downstream libraries (dart, rn, python, and jvm) to the given tag. This allows for everyone to test their own workflows, run their CI, etc.
 - [ ] Trigger releases for both libraries (for Swift, go to the [bdk-swift](https://github.com/bitcoindevkit/bdk-swift) repository and trigger the workflow using `master`. Simply add the version number and tag name in the text fields when running the workflow manually. Note that the version number must not contain the `v`, i.e. `0.26.0`, but the tag will have it, i.e. `v0.26.0`). For Android, trigger the release locally.
 - [ ] Make sure the released libraries work and contain the artifacts you would expect.
-- [ ] Build the Rust API docs and publish them to the repo's GitHub Pages.
-```shell
-cd bdk-ffi/
-just docs
-```
+- [ ] Make sure the [Publish Rust API Docs](https://github.com/bitcoindevkit/bdk-ffi/actions/workflows/publish-docs.yaml) workflow ran for the tag and the docs at https://bitcoindevkit.github.io/bdk-ffi/ are updated.
 - [ ] Bump the version on master from `1.1.0-SNAPSHOT` to `1.2.0-SNAPSHOT` (Android) and `1.1.0-alpha.0` to `1.2.0-alpha.0` (Rust).
 - [ ] Apply changes to the release issue template if needed.
 - [ ] Make release on GitHub using the reviewed release notes.
