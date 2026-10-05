@@ -14,6 +14,6 @@ check:
 test:
   cargo test --locked
 
-# Build API documentation for gh-pages or local browsing
+# Build API documentation for local browsing (CI publishes it to GitHub Pages on release tags)
 docs:
-  bash scripts/build-docs.sh && bash scripts/deploy-docs.sh
+  bash scripts/build-docs.sh
