@@ -11,13 +11,13 @@ use bdk_kyoto::HashCheckpoint;
 use bdk_kyoto::Receiver;
 use bdk_kyoto::RejectReason;
 use bdk_kyoto::Requester;
+use bdk_kyoto::SyncConfig;
 use bdk_kyoto::TrustedPeer;
 use bdk_kyoto::UnboundedReceiver;
 use bdk_kyoto::UpdateSubscriber;
 use bdk_kyoto::Warning as Warn;
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -33,7 +33,6 @@ use crate::wallet::Wallet;
 use crate::FeeRate;
 
 const DEFAULT_CONNECTIONS: u8 = 2;
-const CWD_PATH: &str = ".";
 const TCP_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(2);
 const MESSAGE_RESPONSE_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -91,7 +90,6 @@ impl CbfNode {
 /// * List of `Peer`: Bitcoin full-nodes for the light client to connect to. May be empty.
 /// * `connections`: The number of connections for the light client to maintain.
 /// * `scan_type`: Sync, recover, or start a new wallet. For more information see [`ScanType`].
-/// * `data_dir`: Optional directory to store block headers and peers.
 ///
 /// A note on recovering wallets. Developers should allow users to provide an
 /// approximate recovery height and an estimated number of transactions for the
@@ -103,7 +101,6 @@ pub struct CbfBuilder {
     connections: u8,
     handshake_timeout: Duration,
     response_timeout: Duration,
-    data_dir: Option<String>,
     scan_type: ScanType,
     socks5_proxy: Option<Socks5Proxy>,
     peers: Vec<Peer>,
@@ -120,7 +117,6 @@ impl CbfBuilder {
             connections: DEFAULT_CONNECTIONS,
             handshake_timeout: TCP_HANDSHAKE_TIMEOUT,
             response_timeout: MESSAGE_RESPONSE_TIMEOUT,
-            data_dir: None,
             scan_type: ScanType::default(),
             socks5_proxy: None,
             peers: Vec::new(),
@@ -132,15 +128,6 @@ impl CbfBuilder {
     pub fn connections(&self, connections: u8) -> Arc<Self> {
         Arc::new(CbfBuilder {
             connections,
-            ..self.clone()
-        })
-    }
-
-    /// Directory to store block headers and peers. If none is provided, the current
-    /// working directory will be used.
-    pub fn data_dir(&self, data_dir: String) -> Arc<Self> {
-        Arc::new(CbfBuilder {
-            data_dir: Some(data_dir),
             ..self.clone()
         })
     }
@@ -200,53 +187,8 @@ impl CbfBuilder {
             trusted_peers.push(peer.clone().into());
         }
 
-        let scan_type = match self.scan_type.clone() {
-            ScanType::Sync => bdk_kyoto::ScanType::Sync,
-            ScanType::Recovery {
-                used_script_index,
-                checkpoint,
-            } => {
-                let network = wallet.network();
-                match checkpoint {
-                    RecoveryPoint::GenesisBlock => bdk_kyoto::ScanType::Recovery {
-                        used_script_index,
-                        checkpoint: HashCheckpoint::from_genesis(network),
-                    },
-                    RecoveryPoint::SegwitActivation if matches!(network, Network::Bitcoin) => {
-                        bdk_kyoto::ScanType::Recovery {
-                            used_script_index,
-                            checkpoint: HashCheckpoint::segwit_activation(),
-                        }
-                    }
-                    RecoveryPoint::TaprootActivation if matches!(network, Network::Bitcoin) => {
-                        bdk_kyoto::ScanType::Recovery {
-                            used_script_index,
-                            checkpoint: HashCheckpoint::taproot_activation(),
-                        }
-                    }
-                    RecoveryPoint::SegwitActivation | RecoveryPoint::TaprootActivation => {
-                        bdk_kyoto::ScanType::Recovery {
-                            used_script_index,
-                            checkpoint: HashCheckpoint::from_genesis(network),
-                        }
-                    }
-                    RecoveryPoint::Other { birthday } => bdk_kyoto::ScanType::Recovery {
-                        used_script_index,
-                        checkpoint: HashCheckpoint::new(birthday.height, birthday.hash.0),
-                    },
-                }
-            }
-        };
-
-        let path_buf = self
-            .data_dir
-            .clone()
-            .map(|path| PathBuf::from(&path))
-            .unwrap_or(PathBuf::from(CWD_PATH));
-
         let mut builder = BDKCbfBuilder::new(wallet.network())
             .required_peers(self.connections)
-            .data_dir(path_buf)
             .handshake_timeout(self.handshake_timeout)
             .response_timeout(self.response_timeout)
             .add_peers(trusted_peers);
@@ -261,10 +203,42 @@ impl CbfBuilder {
             builder = builder.whitelist_only();
         }
 
-        let (client, logging, update_subscriber) = builder
-            .build_with_wallet(&wallet, scan_type)
-            .expect("networks match by definition")
-            .subscribe();
+        let built = match self.scan_type.clone() {
+            ScanType::Sync => {
+                builder.build_with_wallet(&wallet, SyncConfig::sync_from_last_checkpoint().build())
+            }
+            ScanType::New => {
+                builder.build_with_wallet(&wallet, SyncConfig::new_wallet_sync().build())
+            }
+            ScanType::Recovery {
+                used_script_index,
+                checkpoint,
+            } => {
+                let network = wallet.network();
+                let checkpoint = match checkpoint {
+                    RecoveryPoint::GenesisBlock => HashCheckpoint::from_genesis(network),
+                    RecoveryPoint::SegwitActivation if matches!(network, Network::Bitcoin) => {
+                        HashCheckpoint::segwit_activation()
+                    }
+                    RecoveryPoint::TaprootActivation if matches!(network, Network::Bitcoin) => {
+                        HashCheckpoint::taproot_activation()
+                    }
+                    RecoveryPoint::SegwitActivation | RecoveryPoint::TaprootActivation => {
+                        HashCheckpoint::from_genesis(network)
+                    }
+                    RecoveryPoint::Other { birthday } => {
+                        HashCheckpoint::new(birthday.height, birthday.hash.0)
+                    }
+                };
+                builder.build_with_wallet(
+                    &wallet,
+                    SyncConfig::wallet_recovery_sync(checkpoint, used_script_index).build(),
+                )
+            }
+        };
+
+        let (client, logging, update_subscriber) =
+            built.expect("networks match by definition").subscribe();
         let (client, node) = client.managed_start();
         let requester = client.requester();
 
@@ -496,13 +470,17 @@ impl From<Warn> for Warning {
     }
 }
 
-/// Sync a wallet from the last known block hash or recover a wallet from a specified recovery
-/// point.
+/// Sync a wallet from the last known block hash, start a brand new wallet, or recover a wallet
+/// from a specified recovery point.
 #[derive(Debug, Clone, Default, uniffi::Enum)]
 pub enum ScanType {
     /// Sync an existing wallet from the last stored chain checkpoint.
     #[default]
     Sync,
+    /// Start a wallet that is guaranteed to be new, i.e. no scripts have been revealed. Block
+    /// headers are synced to the active chain tip, but filter downloads are skipped. Subsequent
+    /// updates after new blocks are mined will check filters as usual.
+    New,
     /// Recover an existing wallet by scanning from the specified height.
     Recovery {
         /// The estimated number of scripts the user has revealed for the wallet being recovered.

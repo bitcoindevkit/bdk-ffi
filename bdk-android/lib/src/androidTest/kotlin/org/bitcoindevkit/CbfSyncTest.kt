@@ -2,25 +2,16 @@ package org.bitcoindevkit
 
 import kotlin.test.Test
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.runner.RunWith
 import org.kotlinbitcointools.regtesttoolbox.regenv.RegEnv
-import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(AndroidJUnit4::class)
 class CbfSyncTest {
     private val conn: Persister = Persister.newInMemory()
-
-    private val kyotoDataDir: String by lazy {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val dir = File(context.filesDir, "kyoto_test_data")
-        dir.mkdirs()
-        dir.absolutePath
-    }
 
     @Test
     fun syncWithKyotoClient() {
@@ -49,7 +40,6 @@ class CbfSyncTest {
                 .peers(peers)
                 .connections(1u)
                 .scanType(ScanType.Sync)
-                .dataDir(kyotoDataDir)
                 .build(wallet)
 
             node.run()
