@@ -44,7 +44,7 @@ pub struct TxBuilder {
     drain_wallet: bool,
     drain_to: Option<BdkScriptBuf>,
     sequence: Option<u32>,
-    data: Vec<u8>,
+    data: Vec<Vec<u8>>,
     current_height: Option<u32>,
     locktime: Option<LockTime>,
     allow_dust: bool,
@@ -331,9 +331,15 @@ impl TxBuilder {
     }
 
     /// Add data as an output using `OP_RETURN`.
+    ///
+    /// Each call adds a separate `OP_RETURN` output; repeated calls do not replace the payloads
+    /// added by previous calls.
     pub fn add_data(&self, data: Vec<u8>) -> Arc<Self> {
+        let mut new_data: Vec<Vec<u8>> = self.data.clone();
+        new_data.push(data);
+
         Arc::new(TxBuilder {
-            data,
+            data: new_data,
             ..self.clone()
         })
     }
@@ -635,8 +641,8 @@ impl TxBuilder {
         if let Some(sequence) = self.sequence {
             tx_builder.set_exact_sequence(Sequence(sequence));
         }
-        if !&self.data.is_empty() {
-            let push_bytes = PushBytesBuf::try_from(self.data.clone())?;
+        for data in &self.data {
+            let push_bytes = PushBytesBuf::try_from(data.clone())?;
             tx_builder.add_data(&push_bytes);
         }
         if let Some(height) = self.current_height {
@@ -942,6 +948,20 @@ mod tests {
             let tx_builder = TxBuilder::new().coin_selection(algorithm);
             assert_eq!(tx_builder.coin_selection, Some(algorithm));
         }
+    }
+
+    #[test]
+    fn tx_builder_add_data_preserves_every_payload() {
+        let tx_builder = TxBuilder::new().add_data(vec![0x01]).add_data(vec![0x02]);
+
+        assert_eq!(tx_builder.data, vec![vec![0x01], vec![0x02]]);
+    }
+
+    #[test]
+    fn tx_builder_add_data_keeps_duplicate_payloads() {
+        let tx_builder = TxBuilder::new().add_data(vec![0x01]).add_data(vec![0x01]);
+
+        assert_eq!(tx_builder.data, vec![vec![0x01], vec![0x01]]);
     }
 
     #[test]
