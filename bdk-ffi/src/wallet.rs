@@ -20,10 +20,11 @@ use bdk_wallet::keys::KeyMap;
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
 use bdk_wallet::{
     CreateParams as BdkCreateParams, LoadParams as BdkLoadParams, PersistedWallet,
-    Wallet as BdkWallet,
+    Wallet as BdkWallet, WalletPersister,
 };
 
 use std::ops::DerefMut;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
 
 /// A Bitcoin wallet.
@@ -41,6 +42,16 @@ use std::sync::{Arc, Mutex, MutexGuard};
 #[derive(uniffi::Object)]
 pub struct Wallet {
     inner_mutex: Mutex<PersistedWallet<PersistenceType>>,
+    // Prevents overlapping snapshots from being persisted out of order.
+    persistence_in_progress: AtomicBool,
+}
+
+struct WalletPersistenceOperation<'a>(&'a AtomicBool);
+
+impl Drop for WalletPersistenceOperation<'_> {
+    fn drop(&mut self) {
+        self.0.store(false, Ordering::Release);
+    }
 }
 
 /// Parameters for `Wallet` creation.
@@ -151,8 +162,13 @@ impl Wallet {
     ) -> Result<Self, CreateWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let mut persist_lock = persister.inner.lock().unwrap();
-        let deref = persist_lock.deref_mut();
+        let mut persist_operation =
+            persister
+                .begin_operation()
+                .map_err(|error| CreateWithPersistError::Persist {
+                    error_message: error.to_string(),
+                })?;
+        let deref = persist_operation.deref_mut();
 
         let bdk_params = BdkWallet::create(descriptor, change_descriptor).network(network);
         let bdk_params = params.apply_to(bdk_params);
@@ -163,6 +179,7 @@ impl Wallet {
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
+            persistence_in_progress: AtomicBool::new(false),
         })
     }
 
@@ -210,8 +227,13 @@ impl Wallet {
         params: CreateParams,
     ) -> Result<Self, CreateWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
-        let mut persist_lock = persister.inner.lock().unwrap();
-        let deref = persist_lock.deref_mut();
+        let mut persist_operation =
+            persister
+                .begin_operation()
+                .map_err(|error| CreateWithPersistError::Persist {
+                    error_message: error.to_string(),
+                })?;
+        let deref = persist_operation.deref_mut();
 
         let bdk_params = BdkWallet::create_single(descriptor).network(network);
         let bdk_params = params.apply_to(bdk_params);
@@ -222,6 +244,7 @@ impl Wallet {
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
+            persistence_in_progress: AtomicBool::new(false),
         })
     }
 
@@ -265,8 +288,13 @@ impl Wallet {
         params: CreateParams,
     ) -> Result<Self, CreateWithPersistError> {
         let descriptor = two_path_descriptor.to_string_with_secret();
-        let mut persist_lock = persister.inner.lock().unwrap();
-        let deref = persist_lock.deref_mut();
+        let mut persist_operation =
+            persister
+                .begin_operation()
+                .map_err(|error| CreateWithPersistError::Persist {
+                    error_message: error.to_string(),
+                })?;
+        let deref = persist_operation.deref_mut();
 
         let bdk_params = BdkWallet::create_from_two_path_descriptor(descriptor).network(network);
         let bdk_params = params.apply_to(bdk_params);
@@ -277,6 +305,7 @@ impl Wallet {
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
+            persistence_in_progress: AtomicBool::new(false),
         })
     }
 
@@ -310,8 +339,13 @@ impl Wallet {
     ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
         let change_descriptor = change_descriptor.to_string_with_secret();
-        let mut persist_lock = persister.inner.lock().unwrap();
-        let deref = persist_lock.deref_mut();
+        let mut persist_operation =
+            persister
+                .begin_operation()
+                .map_err(|error| LoadWithPersistError::Persist {
+                    error_message: error.to_string(),
+                })?;
+        let deref = persist_operation.deref_mut();
 
         let bdk_params = BdkWallet::load()
             .descriptor(KeychainKind::External, Some(descriptor))
@@ -326,6 +360,7 @@ impl Wallet {
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
+            persistence_in_progress: AtomicBool::new(false),
         })
     }
 
@@ -362,8 +397,13 @@ impl Wallet {
         params: LoadParams,
     ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = two_path_descriptor.to_string();
-        let mut persist_lock = persister.inner.lock().unwrap();
-        let deref = persist_lock.deref_mut();
+        let mut persist_operation =
+            persister
+                .begin_operation()
+                .map_err(|error| LoadWithPersistError::Persist {
+                    error_message: error.to_string(),
+                })?;
+        let deref = persist_operation.deref_mut();
 
         let bdk_params = BdkWallet::load().two_path_descriptor(descriptor);
         let bdk_params = params.apply_to(bdk_params);
@@ -375,6 +415,7 @@ impl Wallet {
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
+            persistence_in_progress: AtomicBool::new(false),
         })
     }
 
@@ -400,8 +441,13 @@ impl Wallet {
         params: LoadParams,
     ) -> Result<Wallet, LoadWithPersistError> {
         let descriptor = descriptor.to_string_with_secret();
-        let mut persist_lock = persister.inner.lock().unwrap();
-        let deref = persist_lock.deref_mut();
+        let mut persist_operation =
+            persister
+                .begin_operation()
+                .map_err(|error| LoadWithPersistError::Persist {
+                    error_message: error.to_string(),
+                })?;
+        let deref = persist_operation.deref_mut();
 
         let bdk_params = BdkWallet::load()
             .descriptor(KeychainKind::External, Some(descriptor))
@@ -415,6 +461,7 @@ impl Wallet {
 
         Ok(Wallet {
             inner_mutex: Mutex::new(wallet),
+            persistence_in_progress: AtomicBool::new(false),
         })
     }
 
@@ -942,14 +989,40 @@ impl Wallet {
     /// Returns whether any new changes were persisted.
     ///
     /// If the persister errors, the staged changes will not be cleared.
+    ///
+    /// Overlapping persistence calls for the same wallet or custom persister return an error.
     pub fn persist(&self, persister: Arc<Persister>) -> Result<bool, PersistenceError> {
-        let mut persist_lock = persister.inner.lock().unwrap();
-        let deref = persist_lock.deref_mut();
-        self.get_wallet()
-            .persist(deref)
-            .map_err(|e| PersistenceError::Reason {
-                error_message: e.to_string(),
-            })
+        let _wallet_operation = self.begin_persistence_operation()?;
+        let mut persist_operation = persister.begin_operation()?;
+
+        if matches!(&*persist_operation, PersistenceType::Sql(_)) {
+            return self
+                .get_wallet()
+                .persist(persist_operation.deref_mut())
+                .map_err(|error| PersistenceError::Reason {
+                    error_message: error.to_string(),
+                });
+        }
+
+        // Keep the stage in the wallet while the callback runs so errors and reentrant
+        // mutations cannot discard changes that have not been persisted successfully.
+        let Some(staged) = self.get_wallet().staged().cloned() else {
+            return Ok(false);
+        };
+
+        WalletPersister::persist(persist_operation.deref_mut(), &staged).map_err(|error| {
+            PersistenceError::Reason {
+                error_message: error.to_string(),
+            }
+        })?;
+
+        let mut wallet = self.get_wallet();
+        // A callback may mutate the wallet. Clear only the exact snapshot that was
+        // persisted; otherwise retain the merged stage for the next persistence call.
+        if wallet.staged() == Some(&staged) {
+            let _ = wallet.take_staged();
+        }
+        Ok(true)
     }
 
     /// Get a reference of the staged [`ChangeSet`] that is yet to be committed (if any).
@@ -997,6 +1070,17 @@ impl Wallet {
 }
 
 impl Wallet {
+    fn begin_persistence_operation(
+        &self,
+    ) -> Result<WalletPersistenceOperation<'_>, PersistenceError> {
+        self.persistence_in_progress
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .map_err(|_| PersistenceError::Reason {
+                error_message: "wallet persistence operation already in progress".to_string(),
+            })?;
+        Ok(WalletPersistenceOperation(&self.persistence_in_progress))
+    }
+
     pub(crate) fn get_wallet(&self) -> MutexGuard<'_, PersistedWallet<PersistenceType>> {
         self.inner_mutex.lock().expect("wallet")
     }
