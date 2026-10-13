@@ -801,6 +801,9 @@ pub enum SpkIndexError {
 
     #[error("this wallet has no {keychain:?} keychain")]
     KeychainNotFound { keychain: KeychainKind },
+
+    #[error("no spk was requested, the sync request would be empty")]
+    NoSpksRequested,
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]

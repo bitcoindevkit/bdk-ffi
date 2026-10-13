@@ -945,13 +945,25 @@ impl Wallet {
     /// its keychain, otherwise a [`SpkIndexError`] is returned and no request is built. Syncing
     /// an unrevealed index would be misleading: the wallet's indexer does not track it, so the
     /// outputs of any transaction found there would not be recognized as the wallet's own.
+    ///
+    /// A keychain can be left out of the request entirely by passing `None` (or an empty list) for
+    /// its indices, which is also what makes this usable on a wallet without an internal keychain.
+    /// Leaving out both keychains is refused with a [`SpkIndexError`], since the resulting request
+    /// would carry no spk at all.
+    #[uniffi::method(default(external_indices = None, internal_indices = None))]
     pub fn start_sync_with_spk_indices(
         &self,
-        external_indices: Vec<u32>,
-        internal_indices: Vec<u32>,
+        external_indices: Option<Vec<u32>>,
+        internal_indices: Option<Vec<u32>>,
     ) -> Result<Arc<SyncRequestBuilder>, SpkIndexError> {
         let wallet = self.get_wallet();
         let spk_index = wallet.spk_index();
+
+        let external_indices = external_indices.unwrap_or_default();
+        let internal_indices = internal_indices.unwrap_or_default();
+        if external_indices.is_empty() && internal_indices.is_empty() {
+            return Err(SpkIndexError::NoSpksRequested);
+        }
 
         let mut spks = Vec::with_capacity(external_indices.len() + internal_indices.len());
         for (keychain, indices) in [
@@ -994,20 +1006,38 @@ impl Wallet {
     /// derived addresses. If fewer spks have been revealed than requested, all revealed spks for
     /// that keychain are included. Asking for spks of a keychain this wallet does not have
     /// returns a [`SpkIndexError`].
+    ///
+    /// A keychain can be left out of the request entirely by passing `None` (or a count of zero)
+    /// for it, which is also what makes this usable on a wallet without an internal keychain. A
+    /// request which would end up with no spk at all is refused with a [`SpkIndexError`], whether
+    /// because both counts are zero or because the requested keychain has revealed nothing yet.
+    #[uniffi::method(default(external_count = None, internal_count = None))]
     pub fn start_sync_with_last_revealed_spks(
         &self,
-        external_count: u32,
-        internal_count: u32,
+        external_count: Option<u32>,
+        internal_count: Option<u32>,
     ) -> Result<Arc<SyncRequestBuilder>, SpkIndexError> {
         let wallet = self.get_wallet();
         let spk_index = wallet.spk_index();
+
+        let external_count = external_count.unwrap_or(0);
+        let internal_count = internal_count.unwrap_or(0);
+        if external_count == 0 && internal_count == 0 {
+            return Err(SpkIndexError::NoSpksRequested);
+        }
 
         for (keychain, count) in [
             (KeychainKind::External, external_count),
             (KeychainKind::Internal, internal_count),
         ] {
-            if count > 0 && spk_index.get_descriptor(keychain).is_none() {
+            if count == 0 {
+                continue;
+            }
+            if spk_index.get_descriptor(keychain).is_none() {
                 return Err(SpkIndexError::KeychainNotFound { keychain });
+            }
+            if spk_index.last_revealed_index(keychain).is_none() {
+                return Err(SpkIndexError::NoneRevealed { keychain });
             }
         }
 
