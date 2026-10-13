@@ -302,6 +302,7 @@ impl Wallet {
     ///
     /// Note that the descriptor secret keys are not persisted to the db.
     #[uniffi::constructor]
+    #[allow(deprecated)]
     pub fn load_with_params(
         descriptor: Arc<Descriptor>,
         change_descriptor: Arc<Descriptor>,
@@ -394,6 +395,7 @@ impl Wallet {
     ///
     /// Note that the descriptor secret keys are not persisted to the db.
     #[uniffi::constructor]
+    #[allow(deprecated)]
     pub fn load_single_with_params(
         descriptor: Arc<Descriptor>,
         persister: Arc<Persister>,
@@ -637,6 +639,7 @@ impl Wallet {
     }
 
     /// Return the spending policies for the wallet’s descriptor.
+    #[allow(deprecated)]
     pub fn policies(&self, keychain: KeychainKind) -> Result<Option<Arc<Policy>>, DescriptorError> {
         self.get_wallet()
             .policies(keychain)

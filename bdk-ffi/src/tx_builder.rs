@@ -589,6 +589,7 @@ impl TxBuilder {
 }
 
 impl TxBuilder {
+    #[allow(deprecated)]
     fn finish_with_builder<Cs>(
         &self,
         mut tx_builder: bdk_wallet::TxBuilder<'_, Cs>,
