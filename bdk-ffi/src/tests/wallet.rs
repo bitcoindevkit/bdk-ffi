@@ -83,6 +83,115 @@ fn funded_wallet() -> Wallet {
 }
 
 #[test]
+fn test_finalize_input_outcome_is_finalized() {
+    use crate::error::MiniscriptError;
+    use crate::types::FinalizeInputOutcome;
+
+    assert!(FinalizeInputOutcome::Finalized.is_finalized());
+    assert!(FinalizeInputOutcome::AlreadyFinalized.is_finalized());
+    assert!(!FinalizeInputOutcome::MissingDescriptor.is_finalized());
+    assert!(!FinalizeInputOutcome::CouldNotSatisfy {
+        error: MiniscriptError::CouldNotSatisfy,
+    }
+    .is_finalized());
+}
+
+#[test]
+fn test_try_finalize_psbt_signed_and_already_finalized() {
+    use crate::types::{FinalizeInputOutcome, SignOptions};
+    let wallet = Arc::new(funded_wallet());
+    let script = wallet
+        .next_unused_address(KeychainKind::External)
+        .address
+        .script_pubkey();
+    let psbt = TxBuilder::new()
+        .add_recipient(&script, Arc::new(Amount::from_sat(10_000)))
+        .finish(&wallet)
+        .unwrap();
+    wallet
+        .sign(
+            Arc::clone(&psbt),
+            Some(SignOptions {
+                trust_witness_utxo: false,
+                assume_height: None,
+                allow_all_sighashes: false,
+                try_finalize: false,
+                sign_with_tap_internal_key: true,
+                allow_grinding: true,
+            }),
+        )
+        .unwrap();
+    let outputs_before = psbt.0.lock().unwrap().outputs.clone();
+    let outcome = wallet.try_finalize_psbt(Arc::clone(&psbt)).unwrap();
+    assert!(outcome.is_finalized);
+    assert_eq!(outcome.outcomes.len(), 1);
+    assert!(matches!(
+        outcome.outcomes[&0],
+        FinalizeInputOutcome::Finalized
+    ));
+    assert!(!psbt.extract_tx().unwrap().input()[0].witness.is_empty());
+    assert_eq!(psbt.0.lock().unwrap().outputs, outputs_before);
+    let outcome = wallet.try_finalize_psbt(psbt).unwrap();
+    assert!(outcome.is_finalized);
+    assert!(matches!(
+        outcome.outcomes[&0],
+        FinalizeInputOutcome::AlreadyFinalized
+    ));
+}
+
+#[test]
+fn test_try_finalize_psbt_reports_each_input_failure() {
+    use crate::types::FinalizeInputOutcome;
+    let wallet = build_wallet();
+    let script = wallet
+        .reveal_next_address(KeychainKind::External)
+        .address
+        .script_pubkey();
+    let tx = BdkTransaction {
+        version: transaction::Version::TWO,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![bdk_wallet::bitcoin::TxIn::default(); 2],
+        output: vec![],
+    };
+    let mut raw = bdk_wallet::bitcoin::psbt::Psbt::from_unsigned_tx(tx).unwrap();
+    raw.inputs[0].witness_utxo = Some(BdkTxOut {
+        value: BdkAmount::from_sat(10_000),
+        script_pubkey: script.0.clone(),
+    });
+    let psbt = Arc::new(crate::bitcoin::Psbt::from(raw.clone()));
+    let outcome = wallet.try_finalize_psbt(Arc::clone(&psbt)).unwrap();
+    assert!(!outcome.is_finalized);
+    assert_eq!(outcome.outcomes.len(), 2);
+    assert!(matches!(
+        outcome.outcomes[&0],
+        FinalizeInputOutcome::CouldNotSatisfy { .. }
+    ));
+    assert!(matches!(
+        outcome.outcomes[&1],
+        FinalizeInputOutcome::MissingDescriptor
+    ));
+    assert_eq!(*psbt.0.lock().unwrap(), raw);
+}
+
+#[test]
+fn test_try_finalize_psbt_preserves_malformed_input_index() {
+    let wallet = build_wallet();
+    let tx = BdkTransaction {
+        version: transaction::Version::TWO,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![bdk_wallet::bitcoin::TxIn::default(); 2],
+        output: vec![],
+    };
+    let mut raw = bdk_wallet::bitcoin::psbt::Psbt::from_unsigned_tx(tx).unwrap();
+    raw.inputs.pop();
+    let psbt = Arc::new(crate::bitcoin::Psbt::from(raw));
+    assert!(matches!(
+        wallet.try_finalize_psbt(psbt),
+        Err(crate::error::FinalizePsbtError::InputIndexOutOfBounds { index: 1, len: 1 })
+    ));
+}
+
+#[test]
 fn test_tx_builder_invalid_current_height_returns_error() {
     let wallet = Arc::new(funded_wallet());
     let recipient_script = wallet
