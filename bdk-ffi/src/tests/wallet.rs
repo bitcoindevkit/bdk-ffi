@@ -83,6 +83,20 @@ fn funded_wallet() -> Wallet {
 }
 
 #[test]
+fn test_finalize_input_outcome_is_finalized() {
+    use crate::error::MiniscriptError;
+    use crate::types::FinalizeInputOutcome;
+
+    assert!(FinalizeInputOutcome::Finalized.is_finalized());
+    assert!(FinalizeInputOutcome::AlreadyFinalized.is_finalized());
+    assert!(!FinalizeInputOutcome::MissingDescriptor.is_finalized());
+    assert!(!FinalizeInputOutcome::CouldNotSatisfy {
+        error: MiniscriptError::CouldNotSatisfy,
+    }
+    .is_finalized());
+}
+
+#[test]
 fn test_try_finalize_psbt_signed_and_already_finalized() {
     use crate::types::{FinalizeInputOutcome, SignOptions};
     let wallet = Arc::new(funded_wallet());

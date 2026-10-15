@@ -46,6 +46,8 @@ final class WalletTests: XCTestCase {
 
         XCTAssertFalse(outcome.isFinalized)
         XCTAssertEqual(outcome.outcomes.count, 2)
+        XCTAssertFalse(try XCTUnwrap(outcome.outcomes[0]).isFinalized())
+        XCTAssertTrue(try XCTUnwrap(outcome.outcomes[1]).isFinalized())
         guard case .missingDescriptor? = outcome.outcomes[0] else {
             return XCTFail("Expected a missing descriptor for input 0")
         }

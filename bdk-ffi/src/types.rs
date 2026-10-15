@@ -29,6 +29,8 @@ use bdk_wallet::miniscript::descriptor::Wildcard;
 use bdk_wallet::signer::{SignOptions as BdkSignOptions, TapLeavesOptions};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
+use bdk_wallet::FinalizeInputOutcome as BdkFinalizeInputOutcome;
+use bdk_wallet::FinalizePsbtOutcome as BdkFinalizePsbtOutcome;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
 use bdk_wallet::WalletEvent as BdkWalletEvent;
@@ -836,20 +838,28 @@ pub enum FinalizeInputOutcome {
     CouldNotSatisfy { error: MiniscriptError },
 }
 
-impl From<bdk_wallet::FinalizeInputOutcome> for FinalizeInputOutcome {
-    fn from(outcome: bdk_wallet::FinalizeInputOutcome) -> Self {
+#[uniffi::export]
+impl FinalizeInputOutcome {
+    /// Whether the input is finalized after this call.
+    pub fn is_finalized(&self) -> bool {
+        matches!(self, Self::AlreadyFinalized | Self::Finalized)
+    }
+}
+
+impl From<BdkFinalizeInputOutcome> for FinalizeInputOutcome {
+    fn from(outcome: BdkFinalizeInputOutcome) -> Self {
         match outcome {
-            bdk_wallet::FinalizeInputOutcome::AlreadyFinalized => Self::AlreadyFinalized,
-            bdk_wallet::FinalizeInputOutcome::Finalized => Self::Finalized,
-            bdk_wallet::FinalizeInputOutcome::MissingDescriptor => Self::MissingDescriptor,
-            bdk_wallet::FinalizeInputOutcome::CouldNotSatisfy(error) => Self::CouldNotSatisfy {
+            BdkFinalizeInputOutcome::AlreadyFinalized => Self::AlreadyFinalized,
+            BdkFinalizeInputOutcome::Finalized => Self::Finalized,
+            BdkFinalizeInputOutcome::MissingDescriptor => Self::MissingDescriptor,
+            BdkFinalizeInputOutcome::CouldNotSatisfy(error) => Self::CouldNotSatisfy {
                 error: error.into(),
             },
         }
     }
 }
 
-/// Snapshot of a wallet PSBT finalization attempt.
+/// The outcome of a PSBT finalization attempt.
 #[derive(Debug, uniffi::Record)]
 pub struct FinalizePsbtOutcome {
     /// Whether all inputs are finalized after this call.
@@ -858,8 +868,8 @@ pub struct FinalizePsbtOutcome {
     pub outcomes: HashMap<u64, FinalizeInputOutcome>,
 }
 
-impl From<bdk_wallet::FinalizePsbtOutcome> for FinalizePsbtOutcome {
-    fn from(outcome: bdk_wallet::FinalizePsbtOutcome) -> Self {
+impl From<BdkFinalizePsbtOutcome> for FinalizePsbtOutcome {
+    fn from(outcome: BdkFinalizePsbtOutcome) -> Self {
         Self {
             is_finalized: outcome.is_finalized(),
             outcomes: outcome
