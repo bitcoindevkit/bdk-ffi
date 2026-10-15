@@ -1,9 +1,10 @@
 use crate::error::{
     AddressParseError, Bip32Error, ExtractTxError, FeeRateError, FromScriptError, HashParseError,
-    PsbtError, PsbtParseError, TransactionError,
+    PsbtError, PsbtParseError, SignError, TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::keys::DerivationPath;
+use crate::types::KeyMap;
 
 use crate::{impl_from_core_type, impl_hash_like, impl_into_core_type};
 use bdk_wallet::bitcoin::address::NetworkChecked;
@@ -18,6 +19,9 @@ use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
 use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::psbt::Output as BdkOutput;
+use bdk_wallet::bitcoin::psbt::SigningErrors as BdkSigningErrors;
+use bdk_wallet::bitcoin::psbt::SigningKeys as BdkSigningKeys;
+use bdk_wallet::bitcoin::psbt::SigningKeysMap as BdkSigningKeysMap;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::taproot::LeafNode as BdkLeafNode;
 use bdk_wallet::bitcoin::taproot::NodeInfo as BdkNodeInfo;
@@ -1561,6 +1565,47 @@ impl Psbt {
         let psbt = self.0.lock().unwrap();
         psbt.outputs.iter().map(|o| o.into()).collect()
     }
+
+    /// Attempts to create _all_ the required signatures for this PSBT using `k`.
+    ///
+    /// If you just want to sign an input with one specific key consider using `sighash_ecdsa` or
+    /// `sighash_taproot`. This function does not support scripts that contain `OP_CODESEPARATOR`.
+    ///
+    /// # Returns
+    ///
+    /// A map of input index -> keys used to sign, for Taproot specifics please see [`SigningKeys`].
+    ///
+    /// If an error is returned some signatures may already have been added to the PSBT. Since
+    /// `partial_sigs` is a [`BTreeMap`] it is safe to retry, previous sigs will be overwritten.
+    pub fn sign(&self, k: Vec<KeyMap>) -> PsbtSignResult {
+        let mut psbt = self.0.lock().unwrap();
+        let secp = Secp256k1::new();
+        let mut bdk_map: bdk_wallet::miniscript::descriptor::KeyMap =
+            std::collections::BTreeMap::new();
+        for key_map in &k {
+            bdk_map.insert(
+                key_map.descriptor_public_key.as_ref().0.clone(),
+                key_map.descriptor_secret_key.as_ref().0.clone(),
+            );
+        }
+        let bdk_wrapper = bdk_wallet::miniscript::descriptor::KeyMapWrapper::from(bdk_map);
+        let sign_result = psbt.sign(&bdk_wrapper, &secp);
+        match sign_result {
+            Ok(bdk_signing_keys_map) => {
+                let signing_keys_map: SigningKeysMap = bdk_signing_keys_map.into();
+                PsbtSignResult {
+                    signing_keys_map,
+                    signing_errors: SigningErrorsMap {
+                        map: HashMap::new(),
+                    },
+                }
+            }
+            Err(e) => PsbtSignResult {
+                signing_keys_map: e.0.into(),
+                signing_errors: e.1.into(),
+            },
+        }
+    }
 }
 
 impl From<BdkPsbt> for Psbt {
@@ -1647,6 +1692,87 @@ impl From<TxOut> for BdkTxOut {
         Self {
             value: tx_out.value.0,
             script_pubkey: tx_out.script_pubkey.0.clone(),
+        }
+    }
+}
+
+/// Map of input index -> signing key for that input.
+
+#[derive(uniffi::Record, Clone, Debug)]
+pub struct SigningKeysMap {
+    pub map: HashMap<u64, SigningKeys>,
+}
+
+impl From<BdkSigningKeysMap> for SigningKeysMap {
+    fn from(bdk_signing_keys_map: BdkSigningKeysMap) -> Self {
+        let signing_keys_map = bdk_signing_keys_map
+            .into_iter()
+            .map(|(input_index, signing_keys)| {
+                (input_index as u64, SigningKeys::from(signing_keys))
+            })
+            .collect();
+        SigningKeysMap {
+            map: signing_keys_map,
+        }
+    }
+}
+
+/// Map of input index -> the error encountered while attempting to sign that input.
+#[derive(uniffi::Record, Debug)]
+pub struct SigningErrorsMap {
+    pub map: HashMap<u64, SignError>,
+}
+
+impl From<BdkSigningErrors> for SigningErrorsMap {
+    fn from(bdk_signing_errors: BdkSigningErrors) -> Self {
+        let signing_errors = bdk_signing_errors
+            .into_iter()
+            .map(|(input_index, sign_error)| (input_index as u64, SignError::from(sign_error)))
+            .collect();
+        SigningErrorsMap {
+            map: signing_errors,
+        }
+    }
+}
+
+#[derive(uniffi::Record)]
+#[uniffi::export(Display)]
+pub struct PsbtSignResult {
+    pub signing_keys_map: SigningKeysMap,
+    pub signing_errors: SigningErrorsMap,
+}
+
+impl Display for PsbtSignResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "SigningKeysMap: {:?}, SigningErrors: {:?}",
+            self.signing_keys_map, self.signing_errors
+        )
+    }
+}
+
+/// A list of keys used to sign an input.
+#[derive(Clone, Debug, uniffi::Enum)]
+pub enum SigningKeys {
+    /// Keys used to sign an ECDSA input.
+    Ecdsa(Vec<String>),
+    /// Keys used to sign a Taproot input.
+    ///
+    /// - Key path spend: This is the internal key.
+    /// - Script path spend: This is the pubkey associated with the secret key that signed.
+    Schnorr(Vec<String>),
+}
+
+impl From<BdkSigningKeys> for SigningKeys {
+    fn from(value: BdkSigningKeys) -> Self {
+        match value {
+            BdkSigningKeys::Ecdsa(keys) => {
+                SigningKeys::Ecdsa(keys.into_iter().map(|k| k.to_string()).collect())
+            }
+            BdkSigningKeys::Schnorr(keys) => {
+                SigningKeys::Schnorr(keys.into_iter().map(|k| k.to_string()).collect())
+            }
         }
     }
 }
