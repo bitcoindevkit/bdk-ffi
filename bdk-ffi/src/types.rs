@@ -3,7 +3,7 @@ use crate::bitcoin::{
     Transaction, TxOut, Txid,
 };
 use crate::descriptor::Descriptor;
-use crate::error::{CreateTxError, RequestBuilderError};
+use crate::error::{CreateTxError, MiniscriptError, RequestBuilderError};
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::chain::spk_client::SyncItem;
@@ -819,6 +819,54 @@ impl From<BdkCondition> for Condition {
         Condition {
             csv: value.csv.map(|e| e.to_consensus_u32()),
             timelock: value.timelock.map(|e| e.into()),
+        }
+    }
+}
+
+/// The finalization status of a single PSBT input.
+#[derive(Debug, uniffi::Enum)]
+pub enum FinalizeInputOutcome {
+    /// The input was already finalized before this call.
+    AlreadyFinalized,
+    /// The input was finalized during this call.
+    Finalized,
+    /// The wallet could not derive a descriptor for the input.
+    MissingDescriptor,
+    /// The descriptor was found, but its spending conditions could not be satisfied.
+    CouldNotSatisfy { error: MiniscriptError },
+}
+
+impl From<bdk_wallet::FinalizeInputOutcome> for FinalizeInputOutcome {
+    fn from(outcome: bdk_wallet::FinalizeInputOutcome) -> Self {
+        match outcome {
+            bdk_wallet::FinalizeInputOutcome::AlreadyFinalized => Self::AlreadyFinalized,
+            bdk_wallet::FinalizeInputOutcome::Finalized => Self::Finalized,
+            bdk_wallet::FinalizeInputOutcome::MissingDescriptor => Self::MissingDescriptor,
+            bdk_wallet::FinalizeInputOutcome::CouldNotSatisfy(error) => Self::CouldNotSatisfy {
+                error: error.into(),
+            },
+        }
+    }
+}
+
+/// Snapshot of a wallet PSBT finalization attempt.
+#[derive(Debug, uniffi::Record)]
+pub struct FinalizePsbtOutcome {
+    /// Whether all inputs are finalized after this call.
+    pub is_finalized: bool,
+    /// Outcomes keyed by the zero-based transaction input index.
+    pub outcomes: HashMap<u64, FinalizeInputOutcome>,
+}
+
+impl From<bdk_wallet::FinalizePsbtOutcome> for FinalizePsbtOutcome {
+    fn from(outcome: bdk_wallet::FinalizePsbtOutcome) -> Self {
+        Self {
+            is_finalized: outcome.is_finalized(),
+            outcomes: outcome
+                .into_outcomes()
+                .into_iter()
+                .map(|(index, outcome)| (index as u64, outcome.into()))
+                .collect(),
         }
     }
 }

@@ -4,14 +4,15 @@ use crate::bitcoin::{
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
-    LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
+    FinalizePsbtError, LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
 };
 use crate::signer::SignersContainer;
 use crate::store::{PersistenceType, Persister};
 use crate::types::{
-    AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FullScanRequestBuilder,
-    KeychainAndIndex, KeychainKind, LocalOutput, Policy, SentAndReceivedValues, SignOptions,
-    SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent, WalletKeychain,
+    AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FinalizePsbtOutcome,
+    FullScanRequestBuilder, KeychainAndIndex, KeychainKind, LocalOutput, Policy,
+    SentAndReceivedValues, SignOptions, SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent,
+    WalletKeychain,
 };
 
 use bdk_wallet::bitcoin::Network;
@@ -763,6 +764,25 @@ impl Wallet {
         self.get_wallet()
             .finalize_psbt(&mut psbt, bdk_sign_options)
             .map_err(SignerError::from)
+    }
+
+    /// Attempt to finalize each PSBT input and return its finalization outcome.
+    ///
+    /// Mutates the supplied PSBT in place. Per-input failures are returned in the outcome;
+    /// an error is returned only when the PSBT input maps are out of bounds.
+    /// `is_finalized` reports whether all inputs are finalized after this call.
+    ///
+    /// Unlike [`Self::finalize_psbt`], timelocks are evaluated from the transaction fields
+    /// without [`SignOptions`], and output metadata is not cleared.
+    pub fn try_finalize_psbt(
+        &self,
+        psbt: Arc<Psbt>,
+    ) -> Result<FinalizePsbtOutcome, FinalizePsbtError> {
+        let mut psbt = psbt.0.lock().unwrap();
+        self.get_wallet()
+            .try_finalize_psbt(&mut psbt)
+            .map(FinalizePsbtOutcome::from)
+            .map_err(FinalizePsbtError::from)
     }
 
     /// Compute the `tx`'s sent and received [`Amount`]s.

@@ -33,6 +33,27 @@ final class WalletTests: XCTestCase {
         XCTAssertEqual(addressInfo.address.description, "tb1qhjys9wxlfykmte7ftryptx975uqgd6kcm6a7z4")
     }
 
+    func testTryFinalizePsbtReportsInputOutcomes() throws {
+        let wallet = try Wallet(
+            descriptor: descriptor,
+            changeDescriptor: changeDescriptor,
+            network: .signet,
+            persister: Persister.newInMemory()
+        )
+        // Two unknown inputs: the second already has a final witness.
+        let psbt = try Psbt(psbtBase64: "cHNidP8BAFwCAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAP////8AAAAAAAAAAQgDAQEBAA==")
+        let outcome = try wallet.tryFinalizePsbt(psbt: psbt)
+
+        XCTAssertFalse(outcome.isFinalized)
+        XCTAssertEqual(outcome.outcomes.count, 2)
+        guard case .missingDescriptor? = outcome.outcomes[0] else {
+            return XCTFail("Expected a missing descriptor for input 0")
+        }
+        guard case .alreadyFinalized? = outcome.outcomes[1] else {
+            return XCTFail("Expected input 1 to remain finalized")
+        }
+    }
+
     func testBalance() throws {
         let persister = try Persister.newInMemory()
         let wallet = try Wallet(
