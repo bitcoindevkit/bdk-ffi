@@ -44,9 +44,15 @@ class FinalizePsbtTest {
                 username = "regtest",
                 password = "password",
             )
+            // Do not fund the shared descriptors: other tests expect them to have no history.
+            val secretKey = DescriptorSecretKey(
+                NetworkKind.TEST,
+                Mnemonic(WordCount.WORDS12),
+                null
+            )
             val wallet = Wallet(
-                descriptor = BIP84_DESCRIPTOR,
-                changeDescriptor = BIP84_CHANGE_DESCRIPTOR,
+                descriptor = Descriptor.newBip84(secretKey, KeychainKind.EXTERNAL, NetworkKind.TEST),
+                changeDescriptor = Descriptor.newBip84(secretKey, KeychainKind.INTERNAL, NetworkKind.TEST),
                 network = Network.REGTEST,
                 persister = Persister.newInMemory()
             )
