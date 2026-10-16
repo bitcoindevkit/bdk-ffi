@@ -767,6 +767,23 @@ pub enum PsbtFinalizeError {
     InputIdxOutofBounds { psbt_inp: u32, requested: u32 },
 }
 
+/// A malformed PSBT passed to `Wallet::try_finalize_psbt`.
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
+pub enum FinalizePsbtError {
+    #[error("PSBT input index {index} is out of bounds for {len} input maps")]
+    InputIndexOutOfBounds { index: u64, len: u64 },
+}
+
+impl From<bdk_wallet::IndexOutOfBoundsError> for FinalizePsbtError {
+    fn from(error: bdk_wallet::IndexOutOfBoundsError) -> Self {
+        Self::InputIndexOutOfBounds {
+            index: error.index as u64,
+            len: error.len as u64,
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
 pub enum PsbtParseError {
