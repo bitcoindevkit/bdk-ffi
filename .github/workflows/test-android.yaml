@@ -2,9 +2,11 @@ name: Test Android
 
 # Tests the Android bindings for bdk-ffi on an Android emulator.
 # Builds Rust binaries, sets up Android emulator, and runs the connected tests.
+# Also called by the publish-android workflow before publishing.
 
 on:
   workflow_dispatch:
+  workflow_call:
   push:
     paths:
       - "bdk-ffi/**"
