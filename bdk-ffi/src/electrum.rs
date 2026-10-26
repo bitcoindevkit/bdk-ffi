@@ -165,6 +165,15 @@ impl ElectrumClient {
         Ok(Arc::new(Transaction::from(tx.as_ref().clone())))
     }
 
+    /// Insert transactions into the transaction cache so that the client will not re-fetch them.
+    ///
+    /// Typically used with a new client before a `full_scan` or `sync`, passing the transactions
+    /// the wallet already has (see `Wallet.transactions`), so that the scan only downloads new ones.
+    pub fn populate_tx_cache(&self, txs: Vec<Arc<Transaction>>) {
+        self.0
+            .populate_tx_cache(txs.iter().map(|tx| BdkTransaction::from(tx.as_ref())));
+    }
+
     /// Returns the capabilities of the server.
     pub fn server_features(&self) -> Result<ServerFeaturesRes, ElectrumError> {
         let res = self
