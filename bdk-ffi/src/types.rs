@@ -134,6 +134,16 @@ impl From<ConfirmationBlockTime> for BdkConfirmationBlockTime {
     }
 }
 
+/// A transaction id with one of its confirmation anchors, used to prefill an Electrum client's
+/// anchor cache (see `ElectrumClient::populate_anchor_cache`).
+#[derive(Clone, uniffi::Record)]
+pub struct TxAnchor {
+    /// The id of the anchored transaction.
+    pub txid: Arc<crate::bitcoin::Txid>,
+    /// A block the transaction is confirmed in, with its confirmation time.
+    pub anchor: ConfirmationBlockTime,
+}
+
 /// A reference to a block in the canonical chain.
 #[derive(Debug, Clone, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
 pub struct BlockId {
