@@ -3,7 +3,7 @@ use crate::bitcoin::{
     Transaction, TxOut, Txid,
 };
 use crate::descriptor::Descriptor;
-use crate::error::{CreateTxError, RequestBuilderError};
+use crate::error::{CreateTxError, MiniscriptError, RequestBuilderError};
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::chain::spk_client::SyncItem;
@@ -29,6 +29,8 @@ use bdk_wallet::miniscript::descriptor::Wildcard;
 use bdk_wallet::signer::{SignOptions as BdkSignOptions, TapLeavesOptions};
 use bdk_wallet::AddressInfo as BdkAddressInfo;
 use bdk_wallet::Balance as BdkBalance;
+use bdk_wallet::FinalizeInputOutcome as BdkFinalizeInputOutcome;
+use bdk_wallet::FinalizePsbtOutcome as BdkFinalizePsbtOutcome;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
 use bdk_wallet::Update as BdkUpdate;
 use bdk_wallet::WalletEvent as BdkWalletEvent;
@@ -819,6 +821,62 @@ impl From<BdkCondition> for Condition {
         Condition {
             csv: value.csv.map(|e| e.to_consensus_u32()),
             timelock: value.timelock.map(|e| e.into()),
+        }
+    }
+}
+
+/// The finalization status of a single PSBT input.
+#[derive(Debug, uniffi::Enum)]
+pub enum FinalizeInputOutcome {
+    /// The input was already finalized before this call.
+    AlreadyFinalized,
+    /// The input was finalized during this call.
+    Finalized,
+    /// The wallet could not derive a descriptor for the input.
+    MissingDescriptor,
+    /// The descriptor was found, but its spending conditions could not be satisfied.
+    CouldNotSatisfy { error: MiniscriptError },
+}
+
+#[uniffi::export]
+impl FinalizeInputOutcome {
+    /// Whether the input is finalized after this call.
+    pub fn is_finalized(&self) -> bool {
+        matches!(self, Self::AlreadyFinalized | Self::Finalized)
+    }
+}
+
+impl From<BdkFinalizeInputOutcome> for FinalizeInputOutcome {
+    fn from(outcome: BdkFinalizeInputOutcome) -> Self {
+        match outcome {
+            BdkFinalizeInputOutcome::AlreadyFinalized => Self::AlreadyFinalized,
+            BdkFinalizeInputOutcome::Finalized => Self::Finalized,
+            BdkFinalizeInputOutcome::MissingDescriptor => Self::MissingDescriptor,
+            BdkFinalizeInputOutcome::CouldNotSatisfy(error) => Self::CouldNotSatisfy {
+                error: error.into(),
+            },
+        }
+    }
+}
+
+/// The outcome of a PSBT finalization attempt.
+#[derive(Debug, uniffi::Record)]
+pub struct FinalizePsbtOutcome {
+    /// Whether all inputs are finalized after this call.
+    pub is_finalized: bool,
+    /// Outcomes keyed by the zero-based transaction input index.
+    pub outcomes: HashMap<u64, FinalizeInputOutcome>,
+}
+
+impl From<BdkFinalizePsbtOutcome> for FinalizePsbtOutcome {
+    fn from(outcome: BdkFinalizePsbtOutcome) -> Self {
+        Self {
+            is_finalized: outcome.is_finalized(),
+            outcomes: outcome
+                .into_outcomes()
+                .into_iter()
+                .map(|(index, outcome)| (index as u64, outcome.into()))
+                .collect(),
         }
     }
 }
