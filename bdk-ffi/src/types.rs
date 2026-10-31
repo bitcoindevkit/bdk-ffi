@@ -38,12 +38,12 @@ use std::convert::TryFrom;
 use std::fmt::Display;
 use std::sync::{Arc, Mutex};
 
+use crate::keys::{DescriptorPublicKey, DescriptorSecretKey};
 use crate::{impl_from_core_type, impl_into_core_type};
 use bdk_esplora::esplora_client::api::MerkleProof as BdkMerkleProof;
 use bdk_esplora::esplora_client::api::OutputStatus as BdkOutputStatus;
 use bdk_esplora::esplora_client::api::Tx as BdkTx;
 use bdk_esplora::esplora_client::api::TxStatus as BdkTxStatus;
-
 pub(crate) type KeychainKind = bdk_wallet::KeychainKind;
 
 /// Types of keychains.
@@ -1412,13 +1412,13 @@ impl From<bdk_wallet::ChangeSet> for ChangeSet {
         let descriptor = value.descriptor.map(|d| {
             Arc::new(Descriptor {
                 extended_descriptor: d,
-                key_map: BTreeMap::new(),
+                key_map: Vec::new(),
             })
         });
         let change_descriptor = value.change_descriptor.map(|d| {
             Arc::new(Descriptor {
                 extended_descriptor: d,
-                key_map: BTreeMap::new(),
+                key_map: Vec::new(),
             })
         });
         let network = value.network;
@@ -1496,4 +1496,16 @@ impl From<WildcardType> for Wildcard {
             WildcardType::Hardened => Wildcard::Hardened,
         }
     }
+}
+
+/// Alias type for a map of public key to secret key
+///
+/// This map is returned whenever a descriptor that contains secrets is parsed using
+/// [`bdk_wallet::descriptor::Descriptor::parse_descriptor`], since the descriptor will always only contain
+/// public keys. This map allows looking up the corresponding secret key given a
+/// public key from the descriptor.
+#[derive(uniffi::Record, Clone, Debug)]
+pub struct KeyMap {
+    pub descriptor_public_key: Arc<DescriptorPublicKey>,
+    pub descriptor_secret_key: Arc<DescriptorSecretKey>,
 }
