@@ -499,3 +499,63 @@ fn test_load_from_two_path_descriptor_with_params() {
         error => panic!("expected InvalidChangeSet error, got {:?}", error),
     }
 }
+
+#[test]
+fn test_add_data_creates_one_op_return_output_per_call() {
+    let wallet = Arc::new(funded_wallet());
+    let recipient_script = wallet
+        .next_unused_address(KeychainKind::External)
+        .address
+        .script_pubkey();
+
+    let psbt = TxBuilder::new()
+        .add_recipient(&recipient_script, Arc::new(Amount::from_sat(10_000)))
+        .add_data(vec![0x01])
+        .add_data(vec![0x02])
+        .finish(&wallet)
+        .unwrap();
+
+    let locked = psbt.0.lock().unwrap();
+    let op_returns: Vec<_> = locked
+        .unsigned_tx
+        .output
+        .iter()
+        .filter(|txout| txout.script_pubkey.is_op_return())
+        .collect();
+
+    assert!(op_returns.iter().all(|o| o.value == BdkAmount::ZERO));
+
+    let mut payloads: Vec<String> = op_returns
+        .iter()
+        .map(|o| o.script_pubkey.to_hex_string())
+        .collect();
+    payloads.sort();
+
+    assert_eq!(payloads, ["6a0101", "6a0102"]);
+}
+
+#[test]
+fn test_add_data_with_empty_payload_creates_an_op_return_output() {
+    let wallet = Arc::new(funded_wallet());
+    let recipient_script = wallet
+        .next_unused_address(KeychainKind::External)
+        .address
+        .script_pubkey();
+
+    let psbt = TxBuilder::new()
+        .add_recipient(&recipient_script, Arc::new(Amount::from_sat(10_000)))
+        .add_data(vec![])
+        .finish(&wallet)
+        .unwrap();
+
+    let locked = psbt.0.lock().unwrap();
+    let payloads: Vec<String> = locked
+        .unsigned_tx
+        .output
+        .iter()
+        .filter(|txout| txout.script_pubkey.is_op_return())
+        .map(|txout| txout.script_pubkey.to_hex_string())
+        .collect();
+
+    assert_eq!(payloads, ["6a00"]);
+}
