@@ -25,4 +25,4 @@ mkdir -p ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
 cp ./target/$COMPILATION_TARGET_ARM64_V8A/debug/$LIB_NAME ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_ARM64_V8A/
 
 # Generate Kotlin bindings using uniffi-bindgen
-cargo run --locked --bin uniffi-bindgen generate --library ./target/$COMPILATION_TARGET_ARM64_V8A/debug/$LIB_NAME --language kotlin --out-dir ../bdk-android/lib/src/main/kotlin/ --no-format
+cargo run --locked --features uniffi-bindgen --bin uniffi-bindgen generate --library ./target/$COMPILATION_TARGET_ARM64_V8A/debug/$LIB_NAME --language kotlin --out-dir ../bdk-android/lib/src/main/kotlin/ --no-format

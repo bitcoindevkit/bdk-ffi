@@ -35,7 +35,7 @@ cargo build --locked --package bdk-ffi --profile release-smaller --target aarch6
 
 # build bdk-ffi Swift bindings and put in bdk-swift Sources
 UNIFFI_LIBRARY_PATH="./target/aarch64-apple-ios/${RELDIR}/lib${NAME}.dylib"
-cargo run --locked --bin uniffi-bindgen generate --library "${UNIFFI_LIBRARY_PATH}" --language swift --out-dir "${SWIFT_OUT_DIR}" --no-format
+cargo run --locked --features uniffi-bindgen --bin uniffi-bindgen generate --library "${UNIFFI_LIBRARY_PATH}" --language swift --out-dir "${SWIFT_OUT_DIR}" --no-format
 
 # Final xcframework structure (per-arch):
 #   Headers/
@@ -45,7 +45,7 @@ cargo run --locked --bin uniffi-bindgen generate --library "${UNIFFI_LIBRARY_PAT
 rm -rf "${NEW_HEADER_DIR:?}"/*
 rm -rf "${HEADER_OUT_DIR:?}"
 mkdir -p "${HEADER_OUT_DIR}"
-cargo run --locked --bin uniffi-bindgen generate --library "${UNIFFI_LIBRARY_PATH}" --language swift --out-dir "${HEADER_OUT_DIR}" --no-format
+cargo run --locked --features uniffi-bindgen --bin uniffi-bindgen generate --library "${UNIFFI_LIBRARY_PATH}" --language swift --out-dir "${HEADER_OUT_DIR}" --no-format
 
 # Keep the header output directory clean: xcframework headers should only contain .h + module.modulemap
 find "${HEADER_OUT_DIR}" -maxdepth 1 -name '*.swift' -delete

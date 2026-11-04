@@ -35,4 +35,4 @@ cp ./target/$COMPILATION_TARGET_ARMEABI_V7A/release-smaller/$LIB_NAME ../bdk-and
 cp ./target/$COMPILATION_TARGET_X86_64/release-smaller/$LIB_NAME ../bdk-android/lib/src/main/jniLibs/$RESOURCE_DIR_X86_64/
 
 # Generate Kotlin bindings using uniffi-bindgen
-cargo run --locked --bin uniffi-bindgen generate --library ./target/$COMPILATION_TARGET_ARM64_V8A/release-smaller/$LIB_NAME --language kotlin --out-dir ../bdk-android/lib/src/main/kotlin/ --no-format
+cargo run --locked --features uniffi-bindgen --bin uniffi-bindgen generate --library ./target/$COMPILATION_TARGET_ARM64_V8A/release-smaller/$LIB_NAME --language kotlin --out-dir ../bdk-android/lib/src/main/kotlin/ --no-format

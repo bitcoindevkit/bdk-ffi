@@ -35,7 +35,7 @@ cargo build --locked --package bdk-ffi --target "$IOS_SIM_TARGET"
 cargo build --locked --package bdk-ffi --target "$IOS_DEVICE_TARGET"
 
 UNIFFI_LIBRARY_PATH="./target/$IOS_DEVICE_TARGET/$PROFILE_DIR/lib${NAME}.dylib"
-cargo run --locked --bin uniffi-bindgen generate \
+cargo run --locked --features uniffi-bindgen --bin uniffi-bindgen generate \
     --library "${UNIFFI_LIBRARY_PATH}" \
     --language swift \
     --out-dir "${SWIFT_OUT_DIR}" \
@@ -49,7 +49,7 @@ cargo run --locked --bin uniffi-bindgen generate \
 rm -rf "${NEW_HEADER_DIR:?}"/*
 rm -rf "${HEADER_OUT_DIR:?}"
 mkdir -p "${HEADER_OUT_DIR}"
-cargo run --locked --bin uniffi-bindgen generate \
+cargo run --locked --features uniffi-bindgen --bin uniffi-bindgen generate \
     --library "${UNIFFI_LIBRARY_PATH}" \
     --language swift \
     --out-dir "${HEADER_OUT_DIR}" \
