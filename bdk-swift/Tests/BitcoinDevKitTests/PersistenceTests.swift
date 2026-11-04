@@ -32,7 +32,7 @@ final class PersistenceTests: XCTestCase {
             changeDescriptor: changeDescriptor,
             persister: persister
         )
-        let nextAddress: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
+        let nextAddress: AddressInfo = try wallet.revealNextAddress(keychain: KeychainKind.external)
         print("Address: \(nextAddress)")
 
         XCTAssertTrue(nextAddress.address.description == "tb1qan3lldunh37ma6c0afeywgjyjgnyc8uz975zl2")
@@ -56,7 +56,7 @@ final class PersistenceTests: XCTestCase {
             changeDescriptor: changeDescriptorPub,
             persister: persister
         )
-        let nextAddress: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
+        let nextAddress: AddressInfo = try wallet.revealNextAddress(keychain: KeychainKind.external)
         print("Address: \(nextAddress)")
 
         XCTAssertEqual(nextAddress.index, 7)
