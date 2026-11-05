@@ -4,14 +4,15 @@ use crate::bitcoin::{
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
-    LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
+    FinalizePsbtError, LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
 };
 use crate::signer::SignersContainer;
 use crate::store::{PersistenceType, Persister};
 use crate::types::{
-    AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FullScanRequestBuilder,
-    KeychainAndIndex, KeychainKind, LocalOutput, Policy, SentAndReceivedValues, SignOptions,
-    SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent, WalletKeychain,
+    AddressInfo, Balance, BlockId, CanonicalTx, ChangeSet, EvictedTx, FinalizePsbtOutcome,
+    FullScanRequestBuilder, KeychainAndIndex, KeychainKind, LocalOutput, Policy,
+    SentAndReceivedValues, SignOptions, SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent,
+    WalletKeychain,
 };
 
 use bdk_wallet::bitcoin::Network;
@@ -763,6 +764,29 @@ impl Wallet {
         self.get_wallet()
             .finalize_psbt(&mut psbt, bdk_sign_options)
             .map_err(SignerError::from)
+    }
+
+    /// Attempt to finalize each input of a PSBT and return per-input finalization results.
+    ///
+    /// Use this method when you need to inspect why a specific input could not be finalized. Read
+    /// [`FinalizePsbtOutcome::is_finalized`] on the returned value to check whether all inputs are
+    /// finalized after the call.
+    ///
+    /// Per-input finalization failures are reported as [`crate::types::FinalizeInputOutcome`] values.
+    /// This method only returns an error when the PSBT is malformed, for example if its inputs
+    /// are out of bounds.
+    ///
+    /// Timelock satisfaction is evaluated from the PSBT transaction fields. This method does not
+    /// redact or clear output metadata.
+    pub fn try_finalize_psbt(
+        &self,
+        psbt: Arc<Psbt>,
+    ) -> Result<FinalizePsbtOutcome, FinalizePsbtError> {
+        let mut psbt = psbt.0.lock().unwrap();
+        self.get_wallet()
+            .try_finalize_psbt(&mut psbt)
+            .map(FinalizePsbtOutcome::from)
+            .map_err(FinalizePsbtError::from)
     }
 
     /// Compute the `tx`'s sent and received [`Amount`]s.
