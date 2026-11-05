@@ -1,6 +1,7 @@
 use crate::bitcoin::{BlockHash, Header, Transaction, Txid};
 use crate::error::ElectrumError;
 use crate::types::KeychainKind;
+use crate::types::TxAnchor;
 use crate::types::Update;
 use crate::types::{FullScanRequest, SyncRequest};
 
@@ -12,6 +13,7 @@ use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
 use bdk_wallet::chain::spk_client::FullScanResponse as BdkFullScanResponse;
 use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
 use bdk_wallet::chain::spk_client::SyncResponse as BdkSyncResponse;
+use bdk_wallet::chain::ConfirmationBlockTime as BdkConfirmationBlockTime;
 use bdk_wallet::Update as BdkUpdate;
 
 use bdk_electrum::electrum_client::ElectrumApi;
@@ -58,6 +60,25 @@ impl ElectrumClient {
             bdk_electrum::electrum_client::Client::from_config(url.as_str(), config.build())?;
         let client = BdkBdkElectrumClient::new(inner_client);
         Ok(Self(client))
+    }
+
+    /// Insert confirmation anchors into the client's anchor cache so that later syncs and full
+    /// scans do not request their Merkle proofs again.
+    ///
+    /// Anchors are keyed by block hash: when the client resolves a different block at that height
+    /// (for example after a reorg), the proof is fetched and validated as usual.
+    ///
+    /// Only pass direct confirmation anchors already verified by the wallet. When building them
+    /// from `Wallet.transactions()`, select `ChainPosition::Confirmed { transitively: None, .. }`.
+    /// A transitive anchor belongs to a confirmed descendant, not to the transaction whose id is
+    /// passed.
+    pub fn populate_anchor_cache(&self, anchors: Vec<TxAnchor>) {
+        self.0.populate_anchor_cache(anchors.into_iter().map(|a| {
+            (
+                a.txid.0,
+                std::iter::once(BdkConfirmationBlockTime::from(a.anchor)),
+            )
+        }));
     }
 
     /// Full scan the keychain scripts specified with the blockchain (via an Electrum client) and

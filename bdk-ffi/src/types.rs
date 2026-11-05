@@ -134,6 +134,19 @@ impl From<ConfirmationBlockTime> for BdkConfirmationBlockTime {
     }
 }
 
+/// A transaction id with one of its confirmation anchors, used to prefill an Electrum client's
+/// anchor cache (see `ElectrumClient::populate_anchor_cache`).
+///
+/// Replaces the Rust `(Txid, impl IntoIterator<Item = ConfirmationBlockTime>)` pair, since UniFFI
+/// cannot expose tuples or generics. Pass multiple records for a transaction with multiple anchors.
+#[derive(Clone, uniffi::Record)]
+pub struct TxAnchor {
+    /// The id of the anchored transaction.
+    pub txid: Arc<Txid>,
+    /// A direct confirmation anchor for this transaction, not one inherited from a descendant.
+    pub anchor: ConfirmationBlockTime,
+}
+
 /// A reference to a block in the canonical chain.
 #[derive(Debug, Clone, PartialEq, Eq, std::hash::Hash, uniffi::Record)]
 pub struct BlockId {
