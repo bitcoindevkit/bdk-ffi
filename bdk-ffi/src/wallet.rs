@@ -4,7 +4,7 @@ use crate::bitcoin::{
 use crate::descriptor::Descriptor;
 use crate::error::{
     CalculateFeeError, CannotConnectError, CreateWithPersistError, DescriptorError,
-    LoadWithPersistError, PersistenceError, SignerError, TxidParseError,
+    LoadWithPersistError, PersistenceError, SignerError, SpkIndexError, TxidParseError,
 };
 use crate::signer::SignersContainer;
 use crate::store::{PersistenceType, Persister};
@@ -14,7 +14,9 @@ use crate::types::{
     SyncRequestBuilder, UnconfirmedTx, Update, WalletEvent, WalletKeychain,
 };
 
-use bdk_wallet::bitcoin::Network;
+use bdk_wallet::bitcoin::{Network, ScriptBuf};
+use bdk_wallet::chain::spk_client::SyncRequest as BdkSyncRequest;
+use bdk_wallet::chain::spk_client::SyncRequestBuilder as BdkSyncRequestBuilder;
 use bdk_wallet::keys::KeyMap;
 #[allow(deprecated)]
 use bdk_wallet::signer::SignOptions as BdkSignOptions;
@@ -940,6 +942,124 @@ impl Wallet {
         Arc::new(SyncRequestBuilder(Mutex::new(Some(builder))))
     }
 
+    /// Create a partial [`SyncRequest`] for a specific set of derivation indices.
+    ///
+    /// Only the spks at the given indices are included. Every index must have been revealed on
+    /// its keychain, otherwise a [`SpkIndexError`] is returned and no request is built. Syncing
+    /// an unrevealed index would be misleading: the wallet's indexer does not track it, so the
+    /// outputs of any transaction found there would not be recognized as the wallet's own.
+    ///
+    /// A keychain can be left out of the request entirely by passing `None` (or an empty list) for
+    /// its indices, which is also what makes this usable on a wallet without an internal keychain.
+    /// Leaving out both keychains is refused with a [`SpkIndexError`], since the resulting request
+    /// would carry no spk at all.
+    #[uniffi::method(default(external_indices = None, internal_indices = None))]
+    pub fn start_sync_with_spk_indices(
+        &self,
+        external_indices: Option<Vec<u32>>,
+        internal_indices: Option<Vec<u32>>,
+    ) -> Result<Arc<SyncRequestBuilder>, SpkIndexError> {
+        let wallet = self.get_wallet();
+        let spk_index = wallet.spk_index();
+
+        let external_indices = external_indices.unwrap_or_default();
+        let internal_indices = internal_indices.unwrap_or_default();
+        if external_indices.is_empty() && internal_indices.is_empty() {
+            return Err(SpkIndexError::NoSpksRequested);
+        }
+
+        let mut spks = Vec::with_capacity(external_indices.len() + internal_indices.len());
+        for (keychain, indices) in [
+            (KeychainKind::External, external_indices),
+            (KeychainKind::Internal, internal_indices),
+        ] {
+            if indices.is_empty() {
+                continue;
+            }
+            if spk_index.get_descriptor(keychain).is_none() {
+                return Err(SpkIndexError::KeychainNotFound { keychain });
+            }
+            let last_revealed = spk_index
+                .last_revealed_index(keychain)
+                .ok_or(SpkIndexError::NoneRevealed { keychain })?;
+
+            for index in indices {
+                if index > last_revealed {
+                    return Err(SpkIndexError::NotRevealed {
+                        keychain,
+                        index,
+                        last_revealed,
+                    });
+                }
+                let spk = spk_index
+                    .spk_at_index(keychain, index)
+                    .expect("revealed index must have an spk");
+                spks.push(((keychain, index), spk));
+            }
+        }
+
+        let builder = partial_sync_request_builder(&wallet, spks);
+        Ok(Arc::new(SyncRequestBuilder(Mutex::new(Some(builder)))))
+    }
+
+    /// Create a partial [`SyncRequest`] covering the last `external_count` revealed external
+    /// spks and the last `internal_count` revealed internal spks.
+    ///
+    /// Spks are selected from the end of the revealed range, so this captures the most recently
+    /// derived addresses. If fewer spks have been revealed than requested, all revealed spks for
+    /// that keychain are included. Asking for spks of a keychain this wallet does not have
+    /// returns a [`SpkIndexError`].
+    ///
+    /// A keychain can be left out of the request entirely by passing `None` (or a count of zero)
+    /// for it, which is also what makes this usable on a wallet without an internal keychain. A
+    /// request which would end up with no spk at all is refused with a [`SpkIndexError`], whether
+    /// because both counts are zero or because the requested keychain has revealed nothing yet.
+    #[uniffi::method(default(external_count = None, internal_count = None))]
+    pub fn start_sync_with_last_revealed_spks(
+        &self,
+        external_count: Option<u32>,
+        internal_count: Option<u32>,
+    ) -> Result<Arc<SyncRequestBuilder>, SpkIndexError> {
+        let wallet = self.get_wallet();
+        let spk_index = wallet.spk_index();
+
+        let external_count = external_count.unwrap_or(0);
+        let internal_count = internal_count.unwrap_or(0);
+        if external_count == 0 && internal_count == 0 {
+            return Err(SpkIndexError::NoSpksRequested);
+        }
+
+        for (keychain, count) in [
+            (KeychainKind::External, external_count),
+            (KeychainKind::Internal, internal_count),
+        ] {
+            if count == 0 {
+                continue;
+            }
+            if spk_index.get_descriptor(keychain).is_none() {
+                return Err(SpkIndexError::KeychainNotFound { keychain });
+            }
+            if spk_index.last_revealed_index(keychain).is_none() {
+                return Err(SpkIndexError::NoneRevealed { keychain });
+            }
+        }
+
+        let external_spks = spk_index
+            .revealed_keychain_spks(KeychainKind::External)
+            .rev()
+            .take(external_count as usize)
+            .map(|(i, spk)| ((KeychainKind::External, i), spk));
+
+        let internal_spks = spk_index
+            .revealed_keychain_spks(KeychainKind::Internal)
+            .rev()
+            .take(internal_count as usize)
+            .map(|(i, spk)| ((KeychainKind::Internal, i), spk));
+
+        let builder = partial_sync_request_builder(&wallet, external_spks.chain(internal_spks));
+        Ok(Arc::new(SyncRequestBuilder(Mutex::new(Some(builder)))))
+    }
+
     /// Persist staged changes of wallet into persister.
     ///
     /// Returns whether any new changes were persisted.
@@ -1003,4 +1123,29 @@ impl Wallet {
     pub(crate) fn get_wallet(&self) -> MutexGuard<'_, PersistedWallet<PersistenceType>> {
         self.inner_mutex.lock().expect("wallet")
     }
+}
+
+/// Build a partial [`SyncRequest`] over `spks` for a wallet.
+///
+/// Besides the spks themselves, the request carries the wallet's chain tip (so the chain source
+/// can produce a chain update which the wallet can connect to its local chain) and the txids the
+/// wallet expects to see under its spks (so that a transaction which has been evicted from the
+/// mempool, or replaced, can be detected as missing). Expected txids are looked up per spk by the
+/// chain source, so entries for spks which are not part of `spks` are simply ignored.
+fn partial_sync_request_builder(
+    wallet: &BdkWallet,
+    spks: impl IntoIterator<Item = ((KeychainKind, u32), ScriptBuf)>,
+) -> BdkSyncRequestBuilder<(KeychainKind, u32)> {
+    let chain_tip = wallet.local_chain().tip();
+    let expected_spk_txids = wallet.tx_graph().list_expected_spk_txids(
+        wallet.local_chain(),
+        chain_tip.block_id(),
+        wallet.spk_index(),
+        ..,
+    );
+
+    BdkSyncRequest::builder()
+        .chain_tip(chain_tip)
+        .spks_with_indexes(spks)
+        .expected_spk_txids(expected_spk_txids)
 }
