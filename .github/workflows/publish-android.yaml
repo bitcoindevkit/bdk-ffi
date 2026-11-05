@@ -1,0 +1,124 @@
+name: Publish Android Library To Maven Central
+
+# Run this workflow from the GitHub UI, selecting the release tag (e.g. v3.2.0) in the
+# "Run workflow > Use workflow from" dropdown. It runs the Android tests, builds the native
+# libraries for all Android targets, and uploads the deployment to the Central Portal, where
+# the release must then be published manually at https://central.sonatype.com.
+
+on: [workflow_dispatch]
+
+permissions: {}
+
+concurrency:
+  group: publish-android
+  cancel-in-progress: false
+
+jobs:
+  verify-tag:
+    name: "Verify tag and library version"
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: "Ensure workflow was started from a release tag"
+        if: github.ref_type != 'tag' || !startsWith(github.ref_name, 'v')
+        run: |
+          echo "::error::This workflow must be run from a release tag (e.g. v3.2.0), not '${GITHUB_REF_NAME}'."
+          exit 1
+
+      - name: "Check out tag"
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: "Ensure library version matches tag"
+        run: |
+          LIB_VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' bdk-android/lib/build.gradle.kts)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "Library version: ${LIB_VERSION}"
+          echo "Tag version:     ${TAG_VERSION}"
+          if [[ "${LIB_VERSION}" == *SNAPSHOT* ]]; then
+            echo "::error::Library version ${LIB_VERSION} is a SNAPSHOT version."
+            exit 1
+          fi
+          if [[ "${LIB_VERSION}" != "${TAG_VERSION}" ]]; then
+            echo "::error::Library version ${LIB_VERSION} does not match tag ${GITHUB_REF_NAME}."
+            exit 1
+          fi
+
+  test:
+    name: "Run Android tests"
+    needs: verify-tag
+    permissions:
+      contents: read
+    uses: ./.github/workflows/test-android.yaml
+
+  publish:
+    name: "Publish bdk-android to Maven Central"
+    needs: test
+    runs-on: ubuntu-24.04
+    environment: maven-central
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: "Check out tag"
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: "Set up JDK"
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: "Set up Android SDK"
+        uses: android-actions/setup-android@v4
+
+      - name: "Set up Android NDK"
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26c
+
+      - name: "Set up Rust"
+        uses: actions-rust-lang/setup-rust-toolchain@v2
+        with:
+          cache: false
+          rustflags: "-D warnings"
+
+      # All Android targets are cross-compiled from this single Linux runner using the NDK
+      - name: "Build native libraries and Kotlin bindings"
+        working-directory: bdk-android
+        run: bash ./scripts/release/build-release-linux-x86_64.sh
+
+      - name: "Verify all native libraries are present"
+        working-directory: bdk-android
+        run: |
+          for lib in \
+            arm64-v8a/libbdkffi.so \
+            armeabi-v7a/libbdkffi.so \
+            x86_64/libbdkffi.so; do
+            if [[ ! -f "lib/src/main/jniLibs/${lib}" ]]; then
+              echo "::error::Missing native library: ${lib}"
+              exit 1
+            fi
+          done
+          find lib/src/main/jniLibs -type f
+
+      # Uploads the deployment to the Central Portal, where it must be published manually
+      # at https://central.sonatype.com. It does not release the library on its own.
+      - name: "Upload deployment to Maven Central"
+        working-directory: bdk-android
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: ./gradlew :lib:publishToMavenCentral --console=plain
+
+      - name: "Generate build provenance attestation"
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: bdk-android/lib/build/outputs/aar/*.aar
