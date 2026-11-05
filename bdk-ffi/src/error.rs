@@ -29,6 +29,7 @@ use bdk_wallet::tx_builder::AddUtxoError;
 use bdk_wallet::LoadError as BdkLoadError;
 use bdk_wallet::LoadWithPersistError as BdkLoadWithPersistError;
 use bdk_wallet::{chain, CreateWithPersistError as BdkCreateWithPersistError};
+use std::fmt::Write as _;
 
 use std::convert::TryInto;
 
@@ -70,11 +71,11 @@ pub enum AddForeignUtxoError {
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
 pub enum AddressParseError {
-    #[error("base58 address encoding error")]
-    Base58,
+    #[error("base58 address encoding error: {error_message}")]
+    Base58 { error_message: String },
 
-    #[error("bech32 address encoding error")]
-    Bech32,
+    #[error("bech32 address encoding error: {error_message}")]
+    Bech32 { error_message: String },
 
     #[error("witness version conversion/parsing error: {error_message}")]
     WitnessVersion { error_message: String },
@@ -82,24 +83,24 @@ pub enum AddressParseError {
     #[error("witness program error: {error_message}")]
     WitnessProgram { error_message: String },
 
-    #[error("tried to parse an unknown hrp")]
-    UnknownHrp,
+    #[error("{error_message}")]
+    UnknownHrp { error_message: String },
 
-    #[error("legacy address base58 string")]
-    LegacyAddressTooLong,
+    #[error("{error_message}")]
+    LegacyAddressTooLong { error_message: String },
 
-    #[error("legacy address base58 data")]
-    InvalidBase58PayloadLength,
+    #[error("{error_message}")]
+    InvalidBase58PayloadLength { error_message: String },
 
-    #[error("segwit address bech32 string")]
-    InvalidLegacyPrefix,
+    #[error("{error_message}")]
+    InvalidLegacyPrefix { error_message: String },
 
-    #[error("validation error")]
-    NetworkValidation,
+    #[error("{error_message}")]
+    NetworkValidation { error_message: String },
 
     // This error is required because the bdk::bitcoin::address::ParseError is non-exhaustive
-    #[error("other address parse error")]
-    OtherAddressParseErr,
+    #[error("other address parse error: {error_message}")]
+    OtherAddressParseErr { error_message: String },
 }
 
 #[derive(Debug, thiserror::Error, uniffi::Error)]
@@ -883,6 +884,21 @@ pub enum TxidParseError {
 // error conversions
 // ------------------------------------------------------------------------
 
+/// Build the complete message for an error, including its `source()` chain.
+///
+/// `source()` does not cross the FFI boundary, and under `std` rust-bitcoin's
+/// `write_err!` macro omits the source from `Display`, so `to_string()` on such
+/// an error returns only the outermost label.
+fn full_error_message(error: &dyn std::error::Error) -> String {
+    let mut message = error.to_string();
+    let mut source = error.source();
+    while let Some(inner) = source {
+        let _ = write!(message, ": {}", inner);
+        source = inner.source();
+    }
+    message
+}
+
 impl From<AddForeignUtxoError> for CreateTxError {
     fn from(error: AddForeignUtxoError) -> Self {
         match error {
@@ -965,22 +981,38 @@ impl From<BdkElectrumError> for ElectrumError {
 impl From<BdkParseError> for AddressParseError {
     fn from(error: BdkParseError) -> Self {
         match error {
-            BdkParseError::Base58(_) => AddressParseError::Base58,
-            BdkParseError::Bech32(_) => AddressParseError::Bech32,
-            BdkParseError::WitnessVersion(e) => AddressParseError::WitnessVersion {
-                error_message: e.to_string(),
+            BdkParseError::Base58(ref e) => AddressParseError::Base58 {
+                error_message: full_error_message(e),
             },
-            BdkParseError::WitnessProgram(e) => AddressParseError::WitnessProgram {
-                error_message: e.to_string(),
+            BdkParseError::Bech32(ref e) => AddressParseError::Bech32 {
+                error_message: full_error_message(e),
             },
-            ParseError::UnknownHrp(_) => AddressParseError::UnknownHrp,
-            ParseError::LegacyAddressTooLong(_) => AddressParseError::LegacyAddressTooLong,
-            ParseError::InvalidBase58PayloadLength(_) => {
-                AddressParseError::InvalidBase58PayloadLength
+            BdkParseError::WitnessVersion(ref e) => AddressParseError::WitnessVersion {
+                error_message: full_error_message(e),
+            },
+            BdkParseError::WitnessProgram(ref e) => AddressParseError::WitnessProgram {
+                error_message: full_error_message(e),
+            },
+            ParseError::UnknownHrp(ref e) => AddressParseError::UnknownHrp {
+                error_message: full_error_message(e),
+            },
+            ParseError::LegacyAddressTooLong(ref e) => AddressParseError::LegacyAddressTooLong {
+                error_message: full_error_message(e),
+            },
+            ParseError::InvalidBase58PayloadLength(ref e) => {
+                AddressParseError::InvalidBase58PayloadLength {
+                    error_message: full_error_message(e),
+                }
             }
-            ParseError::InvalidLegacyPrefix(_) => AddressParseError::InvalidLegacyPrefix,
-            ParseError::NetworkValidation(_) => AddressParseError::NetworkValidation,
-            _ => AddressParseError::OtherAddressParseErr,
+            ParseError::InvalidLegacyPrefix(ref e) => AddressParseError::InvalidLegacyPrefix {
+                error_message: full_error_message(e),
+            },
+            ParseError::NetworkValidation(ref e) => AddressParseError::NetworkValidation {
+                error_message: full_error_message(e),
+            },
+            _ => AddressParseError::OtherAddressParseErr {
+                error_message: full_error_message(&error),
+            },
         }
     }
 }
