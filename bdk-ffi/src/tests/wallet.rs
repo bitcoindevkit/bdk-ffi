@@ -4,12 +4,16 @@ use crate::error::{CreateTxError, LoadWithPersistError};
 use crate::signer::SignersContainer;
 use crate::store::Persister;
 use crate::tx_builder::{BumpFeeTxBuilder, TxBuilder};
-use crate::types::{UnconfirmedTx, Update};
+use crate::types::{
+    BlockId, ChainPosition, ConfirmationBlockTime, TxAnchor, UnconfirmedTx, Update,
+};
 use crate::wallet::{CreateParams, LoadParams, Wallet};
 
 use bdk_wallet::bitcoin::Amount as BdkAmount;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
-use bdk_wallet::bitcoin::{absolute, transaction, TxOut as BdkTxOut};
+use bdk_wallet::bitcoin::{
+    absolute, transaction, OutPoint as BdkOutPoint, TxIn as BdkTxIn, TxOut as BdkTxOut,
+};
 use bdk_wallet::KeychainKind;
 
 use std::sync::Arc;
@@ -80,6 +84,92 @@ fn funded_wallet() -> Wallet {
     wallet.apply_update(Arc::new(Update(update))).unwrap();
 
     wallet
+}
+
+#[test]
+fn test_build_tx_anchors_from_wallet_transactions() {
+    let wallet = funded_wallet();
+    let funding_tx = wallet.transactions().pop().unwrap().transaction;
+    let txid = funding_tx.compute_txid();
+    let anchor = ConfirmationBlockTime {
+        block_id: BlockId {
+            height: 1,
+            hash: Arc::new(BlockHash::from_bytes(vec![1; 32]).unwrap()),
+        },
+        confirmation_time: 1,
+    };
+    let mut child_tx = BdkTransaction::from(funding_tx.as_ref());
+    child_tx.input = vec![BdkTxIn {
+        previous_output: BdkOutPoint::new(txid.0, 0),
+        ..Default::default()
+    }];
+    child_tx.output[0].value = BdkAmount::from_sat(75_000);
+    let child_txid = child_tx.compute_txid();
+    let mut unconfirmed_tx = BdkTransaction::from(funding_tx.as_ref());
+    unconfirmed_tx.output[0].value = BdkAmount::from_sat(10_000);
+    let unconfirmed_txid = unconfirmed_tx.compute_txid();
+    let mut update = bdk_wallet::Update {
+        chain: Some(
+            wallet
+                .get_wallet()
+                .latest_checkpoint()
+                .push(anchor.block_id.clone().into())
+                .unwrap(),
+        ),
+        ..Default::default()
+    };
+    update
+        .tx_update
+        .anchors
+        .insert((anchor.clone().into(), child_txid));
+    update.tx_update.txs.push(Arc::new(child_tx));
+    update.tx_update.txs.push(Arc::new(unconfirmed_tx));
+    update.tx_update.seen_ats.insert((unconfirmed_txid, 2));
+    wallet.apply_update(Arc::new(Update(update))).unwrap();
+    assert_eq!(wallet.transactions().len(), 3);
+    let parent_position = wallet
+        .transactions()
+        .into_iter()
+        .find(|tx| tx.transaction.compute_txid() == txid)
+        .unwrap()
+        .chain_position;
+    assert!(matches!(
+        parent_position,
+        ChainPosition::Confirmed {
+            transitively: Some(descendant),
+            ..
+        } if descendant.0 == child_txid
+    ));
+    let unconfirmed_position = wallet
+        .transactions()
+        .into_iter()
+        .find(|tx| tx.transaction.compute_txid().0 == unconfirmed_txid)
+        .unwrap()
+        .chain_position;
+    assert!(matches!(
+        unconfirmed_position,
+        ChainPosition::Unconfirmed { .. }
+    ));
+
+    // Build the cache records using only the public wallet transaction fields.
+    let anchors: Vec<TxAnchor> = wallet
+        .transactions()
+        .into_iter()
+        .filter_map(|tx| match tx.chain_position {
+            ChainPosition::Confirmed {
+                confirmation_block_time,
+                transitively: None,
+            } => Some(TxAnchor {
+                txid: tx.transaction.compute_txid(),
+                anchor: confirmation_block_time,
+            }),
+            _ => None,
+        })
+        .collect();
+
+    assert_eq!(anchors.len(), 1);
+    assert_eq!(anchors[0].txid.0, child_txid);
+    assert_eq!(anchors[0].anchor, anchor);
 }
 
 #[test]
