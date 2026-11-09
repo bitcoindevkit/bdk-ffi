@@ -19,7 +19,7 @@ final class WalletTests: XCTestCase {
             network: .signet,
             persister: persister
         )
-        let addressInfo: AddressInfo = wallet.revealNextAddress(keychain: KeychainKind.external)
+        let addressInfo: AddressInfo = try wallet.revealNextAddress(keychain: KeychainKind.external)
 
         XCTAssertTrue(addressInfo.address.isValidForNetwork(network: Network.testnet),
                      "Address is not valid for testnet network")
