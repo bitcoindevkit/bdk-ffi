@@ -104,6 +104,7 @@ pub struct CbfBuilder {
     socks5_proxy: Option<Socks5Proxy>,
     peers: Vec<Peer>,
     whitelist_only: bool,
+    emit_update_every: Option<u32>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -120,6 +121,7 @@ impl CbfBuilder {
             socks5_proxy: None,
             peers: Vec::new(),
             whitelist_only: false,
+            emit_update_every: None,
         }
     }
 
@@ -177,6 +179,17 @@ impl CbfBuilder {
         })
     }
 
+    /// Return an [`Update`] from [`CbfClient::update`] each time `blocks` blocks are scanned
+    /// before the tip, in addition to the update at the tip. Each intermediate update ends at the
+    /// last block scanned, which allows a wallet to apply partial results during a long sync or
+    /// recovery. `blocks` is clamped to at least one.
+    pub fn emit_update_every_n_blocks(&self, blocks: u32) -> Arc<Self> {
+        Arc::new(CbfBuilder {
+            emit_update_every: Some(blocks),
+            ..self.clone()
+        })
+    }
+
     /// Construct a [`CbfComponents`] for a [`Wallet`].
     pub fn build(&self, wallet: &Wallet) -> CbfComponents {
         let wallet = wallet.get_wallet();
@@ -205,10 +218,19 @@ impl CbfBuilder {
 
         let light_client = match self.scan_type.clone() {
             ScanType::Sync => {
-                builder.build_with_wallet(&wallet, SyncConfig::sync_from_last_checkpoint().build())
+                let mut builder =
+                    builder.wallet(&wallet, SyncConfig::sync_from_last_checkpoint().build());
+                if let Some(blocks) = self.emit_update_every {
+                    builder = builder.emit_update_every_n_blocks(blocks);
+                }
+                builder.build()
             }
             ScanType::NewWallet => {
-                builder.build_with_wallet(&wallet, SyncConfig::new_wallet_sync().build())
+                let mut builder = builder.wallet(&wallet, SyncConfig::new_wallet_sync().build());
+                if let Some(blocks) = self.emit_update_every {
+                    builder = builder.emit_update_every_n_blocks(blocks);
+                }
+                builder.build()
             }
             ScanType::Recovery { checkpoint } => {
                 let checkpoint = match checkpoint {
@@ -225,10 +247,14 @@ impl CbfBuilder {
                         HashCheckpoint::new(birthday.height, birthday.hash.0)
                     }
                 };
-                builder.build_with_wallet(
+                let mut builder = builder.wallet(
                     &wallet,
                     SyncConfig::wallet_recovery_sync(checkpoint).build(),
-                )
+                );
+                if let Some(blocks) = self.emit_update_every {
+                    builder = builder.emit_update_every_n_blocks(blocks);
+                }
+                builder.build()
             }
         };
 
@@ -279,7 +305,9 @@ impl CbfClient {
     }
 
     /// Return an [`Update`]. This is method returns once the node syncs to the rest of
-    /// the network or a new block has been gossiped.
+    /// the network or a new block has been gossiped. If
+    /// [`CbfBuilder::emit_update_every_n_blocks`] is set, an [`Update`] is also returned each
+    /// time that many blocks are scanned before the tip.
     pub async fn update(&self) -> Result<Update, CbfError> {
         let update = self
             .update_rx
