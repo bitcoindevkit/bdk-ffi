@@ -11,13 +11,12 @@ use bdk_kyoto::HashCheckpoint;
 use bdk_kyoto::Receiver;
 use bdk_kyoto::RejectReason;
 use bdk_kyoto::Requester;
+use bdk_kyoto::SyncConfig;
 use bdk_kyoto::TrustedPeer;
-use bdk_kyoto::UnboundedReceiver;
 use bdk_kyoto::UpdateSubscriber;
 use bdk_kyoto::Warning as Warn;
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -33,7 +32,6 @@ use crate::wallet::Wallet;
 use crate::FeeRate;
 
 const DEFAULT_CONNECTIONS: u8 = 2;
-const CWD_PATH: &str = ".";
 const TCP_HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(2);
 const MESSAGE_RESPONSE_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -51,7 +49,7 @@ pub struct CbfComponents {
 pub struct CbfClient {
     sender: Arc<Requester>,
     info_rx: Mutex<Receiver<bdk_kyoto::Info>>,
-    warning_rx: Mutex<UnboundedReceiver<bdk_kyoto::Warning>>,
+    warning_rx: Mutex<Receiver<bdk_kyoto::Warning>>,
     update_rx: Mutex<UpdateSubscriber<bdk_kyoto::wallets::Single>>,
 }
 
@@ -91,7 +89,6 @@ impl CbfNode {
 /// * List of `Peer`: Bitcoin full-nodes for the light client to connect to. May be empty.
 /// * `connections`: The number of connections for the light client to maintain.
 /// * `scan_type`: Sync, recover, or start a new wallet. For more information see [`ScanType`].
-/// * `data_dir`: Optional directory to store block headers and peers.
 ///
 /// A note on recovering wallets. Developers should allow users to provide an
 /// approximate recovery height and an estimated number of transactions for the
@@ -103,11 +100,11 @@ pub struct CbfBuilder {
     connections: u8,
     handshake_timeout: Duration,
     response_timeout: Duration,
-    data_dir: Option<String>,
     scan_type: ScanType,
     socks5_proxy: Option<Socks5Proxy>,
     peers: Vec<Peer>,
     whitelist_only: bool,
+    emit_update_every: Option<u32>,
 }
 
 #[allow(clippy::new_without_default)]
@@ -120,11 +117,11 @@ impl CbfBuilder {
             connections: DEFAULT_CONNECTIONS,
             handshake_timeout: TCP_HANDSHAKE_TIMEOUT,
             response_timeout: MESSAGE_RESPONSE_TIMEOUT,
-            data_dir: None,
             scan_type: ScanType::default(),
             socks5_proxy: None,
             peers: Vec::new(),
             whitelist_only: false,
+            emit_update_every: None,
         }
     }
 
@@ -132,15 +129,6 @@ impl CbfBuilder {
     pub fn connections(&self, connections: u8) -> Arc<Self> {
         Arc::new(CbfBuilder {
             connections,
-            ..self.clone()
-        })
-    }
-
-    /// Directory to store block headers and peers. If none is provided, the current
-    /// working directory will be used.
-    pub fn data_dir(&self, data_dir: String) -> Arc<Self> {
-        Arc::new(CbfBuilder {
-            data_dir: Some(data_dir),
             ..self.clone()
         })
     }
@@ -191,6 +179,17 @@ impl CbfBuilder {
         })
     }
 
+    /// Return an [`Update`] from [`CbfClient::update`] each time `blocks` blocks are scanned
+    /// before the tip, in addition to the update at the tip. Each intermediate update ends at the
+    /// last block scanned, which allows a wallet to apply partial results during a long sync or
+    /// recovery. `blocks` is clamped to at least one.
+    pub fn emit_update_every_n_blocks(&self, blocks: u32) -> Arc<Self> {
+        Arc::new(CbfBuilder {
+            emit_update_every: Some(blocks),
+            ..self.clone()
+        })
+    }
+
     /// Construct a [`CbfComponents`] for a [`Wallet`].
     pub fn build(&self, wallet: &Wallet) -> CbfComponents {
         let wallet = wallet.get_wallet();
@@ -200,53 +199,9 @@ impl CbfBuilder {
             trusted_peers.push(peer.clone().into());
         }
 
-        let scan_type = match self.scan_type.clone() {
-            ScanType::Sync => bdk_kyoto::ScanType::Sync,
-            ScanType::Recovery {
-                used_script_index,
-                checkpoint,
-            } => {
-                let network = wallet.network();
-                match checkpoint {
-                    RecoveryPoint::GenesisBlock => bdk_kyoto::ScanType::Recovery {
-                        used_script_index,
-                        checkpoint: HashCheckpoint::from_genesis(network),
-                    },
-                    RecoveryPoint::SegwitActivation if matches!(network, Network::Bitcoin) => {
-                        bdk_kyoto::ScanType::Recovery {
-                            used_script_index,
-                            checkpoint: HashCheckpoint::segwit_activation(),
-                        }
-                    }
-                    RecoveryPoint::TaprootActivation if matches!(network, Network::Bitcoin) => {
-                        bdk_kyoto::ScanType::Recovery {
-                            used_script_index,
-                            checkpoint: HashCheckpoint::taproot_activation(),
-                        }
-                    }
-                    RecoveryPoint::SegwitActivation | RecoveryPoint::TaprootActivation => {
-                        bdk_kyoto::ScanType::Recovery {
-                            used_script_index,
-                            checkpoint: HashCheckpoint::from_genesis(network),
-                        }
-                    }
-                    RecoveryPoint::Other { birthday } => bdk_kyoto::ScanType::Recovery {
-                        used_script_index,
-                        checkpoint: HashCheckpoint::new(birthday.height, birthday.hash.0),
-                    },
-                }
-            }
-        };
-
-        let path_buf = self
-            .data_dir
-            .clone()
-            .map(|path| PathBuf::from(&path))
-            .unwrap_or(PathBuf::from(CWD_PATH));
-
-        let mut builder = BDKCbfBuilder::new(wallet.network())
+        let network = wallet.network();
+        let mut builder = BDKCbfBuilder::new(network)
             .required_peers(self.connections)
-            .data_dir(path_buf)
             .handshake_timeout(self.handshake_timeout)
             .response_timeout(self.response_timeout)
             .add_peers(trusted_peers);
@@ -261,8 +216,49 @@ impl CbfBuilder {
             builder = builder.whitelist_only();
         }
 
-        let (client, logging, update_subscriber) = builder
-            .build_with_wallet(&wallet, scan_type)
+        let light_client = match self.scan_type.clone() {
+            ScanType::Sync => {
+                let mut builder =
+                    builder.wallet(&wallet, SyncConfig::sync_from_last_checkpoint().build());
+                if let Some(blocks) = self.emit_update_every {
+                    builder = builder.emit_update_every_n_blocks(blocks);
+                }
+                builder.build()
+            }
+            ScanType::NewWallet => {
+                let mut builder = builder.wallet(&wallet, SyncConfig::new_wallet_sync().build());
+                if let Some(blocks) = self.emit_update_every {
+                    builder = builder.emit_update_every_n_blocks(blocks);
+                }
+                builder.build()
+            }
+            ScanType::Recovery { checkpoint } => {
+                let checkpoint = match checkpoint {
+                    RecoveryPoint::SegwitActivation if matches!(network, Network::Bitcoin) => {
+                        HashCheckpoint::segwit_activation()
+                    }
+                    RecoveryPoint::TaprootActivation if matches!(network, Network::Bitcoin) => {
+                        HashCheckpoint::taproot_activation()
+                    }
+                    RecoveryPoint::GenesisBlock
+                    | RecoveryPoint::SegwitActivation
+                    | RecoveryPoint::TaprootActivation => HashCheckpoint::from_genesis(network),
+                    RecoveryPoint::Other { birthday } => {
+                        HashCheckpoint::new(birthday.height, birthday.hash.0)
+                    }
+                };
+                let mut builder = builder.wallet(
+                    &wallet,
+                    SyncConfig::wallet_recovery_sync(checkpoint).build(),
+                );
+                if let Some(blocks) = self.emit_update_every {
+                    builder = builder.emit_update_every_n_blocks(blocks);
+                }
+                builder.build()
+            }
+        };
+
+        let (client, logging, update_subscriber) = light_client
             .expect("networks match by definition")
             .subscribe();
         let (client, node) = client.managed_start();
@@ -309,7 +305,9 @@ impl CbfClient {
     }
 
     /// Return an [`Update`]. This is method returns once the node syncs to the rest of
-    /// the network or a new block has been gossiped.
+    /// the network or a new block has been gossiped. If
+    /// [`CbfBuilder::emit_update_every_n_blocks`] is set, an [`Update`] is also returned each
+    /// time that many blocks are scanned before the tip.
     pub async fn update(&self) -> Result<Update, CbfError> {
         let update = self
             .update_rx
@@ -417,13 +415,12 @@ pub enum Info {
     ConnectionsMet,
     /// The node was able to successfully connect to a remote peer.
     SuccessfulHandshake,
-    /// A percentage value of filters that have been scanned.
-    Progress {
-        /// The height of the local block chain.
-        chain_height: u32,
-        /// The percent of filters downloaded.
-        filters_downloaded_percent: f32,
-    },
+    /// The header chain has been extended to a new height.
+    NewChainHeight { height: u32 },
+    /// Compact filter headers have been checked up to this height.
+    CfHeadersAdded { height: u32 },
+    /// A compact block filter has been checked at this height.
+    FilterAdded { height: u32 },
     /// A relevant block was downloaded from a peer.
     BlockReceived(String),
 }
@@ -433,10 +430,9 @@ impl From<bdk_kyoto::Info> for Info {
         match value {
             bdk_kyoto::Info::ConnectionsMet => Info::ConnectionsMet,
             bdk_kyoto::Info::SuccessfulHandshake => Info::SuccessfulHandshake,
-            bdk_kyoto::Info::Progress(progress) => Info::Progress {
-                filters_downloaded_percent: progress.percentage_complete(),
-                chain_height: progress.chain_height(),
-            },
+            bdk_kyoto::Info::NewChainHeight(height) => Info::NewChainHeight { height },
+            bdk_kyoto::Info::CFHeadersAdded(height) => Info::CfHeadersAdded { height },
+            bdk_kyoto::Info::FilterAdded(height) => Info::FilterAdded { height },
             bdk_kyoto::Info::BlockReceived(block) => Info::BlockReceived(block.to_string()),
         }
     }
@@ -496,18 +492,20 @@ impl From<Warn> for Warning {
     }
 }
 
-/// Sync a wallet from the last known block hash or recover a wallet from a specified recovery
-/// point.
+/// Sync a wallet from the last known block hash, start a new wallet, or recover a wallet from a
+/// specified recovery point.
 #[derive(Debug, Clone, Default, uniffi::Enum)]
 pub enum ScanType {
     /// Sync an existing wallet from the last stored chain checkpoint.
     #[default]
     Sync,
-    /// Recover an existing wallet by scanning from the specified height.
+    /// Sync a wallet that is guaranteed to be new, meaning no scripts have been revealed. Block
+    /// headers are synced to the tip, but filters are not downloaded until new blocks are mined.
+    NewWallet,
+    /// Recover an existing wallet by scanning from the specified height. Filters are checked
+    /// against the wallet's revealed scripts plus its lookahead, so the `Wallet` should be loaded
+    /// with a lookahead large enough to cover the gap between used addresses.
     Recovery {
-        /// The estimated number of scripts the user has revealed for the wallet being recovered.
-        /// If unknown, a conservative estimate, say 1,000, could be used.
-        used_script_index: u32,
         /// A relevant starting point or soft fork to start the sync.
         checkpoint: RecoveryPoint,
     },
