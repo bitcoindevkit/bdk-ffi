@@ -204,9 +204,9 @@ dependencies = [
 
 [[package]]
 name = "bdk_kyoto"
-version = "0.17.1"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8af2d4c542f83e4d20afd49f61b2b5075b24f7d684deb1a3a7652b1fa4105ae8"
+checksum = "f51399b3cb0bfb4448e3f7caf3ec58b1be3f8a240adaf5664c0b54f5e62d0651"
 dependencies = [
  "bdk_wallet",
  "bip157",
@@ -248,9 +248,9 @@ checksum = "32637268377fc7b10a8c6d51de3e7fba1ce5dd371a96e342b34e6078db558e7f"
 
 [[package]]
 name = "bip157"
-version = "0.6.3"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf76493aa2ead2603d435280f4a7bb2413610ff16ddb34f7ec24b090fff51236"
+checksum = "228f1ddc455518aee2bcc1c8195ba45efa079b4ad14679ef00d5177a51bf468e"
 dependencies = [
  "bip324",
  "bitcoin",
@@ -261,9 +261,9 @@ dependencies = [
 
 [[package]]
 name = "bip324"
-version = "0.7.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53157fcb2d6ec2851c7602d0690536d0b79209e393972cb2b36bd5d72dbd1879"
+checksum = "10e93f07cf774278cf032e8f1d97343a08d079017a33bb20097df380fd55d26c"
 dependencies = [
  "bitcoin",
  "bitcoin_hashes 0.15.0",
@@ -303,9 +303,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin-address-book"
-version = "0.1.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "060c05780195789a7b89bbfe7f57a1a8cd6ae0bb3daa9b96eeca4fbe0ba8014f"
+checksum = "f3b0f32a57f4d3801fbe4d68778a3bb69b356cafb16d2f2a701039359e0ebc9f"
 dependencies = [
  "bitcoin",
 ]
