@@ -1,6 +1,6 @@
 use crate::error::{
     AddressParseError, Bip32Error, ExtractTxError, FeeRateError, FromScriptError, HashParseError,
-    PsbtError, PsbtParseError, TransactionError,
+    PsbtError, PsbtParseError, PsbtSignError, TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::keys::DerivationPath;
@@ -18,6 +18,7 @@ use bdk_wallet::bitcoin::hashes::sha256::Hash as BitcoinSha256Hash;
 use bdk_wallet::bitcoin::hashes::sha256d::Hash as BitcoinDoubleSha256Hash;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
 use bdk_wallet::bitcoin::psbt::Output as BdkOutput;
+use bdk_wallet::bitcoin::psbt::SigningKeys as BdkSigningKeys;
 use bdk_wallet::bitcoin::secp256k1::Secp256k1;
 use bdk_wallet::bitcoin::taproot::LeafNode as BdkLeafNode;
 use bdk_wallet::bitcoin::taproot::NodeInfo as BdkNodeInfo;
@@ -37,7 +38,8 @@ use bdk_wallet::bitcoin::Wtxid as BitcoinWtxid;
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
-use std::collections::HashMap;
+use crate::descriptor::Descriptor;
+use std::collections::{BTreeSet, HashMap};
 use std::convert::TryFrom;
 use std::fmt::Display;
 use std::fs::File;
@@ -1579,6 +1581,60 @@ impl Psbt {
         let psbt = self.0.lock().unwrap();
         psbt.outputs.iter().map(|o| o.into()).collect()
     }
+
+    /// Signs the inputs of this PSBT using the secret keys held by the given descriptors.
+    ///
+    /// Pass every descriptor that may own inputs of this transaction (for example a wallet's
+    /// external and internal descriptors). Each descriptor is tried against every input, and keys
+    /// that do not match an input are ignored. This function does not support scripts that contain
+    /// `OP_CODESEPARATOR`.
+    ///
+    /// # Returns
+    ///
+    /// A `PsbtSignResult` listing the inputs that received a signature in this call and the errors
+    /// encountered while attempting to sign. An empty `signed_inputs` means nothing was signed, for
+    /// example because the descriptors do not match the inputs. Use `finalize` to check whether the
+    /// PSBT is complete.
+    ///
+    /// # Errors
+    ///
+    /// Returns `SignError::NoSecretKeys` if none of the descriptors contain secret keys.
+    pub fn sign(&self, descriptors: Vec<Arc<Descriptor>>) -> Result<PsbtSignResult, PsbtSignError> {
+        if descriptors.iter().all(|d| d.key_map.is_empty()) {
+            return Err(PsbtSignError::NoSecretKeys);
+        }
+
+        let mut psbt = self.0.lock().unwrap();
+        let secp = Secp256k1::new();
+        let mut signed_inputs = BTreeSet::new();
+        let mut errors = HashMap::new();
+
+        for descriptor in descriptors.iter().filter(|d| !d.key_map.is_empty()) {
+            let keys =
+                bdk_wallet::miniscript::descriptor::KeyMapWrapper::from(descriptor.key_map.clone());
+            let (used, errs) = match psbt.sign(&keys, &secp) {
+                Ok(used) => (used, Default::default()),
+                Err((used, errs)) => (used, errs),
+            };
+            signed_inputs.extend(
+                used.into_iter()
+                    .filter(|(_, keys)| match keys {
+                        BdkSigningKeys::Ecdsa(k) => !k.is_empty(),
+                        BdkSigningKeys::Schnorr(k) => !k.is_empty(),
+                    })
+                    .map(|(index, _)| index as u64),
+            );
+            errors.extend(
+                errs.into_iter()
+                    .map(|(index, error)| (index as u64, PsbtSignError::from(error))),
+            );
+        }
+
+        Ok(PsbtSignResult {
+            signed_inputs: signed_inputs.into_iter().collect(),
+            errors,
+        })
+    }
 }
 
 impl From<BdkPsbt> for Psbt {
@@ -1666,6 +1722,25 @@ impl From<TxOut> for BdkTxOut {
             value: tx_out.value.0,
             script_pubkey: tx_out.script_pubkey.0.clone(),
         }
+    }
+}
+
+#[derive(uniffi::Record)]
+#[uniffi::export(Display)]
+pub struct PsbtSignResult {
+    /// Inputs that received at least one signature in this call.
+    pub signed_inputs: Vec<u64>,
+    /// Errors encountered while attempting to sign, keyed by input index.
+    pub errors: HashMap<u64, PsbtSignError>,
+}
+
+impl Display for PsbtSignResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Signed inputs: {:?}, Errors: {:?}",
+            self.signed_inputs, self.errors
+        )
     }
 }
 
