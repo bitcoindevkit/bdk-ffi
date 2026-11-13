@@ -7,8 +7,9 @@ use bdk_wallet::migration::{
 };
 use bdk_wallet::{rusqlite::Connection as BdkConnection, WalletPersister};
 
-use std::ops::DerefMut;
-use std::sync::{Arc, Mutex};
+use std::ops::{Deref, DerefMut};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 /// Definition of a wallet persistence implementation.
 #[uniffi::export(with_foreign)]
@@ -23,6 +24,44 @@ pub trait Persistence: Send + Sync {
 pub(crate) enum PersistenceType {
     Custom(Arc<dyn Persistence>),
     Sql(Mutex<BdkConnection>),
+}
+
+// SQL operations retain the existing mutex guard. Custom operations retain only a
+// non-blocking lease so foreign callbacks never run while `Persister::inner` is locked.
+pub(crate) enum PersistenceOperation<'a> {
+    Locked(MutexGuard<'a, PersistenceType>),
+    Custom {
+        persistence: PersistenceType,
+        in_progress: &'a AtomicBool,
+    },
+}
+
+impl Deref for PersistenceOperation<'_> {
+    type Target = PersistenceType;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Locked(persistence) => persistence.deref(),
+            Self::Custom { persistence, .. } => persistence,
+        }
+    }
+}
+
+impl DerefMut for PersistenceOperation<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            Self::Locked(persistence) => persistence.deref_mut(),
+            Self::Custom { persistence, .. } => persistence,
+        }
+    }
+}
+
+impl Drop for PersistenceOperation<'_> {
+    fn drop(&mut self) {
+        if let Self::Custom { in_progress, .. } = self {
+            in_progress.store(false, Ordering::Release);
+        }
+    }
 }
 
 /// `PreV1WalletKeychain` represents a structure that holds the keychain details
@@ -42,6 +81,8 @@ pub struct PreV1WalletKeychain {
 #[derive(uniffi::Object)]
 pub struct Persister {
     pub(crate) inner: Mutex<PersistenceType>,
+    // Serializes the full initialize/persist operation without blocking reentrant callbacks.
+    custom_operation_in_progress: AtomicBool,
 }
 
 #[uniffi::export]
@@ -52,6 +93,7 @@ impl Persister {
         let conn = BdkConnection::open(path)?;
         Ok(Self {
             inner: PersistenceType::Sql(conn.into()).into(),
+            custom_operation_in_progress: AtomicBool::new(false),
         })
     }
 
@@ -61,6 +103,7 @@ impl Persister {
         let conn = BdkConnection::open_in_memory()?;
         Ok(Self {
             inner: PersistenceType::Sql(conn.into()).into(),
+            custom_operation_in_progress: AtomicBool::new(false),
         })
     }
 
@@ -69,6 +112,7 @@ impl Persister {
     pub fn custom(persistence: Arc<dyn Persistence>) -> Self {
         Self {
             inner: PersistenceType::Custom(persistence).into(),
+            custom_operation_in_progress: AtomicBool::new(false),
         }
     }
 
@@ -85,6 +129,30 @@ impl Persister {
                     .map_err(Into::into)
             }
             PersistenceType::Custom(_) => Err(PreV1MigrationError::SqliteOnly),
+        }
+    }
+}
+
+impl Persister {
+    pub(crate) fn begin_operation(&self) -> Result<PersistenceOperation<'_>, PersistenceError> {
+        let lock = self.inner.lock().unwrap();
+        match lock.deref() {
+            PersistenceType::Sql(_) => Ok(PersistenceOperation::Locked(lock)),
+            PersistenceType::Custom(persistence) => {
+                // Waiting here could deadlock if a callback delegates reentry to another thread.
+                self.custom_operation_in_progress
+                    .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+                    .map_err(|_| PersistenceError::Reason {
+                        error_message: "custom persistence operation already in progress"
+                            .to_string(),
+                    })?;
+                let persistence = Arc::clone(persistence);
+                drop(lock);
+                Ok(PersistenceOperation::Custom {
+                    persistence: PersistenceType::Custom(persistence),
+                    in_progress: &self.custom_operation_in_progress,
+                })
+            }
         }
     }
 }
