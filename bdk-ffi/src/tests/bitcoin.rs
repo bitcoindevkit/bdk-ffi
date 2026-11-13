@@ -1,7 +1,8 @@
 use crate::bitcoin::{
-    Address, AddressData, ControlBlock, FeeRate, Input, Key, Network, ProprietaryKey, Psbt, Script,
-    TapScriptEntry, Transaction,
+    Address, AddressData, ControlBlock, FeeRate, Input, Key, Network, NetworkKind, ProprietaryKey,
+    Psbt, Script, SigningKeys, TapScriptEntry, Transaction,
 };
+use crate::descriptor::Descriptor;
 use crate::error::{AddForeignUtxoError, TransactionError};
 use bdk_electrum::bdk_core::bitcoin::hex::DisplayHex;
 use bdk_wallet::bitcoin::psbt::Input as BdkInput;
@@ -719,6 +720,70 @@ fn test_psbt_output_tap_tree() {
     assert_eq!(
         leaf_version, expected_leaf_version,
         "Tap tree leaf version does not match the expected value"
+    );
+}
+
+#[test]
+fn test_psbt_sign_account_xprv() {
+    // A PSBT with a single Taproot key-path input to be signed.
+    let psbt = Psbt::new(
+        "cHNidP8BAF4CAAAAAU1jsXk14vinaw/FavxEf6I13DTTWcQ3W3qfEO45TulmAAAAAAD/////ASgjAAAAAAAAIlEgXnzxN1lKw2Se0nelATBRTNfinxJWqjQNKLqvwkspeREAAAAAAAEBKxAnAAAAAAAAIlEgXnzxN1lKw2Se0nelATBRTNfinxJWqjQNKLqvwkspeREhFtXKImYR1dqFkU+0ktlTKKLzI4vHT1o4Ukyt7xYanJ5zGQBRWcFzVgAAgAEAAIAAAACAAAAAAAAAAAABFyDVyiJmEdXahZFPtJLZUyii8yOLx09aOFJMre8WGpyecwAA"
+            .to_string(),
+    )
+    .unwrap();
+
+    // The descriptor holding the secret key corresponding to the input above.
+    let descriptor = Descriptor::new(
+        "tr([5159c173/86h/1h/0h]tprv8gfBCLYgHZLJLhg1DUSY6NN6eNAee3aqt3SE3M1hywpAiFWYGsm6U6B17VDKh8W1SQnatRpZujU5xseJ84nYZmkxPGCngNhmBMVRY2sAZhY/0/*)".to_string(),
+        NetworkKind::Test,
+    )
+    .unwrap();
+
+    // Before signing there is no signature for the input.
+    assert!(psbt.input()[0].tap_key_sig.is_none());
+
+    let sign_result = psbt.sign(descriptor.into());
+
+    // Exactly one input was signed and there were no signing errors.
+    assert!(sign_result.signing_errors.is_empty());
+    assert_eq!(sign_result.signing_keys_map.len(), 1);
+    assert!(matches!(
+        sign_result.signing_keys_map.get(&0),
+        Some(SigningKeys::Schnorr(_))
+    ));
+
+    // After signing the input carries a Taproot key-spend signature.
+    assert!(psbt.input()[0].tap_key_sig.is_some());
+
+    let finalized = psbt.finalize();
+    assert!(
+        finalized.could_finalize,
+        "account-xprv signature should be valid and allow finalization: {:?}",
+        finalized.errors
+    );
+}
+
+/// Verifies that a master xprv can sign and finalize a Taproot key-path PSBT.
+#[test]
+fn test_psbt_sign_master_xprv() {
+    let psbt = Psbt::new(
+        "cHNidP8BAIkCAAAAAd7Z58uNWmI7QC42edMCsKVfKMy72i68/bT+AzZDlfGWAAAAAAD9////AjUBAQAAAAAAIlEgbor4TTTaKr/DR4vQbGW6FHCQYnjuq0UpNplr8IFEUmgQJwAAAAAAACJRIAibNvaCqBgrW+quV/ypDHIA8Saao97/JxGenDgaZTKPAAAAAAABASvgKAEAAAAAACJRIFGvNAV+rp6xsnJxkEp4563vQ6BioBxl6P93UYjQGA/6IRYj8800YYG7nOzss1f693txGJD9kHZEbDvrlc2kaCSSCxkAkSLZ4FYAAIABAACAAAAAgAAAAAAAAAAAARcgI/PNNGGBu5zs7LNX+vd7cRiQ/ZB2RGw765XNpGgkkgsAAQUgSdyW+m8C7riSF8PKZxCBg2lU3xqZoUe6tTu9rJmBXDghB0nclvpvAu64khfDymcQgYNpVN8amaFHurU7vayZgVw4GQCRItngVgAAgAEAAIAAAACAAQAAAAAAAAAAAQUgmEUFEs04MftraM+doth9Q9GDpsmEp87kv/5tyvunoHIhB5hFBRLNODH7a2jPnaLYfUPRg6bJhKfO5L/+bcr7p6ByGQCRItngVgAAgAEAAIAAAACAAAAAAAEAAAAA"
+            .to_string(),
+    )
+    .unwrap();
+
+    const MASTER: &str = "tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B";
+    let descriptor =
+        Descriptor::new(format!("tr({MASTER}/86h/1h/0h/0/*)"), NetworkKind::Test).unwrap();
+    let sign_result = psbt.sign(descriptor.into());
+    assert!(sign_result.signing_errors.is_empty());
+    assert!(psbt.input()[0].tap_key_sig.is_some());
+
+    let finalized = psbt.finalize();
+    assert!(
+        finalized.could_finalize,
+        "master-xprv PSBT should finalize: {:?}",
+        finalized.errors
     );
 }
 
