@@ -1,18 +1,21 @@
 use crate::bitcoin::{Amount, BlockHash, FeeRate, Network, NetworkKind};
 use crate::descriptor::Descriptor;
-use crate::error::{CreateTxError, LoadWithPersistError};
+use crate::error::{CreateTxError, LoadWithPersistError, PersistenceError};
 use crate::signer::SignersContainer;
-use crate::store::Persister;
+use crate::store::{Persistence, Persister};
 use crate::tx_builder::{BumpFeeTxBuilder, TxBuilder};
-use crate::types::{UnconfirmedTx, Update};
+use crate::types::{ChangeSet, IndexerChangeSet, UnconfirmedTx, Update};
 use crate::wallet::{CreateParams, LoadParams, Wallet};
 
 use bdk_wallet::bitcoin::Amount as BdkAmount;
+use bdk_wallet::bitcoin::ScriptBuf as BdkScriptBuf;
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::bitcoin::{absolute, transaction, TxOut as BdkTxOut};
+use bdk_wallet::chain::DescriptorId as BdkDescriptorId;
 use bdk_wallet::KeychainKind;
 
-use std::sync::Arc;
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
 
 const EXTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/0/*)";
 const INTERNAL_DESCRIPTOR: &str = "wpkh(tprv8ZgxMBicQKsPf2qfrEygW6fdYseJDDrVnDv26PH5BHdvSuG6ecCbHqLVof9yZcMoM31z9ur3tTYbSnr1WBqbGX97CbXcmp5H6qeMpyvx35B/84h/1h/1h/1/*)";
@@ -498,4 +501,186 @@ fn test_load_from_two_path_descriptor_with_params() {
         }
         error => panic!("expected InvalidChangeSet error, got {:?}", error),
     }
+}
+
+/// Number of script pubkeys derived ahead of the last revealed index in the spk cache tests.
+const SPK_CACHE_LOOKAHEAD: u32 = 5;
+
+/// A `Persistence` implementation that keeps the aggregate `ChangeSet` in memory, the same way a
+/// foreign-language custom persister would.
+#[derive(Default)]
+struct InMemoryCustomPersistence {
+    aggregate: Mutex<Option<Arc<ChangeSet>>>,
+    last_persisted: Mutex<Option<Arc<ChangeSet>>>,
+}
+
+type BdkSpkCache = BTreeMap<BdkDescriptorId, BTreeMap<u32, BdkScriptBuf>>;
+
+impl InMemoryCustomPersistence {
+    fn spk_cache_of(changeset: &Mutex<Option<Arc<ChangeSet>>>) -> BdkSpkCache {
+        let changeset: bdk_wallet::ChangeSet = changeset
+            .lock()
+            .unwrap()
+            .as_ref()
+            .expect("nothing was persisted")
+            .as_ref()
+            .clone()
+            .into();
+        changeset.indexer.spk_cache
+    }
+
+    /// The spk cache in the aggregate of everything persisted so far.
+    fn aggregate_spk_cache(&self) -> BdkSpkCache {
+        Self::spk_cache_of(&self.aggregate)
+    }
+
+    /// The spk cache in the most recent `persist` call only.
+    fn last_persisted_spk_cache(&self) -> BdkSpkCache {
+        Self::spk_cache_of(&self.last_persisted)
+    }
+}
+
+impl Persistence for InMemoryCustomPersistence {
+    fn initialize(&self) -> Result<Arc<ChangeSet>, PersistenceError> {
+        Ok(self
+            .aggregate
+            .lock()
+            .unwrap()
+            .clone()
+            .unwrap_or_else(|| Arc::new(ChangeSet::new())))
+    }
+
+    fn persist(&self, changeset: Arc<ChangeSet>) -> Result<(), PersistenceError> {
+        let mut aggregate = self.aggregate.lock().unwrap();
+        let merged = match aggregate.take() {
+            Some(existing) => Arc::new(ChangeSet::from_merge(existing, Arc::clone(&changeset))),
+            None => Arc::clone(&changeset),
+        };
+        *aggregate = Some(merged);
+        *self.last_persisted.lock().unwrap() = Some(changeset);
+        Ok(())
+    }
+}
+
+fn spk_cache_load_params() -> LoadParams {
+    LoadParams {
+        check_network: None,
+        check_genesis_hash: None,
+        lookahead: SPK_CACHE_LOOKAHEAD,
+        use_spk_cache: true,
+    }
+}
+
+#[test]
+fn test_custom_persistence_persists_spk_cache() {
+    let persistence = Arc::new(InMemoryCustomPersistence::default());
+    let persister = Arc::new(Persister::custom(persistence.clone()));
+    let wallet = Wallet::create_with_params(
+        external_descriptor(),
+        internal_descriptor(),
+        Network::Signet,
+        Arc::clone(&persister),
+        CreateParams {
+            genesis_hash: None,
+            lookahead: SPK_CACHE_LOOKAHEAD,
+            use_spk_cache: true,
+        },
+    )
+    .unwrap();
+
+    // The index stages the script pubkeys it derives and hands them over on the next reveal.
+    wallet.reveal_next_address(KeychainKind::External);
+    assert!(wallet.persist(Arc::clone(&persister)).unwrap());
+
+    let spk_cache = persistence.aggregate_spk_cache();
+    let external_id = BdkDescriptorId(external_descriptor().descriptor_id().0);
+    let internal_id = BdkDescriptorId(internal_descriptor().descriptor_id().0);
+    // Revealing index 0 keeps `SPK_CACHE_LOOKAHEAD` more script pubkeys derived past it.
+    let expected_lengths = [
+        (KeychainKind::External, external_id, SPK_CACHE_LOOKAHEAD + 1),
+        (KeychainKind::Internal, internal_id, SPK_CACHE_LOOKAHEAD),
+    ];
+    for (keychain, descriptor_id, expected_len) in expected_lengths {
+        let cached = spk_cache
+            .get(&descriptor_id)
+            .unwrap_or_else(|| panic!("no spk cache persisted for {:?}", keychain));
+        assert_eq!(cached.len() as u32, expected_len);
+        for (index, script) in cached {
+            let expected = wallet
+                .peek_address(keychain, *index)
+                .address
+                .script_pubkey();
+            assert_eq!(script.as_bytes(), expected.to_bytes().as_slice());
+        }
+    }
+}
+
+#[test]
+fn test_custom_persistence_reloads_spk_cache_without_rederiving() {
+    let persistence = Arc::new(InMemoryCustomPersistence::default());
+    let persister = Arc::new(Persister::custom(persistence.clone()));
+    let wallet = Wallet::create_with_params(
+        external_descriptor(),
+        internal_descriptor(),
+        Network::Signet,
+        Arc::clone(&persister),
+        CreateParams {
+            genesis_hash: None,
+            lookahead: SPK_CACHE_LOOKAHEAD,
+            use_spk_cache: true,
+        },
+    )
+    .unwrap();
+    wallet.reveal_next_address(KeychainKind::External);
+    assert!(wallet.persist(Arc::clone(&persister)).unwrap());
+    drop(wallet);
+
+    let loaded = Wallet::load_with_params(
+        external_descriptor(),
+        internal_descriptor(),
+        Arc::clone(&persister),
+        spk_cache_load_params(),
+    )
+    .unwrap();
+    let revealed = loaded.reveal_next_address(KeychainKind::External);
+    assert!(loaded.persist(Arc::clone(&persister)).unwrap());
+
+    // With the cache restored, only the one script pubkey newly derived past the lookahead window
+    // is staged. Without it, every script pubkey would be derived again on load and staged here.
+    let newly_derived_index = revealed.index + SPK_CACHE_LOOKAHEAD;
+    let external_id = BdkDescriptorId(external_descriptor().descriptor_id().0);
+    let staged: Vec<(BdkDescriptorId, u32)> = persistence
+        .last_persisted_spk_cache()
+        .into_iter()
+        .flat_map(|(id, spks)| spks.into_keys().map(move |index| (id, index)))
+        .collect();
+    assert_eq!(staged, vec![(external_id, newly_derived_index)]);
+}
+
+/// Arbitrary derivation indices for the `IndexerChangeSet` round-trip test.
+const ROUND_TRIP_LAST_REVEALED_INDEX: u32 = 3;
+const ROUND_TRIP_CACHED_SPK_INDEX: u32 = 7;
+
+#[test]
+fn test_indexer_changeset_round_trips_spk_cache() {
+    let descriptor_id = BdkDescriptorId(external_descriptor().descriptor_id().0);
+    let script = build_wallet()
+        .peek_address(KeychainKind::External, ROUND_TRIP_CACHED_SPK_INDEX)
+        .address
+        .script_pubkey()
+        .0
+        .clone();
+    let original = bdk_wallet::chain::indexer::keychain_txout::ChangeSet {
+        last_revealed: [(descriptor_id, ROUND_TRIP_LAST_REVEALED_INDEX)].into(),
+        spk_cache: [(
+            descriptor_id,
+            [(ROUND_TRIP_CACHED_SPK_INDEX, script)].into(),
+        )]
+        .into(),
+    };
+
+    let ffi: IndexerChangeSet = original.clone().into();
+    let round_tripped: bdk_wallet::chain::indexer::keychain_txout::ChangeSet = ffi.into();
+
+    assert_eq!(round_tripped, original);
 }
