@@ -869,9 +869,18 @@ pub enum SignerError {
     Psbt { error_message: String },
 }
 
+/// An error that prevents `Psbt::sign` from attempting to sign at all.
 #[derive(Debug, thiserror::Error, uniffi::Error)]
 #[uniffi::export(Debug, Display)]
 pub enum PsbtSignError {
+    #[error("none of the provided descriptors contain secret keys")]
+    NoSecretKeys,
+}
+
+/// An error encountered while signing a single PSBT input, reported in `PsbtSignResult::errors`.
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi::export(Debug, Display)]
+pub enum InputSignError {
     #[error("index out of bounds {error_message}")]
     IndexOutOfBounds { error_message: String },
     #[error("invalid sighash type")]
@@ -904,13 +913,11 @@ pub enum PsbtSignError {
     WrongSigningAlgorithm,
     #[error("signing request currently unsupported")]
     Unsupported,
-    #[error("none of the provided descriptors contain secret keys")]
-    NoSecretKeys,
     #[error("unknown signing error")]
     Unknown,
 }
 
-impl From<BdkSignError> for PsbtSignError {
+impl From<BdkSignError> for InputSignError {
     fn from(error: BdkSignError) -> Self {
         match error {
             BdkSignError::IndexOutOfBounds(e) => Self::IndexOutOfBounds {

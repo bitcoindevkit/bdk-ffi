@@ -60,7 +60,7 @@ class PsbtTest {
                 .feeRate(FeeRate.fromSatPerVb(22uL))
                 .finish(wallet)
 
-            val psbtSignedResult = psbt.sign(listOf(BIP86_DESCRIPTOR))
+            val psbtSignedResult = psbt.sign(listOf(BIP86_DESCRIPTOR, BIP86_CHANGE_DESCRIPTOR))
 
             assertTrue(
                 psbtSignedResult.errors.isEmpty(),

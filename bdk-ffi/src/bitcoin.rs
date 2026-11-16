@@ -1,6 +1,6 @@
 use crate::error::{
     AddressParseError, Bip32Error, ExtractTxError, FeeRateError, FromScriptError, HashParseError,
-    PsbtError, PsbtParseError, PsbtSignError, TransactionError,
+    InputSignError, PsbtError, PsbtParseError, PsbtSignError, TransactionError,
 };
 use crate::error::{ParseAmountError, PsbtFinalizeError};
 use crate::keys::DerivationPath;
@@ -35,11 +35,13 @@ use bdk_wallet::bitcoin::TxOut as BdkTxOut;
 use bdk_wallet::bitcoin::Txid as BitcoinTxid;
 use bdk_wallet::bitcoin::Weight;
 use bdk_wallet::bitcoin::Wtxid as BitcoinWtxid;
+use bdk_wallet::keys::KeyMap;
+use bdk_wallet::miniscript::descriptor::KeyMapWrapper;
 use bdk_wallet::miniscript::psbt::PsbtExt;
 use bdk_wallet::serde_json;
 
 use crate::descriptor::Descriptor;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::Display;
 use std::fs::File;
@@ -1585,9 +1587,9 @@ impl Psbt {
     /// Signs the inputs of this PSBT using the secret keys held by the given descriptors.
     ///
     /// Pass every descriptor that may own inputs of this transaction (for example a wallet's
-    /// external and internal descriptors). Each descriptor is tried against every input, and keys
-    /// that do not match an input are ignored. This function does not support scripts that contain
-    /// `OP_CODESEPARATOR`.
+    /// external and internal descriptors). The secret keys of all descriptors are combined and
+    /// tried against every input in a single pass; keys that do not match an input are ignored.
+    /// This function does not support scripts that contain `OP_CODESEPARATOR`.
     ///
     /// # Returns
     ///
@@ -1598,40 +1600,40 @@ impl Psbt {
     ///
     /// # Errors
     ///
-    /// Returns `SignError::NoSecretKeys` if none of the descriptors contain secret keys.
+    /// Returns `PsbtSignError::NoSecretKeys` if none of the descriptors contain secret keys.
+    /// Problems with individual inputs are not returned as an error; they are reported in
+    /// `PsbtSignResult::errors`.
     pub fn sign(&self, descriptors: Vec<Arc<Descriptor>>) -> Result<PsbtSignResult, PsbtSignError> {
-        if descriptors.iter().all(|d| d.key_map.is_empty()) {
+        let key_map: KeyMap = descriptors.iter().flat_map(|d| d.key_map.clone()).collect();
+        if key_map.is_empty() {
             return Err(PsbtSignError::NoSecretKeys);
         }
+        let keys = KeyMapWrapper::from(key_map);
 
         let mut psbt = self.0.lock().unwrap();
         let secp = Secp256k1::new();
-        let mut signed_inputs = BTreeSet::new();
-        let mut errors = HashMap::new();
+        let (used, errors) = match psbt.sign(&keys, &secp) {
+            Ok(used) => (used, Default::default()),
+            Err((used, errors)) => (used, errors),
+        };
 
-        for descriptor in descriptors.iter().filter(|d| !d.key_map.is_empty()) {
-            let keys =
-                bdk_wallet::miniscript::descriptor::KeyMapWrapper::from(descriptor.key_map.clone());
-            let (used, errs) = match psbt.sign(&keys, &secp) {
-                Ok(used) => (used, Default::default()),
-                Err((used, errs)) => (used, errs),
-            };
-            signed_inputs.extend(
-                used.into_iter()
-                    .filter(|(_, keys)| match keys {
-                        BdkSigningKeys::Ecdsa(k) => !k.is_empty(),
-                        BdkSigningKeys::Schnorr(k) => !k.is_empty(),
-                    })
-                    .map(|(index, _)| index as u64),
-            );
-            errors.extend(
-                errs.into_iter()
-                    .map(|(index, error)| (index as u64, PsbtSignError::from(error))),
-            );
-        }
+        // `used` has an entry for every input that was attempted, including inputs where no key
+        // matched (with an empty key list). Only report inputs that actually received a signature.
+        let signed_inputs = used
+            .into_iter()
+            .filter(|(_, keys)| match keys {
+                BdkSigningKeys::Ecdsa(k) => !k.is_empty(),
+                BdkSigningKeys::Schnorr(k) => !k.is_empty(),
+            })
+            .map(|(index, _)| index as u64)
+            .collect();
+        let errors = errors
+            .into_iter()
+            .map(|(index, error)| (index as u64, InputSignError::from(error)))
+            .collect();
 
         Ok(PsbtSignResult {
-            signed_inputs: signed_inputs.into_iter().collect(),
+            signed_inputs,
             errors,
         })
     }
@@ -1731,7 +1733,7 @@ pub struct PsbtSignResult {
     /// Inputs that received at least one signature in this call.
     pub signed_inputs: Vec<u64>,
     /// Errors encountered while attempting to sign, keyed by input index.
-    pub errors: HashMap<u64, PsbtSignError>,
+    pub errors: HashMap<u64, InputSignError>,
 }
 
 impl Display for PsbtSignResult {
