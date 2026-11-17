@@ -1,6 +1,7 @@
 package org.bitcoindevkit
 
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -43,6 +44,9 @@ class CbfSyncTest {
                 .build(wallet)
 
             node.run()
+            assertFailsWith<CbfException.NodeAlreadyStarted> {
+                node.run()
+            }
 
             val warningJob = launch {
                 try {
