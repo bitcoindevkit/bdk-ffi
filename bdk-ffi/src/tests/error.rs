@@ -1,14 +1,15 @@
 use crate::bitcoin::Psbt;
 use crate::error::{
-    Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError, ElectrumError,
-    EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError, SignerError,
-    TransactionError, TxidParseError,
+    Bip32Error, Bip39Error, CannotConnectError, CreateTxError, DescriptorError, DescriptorKeyError,
+    ElectrumError, EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError,
+    SignerError, TransactionError, TxidParseError,
 };
 
 use bdk_wallet::bitcoin::{
-    absolute, transaction, Amount as BdkAmount, Psbt as BdkPsbt, ScriptBuf as BdkScriptBuf,
-    Transaction as BdkTransaction, TxOut as BdkTxOut,
+    absolute, transaction, Amount as BdkAmount, OutPoint as BdkOutPoint, Psbt as BdkPsbt,
+    ScriptBuf as BdkScriptBuf, Transaction as BdkTransaction, TxOut as BdkTxOut, Txid as BdkTxid,
 };
+use bdk_wallet::error::BuildFeeBumpError;
 
 #[test]
 fn test_error_bip32() {
@@ -672,4 +673,47 @@ fn test_error_txid_parse() {
     for (error, expected_message) in cases {
         assert_eq!(error.to_string(), expected_message);
     }
+}
+
+#[test]
+fn test_error_build_fee_bump() {
+    let txid: BdkTxid = "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"
+        .parse()
+        .unwrap();
+    let outpoint = BdkOutPoint { txid, vout: 7 };
+
+    let cases = vec![
+        (
+            BuildFeeBumpError::UnknownUtxo(outpoint),
+            format!("reference to an unknown utxo: {outpoint}"),
+        ),
+        (
+            BuildFeeBumpError::TransactionNotFound(txid),
+            format!("transaction not found in the internal database with txid: {txid}"),
+        ),
+        (
+            BuildFeeBumpError::TransactionConfirmed(txid),
+            format!("transaction already confirmed with txid: {txid}"),
+        ),
+        (
+            BuildFeeBumpError::IrreplaceableTransaction(txid),
+            format!("transaction can't be replaced with txid: {txid}"),
+        ),
+        (
+            BuildFeeBumpError::FeeRateUnavailable,
+            "fee rate unavailable".to_string(),
+        ),
+        (
+            BuildFeeBumpError::InvalidOutputIndex(outpoint),
+            format!("a txin referenced an invalid output: {outpoint}"),
+        ),
+    ];
+
+    for (upstream, expected_message) in cases {
+        let error: CreateTxError = upstream.into();
+        assert_eq!(error.to_string(), expected_message);
+    }
+
+    let error: CreateTxError = BuildFeeBumpError::TransactionConfirmed(txid).into();
+    assert!(matches!(error, CreateTxError::TransactionConfirmed { .. }));
 }
