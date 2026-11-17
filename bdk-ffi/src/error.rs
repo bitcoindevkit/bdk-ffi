@@ -241,6 +241,21 @@ pub enum CreateTxError {
     #[error("reference to an unknown utxo: {outpoint}")]
     UnknownUtxo { outpoint: String },
 
+    #[error("transaction not found in the internal database with txid: {txid}")]
+    TransactionNotFound { txid: String },
+
+    #[error("transaction already confirmed with txid: {txid}")]
+    TransactionConfirmed { txid: String },
+
+    #[error("transaction can't be replaced with txid: {txid}")]
+    IrreplaceableTransaction { txid: String },
+
+    #[error("fee rate unavailable")]
+    FeeRateUnavailable,
+
+    #[error("a txin referenced an invalid output: {outpoint}")]
+    InvalidOutputIndex { outpoint: String },
+
     #[error("missing non-witness utxo for outpoint: {outpoint}")]
     MissingNonWitnessUtxo { outpoint: String },
 
@@ -1280,19 +1295,19 @@ impl From<BuildFeeBumpError> for CreateTxError {
             BuildFeeBumpError::UnknownUtxo(outpoint) => CreateTxError::UnknownUtxo {
                 outpoint: outpoint.to_string(),
             },
-            BuildFeeBumpError::TransactionNotFound(txid) => CreateTxError::UnknownUtxo {
-                outpoint: txid.to_string(),
+            BuildFeeBumpError::TransactionNotFound(txid) => CreateTxError::TransactionNotFound {
+                txid: txid.to_string(),
             },
-            BuildFeeBumpError::TransactionConfirmed(txid) => CreateTxError::UnknownUtxo {
-                outpoint: txid.to_string(),
+            BuildFeeBumpError::TransactionConfirmed(txid) => CreateTxError::TransactionConfirmed {
+                txid: txid.to_string(),
             },
-            BuildFeeBumpError::IrreplaceableTransaction(txid) => CreateTxError::UnknownUtxo {
-                outpoint: txid.to_string(),
-            },
-            BuildFeeBumpError::FeeRateUnavailable => CreateTxError::FeeRateTooLow {
-                required: "unavailable".to_string(),
-            },
-            BuildFeeBumpError::InvalidOutputIndex(outpoint) => CreateTxError::UnknownUtxo {
+            BuildFeeBumpError::IrreplaceableTransaction(txid) => {
+                CreateTxError::IrreplaceableTransaction {
+                    txid: txid.to_string(),
+                }
+            }
+            BuildFeeBumpError::FeeRateUnavailable => CreateTxError::FeeRateUnavailable,
+            BuildFeeBumpError::InvalidOutputIndex(outpoint) => CreateTxError::InvalidOutputIndex {
                 outpoint: outpoint.to_string(),
             },
         }
