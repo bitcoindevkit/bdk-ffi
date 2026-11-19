@@ -362,8 +362,10 @@ pub enum ElectrumError {
     #[error("missing domain while it was explicitly asked to validate it")]
     MissingDomain,
 
-    #[error("made one or multiple attempts, all errored")]
-    AllAttemptsErrored,
+    /// An electrum-client bug (rust-electrum-client#186) can
+    /// leave out the last attempt's error, so the list may even be empty.
+    #[error("made one or multiple attempts, all errored{}", attempt_errors_suffix(.error_messages))]
+    AllAttemptsErrored { error_messages: Vec<String> },
 
     #[error("{error_message}")]
     SharedIOError { error_message: String },
@@ -1067,7 +1069,9 @@ impl From<BdkElectrumError> for ElectrumError {
                 ElectrumError::InvalidDNSNameError { domain }
             }
             BdkElectrumError::MissingDomain => ElectrumError::MissingDomain,
-            BdkElectrumError::AllAttemptsErrored(_) => ElectrumError::AllAttemptsErrored,
+            BdkElectrumError::AllAttemptsErrored(errors) => ElectrumError::AllAttemptsErrored {
+                error_messages: attempt_error_messages(errors),
+            },
             BdkElectrumError::SharedIOError(e) => ElectrumError::SharedIOError {
                 error_message: e.to_string(),
             },
@@ -1079,6 +1083,27 @@ impl From<BdkElectrumError> for ElectrumError {
                 }
             }
         }
+    }
+}
+
+/// Returns the message from each failed attempt, in order. If an attempt
+/// failed with its own `AllAttemptsErrored`, its messages are added here too.
+fn attempt_error_messages(errors: Vec<BdkElectrumError>) -> Vec<String> {
+    errors
+        .into_iter()
+        .flat_map(|error| match error {
+            BdkElectrumError::AllAttemptsErrored(nested) => attempt_error_messages(nested),
+            error => vec![error.to_string()],
+        })
+        .collect()
+}
+
+/// Ends the `AllAttemptsErrored` message with `": first; second"`, or nothing if empty.
+fn attempt_errors_suffix(error_messages: &[String]) -> String {
+    if error_messages.is_empty() {
+        String::new()
+    } else {
+        format!(": {}", error_messages.join("; "))
     }
 }
 

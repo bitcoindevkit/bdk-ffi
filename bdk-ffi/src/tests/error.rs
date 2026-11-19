@@ -5,6 +5,7 @@ use crate::error::{
     TransactionError, TxidParseError,
 };
 
+use bdk_electrum::electrum_client::Error as BdkElectrumError;
 use bdk_wallet::bitcoin::{
     absolute, transaction, Amount as BdkAmount, Psbt as BdkPsbt, ScriptBuf as BdkScriptBuf,
     Transaction as BdkTransaction, TxOut as BdkTxOut,
@@ -260,8 +261,16 @@ fn test_error_electrum_client() {
             "missing domain while it was explicitly asked to validate it",
         ),
         (
-            ElectrumError::AllAttemptsErrored,
+            ElectrumError::AllAttemptsErrored {
+                error_messages: vec![],
+            },
             "made one or multiple attempts, all errored",
+        ),
+        (
+            ElectrumError::AllAttemptsErrored {
+                error_messages: vec!["first".to_string(), "second".to_string()],
+            },
+            "made one or multiple attempts, all errored: first; second",
         ),
         (
             ElectrumError::SharedIOError {
@@ -287,6 +296,37 @@ fn test_error_electrum_client() {
 
     for (error, expected_message) in cases {
         assert_eq!(error.to_string(), expected_message);
+    }
+}
+
+#[test]
+fn test_error_electrum_all_attempts() {
+    let cases = vec![
+        (
+            BdkElectrumError::AllAttemptsErrored(vec![
+                BdkElectrumError::Message("first".to_string()),
+                BdkElectrumError::MissingDomain,
+            ]),
+            "made one or multiple attempts, all errored: first; Missing domain while it was explicitly asked to validate it",
+        ),
+        (
+            BdkElectrumError::AllAttemptsErrored(vec![
+                BdkElectrumError::Message("first".to_string()),
+                BdkElectrumError::AllAttemptsErrored(vec![
+                    BdkElectrumError::Message("second".to_string()),
+                    BdkElectrumError::Message("third".to_string()),
+                ]),
+            ]),
+            "made one or multiple attempts, all errored: first; second; third",
+        ),
+        (
+            BdkElectrumError::AllAttemptsErrored(vec![]),
+            "made one or multiple attempts, all errored",
+        ),
+    ];
+
+    for (error, expected_message) in cases {
+        assert_eq!(ElectrumError::from(error).to_string(), expected_message);
     }
 }
 
