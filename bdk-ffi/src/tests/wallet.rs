@@ -217,12 +217,13 @@ fn test_bump_fee_tx_builder_invalid_current_height_returns_error() {
         .next_unused_address(KeychainKind::External)
         .address
         .script_pubkey();
-    let original_tx = TxBuilder::new()
+    let psbt = TxBuilder::new()
         .add_recipient(&recipient_script, Arc::new(Amount::from_sat(10_000)))
         .finish(&wallet)
-        .unwrap()
-        .extract_tx()
         .unwrap();
+    // The original transaction must be signed
+    assert!(wallet.sign(psbt.clone(), None).unwrap());
+    let original_tx = psbt.extract_tx().unwrap();
 
     assert!(original_tx.is_explicitly_rbf());
 
