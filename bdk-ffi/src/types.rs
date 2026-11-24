@@ -405,6 +405,48 @@ impl FullScanRequestBuilder {
 #[derive(uniffi::Object)]
 pub struct Update(pub(crate) BdkUpdate);
 
+/// Transaction observations carried by an update before the wallet applies it.
+#[derive(uniffi::Record)]
+pub struct UpdateTransactionObservations {
+    /// Transaction IDs reported unconfirmed.
+    pub unconfirmed: Vec<String>,
+    /// Transaction IDs with a confirmation anchor.
+    pub anchored: Vec<String>,
+    /// Transaction bodies carried by the update, including unanchored bodies.
+    pub listed: Vec<String>,
+}
+
+#[uniffi::export]
+impl Update {
+    /// Returns transaction observations without consulting the wallet graph.
+    pub fn transaction_observations(&self) -> UpdateTransactionObservations {
+        let update = &self.0.tx_update;
+        let ids = |ids: Vec<String>| {
+            let mut ids = ids;
+            ids.sort_unstable();
+            ids.dedup();
+            ids
+        };
+        UpdateTransactionObservations {
+            unconfirmed: ids(update
+                .seen_ats
+                .iter()
+                .map(|(id, _)| id.to_string())
+                .collect()),
+            anchored: ids(update
+                .anchors
+                .iter()
+                .map(|(_, id)| id.to_string())
+                .collect()),
+            listed: ids(update
+                .txs
+                .iter()
+                .map(|tx| tx.compute_txid().to_string())
+                .collect()),
+        }
+    }
+}
+
 /// The total value sent and received.
 #[derive(uniffi::Record)]
 pub struct SentAndReceivedValues {
