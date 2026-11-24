@@ -32,6 +32,7 @@ use bdk_wallet::Balance as BdkBalance;
 use bdk_wallet::FinalizeInputOutcome as BdkFinalizeInputOutcome;
 use bdk_wallet::FinalizePsbtOutcome as BdkFinalizePsbtOutcome;
 use bdk_wallet::LocalOutput as BdkLocalOutput;
+use bdk_wallet::TxRejectedReason as BdkTxRejectedReason;
 use bdk_wallet::Update as BdkUpdate;
 use bdk_wallet::WalletEvent as BdkWalletEvent;
 
@@ -607,6 +608,93 @@ pub enum WalletEvent {
         /// Transaction.
         tx: Arc<Transaction>,
     },
+    /// An unconfirmed transaction was rejected and not applied to the wallet.
+    ///
+    /// The transaction spends outputs owned by the wallet, but the signatures (or other
+    /// satisfactions) for those inputs are missing or invalid. Such a transaction can't be valid,
+    /// so the chain source that returned it is likely malicious: it may be trying to make the
+    /// wallet replace a real transaction with one that pays an attacker.
+    ///
+    /// A legitimate transaction can also be rejected if it spends a wallet-owned taproot output
+    /// together with foreign inputs whose prevouts are unknown to the wallet (e.g. a payjoin or
+    /// coinjoin): taproot signatures commit to all the prevouts, so it can't be verified. It is
+    /// accepted once confirmed, or once applied again with the missing prevouts. Use `reason` to
+    /// tell the two cases apart.
+    ///
+    /// Rejections are not persisted: a chain source that keeps returning the transaction causes
+    /// it to be rejected, and reported, on every sync.
+    TxRejected {
+        /// Transaction id.
+        txid: Arc<Txid>,
+        /// Transaction.
+        tx: Arc<Transaction>,
+        /// Why the transaction was rejected.
+        reason: TxRejectedReason,
+    },
+}
+
+/// Why an unconfirmed transaction was rejected, see [`WalletEvent::TxRejected`].
+///
+/// Only the first wallet-owned input that failed verification is reported.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, uniffi::Enum)]
+#[uniffi::export(Display)]
+pub enum TxRejectedReason {
+    /// A wallet-owned input does not validly satisfy its prevout script: its signatures (or other
+    /// satisfactions) are missing or invalid.
+    ///
+    /// The transaction can't be valid. The chain source that returned it is likely malicious.
+    InvalidInput {
+        /// Index of the offending input.
+        input_index: u32,
+    },
+    /// A wallet-owned taproot input fails to verify, and the prevouts of some other inputs are
+    /// unknown to the wallet.
+    ///
+    /// Taproot signatures (other than `SIGHASH_ANYONECANPAY` ones) commit to the prevouts of all
+    /// the inputs, so the input may be validly signed but can't be verified. This is expected for
+    /// legitimate payjoins or coinjoins synced without their foreign prevouts (e.g. Electrum with
+    /// `fetch_prev_txouts = false`), but a forged transaction is reported the same way.
+    MissingPrevouts {
+        /// Index of the input that could not be verified.
+        input_index: u32,
+    },
+}
+
+impl Display for TxRejectedReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        BdkTxRejectedReason::from(*self).fmt(f)
+    }
+}
+
+impl From<TxRejectedReason> for BdkTxRejectedReason {
+    fn from(reason: TxRejectedReason) -> Self {
+        match reason {
+            TxRejectedReason::InvalidInput { input_index } => BdkTxRejectedReason::InvalidInput {
+                input_index: input_index as usize,
+            },
+            TxRejectedReason::MissingPrevouts { input_index } => {
+                BdkTxRejectedReason::MissingPrevouts {
+                    input_index: input_index as usize,
+                }
+            }
+        }
+    }
+}
+
+impl From<BdkTxRejectedReason> for TxRejectedReason {
+    fn from(reason: BdkTxRejectedReason) -> Self {
+        match reason {
+            BdkTxRejectedReason::InvalidInput { input_index } => TxRejectedReason::InvalidInput {
+                input_index: input_index as u32,
+            },
+            BdkTxRejectedReason::MissingPrevouts { input_index } => {
+                TxRejectedReason::MissingPrevouts {
+                    input_index: input_index as u32,
+                }
+            }
+            _ => unreachable!("TxRejectedReason variant not covered in conversion"),
+        }
+    }
 }
 
 impl Display for WalletEvent {
@@ -679,6 +767,11 @@ impl From<BdkWalletEvent> for WalletEvent {
             BdkWalletEvent::TxDropped { txid, tx } => WalletEvent::TxDropped {
                 txid: Arc::new(Txid(txid)),
                 tx: Arc::new(tx.as_ref().clone().into()),
+            },
+            BdkWalletEvent::TxRejected { txid, tx, reason } => WalletEvent::TxRejected {
+                txid: Arc::new(Txid(txid)),
+                tx: Arc::new(tx.as_ref().clone().into()),
+                reason: reason.into(),
             },
             _ => unreachable!("WalletEvent variant not covered in conversion"),
         }
