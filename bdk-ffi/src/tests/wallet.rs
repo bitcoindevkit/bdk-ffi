@@ -83,6 +83,44 @@ fn funded_wallet() -> Wallet {
 }
 
 #[test]
+fn test_recent_checkpoints_limits_results_in_descending_height_order() {
+    use bdk_wallet::bitcoin::{hashes::Hash, BlockHash};
+    use bdk_wallet::chain::{BlockId, CheckPoint};
+
+    let wallet = build_wallet();
+    let genesis = wallet.latest_checkpoint().into();
+    let older = BlockId {
+        height: 3,
+        hash: BlockHash::from_byte_array([1; 32]),
+    };
+    let newer = BlockId {
+        height: 8,
+        hash: BlockHash::from_byte_array([2; 32]),
+    };
+    let tip = BlockId {
+        height: 11,
+        hash: BlockHash::from_byte_array([3; 32]),
+    };
+    let chain = CheckPoint::from_block_ids([genesis, older, newer, tip]).unwrap();
+    let update = bdk_wallet::Update {
+        chain: Some(chain),
+        ..Default::default()
+    };
+    wallet.apply_update(Arc::new(Update(update))).unwrap();
+
+    assert!(wallet.recent_checkpoints(0).is_empty());
+    assert_eq!(
+        wallet.recent_checkpoints(1),
+        vec![wallet.latest_checkpoint()]
+    );
+    assert_eq!(wallet.recent_checkpoints(2), vec![tip.into(), newer.into()]);
+    assert_eq!(
+        wallet.recent_checkpoints(10),
+        vec![tip.into(), newer.into(), older.into(), genesis.into()]
+    );
+}
+
+#[test]
 fn test_finalize_input_outcome_is_finalized() {
     use crate::error::MiniscriptError;
     use crate::types::FinalizeInputOutcome;
