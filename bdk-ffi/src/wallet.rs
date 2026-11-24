@@ -1065,6 +1065,17 @@ impl Wallet {
             .collect()
     }
 
+    /// Returns up to `limit` stored checkpoints, starting with the tip and ordered
+    /// by descending height. Heights may be sparse, and a zero limit returns an
+    /// empty list.
+    pub fn recent_checkpoints(&self, limit: u32) -> Vec<BlockId> {
+        self.get_wallet()
+            .checkpoints()
+            .take(limit as usize)
+            .map(|checkpoint| checkpoint.block_id().into())
+            .collect()
+    }
+
     /// Get the [`TxDetails`] of a wallet transaction.
     pub fn tx_details(&self, txid: Arc<Txid>) -> Option<crate::types::TxDetails> {
         self.get_wallet()
