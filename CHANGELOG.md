@@ -4,7 +4,84 @@ Changelog information can also be found in each release's git tag (which can be 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v3.1.0...HEAD)
+## [Unreleased](https://github.com/bitcoindevkit/bdk-ffi/compare/v3.2.0...HEAD)
+
+## [v3.2.0]
+
+This is version `3.2.0` of the BDK language bindings! This release uses the following Rust dependencies:
+
+- bdk_wallet `3.2.1`
+- bdk_electrum `0.24.1`
+- bdk_esplora `0.22.3`
+- bdk_kyoto `0.19.0`
+- bitcoin `0.32.102`
+- miniscript `12.3.8`
+- uniffi `0.31.2`
+
+### Added
+
+- feat: add esplora client timeout option [#1119]
+- Bump electrum-client to `0.25.2` [#1149]
+- feat(electrum): add ElectrumClient.populate_tx_cache [#1150]
+- chore: bump miniscript to 12.3.8 by @ItoroD [#1152]
+- feat(electrum): add ElectrumClient.populate_anchor_cache [#1151]
+- Add custom sync methods by @thunderbiscuit [#1012]
+- feat: Add sign method for psbt by @ItoroD [#1051]
+- feat: expose Wallet::try_finalize_psbt outcomes [#1144]
+- chore: bump bdk_wallet to `3.2.1` patch [#1161]
+
+### Fixed
+
+- fix(kyoto): honor recovery birthdays on non mainnet networks [#1077]
+- fix: prevent maximum fee rate overflow [#1076]
+- Redact errors that could contain sensitive information [#1131]
+- Derive bytes along the key's derivation path [#1132]
+- fix: apply a key's existing derivation path in derive() [#1133]
+- Bump bdk_wallet to 3.2.0 and patch bdk#2057 [#1142]
+- fix: validate taproot control block conversion [#1083]
+
+[#1119]: https://github.com/bitcoindevkit/bdk-ffi/pull/1119
+[#1149]: https://github.com/bitcoindevkit/bdk-ffi/pull/1149
+[#1150]: https://github.com/bitcoindevkit/bdk-ffi/pull/1150
+[#1152]: https://github.com/bitcoindevkit/bdk-ffi/pull/1152
+[#1151]: https://github.com/bitcoindevkit/bdk-ffi/pull/1151
+[#1012]: https://github.com/bitcoindevkit/bdk-ffi/pull/1012
+[#1051]: https://github.com/bitcoindevkit/bdk-ffi/pull/1051
+[#1144]: https://github.com/bitcoindevkit/bdk-ffi/pull/1144
+[#1161]: https://github.com/bitcoindevkit/bdk-ffi/pull/1161
+[#1077]: https://github.com/bitcoindevkit/bdk-ffi/pull/1077
+[#1076]: https://github.com/bitcoindevkit/bdk-ffi/pull/1076
+[#1131]: https://github.com/bitcoindevkit/bdk-ffi/pull/1131
+[#1132]: https://github.com/bitcoindevkit/bdk-ffi/pull/1132
+[#1133]: https://github.com/bitcoindevkit/bdk-ffi/pull/1133
+[#1142]: https://github.com/bitcoindevkit/bdk-ffi/pull/1142
+[#1083]: https://github.com/bitcoindevkit/bdk-ffi/pull/1083
+
+## [v3.1.1]
+
+This is version `3.1.1` of the BDK language bindings! This release uses the following Rust dependencies:
+
+- bdk_wallet `3.1.0`
+- bdk_electrum `0.24.0`
+- bdk_esplora `0.22.2`
+- bdk_kyoto `0.17.1`
+- bitcoin `0.32.102`
+- miniscript `12.3.7`
+- uniffi `0.31.2`
+
+### Fixed
+
+- Prevent overflow when converting and displaying very large fee rates [#1076]
+- Honor Kyoto recovery birthdays on non-mainnet networks instead of falling back to genesis [#1077]
+- Redact descriptor and key parsing error messages that could echo back sensitive input [#1131]
+- `DescriptorSecretKey::secret_bytes` returns the key derived along the key's derivation path [#1132]
+- `DescriptorSecretKey::derive` and `DescriptorPublicKey::derive` apply a derivation path already set on the key [#1133]
+
+[#1076]: https://github.com/bitcoindevkit/bdk-ffi/pull/1076
+[#1077]: https://github.com/bitcoindevkit/bdk-ffi/pull/1077
+[#1131]: https://github.com/bitcoindevkit/bdk-ffi/pull/1131
+[#1132]: https://github.com/bitcoindevkit/bdk-ffi/pull/1132
+[#1133]: https://github.com/bitcoindevkit/bdk-ffi/pull/1133
 
 ## [v3.1.0]
 
@@ -763,6 +840,8 @@ This release has a number of new APIs, and adds support for Windows in bdk-jvm.
 
 [BIP 0174]:https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#encoding
 
+[v3.2.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v3.1.1...v3.2.0
+[v3.1.1]: https://github.com/bitcoindevkit/bdk-ffi/compare/v3.1.0...v3.1.1
 [v3.1.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v3.0.0...v3.1.0
 [v3.0.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.3.0...v3.0.0
 [v2.3.0]: https://github.com/bitcoindevkit/bdk-ffi/compare/v2.2.0...v2.3.0
