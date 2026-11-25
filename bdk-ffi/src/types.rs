@@ -1165,10 +1165,19 @@ pub struct EvictedTx {
     pub evicted_at: u64,
 }
 
-/// Mapping of descriptors to their last revealed index.
+/// Changes to the keychain indexer: the last revealed index of each descriptor and the cache of
+/// derived script pubkeys.
 #[derive(Debug, Clone, uniffi::Record)]
 pub struct IndexerChangeSet {
+    /// Maps each descriptor to its last revealed derivation index.
     pub last_revealed: HashMap<Arc<DescriptorId>, u32>,
+    /// Cache of derived script pubkeys, keyed by descriptor and derivation index.
+    ///
+    /// Only populated when the wallet is created or loaded with `use_spk_cache`. Custom
+    /// persistence should store it so the script pubkeys are not derived again when the wallet
+    /// is loaded with `use_spk_cache`.
+    #[uniffi(default)]
+    pub spk_cache: HashMap<Arc<DescriptorId>, HashMap<u32, Arc<Script>>>,
 }
 
 impl From<bdk_wallet::chain::indexer::keychain_txout::ChangeSet> for IndexerChangeSet {
@@ -1177,8 +1186,17 @@ impl From<bdk_wallet::chain::indexer::keychain_txout::ChangeSet> for IndexerChan
         for (id, index) in core::mem::take(&mut value.last_revealed) {
             changes.insert(Arc::new(DescriptorId(id.0)), index);
         }
+        let mut spk_cache = HashMap::new();
+        for (id, spks) in core::mem::take(&mut value.spk_cache) {
+            let spks = spks
+                .into_iter()
+                .map(|(index, spk)| (index, Arc::new(Script(spk))))
+                .collect();
+            spk_cache.insert(Arc::new(DescriptorId(id.0)), spks);
+        }
         Self {
             last_revealed: changes,
+            spk_cache,
         }
     }
 }
@@ -1190,9 +1208,17 @@ impl From<IndexerChangeSet> for bdk_wallet::chain::indexer::keychain_txout::Chan
             let descriptor_id = bdk_wallet::chain::DescriptorId(id.0);
             changes.insert(descriptor_id, index);
         }
+        let mut spk_cache = BTreeMap::new();
+        for (id, spks) in core::mem::take(&mut value.spk_cache) {
+            let spks = spks
+                .into_iter()
+                .map(|(index, spk)| (index, spk.0.clone()))
+                .collect();
+            spk_cache.insert(bdk_wallet::chain::DescriptorId(id.0), spks);
+        }
         Self {
             last_revealed: changes,
-            spk_cache: Default::default(),
+            spk_cache,
         }
     }
 }
