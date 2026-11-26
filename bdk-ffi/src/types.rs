@@ -7,8 +7,8 @@ use crate::error::{CreateTxError, MiniscriptError, RequestBuilderError};
 
 use bdk_wallet::bitcoin::absolute::LockTime as BdkLockTime;
 use bdk_wallet::chain::spk_client::SyncItem;
-use bdk_wallet::chain::BlockId as BdkBlockId;
 use bdk_wallet::chain::Merge;
+use bdk_wallet::chain::{BlockId as BdkBlockId, CheckPoint as BdkCheckPoint};
 
 use bdk_wallet::bitcoin::Transaction as BdkTransaction;
 use bdk_wallet::chain::spk_client::FullScanRequest as BdkFullScanRequest;
@@ -404,6 +404,138 @@ impl FullScanRequestBuilder {
 /// An update for a wallet containing chain, descriptor index, and transaction data.
 #[derive(uniffi::Object)]
 pub struct Update(pub(crate) BdkUpdate);
+
+#[uniffi::export]
+impl Update {
+    /// Returns a shared view of the transaction data in this update.
+    pub fn tx_update(self: Arc<Self>) -> Arc<TxUpdate> {
+        Arc::new(TxUpdate { update: self })
+    }
+
+    /// Returns the last active derivation index reported for each keychain in this update.
+    pub fn last_active_indices(&self) -> HashMap<KeychainKind, u32> {
+        self.0
+            .last_active_indices
+            .iter()
+            .map(|(&keychain, &index)| (keychain, index))
+            .collect()
+    }
+
+    /// Returns the tip of the chain update, if present.
+    pub fn chain(&self) -> Option<Arc<CheckPoint>> {
+        self.0
+            .chain
+            .clone()
+            .map(|checkpoint| Arc::new(CheckPoint(checkpoint)))
+    }
+}
+
+/// A checkpoint in a chain update. Earlier checkpoints are accessed one at a time.
+#[derive(uniffi::Object)]
+pub struct CheckPoint(BdkCheckPoint);
+
+#[uniffi::export]
+impl CheckPoint {
+    /// Returns the block at this checkpoint.
+    pub fn block_id(&self) -> BlockId {
+        self.0.block_id().into()
+    }
+
+    /// Returns the preceding checkpoint, if present. Heights may be sparse.
+    pub fn prev(&self) -> Option<Arc<Self>> {
+        self.0.prev().map(|checkpoint| Arc::new(Self(checkpoint)))
+    }
+}
+
+/// A shared view of transaction data reported by a chain source.
+///
+/// This data describes the update before wallet canonicalization. Each accessor converts only its
+/// own collection for the bindings.
+#[derive(uniffi::Object)]
+pub struct TxUpdate {
+    update: Arc<Update>,
+}
+
+#[uniffi::export]
+impl TxUpdate {
+    /// Returns copies of the full transactions included in the update.
+    pub fn txs(&self) -> Vec<Arc<Transaction>> {
+        self.update
+            .0
+            .tx_update
+            .txs
+            .iter()
+            .map(|tx| Arc::new(tx.as_ref().into()))
+            .collect()
+    }
+
+    /// Returns outputs included independently of their full transactions.
+    pub fn txouts(&self) -> HashMap<Arc<HashableOutPoint>, TxOut> {
+        self.update
+            .0
+            .tx_update
+            .txouts
+            .iter()
+            .map(|(&outpoint, txout)| (Arc::new(HashableOutPoint(outpoint.into())), txout.into()))
+            .collect()
+    }
+
+    /// Returns the confirmation anchors reported in the update.
+    pub fn anchors(&self) -> Vec<Anchor> {
+        self.update
+            .0
+            .tx_update
+            .anchors
+            .iter()
+            .map(|&(anchor, txid)| Anchor {
+                confirmation_block_time: anchor.into(),
+                txid: Arc::new(Txid(txid)),
+            })
+            .collect()
+    }
+
+    /// Returns the times transactions were seen in the mempool, in unspecified order.
+    pub fn seen_ats(&self) -> Vec<TxTimestamp> {
+        self.update
+            .0
+            .tx_update
+            .seen_ats
+            .iter()
+            .map(|&(txid, timestamp)| TxTimestamp {
+                txid: Arc::new(Txid(txid)),
+                timestamp,
+            })
+            .collect()
+    }
+
+    /// Returns the times transactions were reported missing from the mempool, in unspecified order.
+    pub fn evicted_ats(&self) -> Vec<TxTimestamp> {
+        self.update
+            .0
+            .tx_update
+            .evicted_ats
+            .iter()
+            .map(|&(txid, timestamp)| TxTimestamp {
+                txid: Arc::new(Txid(txid)),
+                timestamp,
+            })
+            .collect()
+    }
+
+    /// Returns whether every transaction data collection in the update is empty.
+    pub fn is_empty(&self) -> bool {
+        self.update.0.tx_update.is_empty()
+    }
+}
+
+/// A chain source's mempool observation for a transaction at a given time.
+#[derive(uniffi::Record)]
+pub struct TxTimestamp {
+    /// The observed transaction ID.
+    pub txid: Arc<Txid>,
+    /// Time of observation in seconds since the Unix epoch.
+    pub timestamp: u64,
+}
 
 /// The total value sent and received.
 #[derive(uniffi::Record)]
