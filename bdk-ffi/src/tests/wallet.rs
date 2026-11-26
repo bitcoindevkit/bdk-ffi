@@ -609,3 +609,118 @@ fn test_load_from_two_path_descriptor_with_params() {
         error => panic!("expected InvalidChangeSet error, got {:?}", error),
     }
 }
+
+#[test]
+fn test_inspect_wallet_update_before_applying() {
+    use bdk_wallet::bitcoin::{hashes::Hash, BlockHash as BdkBlockHash, OutPoint as BdkOutPoint};
+    use bdk_wallet::chain::{BlockId, CheckPoint, ConfirmationBlockTime};
+
+    let wallet = build_wallet();
+    let genesis = wallet.latest_checkpoint();
+    let block = BlockId {
+        height: 5,
+        hash: BdkBlockHash::from_byte_array([1; 32]),
+    };
+    let tip = BlockId {
+        height: 11,
+        hash: BdkBlockHash::from_byte_array([2; 32]),
+    };
+    let chain = CheckPoint::new(genesis.clone().into())
+        .push(block)
+        .unwrap()
+        .push(tip)
+        .unwrap();
+    let address = wallet.peek_address(KeychainKind::External, 3).address;
+    let output = BdkTxOut {
+        value: BdkAmount::from_sat(42_000),
+        script_pubkey: address.script_pubkey().0.clone(),
+    };
+    let transaction = BdkTransaction {
+        version: transaction::Version::ONE,
+        lock_time: absolute::LockTime::ZERO,
+        input: vec![],
+        output: vec![output.clone()],
+    };
+    let txid = transaction.compute_txid();
+    let floating_outpoint = BdkOutPoint::null();
+    let anchor = ConfirmationBlockTime {
+        block_id: block,
+        confirmation_time: 20,
+    };
+
+    let mut update = bdk_wallet::Update {
+        chain: Some(chain),
+        last_active_indices: [(KeychainKind::External, 3)].into(),
+        ..Default::default()
+    };
+    update.tx_update.txs.push(Arc::new(transaction));
+    update.tx_update.txouts.insert(floating_outpoint, output);
+    update.tx_update.anchors.insert((anchor, txid));
+    update.tx_update.seen_ats.extend([(txid, 1), (txid, 2)]);
+    update.tx_update.evicted_ats.extend([(txid, 3), (txid, 4)]);
+    let update = Arc::new(Update(update));
+
+    let chain = update.chain().unwrap();
+    assert_eq!(chain.block_id(), tip.into());
+    let previous = chain.prev().unwrap();
+    assert_eq!(previous.block_id(), block.into());
+    let first = previous.prev().unwrap();
+    assert_eq!(first.block_id(), genesis);
+    assert!(first.prev().is_none());
+    assert_eq!(
+        update.last_active_indices(),
+        [(KeychainKind::External, 3)].into()
+    );
+
+    let tx_update = Arc::clone(&update).tx_update();
+    assert!(!tx_update.is_empty());
+    let txs = tx_update.txs();
+    assert_eq!(txs.len(), 1);
+    assert_eq!(txs[0].compute_txid().0, txid);
+    let txouts = tx_update.txouts();
+    assert_eq!(txouts.len(), 1);
+    let (outpoint, output) = txouts.iter().next().unwrap();
+    assert_eq!(BdkOutPoint::from(outpoint.outpoint()), floating_outpoint);
+    assert_eq!(output.value.to_sat(), 42_000);
+    assert_eq!(output.script_pubkey.0, address.script_pubkey().0);
+    let anchors = tx_update.anchors();
+    assert_eq!(anchors.len(), 1);
+    assert_eq!(anchors[0].txid.0, txid);
+    assert_eq!(anchors[0].confirmation_block_time, anchor.into());
+
+    for (observations, expected) in [
+        (tx_update.seen_ats(), [1, 2]),
+        (tx_update.evicted_ats(), [3, 4]),
+    ] {
+        assert!(observations
+            .iter()
+            .all(|observation| observation.txid.0 == txid));
+        let mut timestamps: Vec<_> = observations
+            .iter()
+            .map(|observation| observation.timestamp)
+            .collect();
+        timestamps.sort_unstable();
+        assert_eq!(timestamps, expected);
+    }
+
+    let txid = txs[0].compute_txid();
+    assert!(wallet.get_tx(Arc::clone(&txid)).unwrap().is_none());
+    wallet.apply_update(update).unwrap();
+    assert_eq!(wallet.latest_checkpoint(), tip.into());
+    assert!(wallet.get_tx(txid).unwrap().is_some());
+    assert_eq!(tx_update.txs().len(), 1);
+}
+
+#[test]
+fn test_inspect_empty_wallet_update() {
+    let update = Arc::new(Update(bdk_wallet::Update::default()));
+    assert!(update.chain().is_none());
+    assert!(update.last_active_indices().is_empty());
+    let tx_update = update.tx_update();
+    assert!(tx_update.is_empty());
+    assert!(tx_update.txs().is_empty());
+    assert!(tx_update.txouts().is_empty());
+    assert!(tx_update.anchors().is_empty());
+    assert!(tx_update.seen_ats().is_empty());
+    assert!(tx_update.evicted_ats().is_empty());
+}
