@@ -1,14 +1,120 @@
 use crate::bitcoin::Psbt;
 use crate::error::{
-    Bip32Error, Bip39Error, CannotConnectError, DescriptorError, DescriptorKeyError, ElectrumError,
-    EsploraError, ExtractTxError, PsbtError, PsbtParseError, RequestBuilderError, SignerError,
-    TransactionError, TxidParseError,
+    AddressParseError, Bip32Error, Bip39Error, CannotConnectError, DescriptorError,
+    DescriptorKeyError, ElectrumError, EsploraError, ExtractTxError, PsbtError, PsbtParseError,
+    RequestBuilderError, SignerError, TransactionError, TxidParseError,
 };
 
+use assert_matches::assert_matches;
+use bdk_wallet::bitcoin::address::NetworkUnchecked;
 use bdk_wallet::bitcoin::{
-    absolute, transaction, Amount as BdkAmount, Psbt as BdkPsbt, ScriptBuf as BdkScriptBuf,
-    Transaction as BdkTransaction, TxOut as BdkTxOut,
+    absolute, transaction, Address as BdkAddress, Amount as BdkAmount, Network as BdkNetwork,
+    Psbt as BdkPsbt, ScriptBuf as BdkScriptBuf, Transaction as BdkTransaction, TxOut as BdkTxOut,
 };
+
+#[test]
+fn test_error_address_parse() {
+    let cases = vec![
+        (
+            AddressParseError::Base58 {
+                error_message: "decode: invalid base58 character 0x30".to_string(),
+            },
+            "base58 address encoding error: decode: invalid base58 character 0x30",
+        ),
+        (
+            AddressParseError::Bech32 {
+                error_message: "decoding segwit address failed: invalid checksum: the checksum \
+                                residue is not valid for the data"
+                    .to_string(),
+            },
+            "bech32 address encoding error: decoding segwit address failed: invalid checksum: \
+             the checksum residue is not valid for the data",
+        ),
+        (
+            AddressParseError::WitnessVersion {
+                error_message: "invalid witness script version: 17".to_string(),
+            },
+            "witness version conversion/parsing error: invalid witness script version: 17",
+        ),
+        (
+            AddressParseError::WitnessProgram {
+                error_message: "a v0 witness program must be either 20 or 32 bytes: length=21"
+                    .to_string(),
+            },
+            "witness program error: a v0 witness program must be either 20 or 32 bytes: length=21",
+        ),
+        (
+            AddressParseError::UnknownHrp {
+                error_message: "unknown hrp: xyz".to_string(),
+            },
+            "unknown hrp: xyz",
+        ),
+        (
+            AddressParseError::LegacyAddressTooLong {
+                error_message: "legacy address is too long: 60 (max 50 characters)".to_string(),
+            },
+            "legacy address is too long: 60 (max 50 characters)",
+        ),
+        (
+            AddressParseError::InvalidBase58PayloadLength {
+                error_message: "decoded base58 data was an invalid length: 20 (expected 21)"
+                    .to_string(),
+            },
+            "decoded base58 data was an invalid length: 20 (expected 21)",
+        ),
+        (
+            AddressParseError::InvalidLegacyPrefix {
+                error_message: "invalid legacy address prefix in decoded base58 data 8".to_string(),
+            },
+            "invalid legacy address prefix in decoded base58 data 8",
+        ),
+        (
+            AddressParseError::NetworkValidation {
+                error_message:
+                    "address bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4 is not valid on testnet"
+                        .to_string(),
+            },
+            "address bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4 is not valid on testnet",
+        ),
+        (
+            AddressParseError::OtherAddressParseErr {
+                error_message: "something new upstream".to_string(),
+            },
+            "other address parse error: something new upstream",
+        ),
+    ];
+
+    for (error, expected_message) in cases {
+        assert_eq!(error.to_string(), expected_message);
+    }
+}
+
+#[test]
+fn test_address_parse_error_preserves_upstream_detail() {
+    let error: AddressParseError = "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN3"
+        .parse::<BdkAddress<NetworkUnchecked>>()
+        .unwrap_err()
+        .into();
+
+    assert_matches!(
+        error,
+        AddressParseError::Base58 { error_message } if error_message.contains("checksum")
+    );
+
+    let address: BdkAddress<NetworkUnchecked> = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        .parse()
+        .unwrap();
+    let error: AddressParseError = address
+        .require_network(BdkNetwork::Testnet)
+        .unwrap_err()
+        .into();
+
+    assert_matches!(
+        error,
+        AddressParseError::NetworkValidation { error_message }
+            if error_message.contains("is not valid on testnet")
+    );
+}
 
 #[test]
 fn test_error_bip32() {
